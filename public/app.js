@@ -1313,6 +1313,225 @@ function exportToXls() {
     }
 }
 
+function exportInvoice() {
+    readProposalForm();
+    if (state.proposal.items.length === 0) {
+        showToast('Пропозиція порожня', 'warning');
+        return;
+    }
+
+    if (typeof XLSX === 'undefined') {
+        showToast('Помилка: Бібліотека Excel не завантажена', 'error');
+        return;
+    }
+
+    showToast('Генерація рахунку...', 'info');
+
+    const uahRate = state.settings.usdToUah;
+    
+    // Invoice number — derive from proposal number
+    const propNum = state.proposal.number || 'КП-001';
+    const invoiceNum = propNum.replace('КП-', '');
+    const invoiceDate = formatDateUA(state.proposal.date || todayStr());
+
+    // ===== Build rows =====
+    const rows = [];
+
+    // Row 0: Empty top
+    rows.push(["", "", "", "", "", ""]);  // r0
+
+    // Row 1: Title + Number + Date
+    rows.push(["РАХУНОК-ФАКТУРА", "", "", "", "№:", invoiceNum]);  // r1
+    rows.push(["", "", "", "", "Дата:", invoiceDate]);  // r2
+
+    // Row 3: Empty separator
+    rows.push([]);  // r3
+
+    // Row 4: ПОСТАЧАЛЬНИК / ПОКУПЕЦЬ headers
+    rows.push(["ПОСТАЧАЛЬНИК", "", "", "ПОКУПЕЦЬ", "", ""]);  // r4
+
+    // Row 5-10: Supplier + Buyer details
+    rows.push(["Назва:", "ФОП Пастушок Марія Володимирівна", "", "Назва:", state.proposal.clientName || "", ""]);  // r5
+    rows.push(["РНОКПП:", "3090406261", "", "ЄДРПОУ:", "", ""]);  // r6
+    rows.push(["Адреса:", "Україна, 80700, Львівська обл., Золочівський р-н, с. Вороняки, вул. Шкільна, б. 38", "", "Адреса:", "", ""]);  // r7
+    rows.push(["IBAN:", "UA563003350000000260092475237", "", "IBAN:", "", ""]);  // r8
+    rows.push(["Банк:", 'АТ "РАЙФФАЙЗЕН БАНК"', "", "Банк:", "", ""]);  // r9
+    rows.push(["Тел:", "(067)374-08-12", "", "Тел / Email:", state.proposal.clientContact || "", ""]);  // r10
+
+    // Row 11: Empty separator
+    rows.push([]);  // r11
+
+    // Row 12: Table headers
+    rows.push(["№", "Найменування товару", "К-сть", "Од.", "Ціна, грн", "Сума, грн"]);  // r12
+
+    // Row 13+: Product rows
+    let totalUAH = 0;
+    const tableStartRow = 13;
+    
+    state.proposal.items.forEach((it, idx) => {
+        const priceUAH = Math.round(it.price * uahRate * 100) / 100;
+        const sumUAH = Math.round(priceUAH * it.quantity * 100) / 100;
+        totalUAH += sumUAH;
+        
+        const nameWithDesc = it.description 
+            ? `${it.name} — ${it.description}` 
+            : it.name;
+        
+        rows.push([
+            idx + 1,
+            nameWithDesc,
+            it.quantity,
+            it.unit,
+            priceUAH,
+            sumUAH
+        ]);
+    });
+
+    // Pad to minimum 10 rows in table
+    const itemCount = state.proposal.items.length;
+    for (let i = itemCount; i < 10; i++) {
+        rows.push([i + 1, "", "", "шт.", "", ""]);
+    }
+
+    // Total rows
+    const totalRowIdx = rows.length;
+    rows.push([]);  // empty separator
+    rows.push(["", "", "", "", "СУМА ДО СПЛАТИ:", totalUAH]);
+
+    // Sum in words
+    rows.push([]);
+    rows.push(["Сума прописом: " + numberToWordsUA(totalUAH) + " грн.", "", "", "", "", ""]);
+
+    // ===== Create workbook =====
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // Merge cells
+    ws['!merges'] = [
+        // Title
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },  // РАХУНОК-ФАКТУРА
+        // Supplier/Buyer section headers
+        { s: { r: 4, c: 0 }, e: { r: 4, c: 2 } },  // ПОСТАЧАЛЬНИК
+        { s: { r: 4, c: 3 }, e: { r: 4, c: 5 } },  // ПОКУПЕЦЬ
+        // Sum in words
+        { s: { r: totalRowIdx + 2, c: 0 }, e: { r: totalRowIdx + 2, c: 5 } },
+    ];
+
+    // Column widths
+    ws['!cols'] = [
+        { wch: 10 },  // №/ labels
+        { wch: 50 },  // Найменування / values
+        { wch: 10 },  // К-сть
+        { wch: 8 },   // Од.
+        { wch: 14 },  // Ціна
+        { wch: 14 }   // Сума
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Рахунок");
+
+    // Generate filename
+    const filename = `Рахунок_${invoiceNum}.xlsx`;
+
+    // Download
+    try {
+        const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+        const url = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + b64;
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        
+        setTimeout(() => {
+            document.body.removeChild(a);
+        }, 100);
+        
+        showToast('Рахунок завантажено', 'success');
+    } catch (err) {
+        console.error('Invoice Export Error:', err);
+        showToast('Помилка при створенні рахунку', 'error');
+        XLSX.writeFile(wb, filename);
+    }
+}
+
+// Format date as DD.MM.YYYY
+function formatDateUA(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    }
+    return dateStr;
+}
+
+// Convert number to Ukrainian words (simplified)
+function numberToWordsUA(num) {
+    const ones = ['', 'одна', 'дві', 'три', 'чотири', "п'ять", 'шість', 'сім', 'вісім', "дев'ять"];
+    const teens = ['десять', 'одинадцять', 'дванадцять', 'тринадцять', 'чотирнадцять', "п'ятнадцять", 
+                   'шістнадцять', 'сімнадцять', 'вісімнадцять', "дев'ятнадцять"];
+    const tens = ['', '', 'двадцять', 'тридцять', 'сорок', "п'ятдесят", 'шістдесят', 'сімдесят', 'вісімдесят', "дев'яносто"];
+    const hundreds = ['', 'сто', 'двісті', 'триста', 'чотириста', "п'ятсот", 'шістсот', 'сімсот', 'вісімсот', "дев'ятсот"];
+
+    const intPart = Math.floor(num);
+    const kopPart = Math.round((num - intPart) * 100);
+
+    if (intPart === 0) return `нуль грн. ${String(kopPart).padStart(2, '0')} коп.`;
+
+    function convertGroup(n) {
+        if (n === 0) return '';
+        let result = '';
+        if (n >= 100) {
+            result += hundreds[Math.floor(n / 100)] + ' ';
+            n %= 100;
+        }
+        if (n >= 10 && n < 20) {
+            result += teens[n - 10] + ' ';
+            return result;
+        }
+        if (n >= 20) {
+            result += tens[Math.floor(n / 10)] + ' ';
+            n %= 10;
+        }
+        if (n > 0) {
+            result += ones[n] + ' ';
+        }
+        return result;
+    }
+
+    let words = '';
+    
+    if (intPart >= 1000000) {
+        const millions = Math.floor(intPart / 1000000);
+        words += convertGroup(millions);
+        if (millions % 10 === 1 && millions % 100 !== 11) words += 'мільйон ';
+        else if ([2,3,4].includes(millions % 10) && ![12,13,14].includes(millions % 100)) words += 'мільйони ';
+        else words += 'мільйонів ';
+    }
+    
+    const thousands = Math.floor((intPart % 1000000) / 1000);
+    if (thousands > 0) {
+        let thWords = convertGroup(thousands);
+        // Fix gender: одна тисяча, дві тисячі
+        thWords = thWords.replace('одна ', 'одна ').replace('дві ', 'дві ');
+        words += thWords;
+        if (thousands % 10 === 1 && thousands % 100 !== 11) words += 'тисяча ';
+        else if ([2,3,4].includes(thousands % 10) && ![12,13,14].includes(thousands % 100)) words += 'тисячі ';
+        else words += 'тисяч ';
+    }
+
+    const remainder = intPart % 1000;
+    if (remainder > 0) {
+        words += convertGroup(remainder);
+    }
+
+    words = words.trim();
+    // Capitalize first letter
+    words = words.charAt(0).toUpperCase() + words.slice(1);
+    
+    return `${words} грн. ${String(kopPart).padStart(2, '0')} коп.`;
+}
+
 async function prepImagesForCapture() {
     const imgs = document.querySelectorAll('#mainContent img');
     for (let img of imgs) {
@@ -1464,6 +1683,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnSave').addEventListener('click', saveCurrentProposal);
     document.getElementById('btnNewProposal').addEventListener('click', newProposal);
     document.getElementById('btnExportXls').addEventListener('click', exportToXls);
+    document.getElementById('btnInvoice').addEventListener('click', exportInvoice);
     document.getElementById('btnPrint').addEventListener('click', printProposal);
     document.getElementById('btnTelegram').addEventListener('click', () => openModal('telegramModal'));
     document.getElementById('btnSendTelegram').addEventListener('click', sendToTelegram);
