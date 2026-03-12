@@ -334,6 +334,96 @@
         </div>
     </div>
 
+    <!-- ===== INVOICE TEMPLATE (hidden, for PDF generation) ===== -->
+    <div id="invoiceTemplate" style="display:none;">
+        <div id="invoiceContent" style="font-family:'Inter',sans-serif; max-width:210mm; margin:0 auto; padding:20px 25px; background:#fff; color:#1a1a2e;">
+            <!-- Header -->
+            <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; padding-bottom:16px; border-bottom:3px solid #1a3a6b;">
+                <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" style="height:60px; width:auto;">
+                <div>
+                    <div style="font-size:11px; color:#5a6a8a;">Офіс та склад: Львівська обл., м. Золочів, вул. І. Труша 1Б</div>
+                    <div style="font-size:11px; color:#5a6a8a;">+38 067 374 08 02</div>
+                </div>
+            </div>
+
+            <!-- Title -->
+            <div style="text-align:center; margin-bottom:20px;">
+                <h1 style="font-size:22px; font-weight:800; color:#1a3a6b; margin:0; letter-spacing:1px;">РАХУНОК-ФАКТУРА</h1>
+                <div style="display:flex; justify-content:center; gap:30px; margin-top:8px; font-size:13px; color:#333;">
+                    <span>№ <strong id="invNumber"></strong></span>
+                    <span>від <strong id="invDate"></strong></span>
+                </div>
+            </div>
+
+            <!-- Supplier + Buyer -->
+            <table style="width:100%; border-collapse:collapse; margin-bottom:18px; font-size:11.5px;">
+                <tr>
+                    <td style="width:50%; vertical-align:top; padding:10px 12px; border:1.5px solid #1a3a6b; background:#e8edf5;">
+                        <div style="font-weight:700; font-size:12px; color:#1a3a6b; margin-bottom:8px; text-transform:uppercase;">Постачальник</div>
+                        <div style="margin-bottom:3px;"><span style="color:#666; min-width:60px; display:inline-block;">Назва:</span> <strong>ФОП Пастушок Марія Володимирівна</strong></div>
+                        <div style="margin-bottom:3px;"><span style="color:#666;">РНОКПП:</span> 3090406261</div>
+                        <div style="margin-bottom:3px;"><span style="color:#666;">Адреса:</span> Україна, 80700, Львівська обл., Золочівський р-н, с. Вороняки, вул. Шкільна, б. 38</div>
+                        <div style="margin-bottom:3px;"><span style="color:#666;">IBAN:</span> UA563003350000000260092475237</div>
+                        <div style="margin-bottom:3px;"><span style="color:#666;">Банк:</span> АТ "РАЙФФАЙЗЕН БАНК"</div>
+                        <div><span style="color:#666;">Тел:</span> (067)374-08-12</div>
+                    </td>
+                    <td style="width:50%; vertical-align:top; padding:10px 12px; border:1.5px solid #1a3a6b; background:#f7f9fc;">
+                        <div style="font-weight:700; font-size:12px; color:#1a3a6b; margin-bottom:8px; text-transform:uppercase;">Покупець</div>
+                        <div style="margin-bottom:3px;"><span style="color:#666;">Назва:</span> <strong id="invClientName"></strong></div>
+                        <div style="margin-bottom:3px;"><span style="color:#666;">ЄДРПОУ:</span> <span id="invClientEdrpou"></span></div>
+                        <div style="margin-bottom:3px;"><span style="color:#666;">Адреса:</span> <span id="invClientAddress"></span></div>
+                        <div style="margin-bottom:3px;"><span style="color:#666;">IBAN:</span></div>
+                        <div style="margin-bottom:3px;"><span style="color:#666;">Банк:</span></div>
+                        <div><span style="color:#666;">Тел / Email:</span> <span id="invClientContact"></span></div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- Items Table -->
+            <table style="width:100%; border-collapse:collapse; font-size:11.5px; margin-bottom:4px;">
+                <thead>
+                    <tr style="background:#1a3a6b; color:#fff;">
+                        <th style="padding:8px 6px; border:1px solid #1a3a6b; width:35px; text-align:center;">№</th>
+                        <th style="padding:8px 6px; border:1px solid #1a3a6b; text-align:left;">Найменування товару</th>
+                        <th style="padding:8px 6px; border:1px solid #1a3a6b; width:50px; text-align:center;">К-сть</th>
+                        <th style="padding:8px 6px; border:1px solid #1a3a6b; width:40px; text-align:center;">Од.</th>
+                        <th style="padding:8px 6px; border:1px solid #1a3a6b; width:90px; text-align:right;">Ціна, грн</th>
+                        <th style="padding:8px 6px; border:1px solid #1a3a6b; width:100px; text-align:right;">Сума, грн</th>
+                    </tr>
+                </thead>
+                <tbody id="invTableBody">
+                </tbody>
+            </table>
+
+            <!-- Total -->
+            <div style="display:flex; justify-content:flex-end; padding:10px 0; border-top:2px solid #1a3a6b;">
+                <div style="text-align:right;">
+                    <span style="font-size:14px; font-weight:700; color:#1a3a6b;">СУМА ДО СПЛАТИ: </span>
+                    <span id="invTotal" style="font-size:16px; font-weight:800; color:#1a3a6b;"></span>
+                </div>
+            </div>
+
+            <!-- Sum in words -->
+            <div style="margin-top:10px; padding:8px 12px; background:#f7f9fc; border:1px solid #d0d8e8; border-radius:6px; font-size:11px; color:#333;">
+                <span style="color:#666;">Сума прописом:</span> <span id="invSumWords" style="font-style:italic;"></span>
+            </div>
+
+            <!-- Footer -->
+            <div style="display:flex; justify-content:space-between; margin-top:30px; padding-top:15px; border-top:1px solid #d0d8e8;">
+                <div style="font-size:11px;">
+                    <div style="color:#666; margin-bottom:6px;">Постачальник</div>
+                    <div style="border-bottom:1px solid #333; width:200px; height:30px;"></div>
+                    <div style="font-size:9px; color:#999; margin-top:2px;">підпис / ПІБ</div>
+                </div>
+                <div style="font-size:11px;">
+                    <div style="color:#666; margin-bottom:6px;">Покупець</div>
+                    <div style="border-bottom:1px solid #333; width:200px; height:30px;"></div>
+                    <div style="font-size:9px; color:#999; margin-top:2px;">підпис / ПІБ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== TOAST ===== -->
     <div id="toast" class="toast"></div>
 

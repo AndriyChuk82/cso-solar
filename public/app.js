@@ -1320,139 +1320,88 @@ function exportInvoice() {
         return;
     }
 
-    if (typeof XLSX === 'undefined') {
-        showToast('Помилка: Бібліотека Excel не завантажена', 'error');
-        return;
-    }
-
     showToast('Генерація рахунку...', 'info');
 
     const uahRate = state.settings.usdToUah;
-    
-    // Invoice number — derive from proposal number
     const propNum = state.proposal.number || 'КП-001';
     const invoiceNum = propNum.replace('КП-', '');
     const invoiceDate = formatDateUA(state.proposal.date || todayStr());
 
-    // ===== Build rows =====
-    const rows = [];
+    // Fill the template
+    document.getElementById('invNumber').textContent = invoiceNum;
+    document.getElementById('invDate').textContent = invoiceDate;
+    document.getElementById('invClientName').textContent = state.proposal.clientName || '_______________';
+    document.getElementById('invClientContact').textContent = state.proposal.clientContact || '';
 
-    // Row 0: Empty top
-    rows.push(["", "", "", "", "", ""]);  // r0
-
-    // Row 1: Title + Number + Date
-    rows.push(["РАХУНОК-ФАКТУРА", "", "", "", "№:", invoiceNum]);  // r1
-    rows.push(["", "", "", "", "Дата:", invoiceDate]);  // r2
-
-    // Row 3: Empty separator
-    rows.push([]);  // r3
-
-    // Row 4: ПОСТАЧАЛЬНИК / ПОКУПЕЦЬ headers
-    rows.push(["ПОСТАЧАЛЬНИК", "", "", "ПОКУПЕЦЬ", "", ""]);  // r4
-
-    // Row 5-10: Supplier + Buyer details
-    rows.push(["Назва:", "ФОП Пастушок Марія Володимирівна", "", "Назва:", state.proposal.clientName || "", ""]);  // r5
-    rows.push(["РНОКПП:", "3090406261", "", "ЄДРПОУ:", "", ""]);  // r6
-    rows.push(["Адреса:", "Україна, 80700, Львівська обл., Золочівський р-н, с. Вороняки, вул. Шкільна, б. 38", "", "Адреса:", "", ""]);  // r7
-    rows.push(["IBAN:", "UA563003350000000260092475237", "", "IBAN:", "", ""]);  // r8
-    rows.push(["Банк:", 'АТ "РАЙФФАЙЗЕН БАНК"', "", "Банк:", "", ""]);  // r9
-    rows.push(["Тел:", "(067)374-08-12", "", "Тел / Email:", state.proposal.clientContact || "", ""]);  // r10
-
-    // Row 11: Empty separator
-    rows.push([]);  // r11
-
-    // Row 12: Table headers
-    rows.push(["№", "Найменування товару", "К-сть", "Од.", "Ціна, грн", "Сума, грн"]);  // r12
-
-    // Row 13+: Product rows
+    // Build table rows
     let totalUAH = 0;
-    const tableStartRow = 13;
-    
+    let tbodyHtml = '';
+
     state.proposal.items.forEach((it, idx) => {
         const priceUAH = Math.round(it.price * uahRate * 100) / 100;
         const sumUAH = Math.round(priceUAH * it.quantity * 100) / 100;
         totalUAH += sumUAH;
-        
-        const nameWithDesc = it.description 
-            ? `${it.name} — ${it.description}` 
-            : it.name;
-        
-        rows.push([
-            idx + 1,
-            nameWithDesc,
-            it.quantity,
-            it.unit,
-            priceUAH,
-            sumUAH
-        ]);
+
+        const bg = idx % 2 === 0 ? '#ffffff' : '#f7f9fc';
+        tbodyHtml += `<tr style="background:${bg};">
+            <td style="padding:6px; border:1px solid #c0c8d8; text-align:center;">${idx + 1}</td>
+            <td style="padding:6px; border:1px solid #c0c8d8;">
+                <strong>${escHtml(it.name)}</strong>
+                ${it.description ? '<br><span style="font-size:10px; color:#666;">' + escHtml(it.description) + '</span>' : ''}
+            </td>
+            <td style="padding:6px; border:1px solid #c0c8d8; text-align:center;">${it.quantity}</td>
+            <td style="padding:6px; border:1px solid #c0c8d8; text-align:center;">${it.unit}</td>
+            <td style="padding:6px; border:1px solid #c0c8d8; text-align:right;">${priceUAH.toLocaleString('uk-UA', {minimumFractionDigits: 2})}</td>
+            <td style="padding:6px; border:1px solid #c0c8d8; text-align:right; font-weight:600;">${sumUAH.toLocaleString('uk-UA', {minimumFractionDigits: 2})}</td>
+        </tr>`;
     });
 
-    // Pad to minimum 10 rows in table
-    const itemCount = state.proposal.items.length;
-    for (let i = itemCount; i < 10; i++) {
-        rows.push([i + 1, "", "", "шт.", "", ""]);
+    // Pad empty rows to minimum 10
+    for (let i = state.proposal.items.length; i < 10; i++) {
+        const bg = i % 2 === 0 ? '#ffffff' : '#f7f9fc';
+        tbodyHtml += `<tr style="background:${bg};">
+            <td style="padding:6px; border:1px solid #c0c8d8; text-align:center; color:#ccc;">${i + 1}</td>
+            <td style="padding:6px; border:1px solid #c0c8d8;"></td>
+            <td style="padding:6px; border:1px solid #c0c8d8;"></td>
+            <td style="padding:6px; border:1px solid #c0c8d8; text-align:center; color:#ccc;">шт.</td>
+            <td style="padding:6px; border:1px solid #c0c8d8;"></td>
+            <td style="padding:6px; border:1px solid #c0c8d8;"></td>
+        </tr>`;
     }
 
-    // Total rows
-    const totalRowIdx = rows.length;
-    rows.push([]);  // empty separator
-    rows.push(["", "", "", "", "СУМА ДО СПЛАТИ:", totalUAH]);
+    document.getElementById('invTableBody').innerHTML = tbodyHtml;
+    document.getElementById('invTotal').textContent = totalUAH.toLocaleString('uk-UA', {minimumFractionDigits: 2}) + ' грн';
+    document.getElementById('invSumWords').textContent = numberToWordsUA(totalUAH);
 
-    // Sum in words
-    rows.push([]);
-    rows.push(["Сума прописом: " + numberToWordsUA(totalUAH) + " грн.", "", "", "", "", ""]);
+    // Show the template, render PDF, hide it
+    const template = document.getElementById('invoiceTemplate');
+    const content = document.getElementById('invoiceContent');
+    template.style.display = 'block';
+    template.style.position = 'absolute';
+    template.style.left = '-9999px';
+    template.style.top = '0';
 
-    // ===== Create workbook =====
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const opt = {
+        margin: [5, 5, 10, 5],
+        filename: `Рахунок_${invoiceNum}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2, 
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            allowTaint: true
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
 
-    // Merge cells
-    ws['!merges'] = [
-        // Title
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },  // РАХУНОК-ФАКТУРА
-        // Supplier/Buyer section headers
-        { s: { r: 4, c: 0 }, e: { r: 4, c: 2 } },  // ПОСТАЧАЛЬНИК
-        { s: { r: 4, c: 3 }, e: { r: 4, c: 5 } },  // ПОКУПЕЦЬ
-        // Sum in words
-        { s: { r: totalRowIdx + 2, c: 0 }, e: { r: totalRowIdx + 2, c: 5 } },
-    ];
-
-    // Column widths
-    ws['!cols'] = [
-        { wch: 10 },  // №/ labels
-        { wch: 50 },  // Найменування / values
-        { wch: 10 },  // К-сть
-        { wch: 8 },   // Од.
-        { wch: 14 },  // Ціна
-        { wch: 14 }   // Сума
-    ];
-
-    XLSX.utils.book_append_sheet(wb, ws, "Рахунок");
-
-    // Generate filename
-    const filename = `Рахунок_${invoiceNum}.xlsx`;
-
-    // Download
-    try {
-        const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
-        const url = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + b64;
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        
-        setTimeout(() => {
-            document.body.removeChild(a);
-        }, 100);
-        
-        showToast('Рахунок завантажено', 'success');
-    } catch (err) {
-        console.error('Invoice Export Error:', err);
-        showToast('Помилка при створенні рахунку', 'error');
-        XLSX.writeFile(wb, filename);
-    }
+    html2pdf().set(opt).from(content).save().then(() => {
+        template.style.display = 'none';
+        showToast('Рахунок завантажено як PDF', 'success');
+    }).catch(err => {
+        template.style.display = 'none';
+        console.error('Invoice PDF error:', err);
+        showToast('Помилка генерації рахунку', 'error');
+    });
 }
 
 // Format date as DD.MM.YYYY
