@@ -318,23 +318,25 @@ function parseGvizJson(response, categoryName, mainCat) {
             
             // For АКБ, force grouping by the first word of the model (manufacturer)
             if (categoryName === 'АКБ') {
-                const parts = model.trim().split(/\s+/);
-                const brand = parts.length > 0 ? parts[0] : '';
-                
-                // USER REQUEST: Leave only Deye in batteries
-                if (brand.toLowerCase() !== 'deye' && !model.toLowerCase().includes('bms')) {
+                const isDeye = model.toLowerCase().includes('deye') || fallbackCategory.toLowerCase().includes('deye');
+                const isBMS = model.toLowerCase().includes('bms');
+
+                // USER REQUEST: Leave only Deye in batteries (or BMS)
+                if (!isDeye && !isBMS) {
                     continue;
                 }
-                
-                if (parts.length > 0) {
-                    subCat = parts[0];
+
+                if (isBMS) {
+                    subCat = 'BMS / Контролери';
+                } else {
+                    subCat = 'Deye';
                 }
             } else if (categoryName !== 'АКБ' && col0 && col0.toLowerCase() !== 'фото') {
                 // If the standard format has a col0 value during a product row, it might be a specific brand
                 subCat = col0;
             }
 
-            // Separating BMS for AKB (always higher priority)
+            // High priority BMS check for any category
             if (mainCat === 'АКБ та BMS' && model.toLowerCase().includes('bms')) {
                 subCat = 'BMS / Контролери';
             }
@@ -494,23 +496,25 @@ function parseSheetCSV(csv, categoryName, mainCat) {
             
             // For АКБ, force grouping by the first word of the model (manufacturer)
             if (categoryName === 'АКБ') {
-                const parts = model.trim().split(/\s+/);
-                const brand = parts.length > 0 ? parts[0] : '';
+                const isDeye = model.toLowerCase().includes('deye') || fallbackCategory.toLowerCase().includes('deye');
+                const isBMS = model.toLowerCase().includes('bms');
 
-                // USER REQUEST: Leave only Deye in batteries
-                if (brand.toLowerCase() !== 'deye' && !model.toLowerCase().includes('bms')) {
+                // USER REQUEST: Leave only Deye in batteries (or BMS)
+                if (!isDeye && !isBMS) {
                     continue;
                 }
 
-                if (parts.length > 0) {
-                    subCat = parts[0];
+                if (isBMS) {
+                    subCat = 'BMS / Контролери';
+                } else {
+                    subCat = 'Deye';
                 }
             } else if (categoryName !== 'АКБ' && col0 && col0.toLowerCase() !== 'фото') {
                 // If the standard format has a col0 value during a product row, it might be a specific brand
                 subCat = col0;
             }
 
-            // Separating BMS for AKB (always higher priority)
+            // High priority BMS check for any category
             if (mainCat === 'АКБ та BMS' && model.toLowerCase().includes('bms')) {
                 subCat = 'BMS / Контролери';
             }
