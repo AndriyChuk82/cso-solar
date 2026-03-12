@@ -1382,7 +1382,7 @@ function exportInvoice() {
     template.style.top = '0';
 
     const opt = {
-        margin: [5, 5, 10, 5],
+        margin: [0, 5, 5, 5],
         filename: `Рахунок_${invoiceNum}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
