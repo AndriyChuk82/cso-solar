@@ -319,6 +319,13 @@ function parseGvizJson(response, categoryName, mainCat) {
             // For АКБ, force grouping by the first word of the model (manufacturer)
             if (categoryName === 'АКБ') {
                 const parts = model.trim().split(/\s+/);
+                const brand = parts.length > 0 ? parts[0] : '';
+                
+                // USER REQUEST: Leave only Deye in batteries
+                if (brand.toLowerCase() !== 'deye' && !model.toLowerCase().includes('bms')) {
+                    continue;
+                }
+                
                 if (parts.length > 0) {
                     subCat = parts[0];
                 }
@@ -488,6 +495,13 @@ function parseSheetCSV(csv, categoryName, mainCat) {
             // For АКБ, force grouping by the first word of the model (manufacturer)
             if (categoryName === 'АКБ') {
                 const parts = model.trim().split(/\s+/);
+                const brand = parts.length > 0 ? parts[0] : '';
+
+                // USER REQUEST: Leave only Deye in batteries
+                if (brand.toLowerCase() !== 'deye' && !model.toLowerCase().includes('bms')) {
+                    continue;
+                }
+
                 if (parts.length > 0) {
                     subCat = parts[0];
                 }
