@@ -48,22 +48,24 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Невірні дані' });
         }
 
-        const validUsername = process.env.AUTH_USERNAME;
-        const passwordHash = process.env.AUTH_PASSWORD_HASH;
+        const usernames = (process.env.AUTH_USERNAME || '').split(',').map(u => u.trim());
+        const hashes = (process.env.AUTH_PASSWORD_HASH || '').split(',').map(h => h.trim());
         const jwtSecret = process.env.JWT_SECRET;
 
-        if (!validUsername || !passwordHash || !jwtSecret) {
+        if (usernames.length === 0 || hashes.length === 0 || !jwtSecret) {
             console.error('Missing auth environment variables');
             return res.status(500).json({ error: 'Сервер не налаштований' });
         }
 
-        // Constant-time comparison for username (prevent timing attacks)
-        const usernameMatch = username.toLowerCase() === validUsername.toLowerCase();
-        
-        // bcrypt comparison is inherently constant-time
-        const passwordMatch = await bcrypt.compare(password, passwordHash);
+        // Find user in the list
+        const userIndex = usernames.findIndex(u => u.toLowerCase() === username.toLowerCase());
+        let passwordMatch = false;
 
-        if (!usernameMatch || !passwordMatch) {
+        if (userIndex !== -1 && hashes[userIndex]) {
+            passwordMatch = await bcrypt.compare(password, hashes[userIndex]);
+        }
+
+        if (userIndex === -1 || !passwordMatch) {
             // Track failed attempt
             const current = failedAttempts.get(ip) || { count: 0, lastAttempt: 0 };
             failedAttempts.set(ip, { 
