@@ -315,12 +315,19 @@ function parseGvizJson(response, categoryName, mainCat) {
 
         if (model && model.toLowerCase() !== 'модель') {
             let subCat = fallbackCategory;
-            // If the standard format has a col0 value during a product row, it might be a specific brand
-            if (categoryName !== 'АКБ' && col0 && col0.toLowerCase() !== 'фото') {
+            
+            // For АКБ, force grouping by the first word of the model (manufacturer)
+            if (categoryName === 'АКБ') {
+                const parts = model.trim().split(/\s+/);
+                if (parts.length > 0) {
+                    subCat = parts[0];
+                }
+            } else if (categoryName !== 'АКБ' && col0 && col0.toLowerCase() !== 'фото') {
+                // If the standard format has a col0 value during a product row, it might be a specific brand
                 subCat = col0;
             }
 
-            // Separating BMS for AKB
+            // Separating BMS for AKB (always higher priority)
             if (mainCat === 'АКБ та BMS' && model.toLowerCase().includes('bms')) {
                 subCat = 'BMS / Контролери';
             }
@@ -477,11 +484,19 @@ function parseSheetCSV(csv, categoryName, mainCat) {
         // Product row
         if (model && model.toLowerCase() !== 'модель') {
             let subCat = fallbackCategory;
-            if (categoryName !== 'АКБ' && col0 && col0.toLowerCase() !== 'фото') {
+            
+            // For АКБ, force grouping by the first word of the model (manufacturer)
+            if (categoryName === 'АКБ') {
+                const parts = model.trim().split(/\s+/);
+                if (parts.length > 0) {
+                    subCat = parts[0];
+                }
+            } else if (categoryName !== 'АКБ' && col0 && col0.toLowerCase() !== 'фото') {
+                // If the standard format has a col0 value during a product row, it might be a specific brand
                 subCat = col0;
             }
 
-            // Separating BMS for AKB
+            // Separating BMS for AKB (always higher priority)
             if (mainCat === 'АКБ та BMS' && model.toLowerCase().includes('bms')) {
                 subCat = 'BMS / Контролери';
             }
