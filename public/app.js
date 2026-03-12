@@ -318,10 +318,15 @@ function parseGvizJson(response, categoryName, mainCat) {
             
             // For АКБ, force grouping by the first word of the model (manufacturer)
             if (categoryName === 'АКБ') {
-                const isDeye = model.toLowerCase().includes('deye') || fallbackCategory.toLowerCase().includes('deye');
-                const isBMS = model.toLowerCase().includes('bms');
+                const modelLower = model.toLowerCase();
+                const headLower = fallbackCategory.toLowerCase();
+                
+                // Expanded Deye detection: literal 'deye' OR common specific model prefixes
+                const isDeye = modelLower.includes('deye') || headLower.includes('deye') || 
+                               /^(se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs)/i.test(model.trim());
+                
+                const isBMS = modelLower.includes('bms');
 
-                // USER REQUEST: Leave only Deye in batteries (or BMS)
                 if (!isDeye && !isBMS) {
                     continue;
                 }
@@ -496,10 +501,15 @@ function parseSheetCSV(csv, categoryName, mainCat) {
             
             // For АКБ, force grouping by the first word of the model (manufacturer)
             if (categoryName === 'АКБ') {
-                const isDeye = model.toLowerCase().includes('deye') || fallbackCategory.toLowerCase().includes('deye');
-                const isBMS = model.toLowerCase().includes('bms');
+                const modelLower = model.toLowerCase();
+                const headLower = fallbackCategory.toLowerCase();
 
-                // USER REQUEST: Leave only Deye in batteries (or BMS)
+                // Expanded Deye detection: literal 'deye' OR common specific model prefixes
+                const isDeye = modelLower.includes('deye') || headLower.includes('deye') || 
+                               /^(se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs)/i.test(model.trim());
+
+                const isBMS = modelLower.includes('bms');
+
                 if (!isDeye && !isBMS) {
                     continue;
                 }
