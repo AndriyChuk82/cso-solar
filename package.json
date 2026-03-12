@@ -1,0 +1,15 @@
+{
+  "name": "cso-solar-proposals",
+  "version": "1.0.0",
+  "description": "CSO Solar — Commercial Proposals System",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static site — no build needed'",
+    "hash-password": "node scripts/hash-password.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "jose": "^5.2.0"
+  }
+}

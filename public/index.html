@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSO Solar — Комерційні пропозиції</title>
+    <meta name="description" content="Система формування комерційних пропозицій для сонячних станцій CSO Solar">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- ===== HEADER ===== -->
+    <header class="app-header">
+        <div class="header-brand">
+            <div class="logo-container">
+                <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" class="logo">
+                <div class="brand-text">
+                    <span class="brand-name">CSO Solar</span>
+                    <span class="brand-sub">Комерційні пропозиції</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button id="btnRefreshData" class="btn btn-icon" title="Оновити дані з Google Sheets">
+                <span class="btn-icon-svg">&#x21bb;</span>
+                <span class="btn-label">Оновити</span>
+            </button>
+            <button id="btnSettings" class="btn btn-icon" title="Налаштування">
+                <span class="btn-icon-svg">&#x2699;</span>
+                <span class="btn-label">Налаштування</span>
+            </button>
+            <button id="btnHistory" class="btn btn-icon" title="Історія пропозицій">
+                <span class="btn-icon-svg">&#x1f4cb;</span>
+                <span class="btn-label">Історія</span>
+            </button>
+            <a href="/api/logout" id="btnLogout" class="btn btn-icon" title="Вийти" style="display:none;">
+                <span class="btn-icon-svg">&#x1f6aa;</span>
+                <span class="btn-label">Вийти</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- ===== MAIN LAYOUT ===== -->
+    <main class="app-container">
+        <!-- Sidebar Toggle -->
+        <button class="sidebar-toggle" id="sidebarToggle" title="Каталог товарів">&#9776;</button>
+
+        <!-- SIDEBAR: Product Catalog -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header" style="padding-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                    <h2 class="sidebar-title">Каталог товарів</h2>
+                    <button class="sidebar-close" id="sidebarClose">&times;</button>
+                </div>
+                <button id="btnAddNewMaterial" class="btn btn-sm btn-outline" style="width: 100%; justify-content: center; margin-top: 12px; border-color:var(--border-light); color:var(--text-secondary);">+ Власний матеріал</button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="catalogSearch" placeholder="Пошук товару..." class="search-input">
+            </div>
+            <div class="catalog-list" id="catalogList">
+                <div class="catalog-loading" id="catalogLoading">
+                    <div class="spinner"></div>
+                    <p>Завантаження каталогу...</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT: Proposal -->
+        <section class="main-content" id="mainContent">
+            <!-- Print-only header -->
+            <div class="print-header" id="printHeader">
+                <div class="print-logo-row">
+                    <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" class="print-logo">
+                    <div class="print-company">
+                        <p>Комерційна пропозиція</p>
+                        <div class="print-contact-info">
+                            <div>Офіс та склад: Львівська обл., м. Золочів, вул. І. Труша 1Б</div>
+                            <div>+38 067 374 08 02</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Proposal Info -->
+            <div class="proposal-header" id="proposalHeader">
+                <div class="proposal-row">
+                    <div class="form-group">
+                        <label for="proposalNumber">Номер</label>
+                        <input type="text" id="proposalNumber" class="form-input" placeholder="КП-001">
+                    </div>
+                    <div class="form-group">
+                        <label for="proposalDate">Дата</label>
+                        <input type="date" id="proposalDate" class="form-input">
+                    </div>
+                </div>
+                <div class="proposal-row">
+                    <div class="form-group flex-2">
+                        <label for="clientName">Клієнт</label>
+                        <input type="text" id="clientName" class="form-input" placeholder="ПІБ або назва компанії">
+                    </div>
+                    <div class="form-group">
+                        <label for="clientContact">Контакт</label>
+                        <input type="text" id="clientContact" class="form-input" placeholder="Телефон / email">
+                    </div>
+                </div>
+                <div class="form-group full-width proposal-notes-container">
+                    <label for="proposalNotes">Примітки</label>
+                    <textarea id="proposalNotes" class="form-input" rows="2" placeholder="Додаткова інформація..."></textarea>
+                </div>
+            </div>
+
+            <!-- Proposal Table -->
+            <div class="proposal-table-section">
+                <div class="table-toolbar no-print">
+                    <span class="table-title-text">Позиції пропозиції</span>
+                    <div class="toolbar-right">
+                        <div class="toolbar-item">
+                            <label for="quickUsdUah">Курс $:</label>
+                            <input type="number" id="quickUsdUah" class="form-input input-sm" style="width:70px" step="0.01">
+                        </div>
+                        <div class="toolbar-item">
+                            <label for="quickMarkup">Націнка %:</label>
+                            <input type="number" id="quickMarkup" class="form-input input-sm" style="width:60px" step="1">
+                        </div>
+                        <button class="btn btn-sm btn-outline" id="btnApplyGlobalMarkup" title="Застосувати націнку до всіх">📈 Застосувати</button>
+                        <div class="currency-switch">
+                            <button class="cur-btn active" data-currency="USD" id="curUSD">$ USD</button>
+                            <button class="cur-btn" data-currency="UAH" id="curUAH">₴ UAH</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-scroll">
+                    <table class="proposal-table" id="proposalTable">
+                        <thead>
+                            <tr>
+                                <th class="col-num">№</th>
+                                <th class="col-name">Назва товару</th>
+                                <th class="col-unit">Од.</th>
+                                <th class="col-qty">К-сть</th>
+                                <th class="col-cost cost-column">Собівартість</th>
+                                <th class="col-cost-sum cost-column">Сума соб.</th>
+                                <th class="col-price">Ціна</th>
+                                <th class="col-sum">Сума</th>
+                                <th class="col-act no-print">&#128465;</th>
+                            </tr>
+                        </thead>
+                        <tbody id="proposalBody">
+                            <tr class="empty-row" id="emptyRow">
+                                <td colspan="9">
+                                    <div class="empty-state">
+                                        <span class="empty-icon">&#9788;</span>
+                                        <p>Додайте товари з каталогу зліва</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot id="proposalFoot" style="display:none;">
+                            <tr class="totals-row">
+                                <td colspan="4" class="totals-label">Разом:</td>
+                                <td class="cost-column"></td>
+                                <td class="cost-column totals-cost">
+                                    <div style="font-size:0.7rem;color:var(--text-muted)">Собівартість</div>
+                                    <div id="totalCost" style="font-weight:600">0.00</div>
+                                </td>
+                                <td class="totals-empty"></td>
+                                <td class="totals-value">
+                                    <div style="font-size:0.7rem;color:var(--text-muted)">Сума (Продаж)</div>
+                                    <div id="totalSum">0.00</div>
+                                </td>
+                                <td class="no-print"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="custom-item-actions no-print" style="padding:12px 20px;border-top:1px solid var(--border)">
+                    <button id="btnAddCustom" class="btn btn-sm btn-outline">+ Додати довільну позицію</button>
+                </div>
+                <!-- Print currency note -->
+                <div class="print-currency-note" id="printCurrencyNote"></div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="proposal-actions no-print">
+                <button id="btnSave" class="btn btn-primary">💾 Зберегти</button>
+                <button id="btnNewProposal" class="btn btn-outline">📄 Нова</button>
+                <button id="btnExportXls" class="btn btn-outline">📊 EXCEL</button>
+                <button id="btnPrint" class="btn btn-outline">🖨️ Друк</button>
+                <button id="btnTelegram" class="btn btn-accent">📨 Telegram</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===== SETTINGS MODAL ===== -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>⚙️ Налаштування</h3>
+                <button class="modal-close" data-close="settingsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Націнка за замовчуванням (%)</label>
+                    <input type="number" id="settingMarkup" class="form-input" value="15" min="0" max="500" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Курс USD → UAH</label>
+                    <input type="number" id="settingUsdUah" class="form-input" value="41.50" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Курс EUR → USD</label>
+                    <input type="number" id="settingEurUsd" class="form-input" value="1.08" min="0" step="0.01">
+                </div>
+                <div class="setting-check">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="settingShowCost" checked>
+                        <span>Показувати стовпець «Собівартість»</span>
+                    </label>
+                </div>
+                <hr class="modal-divider">
+                <div class="form-group">
+                    <label>Telegram Bot Token</label>
+                    <input type="text" id="settingBotToken" class="form-input" placeholder="123456:ABC...">
+                </div>
+                <div class="form-group">
+                    <label>Telegram Chat ID</label>
+                    <input type="text" id="settingChatId" class="form-input" placeholder="-100...">
+                </div>
+                <hr class="modal-divider">
+                <div class="form-group">
+                    <label>Керування пам’яттю</label>
+                    <button id="btnClearCache" class="btn btn-sm btn-danger" style="width: 100%; justify-content: center;">🗑 Очистити кеш товарів</button>
+                    <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; text-align: center;">Використовуйте, якщо дані в каталозі не оновлюються.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="btnSaveSettings">Зберегти</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== HISTORY MODAL ===== -->
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal modal-wide">
+            <div class="modal-header">
+                <h3>📋 Історія пропозицій</h3>
+                <button class="modal-close" data-close="historyModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="history-search-container" style="margin-bottom: 16px;">
+                    <input type="text" id="historySearch" class="form-input" placeholder="Поиск за ім’ям, телефоном або номером КП..." oninput="renderHistory()" style="width: 100%;">
+                </div>
+                <div id="historyList" class="history-list">
+                    <p class="empty-history">Збережених пропозицій немає</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== NEW MATERIAL MODAL ===== -->
+    <div class="modal-overlay" id="materialModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>🛠️ Власний матеріал</h3>
+                <button class="modal-close" data-close="materialModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Назва товару</label>
+                    <input type="text" id="matName" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Опис / Додатково</label>
+                    <input type="text" id="matDesc" class="form-input">
+                </div>
+                <div class="form-group row" style="display:flex; gap:10px;">
+                    <div style="flex:1;">
+                        <label>Собівартість ($)</label>
+                        <input type="number" id="matCost" class="form-input" min="0" step="0.01">
+                    </div>
+                    <div style="flex:1;">
+                        <label>Одиниця виміру</label>
+                        <select id="matUnit" class="form-input">
+                            <option value="шт.">шт.</option>
+                            <option value="м">м</option>
+                            <option value="комплект">комплект</option>
+                            <option value="послуга">послуга</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="btnSaveMaterial">Зберегти до каталогу</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TELEGRAM MODAL ===== -->
+    <div class="modal-overlay" id="telegramModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📨 Відправити в Telegram</h3>
+                <button class="modal-close" data-close="telegramModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="tg-desc">Оберіть формат відправки:</p>
+                <div class="tg-options">
+                    <label class="tg-option selected">
+                        <input type="radio" name="tgFormat" value="pdf" checked>
+                        <span class="tg-option-card">
+                            <span class="tg-option-icon">📄</span>
+                            <span class="tg-option-label">PDF</span>
+                        </span>
+                    </label>
+                    <label class="tg-option">
+                        <input type="radio" name="tgFormat" value="photo">
+                        <span class="tg-option-card">
+                            <span class="tg-option-icon">📸</span>
+                            <span class="tg-option-label">Скріншот</span>
+                        </span>
+                    </label>
+                    <label class="tg-option">
+                        <input type="radio" name="tgFormat" value="text">
+                        <span class="tg-option-card">
+                            <span class="tg-option-icon">💬</span>
+                            <span class="tg-option-label">Текст</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-accent" id="btnSendTelegram">Відправити</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TOAST ===== -->
+    <div id="toast" class="toast"></div>
+
+    <!-- ===== CDN LIBS ===== -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

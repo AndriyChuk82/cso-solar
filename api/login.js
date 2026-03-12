@@ -1,0 +1,112 @@
+import bcrypt from 'bcryptjs';
+import { SignJWT } from 'jose';
+
+// Rate limiting: track failed attempts per IP
+const failedAttempts = new Map();
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
+
+function cleanOldEntries() {
+    const now = Date.now();
+    for (const [ip, data] of failedAttempts) {
+        if (now - data.lastAttempt > LOCKOUT_MS) {
+            failedAttempts.delete(ip);
+        }
+    }
+}
+
+export default async function handler(req, res) {
+    // Only POST allowed
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    cleanOldEntries();
+
+    // Get client IP for rate limiting
+    const ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown';
+    const attempts = failedAttempts.get(ip);
+
+    // Check lockout
+    if (attempts && attempts.count >= MAX_ATTEMPTS) {
+        const timeLeft = Math.ceil((LOCKOUT_MS - (Date.now() - attempts.lastAttempt)) / 1000 / 60);
+        return res.status(429).json({ 
+            error: `Забагато спроб. Спробуйте через ${timeLeft} хв.`
+        });
+    }
+
+    try {
+        const { username, password } = req.body;
+
+        // Validate input
+        if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
+            return res.status(400).json({ error: 'Введіть логін та пароль' });
+        }
+
+        // Length limits to prevent DoS
+        if (username.length > 100 || password.length > 200) {
+            return res.status(400).json({ error: 'Невірні дані' });
+        }
+
+        const validUsername = process.env.AUTH_USERNAME;
+        const passwordHash = process.env.AUTH_PASSWORD_HASH;
+        const jwtSecret = process.env.JWT_SECRET;
+
+        if (!validUsername || !passwordHash || !jwtSecret) {
+            console.error('Missing auth environment variables');
+            return res.status(500).json({ error: 'Сервер не налаштований' });
+        }
+
+        // Constant-time comparison for username (prevent timing attacks)
+        const usernameMatch = username.toLowerCase() === validUsername.toLowerCase();
+        
+        // bcrypt comparison is inherently constant-time
+        const passwordMatch = await bcrypt.compare(password, passwordHash);
+
+        if (!usernameMatch || !passwordMatch) {
+            // Track failed attempt
+            const current = failedAttempts.get(ip) || { count: 0, lastAttempt: 0 };
+            failedAttempts.set(ip, { 
+                count: current.count + 1, 
+                lastAttempt: Date.now() 
+            });
+
+            const remaining = MAX_ATTEMPTS - (current.count + 1);
+            return res.status(401).json({ 
+                error: remaining > 0 
+                    ? `Невірний логін або пароль. Залишилось спроб: ${remaining}` 
+                    : `Занадто багато спроб. Акаунт заблоковано на 15 хв.`
+            });
+        }
+
+        // Success — clear failed attempts
+        failedAttempts.delete(ip);
+
+        // Create JWT token (expires in 7 days)
+        const secret = new TextEncoder().encode(jwtSecret);
+        const token = await new SignJWT({ 
+            sub: username,
+            iat: Math.floor(Date.now() / 1000)
+        })
+            .setProtectedHeader({ alg: 'HS256' })
+            .setExpirationTime('7d')
+            .sign(secret);
+
+        // Set HTTP-only secure cookie
+        const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+        const cookieOptions = [
+            `cso_auth_token=${token}`,
+            'Path=/',
+            'HttpOnly',
+            'SameSite=Strict',
+            `Max-Age=${7 * 24 * 60 * 60}`, // 7 days
+            isProduction ? 'Secure' : ''
+        ].filter(Boolean).join('; ');
+
+        res.setHeader('Set-Cookie', cookieOptions);
+        return res.status(200).json({ success: true });
+    } catch (err) {
+        console.error('Login error:', err);
+        return res.status(500).json({ error: 'Внутрішня помилка сервера' });
+    }
+}
