@@ -120,7 +120,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v5');
+        const cached = localStorage.getItem('cso_products_cache_v6');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -175,7 +175,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v5', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v6', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -322,12 +322,13 @@ function parseGvizJson(response, categoryName, mainCat) {
                 const headLower = fallbackCategory.toLowerCase();
                 const combined = modelLower + ' ' + headLower;
                 
+                // Aggressive check: brand name or specific series (including Cyrillic B/В)
                 const isDeyeBrand = combined.includes('deye') || 
-                                   /se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|pro-c|prob|pro\s+b|pro\s+v/i.test(modelLower);
+                                   /se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|pro-c|prob|pro[вb]|pro\s+[вb]/i.test(modelLower);
                 const isBMS = modelLower.includes('bms');
 
                 if (!isDeyeBrand && !isBMS) {
-                    continue; // Skip other brands like Dyness, Pylontech
+                    continue;
                 }
 
                 subCat = isBMS ? 'BMS / Контролери' : 'Deye';
@@ -399,7 +400,7 @@ function openManualCsvImport() {
         if (products.length > 0) {
             state.products = products;
             state.categories = [...new Set(products.map(p => p.mainCategory))];
-            localStorage.setItem('cso_products_cache_v5', JSON.stringify({
+            localStorage.setItem('cso_products_cache_v6', JSON.stringify({
                 products: state.products,
                 categories: state.categories,
                 timestamp: Date.now()
@@ -500,11 +501,11 @@ function parseSheetCSV(csv, categoryName, mainCat) {
                 const combined = modelLower + ' ' + headLower;
 
                 const isDeyeBrand = combined.includes('deye') || 
-                                   /se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|pro-c|prob|pro\s+b|pro\s+v/i.test(modelLower);
+                                   /se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|pro-c|prob|pro[вb]|pro\s+[вb]/i.test(modelLower);
                 const isBMS = modelLower.includes('bms');
 
                 if (!isDeyeBrand && !isBMS) {
-                    continue; // Skip other brands like Dyness, Pylontech
+                    continue;
                 }
 
                 subCat = isBMS ? 'BMS / Контролери' : 'Deye';
