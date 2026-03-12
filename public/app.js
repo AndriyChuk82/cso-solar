@@ -316,34 +316,24 @@ function parseGvizJson(response, categoryName, mainCat) {
         if (model && model.toLowerCase() !== 'модель') {
             let subCat = fallbackCategory;
             
-            // For АКБ, force grouping by the first word of the model (manufacturer)
+            // For АКБ, force grouping to Deye if matches brand/prefix
             if (categoryName === 'АКБ') {
                 const modelLower = model.toLowerCase();
-                const headLower = fallbackCategory.toLowerCase();
-                
-                // Aggressive Deye detection: literal 'deye' OR any common model prefix/keyword
-                const isDeye = modelLower.includes('deye') || 
-                               headLower.includes('deye') || 
-                               /(se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|prob|pro-c)/i.test(modelLower);
-                
+                const isDeyeBrand = modelLower.includes('deye') || 
+                                   /(se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|pro-c|prob|pro\s+b|pro\s+v)/i.test(modelLower);
                 const isBMS = modelLower.includes('bms');
 
-                if (!isDeye && !isBMS) {
-                    continue;
+                if (!isDeyeBrand && !isBMS) {
+                    continue; // Skip other brands like Dyness, Pylontech
                 }
 
-                if (isBMS) {
-                    subCat = 'BMS / Контролери';
-                } else {
-                    subCat = 'Deye';
-                }
+                subCat = isBMS ? 'BMS / Контролери' : 'Deye';
             } else if (categoryName !== 'АКБ' && col0 && col0.toLowerCase() !== 'фото') {
-                // If the standard format has a col0 value during a product row, it might be a specific brand
                 subCat = col0;
             }
 
-            // High priority BMS check for any category
-            if (mainCat === 'АКБ та BMS' && model.toLowerCase().includes('bms')) {
+            // High priority BMS check
+            if (model.toLowerCase().includes('bms')) {
                 subCat = 'BMS / Контролери';
             }
 
@@ -406,7 +396,7 @@ function openManualCsvImport() {
         if (products.length > 0) {
             state.products = products;
             state.categories = [...new Set(products.map(p => p.mainCategory))];
-            localStorage.setItem('cso_products_cache_v4', JSON.stringify({
+            localStorage.setItem('cso_products_cache_v5', JSON.stringify({
                 products: state.products,
                 categories: state.categories,
                 timestamp: Date.now()
@@ -500,34 +490,24 @@ function parseSheetCSV(csv, categoryName, mainCat) {
         if (model && model.toLowerCase() !== 'модель') {
             let subCat = fallbackCategory;
             
-            // For АКБ, force grouping by the first word of the model (manufacturer)
+            // For АКБ, force grouping to Deye if matches brand/prefix
             if (categoryName === 'АКБ') {
                 const modelLower = model.toLowerCase();
-                const headLower = fallbackCategory.toLowerCase();
-
-                // Aggressive Deye detection: literal 'deye' OR any common model prefix/keyword
-                const isDeye = modelLower.includes('deye') || 
-                               headLower.includes('deye') || 
-                               /(se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|prob|pro-c)/i.test(modelLower);
-
+                const isDeyeBrand = modelLower.includes('deye') || 
+                                   /(se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|pro-c|prob|pro\s+b|pro\s+v)/i.test(modelLower);
                 const isBMS = modelLower.includes('bms');
 
-                if (!isDeye && !isBMS) {
-                    continue;
+                if (!isDeyeBrand && !isBMS) {
+                    continue; // Skip other brands like Dyness, Pylontech
                 }
 
-                if (isBMS) {
-                    subCat = 'BMS / Контролери';
-                } else {
-                    subCat = 'Deye';
-                }
+                subCat = isBMS ? 'BMS / Контролери' : 'Deye';
             } else if (categoryName !== 'АКБ' && col0 && col0.toLowerCase() !== 'фото') {
-                // If the standard format has a col0 value during a product row, it might be a specific brand
                 subCat = col0;
             }
 
-            // High priority BMS check for any category
-            if (mainCat === 'АКБ та BMS' && model.toLowerCase().includes('bms')) {
+            // High priority BMS check
+            if (model.toLowerCase().includes('bms')) {
                 subCat = 'BMS / Контролери';
             }
 
