@@ -1200,69 +1200,97 @@ function exportToXls() {
 
     showToast('Генерація Excel...', 'info');
 
-    // Headers
-    const headers = [
-        "№", 
-        "Назва товару", 
-        "Опис", 
-        "Одиниця", 
-        "Кількість", 
-        "Ціна (" + state.activeCurrency + ")", 
-        "Сума (" + state.activeCurrency + ")"
+    const cur = state.activeCurrency;
+    const curSym = cur === 'UAH' ? '₴' : '$';
+
+    // Company header rows
+    const rows = [
+        ["CSO Solar"],
+        ["Офіс та склад: Львівська обл., м. Золочів, вул. І. Труша 1Б"],
+        ["+38 067 374 08 02"],
+        [],
+        ["КОМЕРЦІЙНА ПРОПОЗИЦІЯ"],
+        [],
+        ["Номер:", state.proposal.number || "", "", "Дата:", state.proposal.date || ""],
+        ["Клієнт:", state.proposal.clientName || "", "", "Контакт:", state.proposal.clientContact || ""],
+        [],
+        // Table headers
+        ["№", "Назва товару", "Од.", "К-сть", `Ціна (${curSym})`, `Сума (${curSym})`]
     ];
 
     // Data rows
-    const data = state.proposal.items.map((it, idx) => {
-        const priceValue = convertCurrency(it.price, state.activeCurrency);
-        const sumValue = priceValue * it.quantity;
-        return [
+    state.proposal.items.forEach((it, idx) => {
+        const priceValue = convertCurrency(it.price, cur);
+        const sumValue = Math.round(priceValue * it.quantity * 100) / 100;
+        const nameWithDesc = it.description 
+            ? `${it.name}\n${it.description}` 
+            : it.name;
+        rows.push([
             idx + 1,
-            it.name,
-            it.description || "",
+            nameWithDesc,
             it.unit,
             it.quantity,
             priceValue,
             sumValue
-        ];
+        ]);
     });
 
-    // Totals row
+    // Totals
     const totalSum = state.proposal.items.reduce((s, it) => s + it.price * it.quantity, 0);
-    const convertedTotal = convertCurrency(totalSum, state.activeCurrency);
-    data.push([]); // empty row
-    data.push(["", "", "", "", "", "Всього:", convertedTotal]);
+    const convertedTotal = convertCurrency(totalSum, cur);
+    rows.push([]);
+    rows.push(["", "", "", "", "РАЗОМ:", convertedTotal]);
+
+    // Notes
+    if (state.proposal.notes) {
+        rows.push([]);
+        rows.push(["Примітки:", state.proposal.notes]);
+    }
+
+    // Currency note
+    if (cur === 'UAH') {
+        rows.push([]);
+        rows.push([`Курс: 1 USD = ${state.settings.usdToUah} UAH`]);
+    }
 
     // Create workbook
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([
-        ["Комерційна пропозиція № " + (state.proposal.number || ""), ""],
-        ["Дата:", state.proposal.date || ""],
-        ["Клієнт:", state.proposal.clientName || ""],
-        ["Контакт:", state.proposal.clientContact || ""],
-        [],
-        headers,
-        ...data
-    ]);
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // Merge cells for header
+    ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },  // CSO Solar
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },  // Address
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } },  // Phone
+        { s: { r: 4, c: 0 }, e: { r: 4, c: 5 } },  // КОМЕРЦІЙНА ПРОПОЗИЦІЯ
+    ];
 
     // Set column widths
     ws['!cols'] = [
-        { wch: 5 },  // No
-        { wch: 45 }, // Name
-        { wch: 55 }, // Desc
-        { wch: 10 }, // Unit
-        { wch: 10 }, // Qty
-        { wch: 15 }, // Price
-        { wch: 15 }  // Sum
+        { wch: 5 },   // №
+        { wch: 55 },  // Назва товару
+        { wch: 8 },   // Од.
+        { wch: 8 },   // К-сть
+        { wch: 14 },  // Ціна
+        { wch: 14 }   // Сума
     ];
 
-    XLSX.utils.book_append_sheet(wb, ws, "Proposal");
+    // Set row heights for items with descriptions (wrap text)
+    ws['!rows'] = [];
+    for (let i = 0; i < rows.length; i++) {
+        if (i >= 10 && i < 10 + state.proposal.items.length) {
+            ws['!rows'][i] = { hpt: 36 }; // taller rows for product names
+        }
+    }
 
-    // Generate filename - sanitized
+    XLSX.utils.book_append_sheet(wb, ws, "Пропозиція");
+
+    // Generate filename
     const rawNum = state.proposal.number || 'kp';
     const safeNum = rawNum.replace(/[^a-zA-Z0-9а-яА-ЯіїєґІЇЄҐ-]/g, '_');
     const filename = `${safeNum}.xlsx`;
 
-    // Use Data URI for file:// protocol compatibility (Blob downloads often lose filename on file://)
+    // Download
     try {
         const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
         const url = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + b64;
@@ -1281,7 +1309,6 @@ function exportToXls() {
     } catch (err) {
         console.error('Excel Export Error:', err);
         showToast('Помилка при експорті', 'error');
-        // Final fallback
         XLSX.writeFile(wb, filename);
     }
 }
