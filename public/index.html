@@ -183,7 +183,6 @@
             <div class="proposal-actions no-print">
                 <button id="btnSave" class="btn btn-primary">💾 Зберегти</button>
                 <button id="btnNewProposal" class="btn btn-outline">📄 Нова</button>
-                <button id="btnExportXls" class="btn btn-outline">📊 EXCEL</button>
                 <button id="btnInvoice" class="btn btn-outline">🧾 Рахунок</button>
                 <button id="btnPrint" class="btn btn-outline">🖨️ Друк</button>
                 <button id="btnTelegram" class="btn btn-accent">📨 Telegram</button>
@@ -291,6 +290,38 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-primary" id="btnSaveMaterial">Зберегти до каталогу</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== INVOICE FORMAT MODAL ===== -->
+    <div class="modal-overlay" id="invoiceModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>🧾 Рахунок-фактура</h3>
+                <button class="modal-close" data-close="invoiceModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="tg-desc">Оберіть формат рахунку:</p>
+                <div class="tg-options">
+                    <label class="tg-option selected">
+                        <input type="radio" name="invFormat" value="pdf" checked>
+                        <span class="tg-option-card">
+                            <span class="tg-option-icon">📄</span>
+                            <span class="tg-option-label">PDF</span>
+                        </span>
+                    </label>
+                    <label class="tg-option">
+                        <input type="radio" name="invFormat" value="xls">
+                        <span class="tg-option-card">
+                            <span class="tg-option-icon">📊</span>
+                            <span class="tg-option-label">Excel</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="btnGenerateInvoice">Створити</button>
             </div>
         </div>
     </div>

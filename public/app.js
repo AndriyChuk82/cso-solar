@@ -1313,14 +1313,14 @@ function exportToXls() {
     }
 }
 
-function exportInvoice() {
+function exportInvoicePDF() {
     readProposalForm();
     if (state.proposal.items.length === 0) {
         showToast('Пропозиція порожня', 'warning');
         return;
     }
 
-    showToast('Генерація рахунку...', 'info');
+    showToast('Генерація рахунку (PDF)...', 'info');
 
     const uahRate = state.settings.usdToUah;
     const propNum = state.proposal.number || 'КП-001';
@@ -1402,6 +1402,97 @@ function exportInvoice() {
         console.error('Invoice PDF error:', err);
         showToast('Помилка генерації рахунку', 'error');
     });
+}
+
+function exportInvoiceXLS() {
+    readProposalForm();
+    if (state.proposal.items.length === 0) {
+        showToast('Пропозиція порожня', 'warning');
+        return;
+    }
+
+    showToast('Генерація рахунку (Excel)...', 'info');
+
+    const uahRate = state.settings.usdToUah;
+    const propNum = state.proposal.number || 'КП-001';
+    const invoiceNum = propNum.replace('КП-', '');
+    const invoiceDate = formatDateUA(state.proposal.date || todayStr());
+
+    const rows = [
+        ["РАХУНОК-ФАКТУРА", "", "", "", "№:", invoiceNum],
+        ["", "", "", "", "Дата:", invoiceDate],
+        [],
+        ["ПОСТАЧАЛЬНИК", "", "", "ПОКУПЕЦЬ"],
+        ["Назва:", "ФОП Пастушок Марія Володимирівна", "", "Назва:", state.proposal.clientName || ""],
+        ["РНОКПП:", "3090406261", "", "ЄДРПОУ:", ""],
+        ["Адреса:", "Україна, 80700, Львівська обл., Золочівський р-н, с. Вороняки, вул. Шкільна, б. 38", "", "Адреса:", ""],
+        ["IBAN:", "UA563003350000000260092475237", "", "IBAN:", ""],
+        ["Банк:", 'АТ "РАЙФФАЙЗЕН БАНК"', "", "Банк:", ""],
+        ["Тел:", "(067)374-08-12", "", "Тел / Email:", state.proposal.clientContact || ""],
+        [],
+        ["№", "Найменування товару", "К-сть", "Од.", "Ціна, грн", "Сума, грн"]
+    ];
+
+    let totalUAH = 0;
+    state.proposal.items.forEach((it, idx) => {
+        const priceUAH = Math.round(it.price * uahRate * 100) / 100;
+        const sumUAH = Math.round(priceUAH * it.quantity * 100) / 100;
+        totalUAH += sumUAH;
+        const nameWithDesc = it.description ? `${it.name} (${it.description})` : it.name;
+        rows.push([idx + 1, nameWithDesc, it.quantity, it.unit, priceUAH, sumUAH]);
+    });
+
+    // Pad to 10 rows
+    for (let i = state.proposal.items.length; i < 10; i++) {
+        rows.push([i + 1, "", "", "шт.", "", ""]);
+    }
+
+    rows.push([]);
+    rows.push(["", "", "", "", "СУМА ДО СПЛАТИ:", totalUAH]);
+    rows.push(["Сума прописом: " + numberToWordsUA(totalUAH) + " грн.", "", "", "", "", ""]);
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // Title
+        { s: { r: 3, c: 0 }, e: { r: 3, c: 2 } }, // Supplier header
+        { s: { r: 3, c: 3 }, e: { r: 3, c: 5 } }, // Buyer header
+        { s: { r: rows.length - 1, c: 0 }, e: { r: rows.length - 1, c: 5 } } // Sum in words
+    ];
+
+    ws['!cols'] = [{ wch: 8 }, { wch: 50 }, { wch: 8 }, { wch: 8 }, { wch: 14 }, { wch: 14 }];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Рахунок");
+    const filename = `Рахунок_${invoiceNum}.xlsx`;
+
+    try {
+        const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+        const url = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + b64;
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => document.body.removeChild(a), 100);
+        showToast('Рахунок (Excel) завантажено', 'success');
+    } catch (err) {
+        XLSX.writeFile(wb, filename);
+    }
+}
+
+function handleInvoiceClick() {
+    openModal('invoiceModal');
+}
+
+function generateSelectedInvoice() {
+    const format = document.querySelector('input[name="invFormat"]:checked').value;
+    closeModal('invoiceModal');
+    if (format === 'pdf') {
+        exportInvoicePDF();
+    } else {
+        exportInvoiceXLS();
+    }
 }
 
 // Format date as DD.MM.YYYY
@@ -1631,8 +1722,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnHistory').addEventListener('click', () => { renderHistory(); openModal('historyModal'); });
     document.getElementById('btnSave').addEventListener('click', saveCurrentProposal);
     document.getElementById('btnNewProposal').addEventListener('click', newProposal);
-    document.getElementById('btnExportXls').addEventListener('click', exportToXls);
-    document.getElementById('btnInvoice').addEventListener('click', exportInvoice);
+    document.getElementById('btnInvoice').addEventListener('click', handleInvoiceClick);
+    document.getElementById('btnGenerateInvoice').addEventListener('click', generateSelectedInvoice);
     document.getElementById('btnPrint').addEventListener('click', printProposal);
     document.getElementById('btnTelegram').addEventListener('click', () => openModal('telegramModal'));
     document.getElementById('btnSendTelegram').addEventListener('click', sendToTelegram);
