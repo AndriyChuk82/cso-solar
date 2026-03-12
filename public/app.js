@@ -319,8 +319,11 @@ function parseGvizJson(response, categoryName, mainCat) {
             // For АКБ, force grouping to Deye if matches brand/prefix
             if (categoryName === 'АКБ') {
                 const modelLower = model.toLowerCase();
-                const isDeyeBrand = modelLower.includes('deye') || 
-                                   /(se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|pro-c|prob|pro\s+b|pro\s+v)/i.test(modelLower);
+                const headLower = fallbackCategory.toLowerCase();
+                const combined = modelLower + ' ' + headLower;
+                
+                const isDeyeBrand = combined.includes('deye') || 
+                                   /se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|pro-c|prob|pro\s+b|pro\s+v/i.test(modelLower);
                 const isBMS = modelLower.includes('bms');
 
                 if (!isDeyeBrand && !isBMS) {
@@ -493,8 +496,11 @@ function parseSheetCSV(csv, categoryName, mainCat) {
             // For АКБ, force grouping to Deye if matches brand/prefix
             if (categoryName === 'АКБ') {
                 const modelLower = model.toLowerCase();
-                const isDeyeBrand = modelLower.includes('deye') || 
-                                   /(se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|pro-c|prob|pro\s+b|pro\s+v)/i.test(modelLower);
+                const headLower = fallbackCategory.toLowerCase();
+                const combined = modelLower + ' ' + headLower;
+
+                const isDeyeBrand = combined.includes('deye') || 
+                                   /se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|pro-c|prob|pro\s+b|pro\s+v/i.test(modelLower);
                 const isBMS = modelLower.includes('bms');
 
                 if (!isDeyeBrand && !isBMS) {
