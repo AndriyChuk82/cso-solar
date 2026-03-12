@@ -321,9 +321,10 @@ function parseGvizJson(response, categoryName, mainCat) {
                 const modelLower = model.toLowerCase();
                 const headLower = fallbackCategory.toLowerCase();
                 
-                // Expanded Deye detection: literal 'deye' OR common specific model prefixes
-                const isDeye = modelLower.includes('deye') || headLower.includes('deye') || 
-                               /^(se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs)/i.test(model.trim());
+                // Aggressive Deye detection: literal 'deye' OR any common model prefix/keyword
+                const isDeye = modelLower.includes('deye') || 
+                               headLower.includes('deye') || 
+                               /(se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|prob|pro-c)/i.test(modelLower);
                 
                 const isBMS = modelLower.includes('bms');
 
@@ -504,9 +505,10 @@ function parseSheetCSV(csv, categoryName, mainCat) {
                 const modelLower = model.toLowerCase();
                 const headLower = fallbackCategory.toLowerCase();
 
-                // Expanded Deye detection: literal 'deye' OR common specific model prefixes
-                const isDeye = modelLower.includes('deye') || headLower.includes('deye') || 
-                               /^(se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs)/i.test(model.trim());
+                // Aggressive Deye detection: literal 'deye' OR any common model prefix/keyword
+                const isDeye = modelLower.includes('deye') || 
+                               headLower.includes('deye') || 
+                               /(se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|prob|pro-c)/i.test(modelLower);
 
                 const isBMS = modelLower.includes('bms');
 
