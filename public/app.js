@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v40');
+        const cached = localStorage.getItem('cso_products_cache_v41');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v40', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v41', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1490,7 +1490,7 @@ async function sendTelegramPdf() {
         columnStyles: {
             0: { halign: 'center', cellWidth: 10 },
             1: { cellWidth: 'auto', halign: 'left' },
-            2: { halign: 'center', cellWidth: 18 },
+            2: { halign: 'center', cellWidth: 24 }, // Extended width for 'комплект' / 'послуга'
             3: { halign: 'center', cellWidth: 15 },
             4: { halign: 'center', cellWidth: 25 },
             5: { halign: 'center', cellWidth: 28 }
