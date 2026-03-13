@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v42');
+        const cached = localStorage.getItem('cso_products_cache_v43');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v42', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v43', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -2182,6 +2182,94 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.setItem('cso_ttn_data', JSON.stringify(ttnData));
         window.open('/ttn.html', '_blank');
         closeModal('ttnModal');
+    });
+    
+    // Warranty Button
+    document.getElementById('btnWarranty').addEventListener('click', () => {
+        readProposalForm();
+        if (state.proposal.items.length === 0) {
+            showToast('Додайте хоча б один товар', 'error');
+            return;
+        }
+        
+        // Pre-fill date with today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('warrantyDate').value = today;
+        
+        // Try filling buyer if not filled
+        if (!document.getElementById('warrantyBuyer').value && state.proposal.clientName) {
+            document.getElementById('warrantyBuyer').value = state.proposal.clientName;
+        }
+        
+        // Genereate dynamic item inputs
+        const container = document.getElementById('warrantyItemsContainer');
+        container.innerHTML = '';
+        state.proposal.items.forEach((item, index) => {
+            const wrap = document.createElement('div');
+            wrap.style.marginBottom = '15px';
+            wrap.style.padding = '10px';
+            wrap.style.border = '1px solid var(--border)';
+            wrap.style.borderRadius = '5px';
+            wrap.style.background = '#f9fafb';
+            
+            const title = document.createElement('div');
+            title.style.fontWeight = 'bold';
+            title.style.marginBottom = '8px';
+            title.style.fontSize = '0.9rem';
+            title.textContent = `${index + 1}. ${item.name} (${item.quantity} шт.)`;
+            
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.gap = '10px';
+            
+            const divSerial = document.createElement('div');
+            divSerial.style.flex = '2';
+            divSerial.innerHTML = `<label style="font-size:0.8rem">Серійні номери (через кому)</label>
+                <input type="text" class="form-input w-serial" data-idx="${index}" placeholder="S/N...">`;
+                
+            const divPeriod = document.createElement('div');
+            divPeriod.style.flex = '1';
+            divPeriod.innerHTML = `<label style="font-size:0.8rem">Гарантія</label>
+                <input type="text" class="form-input w-period" data-idx="${index}" value="5 років">`;
+            
+            row.appendChild(divSerial);
+            row.appendChild(divPeriod);
+            wrap.appendChild(title);
+            wrap.appendChild(row);
+            container.appendChild(wrap);
+        });
+        
+        openModal('warrantyModal');
+    });
+
+    document.getElementById('btnGenerateWarranty').addEventListener('click', () => {
+        const itemsData = [];
+        document.querySelectorAll('#warrantyItemsContainer > div').forEach(wrap => {
+            const serialInput = wrap.querySelector('.w-serial');
+            const periodInput = wrap.querySelector('.w-period');
+            if (serialInput && periodInput) {
+                const idx = parseInt(serialInput.dataset.idx);
+                const item = state.proposal.items[idx];
+                itemsData.push({
+                    name: item.name,
+                    quantity: item.quantity,
+                    serial: serialInput.value.trim() || '-',
+                    period: periodInput.value.trim() || '5 років'
+                });
+            }
+        });
+    
+        const warrantyData = {
+            date: document.getElementById('warrantyDate').value,
+            seller: document.getElementById('warrantySeller').value,
+            sellerAddress: document.getElementById('warrantySellerAddress').value,
+            buyer: document.getElementById('warrantyBuyer').value,
+            items: itemsData
+        };
+        
+        sessionStorage.setItem('cso_warranty_data', JSON.stringify(warrantyData));
+        window.open('/warranty.html', '_blank');
+        closeModal('warrantyModal');
     });
     document.getElementById('btnGenerateInvoice').addEventListener('click', generateSelectedInvoice);
     document.getElementById('btnPrint').addEventListener('click', printProposal);

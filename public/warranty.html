@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гарантійний талон (Друк)</title>
+    <style>
+        /* A4 Print Setup */
+        @page {
+            size: A4 portrait;
+            margin: 15mm;
+        }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 14px;
+            color: #000;
+            background: #fff;
+            margin: 0;
+            padding: 0;
+            line-height: 1.4;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        .container {
+            width: 180mm; /* A4 width 210mm - 2*15mm margins */
+            margin: 0 auto;
+        }
+        /* Auto-print overlay */
+        .print-btn-overlay {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2563eb;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            border: none;
+            font-size: 16px;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: transparent; }
+        }
+
+        /* Layout styles */
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .date-line {
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        .info-block {
+            margin-bottom: 20px;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 5px;
+        }
+        .info-label {
+            font-weight: bold;
+            min-width: 150px;
+        }
+        .info-value {
+            border-bottom: 1px solid #000;
+            flex-grow: 1;
+            padding-left: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 15px;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            margin-bottom: 30px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        th {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 14px;
+            font-weight: bold;
+            background-color: #f5f5f5;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+        }
+        .text-left { text-align: left; }
+
+        /* Terms */
+        .terms-title {
+            font-size: 15px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+        .terms-content {
+            font-size: 13px;
+            text-align: justify;
+        }
+        .terms-content p {
+            margin: 0 0 10px 0;
+        }
+        .terms-content ol {
+            margin: 0 0 10px 0;
+            padding-left: 20px;
+        }
+        .terms-content li {
+            margin-bottom: 4px;
+        }
+        .terms-content .attention {
+            font-weight: bold;
+            margin-top: 15px;
+            font-size: 12.5px;
+        }
+
+        /* Signatures */
+        .agreement-text {
+            margin-top: 30px;
+            font-weight: bold;
+            font-style: italic;
+            text-align: justify;
+        }
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        .sig-block {
+            width: 45%;
+        }
+        .sig-line {
+            border-bottom: 1px solid #000;
+            height: 25px;
+            margin-top: 5px;
+        }
+        .sig-subtext {
+            font-size: 10px;
+            text-align: center;
+            margin-top: 2px;
+        }
+        .stamp-box {
+            width: 90px;
+            height: 90px;
+            border: 1px dashed #ccc;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            font-size: 12px;
+            margin: -30px auto 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn-overlay no-print" onclick="window.print()">🖨️ ДРУКУВАТИ ТАЛОН</button>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="title">ГАРАНТІЙНИЙ ТАЛОН</div>
+            <div class="date-line">Дата продажу: <span id="outDate" style="font-weight:bold; border-bottom:1px solid #000; padding:0 15px;"></span></div>
+        </div>
+
+        <!-- Info block -->
+        <div class="info-block">
+            <div class="info-row">
+                <span class="info-label">Продавець:</span>
+                <span class="info-value" id="outSeller"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Адреса продавця:</span>
+                <span class="info-value" id="outSellerAddress"></span>
+            </div>
+            <div class="info-row" style="margin-top: 10px;">
+                <span class="info-label">Покупець (ПІБ):</span>
+                <span class="info-value" id="outBuyer"></span>
+            </div>
+        </div>
+
+        <!-- Equipment Table -->
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%">№</th>
+                    <th style="width: 40%">Найменування обладнання</th>
+                    <th style="width: 10%">К-стьшт.</th>
+                    <th style="width: 30%">Серійні номери</th>
+                    <th style="width: 15%">Гарантійний<br>період</th>
+                </tr>
+            </thead>
+            <tbody id="itemsBody">
+                <!-- Rows injected by JS -->
+            </tbody>
+        </table>
+
+        <!-- Terms -->
+        <div class="terms-title">Умови гарантійного обслуговування</div>
+        <div class="terms-content">
+            <p>Придбаний Вами виріб повністю відповідає характеристикам, вказаних у технічному паспорті. Вказані характеристики гарантуються заводом-виробником. Пристрій прослужить Вам довго та якісно при дотриманні правил експлуатації та норм, вказаних в посібнику користувача. При виникненні необхідності гарантійного обслуговування приладу, просимо Вас звертатися до авторизованого сервісного центру постачальника, імпортера або магазину, де була здійснена покупка (адресу сервісних центрів можна дізнатися на офіційному сайті виробника товару).</p>
+            
+            <ol>
+                <li>Гарантійне обслуговування передбачає безкоштовний ремонт, або заміну комплектуючих приладу протягом гарантійного терміну.</li>
+                <li>Гарантійний ремонт здійснюється авторизованим сервісним центром.</li>
+                <li>Рішення питання доцільності ремонту, або заміни непрацюючих частин виробу, приймається авторизованим сервісним центром.</li>
+                <li>Гарантійне обслуговування здійснюється лише при наявності правильно та чітко заповненого гарантійного талону. В гаранійному талоні повинно бути вказано: Виробник, модель, дата продажу та поставлена чітка печатка продавця з його реквізитами.</li>
+                <li>Гарантійне обслуговування не здійснюється у випадку:
+                    <ul style="list-style-type: none; padding-left: 10px; margin: 4px 0;">
+                        <li>5.1. Відсутності гарантійного талону чи інших документів, що засвідчують купівлю товару з відповідними печатками, реквізитами продавця та датою продажу.</li>
+                        <li>5.2. Недотримання робочих параметрів, вказаних у технічному паспорті на придбаний товар.</li>
+                        <li>5.3. Наявності механічних пошкоджень, що могли вивести з ладу внутрішні електронні компоненти пристрою.</li>
+                        <li>5.4. Проникнення сторонніх предметів в середину пристрою.</li>
+                    </ul>
+                </li>
+                <li>На товар, у якого вийшов гарантійний термін, гарантійне обслуговування не розповсюджується.</li>
+            </ol>
+
+            <p class="attention">Зверніть увагу! При самостійному підключенні та монтажі, споживач зобов’язаний технічно проконсультуватися з постачальником, строго дотримуючись його вказівок. Надати монтажну схему з дотриманням технічних характеристик, вказаних в технічному паспорті на виріб. Споживач зобов’язаний надати фото підтвердження придбаного та вмонтованого обладнання з відображенням усіх потрібних робочих характеристик. При недотриманні вище зазначених вказівок та відсутності фото підтвердження вмонтованого обладнання, гарантія на товар не розповсюджується.</p>
+        </div>
+
+        <div class="agreement-text">
+            Новий виріб в повному комплекті, з інструкцією по експлуатацією отримав. З умовами гарантійного обслуговування ознайомлений та згідний.
+        </div>
+
+        <!-- Signatures -->
+        <div class="signatures">
+            <div class="sig-block">
+                <div><strong>Продавець:</strong></div>
+                <div class="sig-line"></div>
+                <div class="sig-subtext">(підпис продавця)</div>
+                <div class="stamp-box">М.П.</div>
+            </div>
+            <div class="sig-block">
+                <div><strong>Покупець:</strong></div>
+                <div class="sig-line"></div>
+                <div class="sig-subtext">(підпис клієнта)</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dataStr = sessionStorage.getItem('cso_warranty_data');
+            if (dataStr) {
+                const data = JSON.parse(dataStr);
+                
+                // Text fields
+                document.getElementById('outSeller').textContent = data.seller || '';
+                document.getElementById('outSellerAddress').textContent = data.sellerAddress || '';
+                document.getElementById('outBuyer').textContent = data.buyer || '';
+
+                // Date parsing (YYYY-MM-DD -> DD.MM.YYYY)
+                if (data.date) {
+                    const [year, month, day] = data.date.split('-');
+                    document.getElementById('outDate').textContent = `${day}.${month}.${year}`;
+                }
+
+                // Table items
+                const tbody = document.getElementById('itemsBody');
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach((item, index) => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td class="text-left">${item.name}</td>
+                            <td>${item.quantity}</td>
+                            <td style="word-break: break-all;">${item.serial}</td>
+                            <td>${item.period}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            }
+
+            // Auto print prompt after a slight delay
+            setTimeout(() => {
+                window.print();
+            }, 600);
+        });
+    </script>
+</body>
+</html>

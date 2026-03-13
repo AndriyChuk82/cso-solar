@@ -185,6 +185,7 @@
                 <button id="btnNewProposal" class="btn btn-outline">📄 Нова</button>
                 <button id="btnInvoice" class="btn btn-outline">🧾 Рахунок</button>
                 <button id="btnTtn" class="btn btn-outline">🚚 ТТН</button>
+                <button id="btnWarranty" class="btn btn-outline">🛡️ Гарантія</button>
                 <button id="btnPrint" class="btn btn-outline">🖨️ Друк</button>
                 <button id="btnTelegram" class="btn btn-accent">📨 Telegram</button>
             </div>
@@ -235,6 +236,42 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-primary" id="btnSaveSettings">Зберегти</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== WARRANTY MODAL ===== -->
+    <div class="modal-overlay" id="warrantyModal">
+        <div class="modal modal-wide">
+            <div class="modal-header">
+                <h3>🛡️ Гарантійний талон</h3>
+                <button class="modal-close" data-close="warrantyModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Дата продажу</label>
+                    <input type="date" id="warrantyDate" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Продавець</label>
+                    <input type="text" id="warrantySeller" class="form-input" value='ТОВ "Центр сервісного обслуговування"'>
+                </div>
+                <div class="form-group">
+                    <label>Адреса продавця</label>
+                    <input type="text" id="warrantySellerAddress" class="form-input" value="80700, Львівська область, м. Золочів, вул. І. Труша, 1Б">
+                </div>
+                <div class="form-group">
+                    <label>Покупець</label>
+                    <input type="text" id="warrantyBuyer" class="form-input" placeholder="ПІБ покупця">
+                </div>
+                <hr class="modal-divider">
+                <h4>Обладнання:</h4>
+                <div id="warrantyItemsContainer" style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
+                    <!-- Items dynamically injected here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="btnGenerateWarranty">📝 Створити Гарантійний талон</button>
             </div>
         </div>
     </div>
@@ -523,6 +560,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="app.js?v=42"></script>
+    <script src="app.js?v=43"></script>
 </body>
 </html>
