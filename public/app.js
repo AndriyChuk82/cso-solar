@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v21');
+        const cached = localStorage.getItem('cso_products_cache_v22');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v21', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v22', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1364,14 +1364,15 @@ async function sendTelegramPdf() {
     try {
         const blob = await html2pdf().set(opt).from(el).output('blob');
 
-        // Cleanup clone
-        document.body.removeChild(el);
-        
         // Restore UI
+        document.body.classList.remove('is-exporting');
+        el.classList.remove('is-exporting');
         printH.style.display = originalDisplay;
-        noprint.forEach(el => el.style.display = '');
+        noprint.forEach(item => item.style.display = '');
+        if (notes) notes.style.display = '';
         if (showCost) document.body.classList.remove('hide-cost');
         else document.body.classList.add('hide-cost');
+        window.scrollTo(0, originalScroll);
 
         // Convert blob to base64
         const reader = new FileReader();
