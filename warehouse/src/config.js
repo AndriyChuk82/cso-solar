@@ -33,7 +33,19 @@ const CONFIG = {
     admin: 'Адміністратор',
     storekeeper: 'Комірник',
     manager: 'Менеджер'
-  }
+  },
+  // Конфігурація Комерційних пропозицій
+  CP_SPREADSHEETS: {
+    MAIN: '1dXuNar4t3aemQSk5LnPOXxcB7DAqqEzraWEFASa2r4g',
+    MATERIALS: '1FeQGoFst-DWfLemlXI_0T5xQzMsYdSMC2Xj9Cjs5C1U'
+  },
+  CP_SHEETS: [
+    { name: 'Сонячні батареї', mainCat: 'Сонячні батареї', gid: 1271219295, sId: 'MAIN' },
+    { name: 'Гібридні інвертори', mainCat: 'Інвертори', gid: 2087142679, sId: 'MAIN' },
+    { name: 'Мережеві інвертори', mainCat: 'Інвертори', gid: 1047165471, sId: 'MAIN' },
+    { name: 'АКБ', mainCat: 'АКБ та BMS', gid: 1248903265, sId: 'MAIN' },
+    { name: 'ДОВІДНИК_ТОВАРІВ', mainCat: 'Власний матеріал', gid: 0, sId: 'MATERIALS' }
+  ]
 };
 
 export default CONFIG;

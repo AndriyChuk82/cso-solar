@@ -1,13 +1,17 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { getCatalog, addProduct } from '../api/gasApi';
+import { fetchCPCatalog } from '../api/externalApi';
 import CONFIG from '../config';
+
+// Глобальний кеш для зовнішнього каталогу (щоб не качати щоразу)
+let externalCatalogCache = null;
 
 /**
  * Компонент живого пошуку товарів із можливістю швидкого додавання нового.
  * Використовується на формах Приходу, Розходу, Переміщення.
  *
  * @param {Function} onSelect — колбек при виборі товару
- * @param {Array} products — список товарів (з кешу)
+ * @param {Array} products — список товарів (з локального кешу)
  * @param {string} placeholder — текст підказки
  */
 export default function ProductSearch({ onSelect, products = [], placeholder = 'Пошук товару...' }) {
@@ -16,7 +20,23 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
   const [showAddForm, setShowAddForm] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', article: '', unit: 'шт' });
   const [saving, setSaving] = useState(false);
+  const [externalProducts, setExternalProducts] = useState([]);
   const wrapperRef = useRef(null);
+
+  // Завантаження зовнішнього каталогу КП
+  useEffect(() => {
+    if (externalCatalogCache) {
+      setExternalProducts(externalCatalogCache);
+      return;
+    }
+
+    fetchCPCatalog().then(data => {
+      if (data && data.length > 0) {
+        externalCatalogCache = data;
+        setExternalProducts(data);
+      }
+    });
+  }, []);
 
   // Закрити випадаючий список при кліку за межами
   useEffect(() => {
@@ -29,14 +49,51 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filtered = products.filter((p) => {
+  // Фільтрація локальних товарів
+  const filteredLocal = products.filter((p) => {
     if (!query.trim()) return false;
     const words = query.toLowerCase().split(/\s+/);
-    const content = `${p.name} ${p.article}`.toLowerCase();
+    const content = `${p.name} ${p.article || ''}`.toLowerCase();
     return words.every((word) => content.includes(word));
   });
 
-  function handleSelect(product) {
+  // Фільтрація зовнішніх товарів (лише тих, яких немає в локальному списку)
+  const filteredExternal = externalProducts.filter((ext) => {
+    if (!query.trim()) return false;
+    // Якщо вже є такий товар локально (по назві), не показуємо як зовнішній
+    if (products.some(p => p.name.toLowerCase() === ext.name.toLowerCase())) return false;
+
+    const words = query.toLowerCase().split(/\s+/);
+    const content = ext.name.toLowerCase();
+    return words.every((word) => content.includes(word));
+  }).slice(0, 10); // Обмежуємо кількість результатів
+
+  async function handleSelect(product) {
+    if (product.isExternal) {
+      // Якщо обрано товар із КП — спочатку додаємо його в складську базу
+      setSaving(true);
+      try {
+        const result = await addProduct({
+          name: product.name,
+          article: '',
+          unit: product.unit || 'шт',
+          category: product.category || 'Із КП',
+          active: true
+        });
+
+        if (result.success && result.product) {
+          onSelect(result.product);
+        }
+      } catch (err) {
+        console.error('Помилка імпорту товару:', err);
+      } finally {
+        setSaving(false);
+        setQuery('');
+        setShowResults(false);
+      }
+      return;
+    }
+
     onSelect(product);
     setQuery('');
     setShowResults(false);
@@ -61,6 +118,7 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
         setNewProduct({ name: '', article: '', unit: 'шт' });
         setShowAddForm(false);
         setQuery('');
+        setShowResults(false);
       }
     } catch (err) {
       console.error('Помилка додавання товару:', err);
@@ -98,7 +156,7 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
           overflowY: 'auto',
           marginTop: '4px'
         }}>
-          {filtered.map((p) => (
+          {filteredLocal.map((p) => (
             <div
               key={p.id}
               onClick={() => handleSelect(p)}
@@ -119,7 +177,39 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
             </div>
           ))}
 
-          {filtered.length === 0 && query.trim() && !showAddForm && (
+          {filteredExternal.length > 0 && (
+            <div style={{ padding: '4px 14px', background: 'var(--bg-alt)', fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+              З КАТАЛОГУ КП (БУДЕ ІМПОРТОВАНО)
+            </div>
+          )}
+
+          {filteredExternal.map((p, idx) => (
+            <div
+              key={'ext-' + idx}
+              onClick={() => handleSelect(p)}
+              style={{
+                padding: '8px 14px',
+                cursor: 'pointer',
+                borderBottom: '1px solid var(--border-light)',
+                fontSize: '0.85rem',
+                transition: 'var(--transition)'
+              }}
+              onMouseEnter={(e) => e.target.style.background = 'var(--primary-bg)'}
+              onMouseLeave={(e) => e.target.style.background = 'transparent'}
+            >
+              <div style={{ fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {p.name}
+                <span style={{ fontSize: '0.65rem', background: 'var(--primary)', color: 'white', padding: '1px 5px', borderRadius: '4px' }}>
+                  КП
+                </span>
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                {p.category} {p.unit && `· ${p.unit}`}
+              </div>
+            </div>
+          ))}
+
+          {filteredLocal.length === 0 && filteredExternal.length === 0 && query.trim() && !showAddForm && (
             <div style={{ padding: '12px 14px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
               Товар не знайдено
             </div>
@@ -143,7 +233,7 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
               onMouseEnter={(e) => e.target.style.background = 'var(--primary-bg)'}
               onMouseLeave={(e) => e.target.style.background = 'transparent'}
             >
-              ➕ Додати новий товар
+              ➕ Створити товар вручну
             </div>
           )}
 
