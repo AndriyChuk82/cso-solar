@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v14');
+        const cached = localStorage.getItem('cso_products_cache_v15');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v14', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v15', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1323,29 +1323,34 @@ async function sendTelegramPdf() {
     const printH = document.getElementById('printHeader');
     const originalDisplay = printH.style.display;
     printH.style.display = 'flex';
+    
+    const el = document.getElementById('mainContent');
     document.body.classList.add('is-exporting');
+    el.classList.add('is-exporting');
 
     const notes = document.querySelector('.proposal-notes-container');
     if (notes) notes.style.display = 'none';
 
     // Convert logo to data URL to avoid tainting
     await prepImagesForCapture();
+    
+    // Give browser a moment to reflow
+    await new Promise(r => setTimeout(r, 250));
 
-    const el = document.getElementById('mainContent');
     const opt = {
         margin: [5, 5, 5, 5],
         filename: `proposal.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
-            scale: 2, 
+            scale: 1.5, // slightly lower scale to reduce memory/clipping issues
             backgroundColor: '#ffffff', 
             useCORS: true,
             allowTaint: true,
             scrollY: 0,
-            windowWidth: 1200
+            windowWidth: 1000
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        pagebreak: { mode: ['css', 'legacy'] }
     };
 
     try {
@@ -1353,6 +1358,7 @@ async function sendTelegramPdf() {
 
         // Restore UI
         document.body.classList.remove('is-exporting');
+        el.classList.remove('is-exporting');
         printH.style.display = originalDisplay;
         printH.style.flexDirection = '';
         printH.style.justifyContent = '';
