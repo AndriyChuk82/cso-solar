@@ -294,12 +294,15 @@ input, textarea, select, button { font-family: var(--font); }
     min-width: 1100px !important;
     background: #ffffff !important;
     margin: 0 !important;
-    padding: 40px !important;
+    padding: 25px !important;
     display: block !important;
     height: auto !important;
     min-height: 100% !important;
     max-height: none !important;
     overflow: visible !important;
+    position: static !important;
+    transform: none !important;
+    left: 0 !important;
 }
 
 .is-exporting .main-content {
