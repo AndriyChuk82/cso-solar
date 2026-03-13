@@ -121,7 +121,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v11');
+        const cached = localStorage.getItem('cso_products_cache_v12');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -178,7 +178,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v11', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v12', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -195,7 +195,8 @@ async function fetchSheetData(forceRefresh = false) {
 // --- Method 1: Google Visualization API ---
 async function fetchViaGviz(gid, categoryName, mainCat, spreadsheetId = null) {
     const sId = spreadsheetId || CONFIG.SPREADSHEET_ID;
-    const url = `https://docs.google.com/spreadsheets/d/${sId}/gviz/tq?tqx=out:csv&gid=${gid}`;
+    const sheetParam = gid ? `gid=${gid}` : `sheet=${encodeURIComponent(categoryName)}`;
+    const url = `https://docs.google.com/spreadsheets/d/${sId}/gviz/tq?tqx=out:csv&${sheetParam}`;
     const resp = await fetch(url);
     if (!resp.ok) throw new Error('gviz HTTP ' + resp.status);
     const csv = await resp.text();
@@ -206,7 +207,8 @@ async function fetchViaGviz(gid, categoryName, mainCat, spreadsheetId = null) {
 // --- Method 2: CORS proxy + CSV export ---
 async function fetchViaProxy(gid, categoryName, mainCat, spreadsheetId = null) {
     const sId = spreadsheetId || CONFIG.SPREADSHEET_ID;
-    const exportUrl = `https://docs.google.com/spreadsheets/d/${sId}/export?format=csv&gid=${gid}`;
+    const sheetParam = gid ? `gid=${gid}` : `sheet=${encodeURIComponent(categoryName)}`;
+    const exportUrl = `https://docs.google.com/spreadsheets/d/${sId}/export?format=csv&${sheetParam}`;
     const proxies = [
         'https://corsproxy.io/?url=',
         'https://api.allorigins.win/raw?url=',
@@ -233,7 +235,8 @@ function fetchViaJsonp(gid, categoryName, mainCat, spreadsheetId = null) {
     const sId = spreadsheetId || CONFIG.SPREADSHEET_ID;
     return new Promise((resolve, reject) => {
         const callbackName = '_gsheetCb_' + Date.now();
-        const url = `https://docs.google.com/spreadsheets/d/${sId}/gviz/tq?tqx=out:json;responseHandler:${callbackName}&gid=${gid}`;
+        const sheetParam = gid ? `gid=${gid}` : `sheet=${encodeURIComponent(categoryName)}`;
+        const url = `https://docs.google.com/spreadsheets/d/${sId}/gviz/tq?tqx=out:json;responseHandler:${callbackName}&${sheetParam}`;
 
         const timeout = setTimeout(() => {
             delete window[callbackName];
