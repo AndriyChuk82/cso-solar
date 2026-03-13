@@ -1455,14 +1455,14 @@ async function sendTelegramPdf() {
         headStyles: {
             fillColor: [245, 245, 245],
             textColor: [60, 60, 60],
-            fontStyle: boldLoaded ? 'bold' : 'normal',
+            fontStyle: 'normal',
             fontSize: 7.5,
             halign: 'center'
         },
         footStyles: {
             fillColor: [255, 251, 235],
             textColor: [180, 83, 9],
-            fontStyle: boldLoaded ? 'bold' : 'normal',
+            fontStyle: 'normal',
             fontSize: 9.5,
             halign: 'center'
         },
