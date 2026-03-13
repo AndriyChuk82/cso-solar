@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v39');
+        const cached = localStorage.getItem('cso_products_cache_v40');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v39', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v40', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1383,10 +1383,10 @@ async function sendTelegramPdf() {
         });
         
         // Calculate dynamic height to preserve correct aspect ratio
-        const renderWidth = 35; // Target width in mm
+        const renderWidth = 24; // Target width in mm (reduced by ~30% from 35)
         const renderHeight = renderWidth * logoObj.aspectRatio;
         
-        doc.addImage(logoObj.data, 'JPEG', marginL, y, renderWidth, renderHeight);
+        doc.addImage(logoObj.data, 'JPEG', marginL, 5, renderWidth, renderHeight); // Move to top edge (y=5)
     } catch (e) { console.warn('Logo skip:', e); }
 
     // Company name & info (right side)
@@ -1436,18 +1436,21 @@ async function sendTelegramPdf() {
     const curSym = cur === 'USD' ? '$' : '₴';
     const showCost = state.settings.showCost;
 
+    // Formatter for prices
+    const formatPrice = (num) => num.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
     const head = [['№', 'Назва товару', 'Од.', 'К-сть', `Ціна (${curSym})`, `Сума (${curSym})`]];
     const body = state.proposal.items.map((it, idx) => {
         const priceVal = convertCurrency(it.price, cur);
-        const sumVal = Math.round(priceVal * it.quantity * 100) / 100;
+        const sumVal = priceVal * it.quantity;
         const name = it.description ? `${it.name}\n${it.description}` : it.name;
         return [
             idx + 1,
             name,
             it.unit || 'шт.',
             it.quantity,
-            priceVal.toFixed(2),
-            sumVal.toFixed(2)
+            formatPrice(priceVal),
+            formatPrice(sumVal)
         ];
     });
 
@@ -1459,7 +1462,7 @@ async function sendTelegramPdf() {
         startY: y,
         head: head,
         body: body,
-        foot: [['', '', '', '', 'РАЗОМ:', `${curSym} ${convertedTotal.toFixed(2)}`]],
+        foot: [['', '', '', '', 'РАЗОМ:', `${curSym} ${formatPrice(convertedTotal)}`]],
         theme: 'grid',
         styles: {
             font: fontName,
