@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ТТН (Друк)</title>
+    <style>
+        /* A4 Print Setup */
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 13px;
+            color: #000;
+            background: #fff;
+            margin: 0;
+            padding: 0;
+            line-height: 1.2;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        .container {
+            width: 190mm; /* A4 width 210mm - 2*10mm margins */
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+        .date-line {
+            font-size: 15px;
+            margin-top: 5px;
+        }
+        .date-gap {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-width: 30px;
+            text-align: center;
+            padding: 0 5px;
+        }
+        .date-month-gap {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-width: 80px;
+            text-align: center;
+            padding: 0 5px;
+        }
+
+        .row {
+            display: flex;
+            margin-bottom: 10px;
+            align-items: flex-end;
+        }
+        .w-half { width: 50%; padding-right: 15px; }
+        .w-half:last-child { padding-right: 0; }
+        .w-full { width: 100%; }
+        
+        .field {
+            margin-bottom: 15px;
+        }
+        .field-label {
+            display: inline-block;
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        .field-value {
+            display: block;
+            border-bottom: 1px solid #000;
+            flex-grow: 1;
+            font-family: Arial, sans-serif; /* Values visually distinct */
+            font-size: 12px;
+            min-height: 18px;
+            text-align: center;
+        }
+        .field-flex {
+            display: flex;
+            align-items: flex-end;
+        }
+        .field-subtext {
+            font-size: 9px;
+            text-align: center;
+            color: #333;
+            margin-top: 2px;
+        }
+        
+        .table-title {
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 20px 0 10px 0;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 4px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        th {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 11px;
+            font-weight: normal;
+        }
+        td {
+            min-height: 20px;
+        }
+        .text-left { text-align: left; }
+        
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        .sig-block {
+            width: 45%;
+            text-align: center;
+        }
+        .sig-line {
+            border-bottom: 1px solid #000;
+            height: 20px;
+            margin-top: 10px;
+        }
+
+        /* Utility for print formatting */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: transparent; }
+        }
+        
+        /* Auto-print overlay */
+        .print-btn-overlay {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2563eb;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            border: none;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn-overlay no-print" onclick="window.print()">🖨️ ДРУКУВАТИ</button>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="title">ТОВАРНО-ТРАНСПОРТНА НАКЛАДНА</div>
+            <div class="date-line">
+                № <span class="date-gap" id="outDay"></span> 
+                <span class="date-month-gap" id="outMonth"></span> 
+                20<span class="date-gap" id="outYear"></span> року
+            </div>
+        </div>
+
+        <!-- Form fields block 1 -->
+        <div class="row">
+            <div class="w-half">
+                <div class="field">
+                    <div class="field-flex">
+                        <span class="field-label">Автомобіль</span>
+                        <span class="field-value" id="outCar"></span>
+                    </div>
+                    <div class="field-subtext">(марка, модель, тип, реєстраційний номер)</div>
+                </div>
+            </div>
+            <div class="w-half">
+                <div class="field">
+                    <div class="field-flex">
+                        <span class="field-label">Причіп/напівпричіп</span>
+                        <span class="field-value" id="outTrailer"></span>
+                    </div>
+                    <div class="field-subtext">(марка, модель, тип, реєстраційний номер)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="w-half">
+                <div class="field">
+                    <div class="field-flex">
+                        <span class="field-label">Автомобільний перевізник</span>
+                        <span class="field-value" id="outCarrier"></span>
+                    </div>
+                    <div class="field-subtext">(повне найменування / ПІБ, податковий номер)</div>
+                </div>
+            </div>
+            <div class="w-half">
+                <div class="field">
+                    <div class="field-flex">
+                        <span class="field-label">Водій</span>
+                        <span class="field-value" id="outDriver"></span>
+                    </div>
+                    <div class="field-subtext">(ПІБ, номер посвідчення водія)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-flex">
+                <span class="field-label">Вантажовідправник</span>
+                <span class="field-value" id="outSender"></span>
+            </div>
+            <div class="field-subtext">(повне найменування / ПІБ, податковий номер)</div>
+        </div>
+
+        <div class="field">
+            <div class="field-flex">
+                <span class="field-label">Вантажоодержувач</span>
+                <span class="field-value" id="outReceiver"></span>
+            </div>
+            <div class="field-subtext">(повне найменування / ПІБ, податковий номер)</div>
+        </div>
+
+        <div class="row">
+            <div class="w-half">
+                <div class="field">
+                    <div class="field-flex">
+                        <span class="field-label">Пункт навантаження</span>
+                        <span class="field-value" id="outLoadPoint"></span>
+                    </div>
+                    <div class="field-subtext">(місцезнаходження)</div>
+                </div>
+            </div>
+            <div class="w-half">
+                <div class="field">
+                    <div class="field-flex">
+                        <span class="field-label">Пункт розвантаження</span>
+                        <span class="field-value" id="outUnloadPoint"></span>
+                    </div>
+                    <div class="field-subtext">(місцезнаходження)</div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="page-break-after: always; /* Ensure table goes to next page ? Or fit? Let's rely on browser */"></div>
+
+        <!-- Cargo Table -->
+        <div class="table-title">ВІДОМОСТІ ПРО ВАНТАЖ</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 4%">№<br>з/п</th>
+                    <th style="width: 35%">Найменування вантажу</th>
+                    <th style="width: 8%">Одиниця<br>вимірювання</th>
+                    <th style="width: 8%">Кількість<br>місць</th>
+                    <th style="width: 10%">Ціна без<br>ПДВ за<br>одиницю,<br>грн</th>
+                    <th style="width: 10%">Загальна<br>сума з<br>ПДВ,<br>грн</th>
+                    <th style="width: 8%">Вид<br>пакув-<br>ання</th>
+                    <th style="width: 10%">Документи з<br>вантажем</th>
+                    <th style="width: 7%">Маса<br>брутто,<br>т</th>
+                </tr>
+                <tr>
+                    <th>1</th>
+                    <th>2</th>
+                    <th>3</th>
+                    <th>4</th>
+                    <th>5</th>
+                    <th>6</th>
+                    <th>7</th>
+                    <th>8</th>
+                    <th>9</th>
+                </tr>
+            </thead>
+            <tbody id="cargoBody">
+                <!-- Rows injected by JS -->
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="text-left" style="font-weight: bold;">Усього:</td>
+                    <td id="totalQty" style="font-weight: bold;"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- Signatures -->
+        <div class="signatures">
+            <div class="sig-block">
+                Здав (відповідальна особа вантажовідправника)
+                <div class="sig-line"></div>
+                <div class="field-subtext">(ПІБ, посада, підпис)</div>
+            </div>
+            <div class="sig-block">
+                Прийняв (відповідальна особа вантажоодержувача)
+                <div class="sig-line"></div>
+                <div class="field-subtext">(ПІБ, посада, підпис)</div>
+            </div>
+        </div>
+
+        <div class="table-title">ВАНТАЖНО-РОЗВАНТАЖУВАЛЬНІ ОПЕРАЦІЇ</div>
+        <table>
+            <thead>
+                <tr>
+                    <th rowspan="2" style="width: 25%">Операція</th>
+                    <th rowspan="2" style="width: 15%">Маса брутто, т</th>
+                    <th colspan="3">Час (год хв)</th>
+                    <th rowspan="2" style="width: 30%">Підпис відповідальної особи</th>
+                </tr>
+                <tr>
+                    <th style="width: 10%">прибуття</th>
+                    <th style="width: 10%">вибуття</th>
+                    <th style="width: 10%">простою</th>
+                </tr>
+                <tr>
+                    <th>1</th>
+                    <th>2</th>
+                    <th>3</th>
+                    <th>4</th>
+                    <th>5</th>
+                    <th>6</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-left">Завантаження</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td class="text-left">Розвантаження</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const months = ["січня", "лютого", "березня", "квітня", "травня", "червня", 
+                        "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"];
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const dataStr = sessionStorage.getItem('cso_ttn_data');
+            if (dataStr) {
+                const data = JSON.parse(dataStr);
+                
+                // Populate text fields
+                document.getElementById('outCar').textContent = data.car || '';
+                document.getElementById('outTrailer').textContent = data.trailer || '';
+                document.getElementById('outCarrier').textContent = data.carrier || '';
+                document.getElementById('outDriver').textContent = data.driver || '';
+                document.getElementById('outSender').textContent = data.sender || '';
+                document.getElementById('outReceiver').textContent = data.receiver || '';
+                document.getElementById('outLoadPoint').textContent = data.loadPoint || '';
+                document.getElementById('outUnloadPoint').textContent = data.unloadPoint || '';
+
+                // Date parsing (YYYY-MM-DD -> DD, Month, YY)
+                if (data.date) {
+                    const [year, month, day] = data.date.split('-');
+                    document.getElementById('outDay').innerHTML = '&nbsp;' + day + '&nbsp;';
+                    document.getElementById('outMonth').textContent = months[parseInt(month, 10) - 1] || '';
+                    document.getElementById('outYear').textContent = year.substring(2);
+                }
+
+                // Table items
+                const tbody = document.getElementById('cargoBody');
+                if (data.items && data.items.length > 0) {
+                    let totalQty = 0;
+                    data.items.forEach((item, index) => {
+                        const tr = document.createElement('tr');
+                        
+                        let name = item.name;
+                        if (item.description) name += `\n(${item.description})`;
+
+                        tr.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td class="text-left">${name}</td>
+                            <td>${item.unit || 'шт.'}</td>
+                            <td>${item.quantity}</td>
+                            <td style="color:#fff">_</td>
+                            <td style="color:#fff">_</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        `;
+                        tbody.appendChild(tr);
+                        
+                        totalQty += parseFloat(item.quantity) || 0;
+                    });
+                    document.getElementById('totalQty').textContent = totalQty;
+                }
+            }
+
+            // Optional auto print after brief delay so fonts load
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

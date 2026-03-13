@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v41');
+        const cached = localStorage.getItem('cso_products_cache_v42');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v41', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v42', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -2144,6 +2144,45 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnSave').addEventListener('click', saveCurrentProposal);
     document.getElementById('btnNewProposal').addEventListener('click', newProposal);
     document.getElementById('btnInvoice').addEventListener('click', handleInvoiceClick);
+    
+    // TTN Button
+    document.getElementById('btnTtn').addEventListener('click', () => {
+        readProposalForm();
+        if (state.proposal.items.length === 0) {
+            showToast('Додайте хоча б один товар', 'error');
+            return;
+        }
+        
+        // Pre-fill date with today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('ttnDate').value = today;
+        
+        // Try filling receiver if not filled
+        if (!document.getElementById('ttnReceiver').value && state.proposal.clientName) {
+            document.getElementById('ttnReceiver').value = state.proposal.clientName;
+        }
+        
+        openModal('ttnModal');
+    });
+
+    document.getElementById('btnGenerateTtn').addEventListener('click', () => {
+        const ttnData = {
+            date: document.getElementById('ttnDate').value,
+            car: document.getElementById('ttnCar').value,
+            trailer: document.getElementById('ttnTrailer').value,
+            carrier: document.getElementById('ttnCarrier').value,
+            driver: document.getElementById('ttnDriver').value,
+            sender: document.getElementById('ttnSender').value,
+            receiver: document.getElementById('ttnReceiver').value,
+            loadPoint: document.getElementById('ttnLoadPoint').value,
+            unloadPoint: document.getElementById('ttnUnloadPoint').value,
+            items: state.proposal.items
+        };
+        
+        sessionStorage.setItem('cso_ttn_data', JSON.stringify(ttnData));
+        window.open('/ttn.html', '_blank');
+        closeModal('ttnModal');
+    });
     document.getElementById('btnGenerateInvoice').addEventListener('click', generateSelectedInvoice);
     document.getElementById('btnPrint').addEventListener('click', printProposal);
     document.getElementById('btnTelegram').addEventListener('click', () => openModal('telegramModal'));
