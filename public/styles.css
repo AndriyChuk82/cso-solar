@@ -290,17 +290,30 @@ input, textarea, select, button { font-family: var(--font); }
 .input-unit, .input-qty { padding-left: 2px !important; padding-right: 2px !important; }
 
 #mainContent.is-exporting {
-    width: 1000px !important; /* Force a standard width for the capture engine */
+    width: 1000px !important; 
     min-width: 1000px !important;
     background: #ffffff !important;
     margin: 0 !important;
     padding: 30px !important;
     display: block !important;
     height: auto !important;
+    min-height: 100% !important;
+    max-height: none !important;
     overflow: visible !important;
 }
 
-.is-exporting body { height: auto !important; overflow: visible !important; background: #fff !important; }
+.is-exporting .main-content {
+    height: auto !important;
+    min-height: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+.is-exporting body { 
+    height: auto !important; 
+    overflow: visible !important; 
+    background: #fff !important; 
+}
 
 .is-exporting .no-print { display: none !important; }
 .is-exporting .proposal-row { display: flex !important; flex-direction: row !important; margin-bottom: 10px !important; }

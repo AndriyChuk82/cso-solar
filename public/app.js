@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v19');
+        const cached = localStorage.getItem('cso_products_cache_v21');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v19', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v21', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1326,43 +1326,36 @@ async function sendTelegramPdf() {
     const originalDisplay = printH.style.display;
     printH.style.display = 'flex';
     
-    // Create a hidden clone for rendering to avoid viewport clipping
-    const originalEl = document.getElementById('mainContent');
-    const el = originalEl.cloneNode(true);
-    el.style.position = 'absolute';
-    el.style.left = '-9999px';
-    el.style.top = '0';
-    el.style.width = '1000px'; // Force standard width
-    el.style.height = 'auto'; // Let it grow to full height
-    el.style.background = '#ffffff';
+    const el = document.getElementById('mainContent');
+    const originalScroll = window.scrollY;
+    
+    // Switch to export mode
+    document.body.classList.add('is-exporting');
     el.classList.add('is-exporting');
-    document.body.appendChild(el);
-
-    // Prepare styles in the clone
-    const cloneNoprint = el.querySelectorAll('.no-print');
-    cloneNoprint.forEach(item => item.style.display = 'none');
     
-    const clonePrintH = el.querySelector('#printHeader');
-    if (clonePrintH) clonePrintH.style.display = 'flex';
-    
-    const cloneNotes = el.querySelector('.proposal-notes-container');
-    if (cloneNotes) cloneNotes.style.display = 'none';
+    // Pre-capture preparation: ensure long items are visible
+    window.scrollTo(0, 0); 
+    const notes = document.querySelector('.proposal-notes-container');
+    if (notes) notes.style.display = 'none';
 
-    // Wait for images and reflow
-    await new Promise(r => setTimeout(r, 400));
+    // Wait for everything to settle
+    await prepImagesForCapture();
+    await new Promise(r => setTimeout(r, 500)); 
 
     const opt = {
-        margin: [10, 10, 10, 10],
+        margin: [10, 5, 10, 5],
         filename: `proposal.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
             scale: 2, 
             backgroundColor: '#ffffff', 
             useCORS: true,
+            allowTaint: true,
             scrollY: 0,
             scrollX: 0,
-            windowWidth: 1050,
-            height: el.scrollHeight // Force capture of the FULL cloned element
+            x: 0,
+            y: 0,
+            windowWidth: 1100
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
