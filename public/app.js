@@ -838,10 +838,13 @@ function renderProposalTable() {
         const sum = Math.round(item.price * item.quantity * 100) / 100;
         const sumCost = Math.round(item.costUSD * item.quantity * 100) / 100;
         
-        let nameInput = `<div class="row-name-text">${escHtml(item.name)}</div>`;
-        if (item.productId === 'custom') {
-            nameInput = `<input type="text" class="tbl-input" style="width:100%;font-weight:600;margin-bottom:2px" value="${escHtml(item.name)}" onchange="updateItemField(${i},'name',this.value)" placeholder="Назва товару">`;
-        }
+        let nameInput = `<div class="row-name-text editable-text" contenteditable="plaintext-only" spellcheck="false" 
+            data-placeholder="Назва товару"
+            onblur="updateItemField(${i},'name',this.innerText.trim())">${escHtml(item.name)}</div>`;
+        
+        let descInput = `<div class="row-name-desc editable-text" contenteditable="plaintext-only" spellcheck="false" 
+            data-placeholder="Опис"
+            onblur="updateItemField(${i},'description',this.innerText.trim())">${escHtml(item.description)}</div>`;
         
         // Editable cost field
         const costVal = convertCurrency(item.costUSD, state.activeCurrency).toFixed(2);
@@ -851,11 +854,7 @@ function renderProposalTable() {
             <td class="row-num">${i + 1}</td>
             <td>
                 ${nameInput}
-                <div class="${item.productId === 'custom' ? '' : 'row-name-desc'}">
-                    ${item.productId === 'custom' 
-                        ? `<input type="text" class="tbl-input" style="width:100%;font-size:0.75rem;color:var(--text-muted)" value="${escHtml(item.description)}" onchange="updateItemField(${i},'description',this.value)" placeholder="Опис">`
-                        : escHtml(item.description)}
-                </div>
+                ${descInput}
             </td>
             <td><input class="tbl-input input-unit" value="${escHtml(item.unit)}" onchange="updateItemField(${i},'unit',this.value)"></td>
             <td><input type="number" class="tbl-input input-qty" value="${item.quantity}" min="1" onchange="updateItemField(${i},'quantity',this.value)"></td>

@@ -419,6 +419,27 @@ textarea.form-input { resize: vertical; min-height: 48px; }
 .row-name-text { font-weight: 500; }
 .row-name-desc { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
 
+.editable-text {
+    cursor: text;
+    border: 1px dashed transparent;
+    transition: var(--transition);
+    outline: none;
+    padding: 2px 4px;
+    margin: -3px -5px;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 1.2em;
+}
+.editable-text[data-placeholder]:empty:before {
+    content: attr(data-placeholder);
+    color: #a0aec0;
+    pointer-events: none;
+    font-style: italic;
+}
+.editable-text:hover { border-color: var(--border-light); background: rgba(0,0,0,0.02); }
+.editable-text:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 2px var(--accent-glow); }
+
 .delete-btn {
     background: none; border: none; color: var(--text-muted);
     cursor: pointer; font-size: 1rem; padding: 4px;
@@ -622,6 +643,7 @@ body.hide-cost .cost-column { display: none; }
     .product-desc { font-size: 7.5pt !important; line-height: 1.2 !important; margin-top: 1px !important; color: #666 !important; }
     .product-model { font-size: 9.5pt !important; font-weight: 600 !important; }
     .tbl-input { background: none !important; border: none !important; padding: 0 !important; font-size: 9pt; color: #111 !important; }
+    .editable-text { border-color: transparent !important; background: none !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important; }
     .totals-row td { border-top: 2px solid #F59E0B; background: #fffbeb !important; }
     .totals-value { color: #b45309 !important; }
     .row-sum { color: #111 !important; }
