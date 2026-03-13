@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v44');
+        const cached = localStorage.getItem('cso_products_cache_v45');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v44', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v45', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -726,18 +726,23 @@ function formatMoney(value, currency) {
 function renderCatalog() {
     const container = document.getElementById('catalogList');
     const searchVal = (document.getElementById('catalogSearch')?.value || '').toLowerCase();
-
+    const searchWords = searchVal.split(/\s+/).filter(w => w.length > 0);
+    
     // extract main categories
     const mainCats = [...new Set(state.products.map(p => p.mainCategory))];
     
     let html = '';
     for (const mCat of mainCats) {
-        const mItems = state.products.filter(p => p.mainCategory === mCat && 
-             (searchVal === '' || p.model.toLowerCase().includes(searchVal) || (p.description || '').toLowerCase().includes(searchVal) || p.subCategory.toLowerCase().includes(searchVal))
-        );
+        const mItems = state.products.filter(p => {
+            if (searchWords.length === 0) return p.mainCategory === mCat;
+            if (p.mainCategory !== mCat) return false;
+            
+            const content = (p.model + ' ' + (p.description || '') + ' ' + p.subCategory + ' ' + p.mainCategory).toLowerCase();
+            return searchWords.every(word => content.includes(word));
+        });
         if (mItems.length === 0) continue;
 
-        const isMainExpanded = searchVal !== ''; // expanded if searching
+        const isMainExpanded = searchWords.length > 0; // expanded if searching
         const mainCollapsedClass = isMainExpanded ? '' : 'collapsed';
 
         html += `<div class="category-main">
