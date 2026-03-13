@@ -293,10 +293,8 @@
                 }
             }
 
-            // Auto print prompt after a slight delay
-            setTimeout(() => {
-                window.print();
-            }, 600);
+            // Close window after printing
+            window.onafterprint = () => window.close();
         });
     </script>
 </body>

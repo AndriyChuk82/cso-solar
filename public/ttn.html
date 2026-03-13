@@ -416,10 +416,8 @@
                 }
             }
 
-            // Optional auto print after brief delay so fonts load
-            setTimeout(() => {
-                window.print();
-            }, 500);
+            // Close window after printing
+            window.onafterprint = () => window.close();
         });
     </script>
 </body>
