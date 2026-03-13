@@ -9,6 +9,7 @@ import DailyBalance from './pages/DailyBalance';
 import Catalog from './pages/Catalog';
 import Warehouses from './pages/Warehouses';
 import Users from './pages/Users';
+import Categories from './pages/Categories';
 import Reports from './pages/Reports';
 
 function AppContent() {
@@ -54,6 +55,7 @@ function AppContent() {
             <>
               <Route path="/warehouses" element={<Warehouses />} />
               <Route path="/users" element={<Users />} />
+              <Route path="/categories" element={<Categories />} />
             </>
           )}
         </Route>

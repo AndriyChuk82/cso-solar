@@ -65,6 +65,9 @@ function doGet(e) {
       case 'getUsers':
         result = handleGetUsers();
         break;
+      case 'getCategories':
+        result = handleGetCategories();
+        break;
       default:
         result = { success: false, error: 'Невідома дія: ' + action };
     }
@@ -127,6 +130,12 @@ function doPost(e) {
         break;
       case 'updateUser':
         result = handleUpdateUser(data.user);
+        break;
+      case 'addCategory':
+        result = handleAddCategory(data.category);
+        break;
+      case 'updateCategory':
+        result = handleUpdateCategory(data.category);
         break;
       default:
         result = { success: false, error: 'Невідома дія: ' + action };
@@ -219,6 +228,53 @@ function handleUpdateUser(userData) {
       sheet.getRange(row, idx + 1).setValue(userData[header]);
     }
   });
+  return { success: true };
+}
+
+// ===== КАТЕГОРІЇ =====
+
+function getSheetWithInit(name, headers, defaultData) {
+  let sheet = getSpreadsheet().getSheetByName(name);
+  if (!sheet) {
+    sheet = getSpreadsheet().insertSheet(name);
+    sheet.appendRow(headers);
+    if (defaultData && defaultData.length > 0) {
+      defaultData.forEach(row => sheet.appendRow(row));
+    }
+  }
+  return sheet;
+}
+
+function handleGetCategories() {
+  const defaultCats = [
+    ['Інвертори', true],
+    ['АКБ', true],
+    ['Сонячні панелі', true],
+    ['Кріплення', true],
+    ['Розхідники', true]
+  ];
+  const sheet = getSheetWithInit('categories', ['name', 'active'], defaultCats);
+  return { success: true, categories: sheetToObjects(sheet) };
+}
+
+function handleAddCategory(category) {
+  const sheet = getSheet('categories');
+  const cats = sheetToObjects(sheet);
+  if (cats.some(c => String(c.name).toLowerCase() === String(category.name).toLowerCase())) {
+    return { success: false, error: 'Така категорія вже існує' };
+  }
+  sheet.appendRow([category.name, category.active !== false]);
+  return { success: true };
+}
+
+function handleUpdateCategory(category) {
+  const sheet = getSheet('categories');
+  const row = findRowByValue(sheet, 'name', category.oldName || category.name);
+  if (row === -1) return { success: false, error: 'Категорію не знайдено' };
+  
+  if (category.name) sheet.getRange(row, 1).setValue(category.name);
+  if (category.active !== undefined) sheet.getRange(row, 2).setValue(category.active);
+  
   return { success: true };
 }
 

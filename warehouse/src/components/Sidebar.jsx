@@ -32,6 +32,7 @@ export default function Sidebar({ isOpen, onClose }) {
       adminOnly: true,
       items: [
         { path: '/catalog', label: 'Каталог товарів', icon: '📦' },
+        { path: '/categories', label: 'Категорії', icon: '🏷️' },
         { path: '/warehouses', label: 'Склади', icon: '🏭' },
         { path: '/users', label: 'Користувачі', icon: '👥' },
       ]

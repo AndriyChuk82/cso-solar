@@ -12,6 +12,7 @@ export default function Catalog() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -33,10 +34,12 @@ export default function Catalog() {
   async function loadProducts() {
     setLoading(true);
     try {
-      const result = await getCatalog();
-      if (result?.success) {
-        setProducts(result.products || []);
-      }
+      const [pResult, cResult] = await Promise.all([
+        getCatalog(),
+        getCategories()
+      ]);
+      if (pResult?.success) setProducts(pResult.products || []);
+      if (cResult?.success) setCategories(cResult.categories || []);
     } catch (err) {
       console.error('Помилка:', err);
     } finally {
@@ -46,7 +49,8 @@ export default function Catalog() {
 
   function openAddModal() {
     setEditProduct(null);
-    setFormData({ name: '', article: '', unit: 'шт', category: '' });
+    const firstCat = categories.find(c => c.active)?.name || '';
+    setFormData({ name: '', article: '', unit: 'шт', category: firstCat });
     setShowModal(true);
   }
 
@@ -272,14 +276,18 @@ export default function Catalog() {
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Категорія</label>
-                  <input
-                    type="text"
-                    className="form-input"
+                  <label>Категорія *</label>
+                  <select
+                    className="form-select"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    placeholder="Опціонально"
-                  />
+                    required
+                  >
+                    <option value="">Оберіть категорію</option>
+                    {categories.filter(c => c.active || c.name === formData.category).map((c) => (
+                      <option key={c.name} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="modal-footer">

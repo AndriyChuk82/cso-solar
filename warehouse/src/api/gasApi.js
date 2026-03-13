@@ -160,3 +160,17 @@ export async function addUser(user) {
 export async function updateUser(user) {
   return gasRequest('updateUser', { user }, 'POST');
 }
+
+// ===== КАТЕГОРІЇ =====
+
+export async function getCategories() {
+  return gasRequest('getCategories');
+}
+
+export async function addCategory(category) {
+  return gasRequest('addCategory', { category }, 'POST');
+}
+
+export async function updateCategory(category) {
+  return gasRequest('updateCategory', { category }, 'POST');
+}
