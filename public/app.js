@@ -120,7 +120,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v7');
+        const cached = localStorage.getItem('cso_products_cache_v8');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -144,14 +144,16 @@ async function fetchSheetData(forceRefresh = false) {
         for (const sheet of CONFIG.SHEETS) {
             let data = null;
 
+            // Try PROXY / Direct Export first to get raw data (preserves text like "800 гот")
             try {
-                data = await fetchViaGviz(sheet.gid, sheet.name, sheet.mainCat, sheet.spreadsheetId);
-            } catch (e) { console.warn(`gviz failed for ${sheet.name}:`, e.message); }
+                data = await fetchViaProxy(sheet.gid, sheet.name, sheet.mainCat, sheet.spreadsheetId);
+            } catch (e) { console.warn(`proxy failed for ${sheet.name}:`, e.message); }
 
+            // Fallback to Google Visualization API if proxy fails
             if (!data || data.length === 0) {
                 try {
-                    data = await fetchViaProxy(sheet.gid, sheet.name, sheet.mainCat, sheet.spreadsheetId);
-                } catch (e) { console.warn(`proxy failed for ${sheet.name}:`, e.message); }
+                    data = await fetchViaGviz(sheet.gid, sheet.name, sheet.mainCat, sheet.spreadsheetId);
+                } catch (e) { console.warn(`gviz failed for ${sheet.name}:`, e.message); }
             }
 
             if (!data || data.length === 0) {
@@ -175,7 +177,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v7', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v8', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -403,7 +405,7 @@ function openManualCsvImport() {
         if (products.length > 0) {
             state.products = products;
             state.categories = [...new Set(products.map(p => p.mainCategory))];
-            localStorage.setItem('cso_products_cache_v7', JSON.stringify({
+            localStorage.setItem('cso_products_cache_v8', JSON.stringify({
                 products: state.products,
                 categories: state.categories,
                 timestamp: Date.now()
