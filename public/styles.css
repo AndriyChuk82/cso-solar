@@ -290,11 +290,11 @@ input, textarea, select, button { font-family: var(--font); }
 .input-unit, .input-qty { padding-left: 2px !important; padding-right: 2px !important; }
 
 #mainContent.is-exporting {
-    width: 1100px !important; 
-    min-width: 1100px !important;
+    width: 900px !important; 
+    min-width: 900px !important;
     background: #ffffff !important;
     margin: 0 !important;
-    padding: 25px !important;
+    padding: 20px !important;
     display: block !important;
     height: auto !important;
     min-height: 100% !important;
@@ -303,6 +303,20 @@ input, textarea, select, button { font-family: var(--font); }
     position: static !important;
     transform: none !important;
     left: 0 !important;
+    font-size: 9pt !important;
+}
+
+.is-exporting .proposal-table th, 
+.is-exporting .proposal-table td,
+.is-exporting .form-input,
+.is-exporting p,
+.is-exporting div {
+    font-size: 9pt !important;
+}
+
+.is-exporting .proposal-row {
+    margin-bottom: 5px !important;
+    gap: 8px !important;
 }
 
 .is-exporting .main-content {

@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v30');
+        const cached = localStorage.getItem('cso_products_cache_v31');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v30', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v31', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1348,13 +1348,13 @@ async function sendTelegramPdf() {
         filename: `proposal.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
-            scale: 0.85, 
+            scale: 1.0, 
             backgroundColor: '#ffffff', 
             useCORS: true,
             allowTaint: true,
             scrollY: 0,
             scrollX: 0,
-            windowWidth: 1100
+            windowWidth: 1400
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
