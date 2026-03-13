@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v32');
+        const cached = localStorage.getItem('cso_products_cache_v33');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v32', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v33', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1317,89 +1317,210 @@ async function sendTelegramPhoto() {
 }
 
 async function sendTelegramPdf() {
-    const showCost = state.settings.showCost;
-    document.body.classList.add('hide-cost');
-    const noprint = document.querySelectorAll('.no-print');
-    noprint.forEach(el => el.style.display = 'none');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 
-    const printHeader = document.getElementById('printHeader');
-    const originalPrintHeaderDisplay = printHeader.style.display;
-    printHeader.style.display = 'flex';
-
-    const el = document.getElementById('mainContent');
-    const originalScroll = window.scrollY;
-    
-    document.body.classList.add('is-exporting');
-    el.classList.add('is-exporting');
-    window.scrollTo(0, 0);
-
-    const notes = document.querySelector('.proposal-notes-container');
-    const originalNotesDisplay = notes ? notes.style.display : '';
-    if (notes) notes.style.display = 'none';
-
-    await prepImagesForCapture();
-    await new Promise(r => setTimeout(r, 300));
-
-    // KEY FIX: Apply CSS zoom to PHYSICALLY shrink the content
-    // This is the only parameter html2canvas actually respects for size reduction
-    const elWidth = el.scrollWidth || 900;
-    const a4UsableWidthPx = 756; // (210mm - 10mm margins) at 96dpi
-    const zoomFactor = Math.min(a4UsableWidthPx / elWidth, 1);
-    el.style.zoom = zoomFactor;
-    
-    // Wait for zoom to apply
-    await new Promise(r => setTimeout(r, 400));
-
-    const opt = {
-        margin: [10, 5, 10, 5],
-        filename: `proposal.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { 
-            scale: 2, 
-            backgroundColor: '#ffffff', 
-            useCORS: true,
-            allowTaint: true,
-            scrollY: 0,
-            scrollX: 0
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
-    };
-
+    // --- 1. Load Cyrillic font ---
+    let fontLoaded = false;
     try {
-        const blob = await html2pdf().set(opt).from(el).output('blob');
-
-        // Restore zoom and UI
-        el.style.zoom = '';
-        document.body.classList.remove('is-exporting');
-        el.classList.remove('is-exporting');
-        printHeader.style.display = originalPrintHeaderDisplay;
-        noprint.forEach(item => item.style.display = '');
-        if (notes) notes.style.display = originalNotesDisplay;
-        if (showCost) document.body.classList.remove('hide-cost');
-        else document.body.classList.add('hide-cost');
-        window.scrollTo(0, originalScroll);
-
-        // Send to Telegram
-        const reader = new FileReader();
-        const pdfBase64 = await new Promise((resolve) => {
-            reader.onloadend = () => resolve(reader.result.split(',')[1]);
-            reader.readAsDataURL(blob);
-        });
-        
-        const caption = `📋 ${state.proposal.number || 'КП'} | ${state.proposal.clientName || ''}`;
-        await telegramRequest('sendDocument', { pdfBase64, caption, filename: 'proposal.pdf' });
-    } catch (err) {
-        console.error('PDF Export Failed:', err);
-        el.style.zoom = '';
-        document.body.classList.remove('is-exporting');
-        el.classList.remove('is-exporting');
-        printHeader.style.display = originalPrintHeaderDisplay;
-        noprint.forEach(el => el.style.display = '');
-        if (showCost) document.body.classList.remove('hide-cost');
-        window.scrollTo(0, originalScroll);
-        throw err;
+        const resp = await fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf');
+        if (resp.ok) {
+            const buf = await resp.arrayBuffer();
+            const bytes = new Uint8Array(buf);
+            let binary = '';
+            const chunk = 0x8000;
+            for (let i = 0; i < bytes.length; i += chunk) {
+                binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+            }
+            const b64 = btoa(binary);
+            doc.addFileToVFS('DejaVuSans.ttf', b64);
+            doc.addFont('DejaVuSans.ttf', 'DejaVuSans', 'normal');
+            doc.setFont('DejaVuSans');
+            fontLoaded = true;
+        }
+    } catch (e) {
+        console.warn('Cyrillic font load failed, trying fallback', e);
     }
+
+    // Fallback: try bold variant for headers from same CDN
+    let boldLoaded = false;
+    try {
+        const resp2 = await fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf');
+        if (resp2.ok) {
+            const buf2 = await resp2.arrayBuffer();
+            const bytes2 = new Uint8Array(buf2);
+            let binary2 = '';
+            const chunk2 = 0x8000;
+            for (let i = 0; i < bytes2.length; i += chunk2) {
+                binary2 += String.fromCharCode.apply(null, bytes2.subarray(i, i + chunk2));
+            }
+            const b64_2 = btoa(binary2);
+            doc.addFileToVFS('DejaVuSans-Bold.ttf', b64_2);
+            doc.addFont('DejaVuSans-Bold.ttf', 'DejaVuSans', 'bold');
+            boldLoaded = true;
+        }
+    } catch (e) { /* skip bold */ }
+
+    const fontName = fontLoaded ? 'DejaVuSans' : 'helvetica';
+    const pageWidth = 210;
+    const marginL = 15;
+    const marginR = 15;
+    const usable = pageWidth - marginL - marginR;
+    let y = 15;
+
+    // --- 2. Header ---
+    // Logo (try to load)
+    try {
+        const logoImg = document.querySelector('.print-logo');
+        if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
+            const canvas = document.createElement('canvas');
+            canvas.width = logoImg.naturalWidth;
+            canvas.height = logoImg.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(logoImg, 0, 0);
+            const logoData = canvas.toDataURL('image/png');
+            doc.addImage(logoData, 'PNG', marginL, y, 30, 12);
+        }
+    } catch (e) { /* skip logo */ }
+
+    // Company name & info (right side)
+    doc.setFont(fontName, boldLoaded ? 'bold' : 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(245, 158, 11); // Orange accent
+    doc.text('КОМЕРЦІЙНА ПРОПОЗИЦІЯ', pageWidth - marginR, y + 5, { align: 'right' });
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont(fontName, 'normal');
+    doc.text('Офіс та склад: Львівська обл., м. Золочів, вул. І. Труша 1Б', pageWidth - marginR, y + 10, { align: 'right' });
+    doc.text('+38 067 374 08 02', pageWidth - marginR, y + 14, { align: 'right' });
+
+    // Orange line
+    y += 18;
+    doc.setDrawColor(245, 158, 11);
+    doc.setLineWidth(0.8);
+    doc.line(marginL, y, pageWidth - marginR, y);
+    y += 6;
+
+    // --- 3. Proposal info ---
+    doc.setFontSize(8);
+    doc.setTextColor(120, 120, 120);
+    doc.setFont(fontName, 'normal');
+    doc.text('НОМЕР', marginL, y);
+    doc.text('ДАТА', marginL + 50, y);
+    y += 4;
+    doc.setFontSize(10);
+    doc.setTextColor(30, 30, 30);
+    doc.text(state.proposal.number || '', marginL, y);
+    doc.text(state.proposal.date || '', marginL + 50, y);
+    y += 6;
+
+    doc.setFontSize(8);
+    doc.setTextColor(120, 120, 120);
+    doc.text('КЛІЄНТ', marginL, y);
+    doc.text('КОНТАКТ', marginL + 90, y);
+    y += 4;
+    doc.setFontSize(10);
+    doc.setTextColor(30, 30, 30);
+    doc.text(state.proposal.clientName || '', marginL, y);
+    doc.text(state.proposal.clientContact || '', marginL + 90, y);
+    y += 8;
+
+    // --- 4. Table via autotable ---
+    const cur = state.activeCurrency;
+    const curSym = cur === 'USD' ? '$' : '₴';
+    const showCost = state.settings.showCost;
+
+    const head = [['№', 'Назва товару', 'Од.', 'К-сть', `Ціна (${curSym})`, `Сума (${curSym})`]];
+    const body = state.proposal.items.map((it, idx) => {
+        const priceVal = convertCurrency(it.price, cur);
+        const sumVal = Math.round(priceVal * it.quantity * 100) / 100;
+        const name = it.description ? `${it.name}\n${it.description}` : it.name;
+        return [
+            idx + 1,
+            name,
+            it.unit || 'шт.',
+            it.quantity,
+            priceVal.toFixed(2),
+            sumVal.toFixed(2)
+        ];
+    });
+
+    // Total
+    const totalSum = state.proposal.items.reduce((s, it) => s + it.price * it.quantity, 0);
+    const convertedTotal = convertCurrency(totalSum, cur);
+
+    doc.autoTable({
+        startY: y,
+        head: head,
+        body: body,
+        foot: [['', '', '', '', 'РАЗОМ:', `${curSym} ${convertedTotal.toFixed(2)}`]],
+        theme: 'grid',
+        styles: {
+            font: fontName,
+            fontSize: 8.5,
+            cellPadding: 3,
+            textColor: [30, 30, 30],
+            lineColor: [220, 220, 220],
+            lineWidth: 0.3
+        },
+        headStyles: {
+            fillColor: [245, 245, 245],
+            textColor: [60, 60, 60],
+            fontStyle: boldLoaded ? 'bold' : 'normal',
+            fontSize: 7.5,
+            halign: 'center'
+        },
+        footStyles: {
+            fillColor: [255, 251, 235],
+            textColor: [180, 83, 9],
+            fontStyle: boldLoaded ? 'bold' : 'normal',
+            fontSize: 9.5,
+            halign: 'right'
+        },
+        columnStyles: {
+            0: { halign: 'center', cellWidth: 10 },
+            1: { cellWidth: 'auto' },
+            2: { halign: 'center', cellWidth: 18 },
+            3: { halign: 'center', cellWidth: 15 },
+            4: { halign: 'right', cellWidth: 25 },
+            5: { halign: 'right', cellWidth: 28 }
+        },
+        margin: { left: marginL, right: marginR },
+        didDrawPage: function(data) {
+            // Footer on each page
+            doc.setFontSize(7);
+            doc.setTextColor(180, 180, 180);
+            doc.text('CSO Solar — комерційна пропозиція', marginL, 290);
+            doc.text(`Стор. ${doc.internal.getNumberOfPages()}`, pageWidth - marginR, 290, { align: 'right' });
+        }
+    });
+
+    // --- 5. Notes & currency info ---
+    let finalY = doc.lastAutoTable.finalY + 8;
+
+    if (cur === 'UAH') {
+        doc.setFontSize(7.5);
+        doc.setTextColor(140, 140, 140);
+        doc.setFont(fontName, 'normal');
+        doc.text(`Курс: 1 USD = ${state.settings.usdToUah} UAH`, pageWidth - marginR, finalY, { align: 'right' });
+        finalY += 6;
+    }
+
+    if (state.proposal.notes) {
+        doc.setFontSize(8);
+        doc.setTextColor(80, 80, 80);
+        doc.text('Примітки:', marginL, finalY);
+        finalY += 4;
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        const noteLines = doc.splitTextToSize(state.proposal.notes, usable);
+        doc.text(noteLines, marginL, finalY);
+    }
+
+    // --- 6. Convert to base64 and send ---
+    const pdfBase64 = doc.output('datauristring').split(',')[1];
+    const caption = `📋 ${state.proposal.number || 'КП'} | ${state.proposal.clientName || ''}`;
+    await telegramRequest('sendDocument', { pdfBase64, caption, filename: 'proposal.pdf' });
 }
 
 function printProposal() {
