@@ -77,9 +77,30 @@ export default function Catalog() {
 
       if (editProduct) {
         productData.id = editProduct.id;
+        // При редагуванні перевіряємо чи не конфліктує нова назва з іншими існуючими товарами
+        const isDuplicate = products.some(p => 
+          p.id !== editProduct.id && 
+          p.name.trim().toLowerCase() === formData.name.trim().toLowerCase()
+        );
+        if (isDuplicate) {
+          setSaving(false);
+          return showToast('Товар з такою назвою вже існує', 'error');
+        }
         await updateProduct(productData);
       } else {
-        await addProduct(productData);
+        // При додаванні нового
+        const isDuplicate = products.some(p => 
+          p.name.trim().toLowerCase() === formData.name.trim().toLowerCase()
+        );
+        if (isDuplicate) {
+          setSaving(false);
+          return showToast('Товар з такою назвою вже існує', 'error');
+        }
+        const result = await addProduct(productData);
+        if (!result.success) {
+          setSaving(false);
+          return showToast(result.error || 'Помилка збереження', 'error');
+        }
       }
 
       setShowModal(false);

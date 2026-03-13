@@ -119,6 +119,8 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
         setShowAddForm(false);
         setQuery('');
         setShowResults(false);
+      } else {
+        alert(result.error || 'Помилка збереження');
       }
     } catch (err) {
       console.error('Помилка додавання товару:', err);

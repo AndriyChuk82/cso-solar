@@ -231,6 +231,14 @@ function handleGetCatalog() {
 
 function handleAddProduct(product) {
   const sheet = getSheet('catalog');
+  const products = sheetToObjects(sheet);
+  
+  // Перевірка на дублікат за назвою
+  const exists = products.find(p => String(p.name).trim().toLowerCase() === String(product.name).trim().toLowerCase());
+  if (exists) {
+    return { success: false, error: 'Товар з такою назвою вже існує в каталозі' };
+  }
+
   const id = generateUUID();
   sheet.appendRow([
     id,
