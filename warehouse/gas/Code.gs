@@ -187,7 +187,7 @@ function handleGetUser(email) {
   if (!email) return { success: false, error: 'Email не вказано' };
   const sheet = getSheet('users');
   const users = sheetToObjects(sheet);
-  const user = users.find(u => String(u.email).toLowerCase() === String(email).toLowerCase());
+  const user = users.find(u => String(u.email).trim().toLowerCase() === String(email).trim().toLowerCase());
   if (!user) return { success: false, error: 'Користувач не знайдений' };
   return { success: true, user: user };
 }
