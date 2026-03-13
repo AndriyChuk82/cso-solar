@@ -7,7 +7,8 @@ const CONFIG = {
         { name: 'Сонячні батареї', mainCat: 'Сонячні батареї', gid: 1271219295 },
         { name: 'Гібридні інвертори', mainCat: 'Інвертори', gid: 2087142679 },
         { name: 'Мережеві інвертори', mainCat: 'Інвертори', gid: 1047165471 },
-        { name: 'АКБ', mainCat: 'АКБ та BMS', gid: 1248903265 }
+        { name: 'АКБ', mainCat: 'АКБ та BMS', gid: 1248903265 },
+        { name: 'ДОВІДНИК_ТОВАРІВ', mainCat: 'Власний матеріал', gid: 0, spreadsheetId: '1FeQGoFst-DWfLemlXI_0T5xQzMsYdSMC2Xj9Cjs5C1U' }
     ],
     CORS_PROXIES: [
         '',
@@ -120,7 +121,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v10');
+        const cached = localStorage.getItem('cso_products_cache_v11');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -177,7 +178,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v10', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v11', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -290,6 +291,27 @@ function parseGvizJson(response, categoryName, mainCat) {
         const col6 = getVal(6);
         const col10 = getVal(10);
         
+        if (categoryName === 'ДОВІДНИК_ТОВАРІВ') {
+            const cat = col2;
+            if (cat !== 'Кріплення' && cat !== 'Розхідники') continue;
+            const modelName = col1;
+            if (!modelName) continue;
+            products.push({
+                id: generateStableId(mainCat + '_' + cat + '_' + modelName),
+                mainCategory: mainCat,
+                subCategory: cat,
+                category: `${mainCat} - ${cat}`,
+                model: modelName,
+                description: '',
+                unit: col3 || 'шт',
+                priceRaw: '0',
+                price: 0,
+                priceCurrency: 'USD',
+                priceUSD: 0
+            });
+            continue;
+        }
+
         // Default mappings (Гібридні інвертори, etc)
         let isCatRow = (col0 && !col1 && col0.length < 50);
         let model = col1;
@@ -492,6 +514,27 @@ function parseSheetCSV(csv, categoryName, mainCat) {
         const col5 = (row[5] || '').trim();
         const col6 = (row[6] || '').trim();
         const col10 = (row[10] || '').trim();
+
+        if (categoryName === 'ДОВІДНИК_ТОВАРІВ') {
+            const cat = col2;
+            if (cat !== 'Кріплення' && cat !== 'Розхідники') continue;
+            const modelName = col1;
+            if (!modelName) continue;
+            products.push({
+                id: generateStableId(mainCat + '_' + cat + '_' + modelName),
+                mainCategory: mainCat,
+                subCategory: cat,
+                category: `${mainCat} - ${cat}`,
+                model: modelName,
+                description: '',
+                unit: col3 || 'шт',
+                priceRaw: '0',
+                price: 0,
+                priceCurrency: 'USD',
+                priceUSD: 0
+            });
+            continue;
+        }
 
         // Default mappings (Гібридні інвертори, etc)
         let isCatRow = (col0 && !col1 && col0.length < 50);
