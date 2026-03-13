@@ -278,47 +278,54 @@
 
     <!-- ===== TTN MODAL ===== -->
     <div class="modal-overlay" id="ttnModal">
-        <div class="modal">
+        <div class="modal modal-wide">
             <div class="modal-header">
                 <h3>🚚 Формування ТТН</h3>
                 <button class="modal-close" data-close="ttnModal">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label>Дата</label>
-                    <input type="date" id="ttnDate" class="form-input">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Дата</label>
+                        <input type="date" id="ttnDate" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Автомобіль (Марка та номер)</label>
+                        <input type="text" id="ttnCar" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Причіп/напівпричіп (Марка та номер)</label>
+                        <input type="text" id="ttnTrailer" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Автомобільний перевізник (ПІБ та ІПН)</label>
+                        <input type="text" id="ttnCarrier" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Водій (ПІБ, посвідчення)</label>
+                        <input type="text" id="ttnDriver" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Вантажовідправник</label>
+                        <input type="text" id="ttnSender" class="form-input" value='ТОВ "Центр сервісного обслуговування" ЄДРПОУ 31758743'>
+                    </div>
+                    <div class="form-group">
+                        <label>Вантажоодержувач (ПІБ та ІПН)</label>
+                        <input type="text" id="ttnReceiver" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Пункт навантаження</label>
+                        <input type="text" id="ttnLoadPoint" class="form-input" value="Золочів, вул. Труша І. 1Б">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Пункт розвантаження</label>
+                        <input type="text" id="ttnUnloadPoint" class="form-input">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Автомобіль (Марка та номер)</label>
-                    <input type="text" id="ttnCar" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Причіп/напівпричіп (Марка та номер)</label>
-                    <input type="text" id="ttnTrailer" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Автомобільний перевізник (ПІБ та ІПН)</label>
-                    <input type="text" id="ttnCarrier" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Водій (ПІБ, посвідчення)</label>
-                    <input type="text" id="ttnDriver" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Вантажовідправник</label>
-                    <input type="text" id="ttnSender" class="form-input" value='ТОВ "Центр сервісного обслуговування" ЄДРПОУ 31758743'>
-                </div>
-                <div class="form-group">
-                    <label>Вантажоодержувач (ПІБ та ІПН)</label>
-                    <input type="text" id="ttnReceiver" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Пункт навантаження</label>
-                    <input type="text" id="ttnLoadPoint" class="form-input" value="Золочів, вул. Труша І. 1Б">
-                </div>
-                <div class="form-group">
-                    <label>Пункт розвантаження</label>
-                    <input type="text" id="ttnUnloadPoint" class="form-input">
+                <hr class="modal-divider">
+                <h4>Вантаж (товари):</h4>
+                <div id="ttnItemsContainer">
+                    <!-- Items dynamically injected here -->
                 </div>
             </div>
             <div class="modal-footer">
@@ -560,6 +567,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="app.js?v=45"></script>
+    <script src="app.js?v=46"></script>
 </body>
 </html>

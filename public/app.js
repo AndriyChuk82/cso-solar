@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v45');
+        const cached = localStorage.getItem('cso_products_cache_v46');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v45', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v46', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -2167,10 +2167,52 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('ttnReceiver').value = state.proposal.clientName;
         }
         
+        // Populate TTN items list
+        const container = document.getElementById('ttnItemsContainer');
+        container.innerHTML = '';
+        state.proposal.items.forEach((item, index) => {
+            const wrap = document.createElement('div');
+            wrap.className = 'warranty-item-row'; // reuse the same styling
+            wrap.dataset.idx = index;
+            
+            // Delete button
+            const btnDelete = document.createElement('button');
+            btnDelete.className = 'btn-remove-item';
+            btnDelete.innerHTML = '&times;';
+            btnDelete.title = 'Видалити з ТТН';
+            btnDelete.onclick = () => {
+                wrap.remove();
+                if (container.children.length === 0) {
+                    showToast('Вантаж не може бути порожнім', 'warning');
+                }
+            };
+            wrap.appendChild(btnDelete);
+            
+            const title = document.createElement('div');
+            title.style.fontWeight = 'bold';
+            title.style.fontSize = '0.9rem';
+            title.style.paddingRight = '30px'; 
+            title.textContent = `${item.name} — ${item.quantity} ${item.unit || 'шт.'}`;
+            wrap.appendChild(title);
+            
+            container.appendChild(wrap);
+        });
+        
         openModal('ttnModal');
     });
 
     document.getElementById('btnGenerateTtn').addEventListener('click', () => {
+        const selectedItems = [];
+        document.querySelectorAll('#ttnItemsContainer .warranty-item-row').forEach(wrap => {
+            const idx = parseInt(wrap.dataset.idx);
+            selectedItems.push(state.proposal.items[idx]);
+        });
+
+        if (selectedItems.length === 0) {
+            showToast('Виберіть хоча б один товар', 'error');
+            return;
+        }
+
         const ttnData = {
             date: document.getElementById('ttnDate').value,
             car: document.getElementById('ttnCar').value,
@@ -2181,7 +2223,7 @@ document.addEventListener('DOMContentLoaded', () => {
             receiver: document.getElementById('ttnReceiver').value,
             loadPoint: document.getElementById('ttnLoadPoint').value,
             unloadPoint: document.getElementById('ttnUnloadPoint').value,
-            items: state.proposal.items
+            items: selectedItems
         };
         
         sessionStorage.setItem('cso_ttn_data', JSON.stringify(ttnData));
