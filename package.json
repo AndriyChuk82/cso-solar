@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "vercel dev",
-    "build": "echo 'Static site — no build needed'",
+    "build": "cd warehouse && npm install && npm run build",
     "hash-password": "node scripts/hash-password.js"
   },
   "dependencies": {

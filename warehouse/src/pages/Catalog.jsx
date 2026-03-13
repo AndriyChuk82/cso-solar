@@ -1,0 +1,278 @@
+import { useState, useEffect } from 'react';
+import { getCatalog, addProduct, updateProduct, archiveProduct } from '../api/gasApi';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import CONFIG from '../config';
+
+/**
+ * Управління каталогом товарів.
+ * Повне керування — лише адміністратор.
+ */
+export default function Catalog() {
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [editProduct, setEditProduct] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    article: '',
+    unit: 'шт',
+    category: ''
+  });
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  async function loadProducts() {
+    setLoading(true);
+    try {
+      const result = await getCatalog();
+      if (result?.success) {
+        setProducts(result.products || []);
+      }
+    } catch (err) {
+      console.error('Помилка:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function openAddModal() {
+    setEditProduct(null);
+    setFormData({ name: '', article: '', unit: 'шт', category: '' });
+    setShowModal(true);
+  }
+
+  function openEditModal(product) {
+    setEditProduct(product);
+    setFormData({
+      name: product.name,
+      article: product.article,
+      unit: product.unit,
+      category: product.category || ''
+    });
+    setShowModal(true);
+  }
+
+  async function handleSave(e) {
+    e.preventDefault();
+    if (!formData.name.trim()) return;
+
+    setSaving(true);
+    try {
+      const productData = {
+        name: formData.name,
+        article: formData.article,
+        unit: formData.unit,
+        category: formData.category,
+        active: true
+      };
+
+      if (editProduct) {
+        productData.id = editProduct.id;
+        await updateProduct(productData);
+      } else {
+        await addProduct(productData);
+      }
+
+      setShowModal(false);
+      showToast(editProduct ? 'Товар оновлено' : 'Товар додано', 'success');
+      loadProducts();
+    } catch (err) {
+      console.error('Помилка:', err);
+      showToast('Помилка збереження', 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleArchive(productId) {
+    if (!confirm('Архівувати цей товар? Він зникне зі списку, але історія операцій збережеться.')) return;
+    try {
+      await archiveProduct(productId);
+      showToast('Товар перенесено в архів', 'success');
+      loadProducts();
+    } catch (err) {
+      console.error('Помилка:', err);
+      showToast('Помилка архівації', 'error');
+    }
+  }
+
+  const filtered = products.filter((p) => {
+    if (!showArchived && !p.active) return false;
+    if (!search.trim()) return true;
+    const words = search.toLowerCase().split(/\s+/);
+    const content = `${p.name} ${p.article} ${p.category}`.toLowerCase();
+    return words.every((w) => content.includes(w));
+  });
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">📦 Каталог товарів</h1>
+          <p className="page-subtitle">Управління переліком товарів</p>
+        </div>
+        {user?.isAdmin && (
+          <button className="btn btn-primary" onClick={openAddModal}>
+            ➕ Додати товар
+          </button>
+        )}
+      </div>
+
+      <div className="filters-bar">
+        <div className="form-group" style={{ flex: 1 }}>
+          <label>Пошук</label>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="За назвою або артикулом..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.82rem' }}>
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={(e) => setShowArchived(e.target.checked)}
+            />
+            Показати архівні
+          </label>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="data-table-wrap">
+          {loading ? (
+            <div className="empty-state">
+              <div className="spinner" style={{ margin: '0 auto' }} />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="empty-state">
+              <span className="empty-icon">📦</span>
+              <p>Товарів не знайдено</p>
+            </div>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Назва</th>
+                  <th>Артикул</th>
+                  <th>Од. виміру</th>
+                  <th>Категорія</th>
+                  <th>Статус</th>
+                  {user?.isAdmin && <th></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((p) => (
+                  <tr key={p.id} style={{ opacity: p.active ? 1 : 0.5 }}>
+                    <td style={{ fontWeight: 600 }}>{p.name}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>{p.article || '—'}</td>
+                    <td>{p.unit}</td>
+                    <td>{p.category || '—'}</td>
+                    <td>
+                      <span className={`badge ${p.active ? 'badge-income' : 'badge-expense'}`}>
+                        {p.active ? 'Активний' : 'Архів'}
+                      </span>
+                    </td>
+                    {user?.isAdmin && (
+                      <td>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button className="btn btn-ghost btn-sm" onClick={() => openEditModal(p)}>✏️</button>
+                          {p.active && (
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => handleArchive(p.id)}
+                              style={{ color: 'var(--danger)' }}
+                            >🗄️</button>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {/* Модалка додавання/редагування */}
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{editProduct ? '✏️ Редагувати товар' : '➕ Новий товар'}</h3>
+              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+            </div>
+            <form onSubmit={handleSave}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Назва товару *</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Артикул</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={formData.article}
+                      onChange={(e) => setFormData({ ...formData, article: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Одиниця виміру</label>
+                    <select
+                      className="form-select"
+                      value={formData.unit}
+                      onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                    >
+                      {CONFIG.UNITS.map((u) => (
+                        <option key={u} value={u}>{u}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Категорія</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    placeholder="Опціонально"
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>
+                  Скасувати
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? 'Збереження...' : 'Зберегти'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
