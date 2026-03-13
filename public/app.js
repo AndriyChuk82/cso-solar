@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v34');
+        const cached = localStorage.getItem('cso_products_cache_v35');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v34', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v35', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1320,10 +1320,10 @@ async function sendTelegramPdf() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 
-    // --- 1. Load Cyrillic font ---
+    // --- 1. Load Cyrillic font (lightweight ~170KB) ---
     let fontLoaded = false;
     try {
-        const resp = await fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf');
+        const resp = await fetch('https://cdn.jsdelivr.net/gh/nicholasgasior/gfonts@master/fonts/roboto/Roboto-Regular.ttf');
         if (resp.ok) {
             const buf = await resp.arrayBuffer();
             const bytes = new Uint8Array(buf);
@@ -1333,35 +1333,17 @@ async function sendTelegramPdf() {
                 binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
             }
             const b64 = btoa(binary);
-            doc.addFileToVFS('DejaVuSans.ttf', b64);
-            doc.addFont('DejaVuSans.ttf', 'DejaVuSans', 'normal');
-            doc.setFont('DejaVuSans');
+            doc.addFileToVFS('Roboto-Regular.ttf', b64);
+            doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+            doc.setFont('Roboto');
             fontLoaded = true;
         }
     } catch (e) {
-        console.warn('Cyrillic font load failed, trying fallback', e);
+        console.warn('Font load failed:', e);
     }
 
-    // Fallback: try bold variant for headers from same CDN
-    let boldLoaded = false;
-    try {
-        const resp2 = await fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf');
-        if (resp2.ok) {
-            const buf2 = await resp2.arrayBuffer();
-            const bytes2 = new Uint8Array(buf2);
-            let binary2 = '';
-            const chunk2 = 0x8000;
-            for (let i = 0; i < bytes2.length; i += chunk2) {
-                binary2 += String.fromCharCode.apply(null, bytes2.subarray(i, i + chunk2));
-            }
-            const b64_2 = btoa(binary2);
-            doc.addFileToVFS('DejaVuSans-Bold.ttf', b64_2);
-            doc.addFont('DejaVuSans-Bold.ttf', 'DejaVuSans', 'bold');
-            boldLoaded = true;
-        }
-    } catch (e) { /* skip bold */ }
-
-    const fontName = fontLoaded ? 'DejaVuSans' : 'helvetica';
+    const fontName = fontLoaded ? 'Roboto' : 'helvetica';
+    const boldStyle = 'normal'; // Use normal weight throughout (no bold font loaded)
     const pageWidth = 210;
     const marginL = 15;
     const marginR = 15;
@@ -1390,7 +1372,7 @@ async function sendTelegramPdf() {
     } catch (e) { console.warn('Logo skip:', e); }
 
     // Company name & info (right side)
-    doc.setFont(fontName, boldLoaded ? 'bold' : 'normal');
+    doc.setFont(fontName, 'normal');
     doc.setFontSize(11);
     doc.setTextColor(245, 158, 11); // Orange accent
     doc.text('КОМЕРЦІЙНА ПРОПОЗИЦІЯ', pageWidth - marginR, y + 5, { align: 'right' });
