@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v36');
+        const cached = localStorage.getItem('cso_products_cache_v37');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v36', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v37', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1358,17 +1358,27 @@ async function sendTelegramPdf() {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = () => {
+                const targetWidth = 300; 
+                const scale = Math.min(1, targetWidth / img.naturalWidth);
+                const w = img.naturalWidth * scale;
+                const h = img.naturalHeight * scale;
+                
                 const canvas = document.createElement('canvas');
-                canvas.width = img.naturalWidth;
-                canvas.height = img.naturalHeight;
+                canvas.width = w;
+                canvas.height = h;
                 const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-                resolve(canvas.toDataURL('image/png'));
+                
+                // Fill with white since PNG might be transparent (JPEG doesn't support alpha)
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, w, h);
+                ctx.drawImage(img, 0, 0, w, h);
+                
+                resolve(canvas.toDataURL('image/jpeg', 0.85)); // Compressed JPEG!
             };
             img.onerror = () => reject('Logo load failed');
             img.src = logoUrl;
         });
-        doc.addImage(logoData, 'PNG', marginL, y, 30, 12);
+        doc.addImage(logoData, 'JPEG', marginL, y, 30, 12);
     } catch (e) { console.warn('Logo skip:', e); }
 
     // Company name & info (right side)
