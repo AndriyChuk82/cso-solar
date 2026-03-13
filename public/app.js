@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v35');
+        const cached = localStorage.getItem('cso_products_cache_v36');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v35', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v36', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1320,29 +1320,29 @@ async function sendTelegramPdf() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 
-    // --- 1. Load Cyrillic font (lightweight ~170KB) ---
+    // --- 1. Load Micro Cyrillic font (PT Sans ~50KB) ---
+    // This is tiny enough to pass through Vercel's strict 1MB JSON body limits easily
     let fontLoaded = false;
     try {
-        const resp = await fetch('https://cdn.jsdelivr.net/gh/nicholasgasior/gfonts@master/fonts/roboto/Roboto-Regular.ttf');
+        const resp = await fetch('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/ptsans/PTSans-Regular.ttf'); 
         if (resp.ok) {
             const buf = await resp.arrayBuffer();
             const bytes = new Uint8Array(buf);
             let binary = '';
-            const chunk = 0x8000;
-            for (let i = 0; i < bytes.length; i += chunk) {
-                binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+            for (let i = 0; i < bytes.length; i += 10000) {
+                binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 10000));
             }
             const b64 = btoa(binary);
-            doc.addFileToVFS('Roboto-Regular.ttf', b64);
-            doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
-            doc.setFont('Roboto');
+            doc.addFileToVFS('PTSans.ttf', b64);
+            doc.addFont('PTSans.ttf', 'PTSans', 'normal');
+            doc.setFont('PTSans');
             fontLoaded = true;
         }
     } catch (e) {
         console.warn('Font load failed:', e);
     }
 
-    const fontName = fontLoaded ? 'Roboto' : 'helvetica';
+    const fontName = fontLoaded ? 'PTSans' : 'helvetica';
     const boldStyle = 'normal'; // Use normal weight throughout (no bold font loaded)
     const pageWidth = 210;
     const marginL = 15;
