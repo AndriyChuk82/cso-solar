@@ -1,3 +1,11 @@
+export const config = {
+    api: {
+        bodyParser: {
+            sizeLimit: '10mb',
+        },
+    },
+};
+
 import { jwtVerify } from 'jose';
 
 // Verify auth before processing
@@ -60,11 +68,13 @@ export default async function handler(req, res) {
                 body: formData
             });
         } else if (action === 'sendDocument') {
-            // Convert base64 PDF to blob
-            const pdfBuffer = Buffer.from(pdfBase64, 'base64');
+            const { base64: genericBase64, contentType } = req.body;
+            const docBase64 = pdfBase64 || genericBase64;
+            const mimeType = contentType || 'application/pdf';
+            const docBuffer = Buffer.from(docBase64, 'base64');
             const formData = new FormData();
             formData.append('chat_id', targetChatId);
-            formData.append('document', new Blob([pdfBuffer], { type: 'application/pdf' }), filename || 'proposal.pdf');
+            formData.append('document', new Blob([docBuffer], { type: mimeType }), filename || 'proposal.pdf');
             if (caption) formData.append('caption', caption);
 
             response = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
