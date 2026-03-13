@@ -1326,18 +1326,30 @@ async function sendTelegramPdf() {
     const originalDisplay = printH.style.display;
     printH.style.display = 'flex';
     
-    const el = document.getElementById('mainContent');
-    document.body.classList.add('is-exporting');
+    // Create a hidden clone for rendering to avoid viewport clipping
+    const originalEl = document.getElementById('mainContent');
+    const el = originalEl.cloneNode(true);
+    el.style.position = 'absolute';
+    el.style.left = '-9999px';
+    el.style.top = '0';
+    el.style.width = '1000px'; // Force standard width
+    el.style.height = 'auto'; // Let it grow to full height
+    el.style.background = '#ffffff';
     el.classList.add('is-exporting');
+    document.body.appendChild(el);
 
-    const notes = document.querySelector('.proposal-notes-container');
-    if (notes) notes.style.display = 'none';
-
-    // Convert logo to data URL to avoid tainting
-    await prepImagesForCapture();
+    // Prepare styles in the clone
+    const cloneNoprint = el.querySelectorAll('.no-print');
+    cloneNoprint.forEach(item => item.style.display = 'none');
     
-    // Give browser a moment to reflow
-    await new Promise(r => setTimeout(r, 250));
+    const clonePrintH = el.querySelector('#printHeader');
+    if (clonePrintH) clonePrintH.style.display = 'flex';
+    
+    const cloneNotes = el.querySelector('.proposal-notes-container');
+    if (cloneNotes) cloneNotes.style.display = 'none';
+
+    // Wait for images and reflow
+    await new Promise(r => setTimeout(r, 400));
 
     const opt = {
         margin: [10, 10, 10, 10],
@@ -1348,7 +1360,9 @@ async function sendTelegramPdf() {
             backgroundColor: '#ffffff', 
             useCORS: true,
             scrollY: 0,
-            windowWidth: 1200
+            scrollX: 0,
+            windowWidth: 1050,
+            height: el.scrollHeight // Force capture of the FULL cloned element
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
@@ -1357,18 +1371,12 @@ async function sendTelegramPdf() {
     try {
         const blob = await html2pdf().set(opt).from(el).output('blob');
 
+        // Cleanup clone
+        document.body.removeChild(el);
+        
         // Restore UI
-        document.body.classList.remove('is-exporting');
-        el.classList.remove('is-exporting');
         printH.style.display = originalDisplay;
-        printH.style.flexDirection = '';
-        printH.style.justifyContent = '';
-        printH.style.alignItems = '';
-        printH.style.marginBottom = '';
-        printH.style.paddingBottom = '';
-        printH.style.borderBottom = '';
         noprint.forEach(el => el.style.display = '');
-        if (notes) notes.style.display = '';
         if (showCost) document.body.classList.remove('hide-cost');
         else document.body.classList.add('hide-cost');
 
