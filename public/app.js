@@ -120,7 +120,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v6');
+        const cached = localStorage.getItem('cso_products_cache_v7');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -175,7 +175,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v6', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v7', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -403,7 +403,7 @@ function openManualCsvImport() {
         if (products.length > 0) {
             state.products = products;
             state.categories = [...new Set(products.map(p => p.mainCategory))];
-            localStorage.setItem('cso_products_cache_v6', JSON.stringify({
+            localStorage.setItem('cso_products_cache_v7', JSON.stringify({
                 products: state.products,
                 categories: state.categories,
                 timestamp: Date.now()
@@ -562,6 +562,14 @@ function parsePrice(str) {
     let currency = 'USD';
 
     if (s.includes('€')) currency = 'EUR';
+
+    // Handle "800 гот / 960 з ПДВ" or similar - extract the first number
+    if (s.toLowerCase().includes('гот') || s.includes('/')) {
+        const match = s.match(/[\d\s,.]+/);
+        if (match) {
+            s = match[0];
+        }
+    }
 
     s = s.replace(/[$€]/g, '').trim();
     s = s.replace(/\s/g, '');
