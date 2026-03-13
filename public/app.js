@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v17');
+        const cached = localStorage.getItem('cso_products_cache_v19');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v17', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v19', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1170,6 +1170,8 @@ async function sendToTelegram() {
             await sendTelegramText();
         } else if (format === 'photo') {
             await sendTelegramPhoto();
+        } else if (format === 'xls') {
+            await sendTelegramXls();
         } else {
             await sendTelegramPdf();
         }
@@ -1217,8 +1219,8 @@ async function telegramRequest(action, data) {
                 throw new Error(errData.description || 'Telegram API error');
             }
         } else if (action === 'sendDocument') {
-            const pdfData = Uint8Array.from(atob(data.pdfBase64), c => c.charCodeAt(0));
-            const blob = new Blob([pdfData], { type: 'application/pdf' });
+            const dataBytes = Uint8Array.from(atob(data.base64 || data.pdfBase64), c => c.charCodeAt(0));
+            const blob = new Blob([dataBytes], { type: data.contentType || 'application/pdf' });
             const fd = new FormData();
             fd.append('chat_id', chatId);
             fd.append('document', blob, data.filename || 'proposal.pdf');
@@ -1338,19 +1340,15 @@ async function sendTelegramPdf() {
     await new Promise(r => setTimeout(r, 250));
 
     const opt = {
-        margin: [5, 5, 5, 5],
+        margin: [10, 10, 10, 10],
         filename: `proposal.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
-            scale: 1.5, // slightly lower scale for better memory support
+            scale: 2, 
             backgroundColor: '#ffffff', 
             useCORS: true,
-            allowTaint: true,
             scrollY: 0,
-            scrollX: 0,
-            x: 0,
-            y: 0,
-            windowWidth: 950
+            windowWidth: 1200
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
@@ -1386,17 +1384,78 @@ async function sendTelegramPdf() {
     } catch (err) {
         document.body.classList.remove('is-exporting');
         printH.style.display = originalDisplay;
-        printH.style.flexDirection = '';
-        printH.style.justifyContent = '';
-        printH.style.alignItems = '';
-        printH.style.marginBottom = '';
-        printH.style.paddingBottom = '';
-        printH.style.borderBottom = '';
         noprint.forEach(el => el.style.display = '');
         if (notes) notes.style.display = '';
         if (showCost) document.body.classList.remove('hide-cost');
         throw err;
     }
+}
+
+async function sendTelegramXls() {
+    if (typeof XLSX === 'undefined') throw new Error('Бібліотека Excel не завантажена');
+    const wb = generateXlsWorkbook();
+    const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+    
+    const rawNum = state.proposal.number || 'kp';
+    const safeNum = rawNum.replace(/[^a-zA-Z0-9а-яА-ЯіїєґІЇЄҐ-]/g, '_');
+    const filename = `${safeNum}.xlsx`;
+    const caption = `📊 ${state.proposal.number || 'КП'} | ${state.proposal.clientName || ''}`;
+
+    await telegramRequest('sendDocument', { 
+        base64: b64, 
+        caption, 
+        filename, 
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+}
+
+function generateXlsWorkbook() {
+    const cur = state.activeCurrency;
+    const curSym = cur === 'USD' ? '$' : 'грн';
+
+    const rows = [
+        ["CSO Solar"],
+        ["Офіс та склад: Львівська обл., м. Золочів, вул. І. Труша 1Б"],
+        ["+38 067 374 08 02"],
+        [],
+        ["КОМЕРЦІЙНА ПРОПОЗИЦІЯ"],
+        [],
+        ["Номер:", state.proposal.number || "", "", "Дата:", state.proposal.date || ""],
+        ["Клієнт:", state.proposal.clientName || "", "", "Контакт:", state.proposal.clientContact || ""],
+        [],
+        ["№", "Назва товару", "Од.", "К-сть", `Ціна (${curSym})`, `Сума (${curSym})`]
+    ];
+
+    state.proposal.items.forEach((it, idx) => {
+        const priceValue = convertCurrency(it.price, cur);
+        const sumValue = Math.round(priceValue * it.quantity * 100) / 100;
+        const nameWithDesc = it.description ? `${it.name}\n${it.description}` : it.name;
+        rows.push([idx + 1, nameWithDesc, it.unit, it.quantity, priceValue, sumValue]);
+    });
+
+    const totalSum = state.proposal.items.reduce((s, it) => s + it.price * it.quantity, 0);
+    const convertedTotal = convertCurrency(totalSum, cur);
+    rows.push([], ["", "", "", "", "РАЗОМ:", convertedTotal]);
+
+    if (state.proposal.notes) {
+        rows.push([], ["Примітки:", state.proposal.notes]);
+    }
+    if (cur === 'UAH') {
+        rows.push([], [`Курс: 1 USD = ${state.settings.usdToUah} UAH`]);
+    }
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } },
+        { s: { r: 4, c: 0 }, e: { r: 4, c: 5 } }
+    ];
+    ws['!cols'] = [{ wch: 5 }, { wch: 55 }, { wch: 8 }, { wch: 8 }, { wch: 14 }, { wch: 14 }];
+    
+    XLSX.utils.book_append_sheet(wb, ws, "Пропозиція");
+    return wb;
 }
 
 function exportToXls() {
