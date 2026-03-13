@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v31');
+        const cached = localStorage.getItem('cso_products_cache_v32');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v31', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v32', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1329,11 +1329,8 @@ async function sendTelegramPdf() {
     const el = document.getElementById('mainContent');
     const originalScroll = window.scrollY;
     
-    // Switch to export mode ON THE ORIGINAL ELEMENT
     document.body.classList.add('is-exporting');
     el.classList.add('is-exporting');
-    
-    // Force scroll to top for capture
     window.scrollTo(0, 0);
 
     const notes = document.querySelector('.proposal-notes-container');
@@ -1341,20 +1338,29 @@ async function sendTelegramPdf() {
     if (notes) notes.style.display = 'none';
 
     await prepImagesForCapture();
-    await new Promise(r => setTimeout(r, 600)); 
+    await new Promise(r => setTimeout(r, 300));
+
+    // KEY FIX: Apply CSS zoom to PHYSICALLY shrink the content
+    // This is the only parameter html2canvas actually respects for size reduction
+    const elWidth = el.scrollWidth || 900;
+    const a4UsableWidthPx = 756; // (210mm - 10mm margins) at 96dpi
+    const zoomFactor = Math.min(a4UsableWidthPx / elWidth, 1);
+    el.style.zoom = zoomFactor;
+    
+    // Wait for zoom to apply
+    await new Promise(r => setTimeout(r, 400));
 
     const opt = {
         margin: [10, 5, 10, 5],
         filename: `proposal.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg', quality: 0.95 },
         html2canvas: { 
-            scale: 1.0, 
+            scale: 2, 
             backgroundColor: '#ffffff', 
             useCORS: true,
             allowTaint: true,
             scrollY: 0,
-            scrollX: 0,
-            windowWidth: 1400
+            scrollX: 0
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
@@ -1363,7 +1369,8 @@ async function sendTelegramPdf() {
     try {
         const blob = await html2pdf().set(opt).from(el).output('blob');
 
-        // Restore UI
+        // Restore zoom and UI
+        el.style.zoom = '';
         document.body.classList.remove('is-exporting');
         el.classList.remove('is-exporting');
         printHeader.style.display = originalPrintHeaderDisplay;
@@ -1384,6 +1391,7 @@ async function sendTelegramPdf() {
         await telegramRequest('sendDocument', { pdfBase64, caption, filename: 'proposal.pdf' });
     } catch (err) {
         console.error('PDF Export Failed:', err);
+        el.style.zoom = '';
         document.body.classList.remove('is-exporting');
         el.classList.remove('is-exporting');
         printHeader.style.display = originalPrintHeaderDisplay;
