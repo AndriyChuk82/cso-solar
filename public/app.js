@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v24');
+        const cached = localStorage.getItem('cso_products_cache_v26');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v24', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v26', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1322,40 +1322,50 @@ async function sendTelegramPdf() {
     const noprint = document.querySelectorAll('.no-print');
     noprint.forEach(el => el.style.display = 'none');
 
-    const printH = document.getElementById('printHeader');
-    const originalDisplay = printH.style.display;
-    printH.style.display = 'flex';
-    
-    const el = document.getElementById('mainContent');
+    const printHeader = document.getElementById('printHeader');
+    const originalPrintHeaderDisplay = printHeader.style.display;
+    printHeader.style.display = 'flex';
+
+    const originalEl = document.getElementById('mainContent');
     const originalScroll = window.scrollY;
     
-    // Switch to export mode
-    document.body.classList.add('is-exporting');
+    // 1. Create a dedicated container for the cleanest possible capture (mimics print)
+    const el = originalEl.cloneNode(true);
     el.classList.add('is-exporting');
-    
-    // Pre-capture preparation: ensure long items are visible
-    window.scrollTo(0, 0); 
-    const notes = document.querySelector('.proposal-notes-container');
-    if (notes) notes.style.display = 'none';
+    el.style.position = 'fixed';
+    el.style.left = '0';
+    el.style.top = '0';
+    el.style.width = '1150px'; // Optimization for A4
+    el.style.height = 'auto';
+    el.style.backgroundColor = '#ffffff';
+    el.style.zIndex = '-9999';
+    el.style.opacity = '1';
+    document.body.appendChild(el);
 
-    // Wait for everything to settle
+    // Ensure all internal elements in the clone are ready
+    const cloneNoPrint = el.querySelectorAll('.no-print');
+    cloneNoPrint.forEach(item => item.style.display = 'none');
+    
+    const clonePrintHeader = el.querySelector('#printHeader');
+    if (clonePrintHeader) clonePrintHeader.style.display = 'flex';
+
+    // 2. Wait for rendering and images
     await prepImagesForCapture();
-    await new Promise(r => setTimeout(r, 500)); 
+    await new Promise(r => setTimeout(r, 800)); 
 
     const opt = {
         margin: [10, 5, 10, 5],
         filename: `proposal.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
-            scale: 1.2, 
+            scale: 1.5, 
             backgroundColor: '#ffffff', 
             useCORS: true,
             allowTaint: true,
             scrollY: 0,
             scrollX: 0,
-            x: 0,
-            y: 0,
-            windowWidth: 1400
+            windowWidth: 1200,
+            logging: false
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
@@ -1364,17 +1374,14 @@ async function sendTelegramPdf() {
     try {
         const blob = await html2pdf().set(opt).from(el).output('blob');
 
-        // Restore UI
-        document.body.classList.remove('is-exporting');
-        el.classList.remove('is-exporting');
-        printH.style.display = originalDisplay;
+        // Cleanup
+        document.body.removeChild(el);
+        printHeader.style.display = originalPrintHeaderDisplay;
         noprint.forEach(item => item.style.display = '');
-        if (notes) notes.style.display = '';
         if (showCost) document.body.classList.remove('hide-cost');
         else document.body.classList.add('hide-cost');
-        window.scrollTo(0, originalScroll);
 
-        // Convert blob to base64
+        // Send to Telegram
         const reader = new FileReader();
         const pdfBase64 = await new Promise((resolve) => {
             reader.onloadend = () => resolve(reader.result.split(',')[1]);
@@ -1384,13 +1391,18 @@ async function sendTelegramPdf() {
         const caption = `📋 ${state.proposal.number || 'КП'} | ${state.proposal.clientName || ''}`;
         await telegramRequest('sendDocument', { pdfBase64, caption, filename: 'proposal.pdf' });
     } catch (err) {
-        document.body.classList.remove('is-exporting');
-        printH.style.display = originalDisplay;
+        console.error('PDF Export Failed:', err);
+        if (document.body.contains(el)) document.body.removeChild(el);
+        printHeader.style.display = originalPrintHeaderDisplay;
         noprint.forEach(el => el.style.display = '');
-        if (notes) notes.style.display = '';
         if (showCost) document.body.classList.remove('hide-cost');
         throw err;
     }
+}
+
+function printProposal() {
+    readProposalForm();
+    window.print();
 }
 
 async function sendTelegramXls() {
