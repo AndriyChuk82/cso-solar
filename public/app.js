@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v26');
+        const cached = localStorage.getItem('cso_products_cache_v27');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v26', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v27', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1326,32 +1326,22 @@ async function sendTelegramPdf() {
     const originalPrintHeaderDisplay = printHeader.style.display;
     printHeader.style.display = 'flex';
 
-    const originalEl = document.getElementById('mainContent');
+    const el = document.getElementById('mainContent');
     const originalScroll = window.scrollY;
     
-    // 1. Create a dedicated container for the cleanest possible capture (mimics print)
-    const el = originalEl.cloneNode(true);
+    // Switch to export mode ON THE ORIGINAL ELEMENT
+    document.body.classList.add('is-exporting');
     el.classList.add('is-exporting');
-    el.style.position = 'fixed';
-    el.style.left = '0';
-    el.style.top = '0';
-    el.style.width = '1150px'; // Optimization for A4
-    el.style.height = 'auto';
-    el.style.backgroundColor = '#ffffff';
-    el.style.zIndex = '-9999';
-    el.style.opacity = '1';
-    document.body.appendChild(el);
-
-    // Ensure all internal elements in the clone are ready
-    const cloneNoPrint = el.querySelectorAll('.no-print');
-    cloneNoPrint.forEach(item => item.style.display = 'none');
     
-    const clonePrintHeader = el.querySelector('#printHeader');
-    if (clonePrintHeader) clonePrintHeader.style.display = 'flex';
+    // Force scroll to top for capture
+    window.scrollTo(0, 0);
 
-    // 2. Wait for rendering and images
+    const notes = document.querySelector('.proposal-notes-container');
+    const originalNotesDisplay = notes ? notes.style.display : '';
+    if (notes) notes.style.display = 'none';
+
     await prepImagesForCapture();
-    await new Promise(r => setTimeout(r, 800)); 
+    await new Promise(r => setTimeout(r, 600)); 
 
     const opt = {
         margin: [10, 5, 10, 5],
@@ -1364,8 +1354,9 @@ async function sendTelegramPdf() {
             allowTaint: true,
             scrollY: 0,
             scrollX: 0,
-            windowWidth: 1200,
-            logging: false
+            x: 0,
+            y: 0,
+            windowWidth: 1200
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
@@ -1374,12 +1365,15 @@ async function sendTelegramPdf() {
     try {
         const blob = await html2pdf().set(opt).from(el).output('blob');
 
-        // Cleanup
-        document.body.removeChild(el);
+        // Restore UI
+        document.body.classList.remove('is-exporting');
+        el.classList.remove('is-exporting');
         printHeader.style.display = originalPrintHeaderDisplay;
         noprint.forEach(item => item.style.display = '');
+        if (notes) notes.style.display = originalNotesDisplay;
         if (showCost) document.body.classList.remove('hide-cost');
         else document.body.classList.add('hide-cost');
+        window.scrollTo(0, originalScroll);
 
         // Send to Telegram
         const reader = new FileReader();
@@ -1392,10 +1386,12 @@ async function sendTelegramPdf() {
         await telegramRequest('sendDocument', { pdfBase64, caption, filename: 'proposal.pdf' });
     } catch (err) {
         console.error('PDF Export Failed:', err);
-        if (document.body.contains(el)) document.body.removeChild(el);
+        document.body.classList.remove('is-exporting');
+        el.classList.remove('is-exporting');
         printHeader.style.display = originalPrintHeaderDisplay;
         noprint.forEach(el => el.style.display = '');
         if (showCost) document.body.classList.remove('hide-cost');
+        window.scrollTo(0, originalScroll);
         throw err;
     }
 }
