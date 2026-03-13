@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v37');
+        const cached = localStorage.getItem('cso_products_cache_v38');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v37', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v38', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1320,11 +1320,11 @@ async function sendTelegramPdf() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 
-    // --- 1. Load Micro Cyrillic font (PT Sans ~50KB) ---
-    // This is tiny enough to pass through Vercel's strict 1MB JSON body limits easily
+    // --- 1. Load Cyrillic font (Roboto) ---
+    // Now that we compressed the logo and increased Vercel limits, the ~170KB Roboto font is completely safe to use.
     let fontLoaded = false;
     try {
-        const resp = await fetch('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/ptsans/PTSans-Regular.ttf'); 
+        const resp = await fetch('https://cdn.jsdelivr.net/gh/nicholasgasior/gfonts@master/fonts/roboto/Roboto-Regular.ttf'); 
         if (resp.ok) {
             const buf = await resp.arrayBuffer();
             const bytes = new Uint8Array(buf);
@@ -1333,16 +1333,16 @@ async function sendTelegramPdf() {
                 binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 10000));
             }
             const b64 = btoa(binary);
-            doc.addFileToVFS('PTSans.ttf', b64);
-            doc.addFont('PTSans.ttf', 'PTSans', 'normal');
-            doc.setFont('PTSans');
+            doc.addFileToVFS('Roboto-Regular.ttf', b64);
+            doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+            doc.setFont('Roboto');
             fontLoaded = true;
         }
     } catch (e) {
         console.warn('Font load failed:', e);
     }
 
-    const fontName = fontLoaded ? 'PTSans' : 'helvetica';
+    const fontName = fontLoaded ? 'Roboto' : 'helvetica';
     const boldStyle = 'normal'; // Use normal weight throughout (no bold font loaded)
     const pageWidth = 210;
     const marginL = 15;
@@ -1351,10 +1351,10 @@ async function sendTelegramPdf() {
     let y = 15;
 
     // --- 2. Header ---
-    // Logo: load directly from URL (DOM element is hidden so we fetch it)
+    // Logo: load directly from URL and preserve aspect ratio
     try {
         const logoUrl = 'https://i.ibb.co/32JD4dc/logo.png';
-        const logoData = await new Promise((resolve, reject) => {
+        const logoObj = await new Promise((resolve, reject) => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = () => {
@@ -1373,12 +1373,20 @@ async function sendTelegramPdf() {
                 ctx.fillRect(0, 0, w, h);
                 ctx.drawImage(img, 0, 0, w, h);
                 
-                resolve(canvas.toDataURL('image/jpeg', 0.85)); // Compressed JPEG!
+                resolve({
+                    data: canvas.toDataURL('image/jpeg', 0.85),
+                    aspectRatio: img.naturalHeight / img.naturalWidth
+                });
             };
             img.onerror = () => reject('Logo load failed');
             img.src = logoUrl;
         });
-        doc.addImage(logoData, 'JPEG', marginL, y, 30, 12);
+        
+        // Calculate dynamic height to preserve correct aspect ratio
+        const renderWidth = 35; // Target width in mm
+        const renderHeight = renderWidth * logoObj.aspectRatio;
+        
+        doc.addImage(logoObj.data, 'JPEG', marginL, y, renderWidth, renderHeight);
     } catch (e) { console.warn('Logo skip:', e); }
 
     // Company name & info (right side)
