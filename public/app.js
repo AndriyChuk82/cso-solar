@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v43');
+        const cached = localStorage.getItem('cso_products_cache_v44');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v43', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v44', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -2206,16 +2206,21 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = '';
         state.proposal.items.forEach((item, index) => {
             const wrap = document.createElement('div');
-            wrap.style.marginBottom = '15px';
-            wrap.style.padding = '10px';
-            wrap.style.border = '1px solid var(--border)';
-            wrap.style.borderRadius = '5px';
-            wrap.style.background = '#f9fafb';
+            wrap.className = 'warranty-item-row';
+            
+            // Delete button
+            const btnDelete = document.createElement('button');
+            btnDelete.className = 'btn-remove-item';
+            btnDelete.innerHTML = '&times;';
+            btnDelete.title = 'Видалити з талону';
+            btnDelete.onclick = () => wrap.remove();
+            wrap.appendChild(btnDelete);
             
             const title = document.createElement('div');
             title.style.fontWeight = 'bold';
             title.style.marginBottom = '8px';
             title.style.fontSize = '0.9rem';
+            title.style.paddingRight = '30px'; // Space for delete btn
             title.textContent = `${index + 1}. ${item.name} (${item.quantity} шт.)`;
             
             const row = document.createElement('div');
@@ -2244,7 +2249,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btnGenerateWarranty').addEventListener('click', () => {
         const itemsData = [];
-        document.querySelectorAll('#warrantyItemsContainer > div').forEach(wrap => {
+        document.querySelectorAll('.warranty-item-row').forEach(wrap => {
             const serialInput = wrap.querySelector('.w-serial');
             const periodInput = wrap.querySelector('.w-period');
             if (serialInput && periodInput) {
@@ -2258,6 +2263,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
+        
+        if (itemsData.length === 0) {
+            showToast('Виберіть хоча б один товар для талону', 'error');
+            return;
+        }
     
         const warrantyData = {
             date: document.getElementById('warrantyDate').value,

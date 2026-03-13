@@ -557,8 +557,41 @@ body.hide-cost .cost-column { display: none; }
 }
 .modal-close:hover { color: var(--text-primary); }
 
-.modal-body { padding: 20px; }
+.modal-body { 
+    padding: 20px; 
+    max-height: calc(90vh - 120px); 
+    overflow-y: auto; 
+}
 .modal-body .form-group { margin-bottom: 14px; }
+
+.warranty-item-row {
+    position: relative;
+    margin-bottom: 15px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: #f9fafb;
+}
+.btn-remove-item {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #fee2e2;
+    color: #ef4444;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: var(--transition);
+}
+.btn-remove-item:hover {
+    background: #fecaca;
+}
 .modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
 .modal-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 
