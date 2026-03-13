@@ -295,7 +295,10 @@ function parseGvizJson(response, categoryName, mainCat) {
         let priceStr = col3 || col4 || col10;
 
         if (categoryName === 'АКБ') {
-            isCatRow = (col0 && !col1 && col0.length < 50);
+            // gviz may return empty price for non-numeric values like "800 гот / 960 з ПДВ"
+            // Check if any other column has data to distinguish products from headers
+            const hasProductData = col2 || col3 || col4 || col5 || col6 || col10;
+            isCatRow = (col0 && !col1 && !hasProductData && col0.length < 50);
             model = col0;
             desc = col2 ? `Технологія: ${col2}, Ємність: ${col3 || ''}Ah, Напруга: ${col4 || ''}V` : '';
             priceStr = col1;
@@ -472,7 +475,8 @@ function parseSheetCSV(csv, categoryName, mainCat) {
         let priceStr = col3 || col4 || col10;
 
         if (categoryName === 'АКБ') {
-            isCatRow = (col0 && !col1 && col0.length < 50);
+            const hasProductData = col2 || col3 || col4 || col5 || col6 || col10;
+            isCatRow = (col0 && !col1 && !hasProductData && col0.length < 50);
             model = col0;
             desc = col2 ? `Технологія: ${col2}, Ємність: ${col3 || ''}Ah, Напруга: ${col4 || ''}V` : '';
             priceStr = col1;
