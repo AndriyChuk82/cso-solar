@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v13');
+        const cached = localStorage.getItem('cso_products_cache_v14');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v13', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v14', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1333,16 +1333,19 @@ async function sendTelegramPdf() {
 
     const el = document.getElementById('mainContent');
     const opt = {
-        margin: [0, 5, 5, 5],
+        margin: [5, 5, 5, 5],
         filename: `proposal.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
             scale: 2, 
             backgroundColor: '#ffffff', 
             useCORS: true,
-            allowTaint: true 
+            allowTaint: true,
+            scrollY: 0,
+            windowWidth: 1200
         },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
     try {
@@ -1583,16 +1586,18 @@ function exportInvoicePDF() {
     template.style.top = '0';
 
     const opt = {
-        margin: [0, 5, 5, 5],
+        margin: [5, 5, 5, 5],
         filename: `Рахунок_${invoiceNum}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
             scale: 2, 
             backgroundColor: '#ffffff',
             useCORS: true,
-            allowTaint: true
+            allowTaint: true,
+            scrollY: 0
         },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
     html2pdf().set(opt).from(content).save().then(() => {
