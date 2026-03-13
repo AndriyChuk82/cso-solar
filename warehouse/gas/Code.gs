@@ -167,12 +167,39 @@ function dateStr(date) {
 function sheetToObjects(sheet) {
   const data = sheet.getDataRange().getValues();
   if (data.length < 2) return [];
-  const headers = data[0];
+  const rawHeaders = data[0];
+  
+  // Мапінг заголовків для сумісності з фронтендом
+  const headerMap = {
+    'назва': 'name',
+    'артикул': 'article',
+    'од. виміру': 'unit',
+    'од.': 'unit',
+    'категорія': 'category',
+    'статус': 'active',
+    'активний': 'active',
+    'склад': 'warehouse_id',
+    'дата': 'date',
+    'кількість': 'quantity',
+    'товару': 'name',
+    'товар': 'name'
+  };
+
+  const headers = rawHeaders.map(h => {
+    const s = String(h).trim().toLowerCase();
+    return headerMap[s] || s;
+  });
+
   const objects = [];
   for (let i = 1; i < data.length; i++) {
     const obj = {};
     for (let j = 0; j < headers.length; j++) {
-      obj[headers[j]] = data[i][j];
+      let val = data[i][j];
+      // Перетворення системних статусів у boolean
+      if (headers[j] === 'active') {
+        val = (val === true || String(val).toLowerCase() === 'true' || val === 'АКТИВНИЙ');
+      }
+      obj[headers[j]] = val;
     }
     objects.push(obj);
   }
@@ -291,16 +318,23 @@ function getNextArticle() {
   if (data.length < 2) return 'арт.№001';
   
   const headers = data[0];
-  const artIdx = headers.indexOf('article');
-  if (artIdx === -1) return 'арт.№001';
+  // Шукаємо індекс за англійською або українською назвою
+  let artIdx = headers.findIndex(h => {
+    const s = String(h).toLowerCase();
+    return s === 'article' || s === 'артикул';
+  });
+  
+  // Якщо не знайшли по назві - беремо 3-тю колонку (стандарт для нашого appendRow)
+  if (artIdx === -1) artIdx = 2;
 
   let maxNum = 0;
   for (let i = 1; i < data.length; i++) {
     const art = String(data[i][artIdx]);
-    const match = art.match(/арт\.№(\d+)/);
+    // Регулярний вираз для пошуку числа в кінці або після №
+    const match = art.match(/(?:арт\.№|№|)(\d+)$/) || art.match(/(\d+)/);
     if (match) {
       const num = parseInt(match[1]);
-      if (num > maxNum) maxNum = num;
+      if (!isNaN(num) && num > maxNum) maxNum = num;
     }
   }
   
@@ -319,7 +353,7 @@ function handleAddProduct(product) {
   }
 
   const id = generateUUID();
-  const article = product.article || getNextArticle();
+  const article = (product.article && String(product.article).trim()) || getNextArticle();
   
   sheet.appendRow([
     id,

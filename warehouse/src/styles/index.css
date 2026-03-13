@@ -502,10 +502,11 @@ body {
 }
 
 .data-table {
-  width: max-content;
-  min-width: 100%;
+  width: 100%;
+  min-width: max-content;
   border-collapse: collapse;
   font-size: 0.85rem;
+  table-layout: auto;
 }
 
 .data-table th {
@@ -519,6 +520,7 @@ body {
   background: var(--bg);
   border-bottom: 2px solid var(--border);
   white-space: nowrap;
+  width: 1px;
 }
 
 .data-table td {
@@ -527,6 +529,7 @@ body {
   color: var(--text);
   vertical-align: middle;
   white-space: nowrap;
+  width: 1px;
 }
 
 .data-table tbody tr {
