@@ -31,8 +31,19 @@ let state = {
     history: loadHistory(),
     activeCurrency: 'USD',
     favorites: loadFavorites(),
-    customMaterials: loadCustomMaterials()
+    customMaterials: loadCustomMaterials(),
+    materialOverrides: loadMaterialOverrides()
 };
+
+function loadMaterialOverrides() {
+    try {
+        return JSON.parse(localStorage.getItem('cso_material_overrides')) || {};
+    } catch(e) { return {}; }
+}
+
+function saveMaterialOverrides() {
+    localStorage.setItem('cso_material_overrides', JSON.stringify(state.materialOverrides));
+}
 
 function loadCustomMaterials() {
     try {
@@ -48,6 +59,24 @@ function loadFavorites() {
     try {
         return JSON.parse(localStorage.getItem('cso_favorites')) || [];
     } catch(e) { return []; }
+}
+
+function applyMaterialOverrides(productsList) {
+    if (!state.materialOverrides) return;
+    for (const p of productsList) {
+        if (state.materialOverrides[p.id]) {
+            const over = state.materialOverrides[p.id];
+            p.model = over.model || p.model;
+            p.description = over.description || p.description;
+            if (over.priceUSD !== undefined) {
+                p.price = over.price;
+                p.priceUSD = over.priceUSD;
+                p.costUSD = over.costUSD || over.priceUSD;
+                p.priceRaw = over.priceRaw || p.priceRaw;
+            }
+            if (over.unit) p.unit = over.unit;
+        }
+    }
 }
 
 function createEmptyProposal() {
@@ -121,12 +150,13 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v12');
+        const cached = localStorage.getItem('cso_products_cache_v13');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
                 if (data && data.products && data.products.length > 0) {
                     state.products = [...data.products, ...state.customMaterials];
+                    applyMaterialOverrides(state.products);
                     state.categories = [...new Set(state.products.map(p => p.mainCategory))];
                     renderCatalog();
                     showToast('Каталог завантажено з кешу', 'info');
@@ -178,13 +208,14 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v12', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v13', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
     }));
 
     state.products = [...allProducts, ...state.customMaterials];
+    applyMaterialOverrides(state.products);
     state.categories = [...new Set(state.products.map(p => p.mainCategory))];
 
     renderCatalog();
@@ -770,8 +801,17 @@ function renderProductItem(p) {
     const favClass = isFav ? 'active' : '';
     const favIcon = isFav ? '★' : '☆';
     
-    const customCostHtml = p.isCustom ? `<span style="font-size:0.65rem; color:var(--text-muted); display:block; margin-top:2px;">Собів: $${p.costUSD}</span>` : '';
-    const deleteBtn = p.isCustom ? `<button class="product-favorite" onclick="deleteCustomMaterial(event, '${p.id}')" title="Видалити з каталогу" style="color:var(--danger)">🗑</button>` : '';
+    // Show cost only for items that are marked custom or are overrides
+    const showCost = p.isCustom || p.mainCategory === 'Власний матеріал';
+    const customCostHtml = showCost && p.costUSD > 0 ? `<span style="font-size:0.65rem; color:var(--text-muted); display:block; margin-top:2px;">Собів: $${p.costUSD}</span>` : '';
+    
+    let actionsHtml = '';
+    if (p.mainCategory === 'Власний матеріал' || p.isCustom || p.mainCategory === 'Витратні матеріали') {
+        actionsHtml = `
+            <button class="product-favorite" onclick="editMaterial('${p.id}')" title="Редагувати" style="color:var(--accent)">✎</button>
+            ${p.isCustom ? `<button class="product-favorite" onclick="deleteCustomMaterial(event, '${p.id}')" title="Видалити з каталогу" style="color:var(--danger)">🗑</button>` : ''}
+        `;
+    }
 
     return `<div class="product-item" title="${escHtml(p.description || '')}">
         <div class="product-info">
@@ -781,7 +821,7 @@ function renderProductItem(p) {
         </div>
         ${priceTag}
         <button class="product-favorite ${favClass}" onclick="toggleFavorite(event, '${p.id}')" title="Улюблене">${favIcon}</button>
-        ${deleteBtn}
+        ${actionsHtml}
         <button class="product-add" onclick="addProductToProposal('${p.id}')" title="Додати">+</button>
     </div>`;
 }
@@ -863,6 +903,24 @@ function removeItem(index) {
     renderProposalTable();
 }
 
+function moveItemUp(index) {
+    if (index > 0) {
+        const item = state.proposal.items[index];
+        state.proposal.items.splice(index, 1);
+        state.proposal.items.splice(index - 1, 0, item);
+        renderProposalTable();
+    }
+}
+
+function moveItemDown(index) {
+    if (index < state.proposal.items.length - 1) {
+        const item = state.proposal.items[index];
+        state.proposal.items.splice(index, 1);
+        state.proposal.items.splice(index + 1, 0, item);
+        renderProposalTable();
+    }
+}
+
 function renderProposalTable() {
     const tbody = document.getElementById('proposalBody');
     const foot = document.getElementById('proposalFoot');
@@ -897,7 +955,13 @@ function renderProposalTable() {
         const costInput = `<input type="number" class="tbl-input input-price" style="width:100%" value="${costVal}" step="0.01" min="0" onchange="updateItemCost(${i},this.value)">`;
 
         html += `<tr>
-            <td class="row-num">${i + 1}</td>
+            <td class="row-num" style="white-space:nowrap; text-align:center; padding: 2px;">
+                <div class="no-print" style="display:inline-flex; flex-direction:column; vertical-align:middle; margin-right:4px;">
+                    <button class="move-btn" onclick="moveItemUp(${i})" ${i === 0 ? 'disabled' : ''} title="Вгору">▲</button>
+                    <button class="move-btn" onclick="moveItemDown(${i})" ${i === items.length - 1 ? 'disabled' : ''} title="Вниз">▼</button>
+                </div>
+                <span style="display:inline-block; vertical-align:middle; width:15px; text-align:left;">${i + 1}</span>
+            </td>
             <td>
                 ${nameInput}
                 ${descInput}
@@ -1877,13 +1941,27 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('catalogSearch').addEventListener('input', () => renderCatalog());
 
     // Custom material logic
+    let editingMatId = null;
+
     document.getElementById('btnAddNewMaterial').addEventListener('click', () => {
+        editingMatId = null;
         document.getElementById('matName').value = '';
         document.getElementById('matDesc').value = '';
         document.getElementById('matCost').value = '';
         document.getElementById('matUnit').value = 'шт.';
         openModal('materialModal');
     });
+
+    window.editMaterial = function(id) {
+        const item = state.products.find(p => p.id === id);
+        if (!item) return;
+        editingMatId = id;
+        document.getElementById('matName').value = item.model;
+        document.getElementById('matDesc').value = item.description || '';
+        document.getElementById('matCost').value = item.costUSD || item.priceUSD || 0;
+        document.getElementById('matUnit').value = item.unit || 'шт.';
+        openModal('materialModal');
+    };
 
     document.getElementById('btnSaveMaterial').addEventListener('click', () => {
         const name = document.getElementById('matName').value.trim();
@@ -1893,28 +1971,71 @@ document.addEventListener('DOMContentLoaded', () => {
         const cost = parseFloat(document.getElementById('matCost').value) || 0;
         const unit = document.getElementById('matUnit').value || 'шт.';
         
-        const newMat = {
-            id: generateStableId('mat_' + Date.now() + name),
-            mainCategory: 'Витратні матеріали',
-            subCategory: 'Мої матеріали',
-            category: 'Витратні матеріали - Мої матеріали',
-            model: name,
-            description: desc,
-            unit: unit,
-            priceRaw: cost.toString(),
-            price: cost,
-            costUSD: cost,
-            priceCurrency: 'USD',
-            priceUSD: cost,
-            isCustom: true
-        };
-        
-        state.customMaterials.push(newMat);
-        saveCustomMaterials();
-        
-        state.products.push(newMat);
-        if (!state.categories.includes('Витратні матеріали')) {
-            state.categories.push('Витратні матеріали');
+        if (editingMatId) {
+            // Check if it's a manual custom material
+            let isManualCustom = false;
+            const customIdx = state.customMaterials.findIndex(m => m.id === editingMatId);
+            if (customIdx >= 0) {
+                state.customMaterials[customIdx].model = name;
+                state.customMaterials[customIdx].description = desc;
+                state.customMaterials[customIdx].priceRaw = cost.toString();
+                state.customMaterials[customIdx].price = cost;
+                state.customMaterials[customIdx].costUSD = cost;
+                state.customMaterials[customIdx].priceUSD = cost;
+                state.customMaterials[customIdx].unit = unit;
+                saveCustomMaterials();
+                isManualCustom = true;
+            } else {
+                // Must be an override on Google Sheet item
+                state.materialOverrides[editingMatId] = {
+                    model: name,
+                    description: desc,
+                    priceRaw: cost.toString(),
+                    price: cost,
+                    costUSD: cost,
+                    priceUSD: cost,
+                    unit: unit
+                };
+                saveMaterialOverrides();
+            }
+
+            // Update in products array
+            const prodIdx = state.products.findIndex(p => p.id === editingMatId);
+            if (prodIdx >= 0) {
+                state.products[prodIdx].model = name;
+                state.products[prodIdx].description = desc;
+                state.products[prodIdx].priceRaw = cost.toString();
+                state.products[prodIdx].price = cost;
+                state.products[prodIdx].costUSD = cost;
+                state.products[prodIdx].priceUSD = cost;
+                state.products[prodIdx].unit = unit;
+            }
+
+            editingMatId = null;
+        } else {
+            const newMat = {
+                id: generateStableId('mat_' + Date.now() + name),
+                mainCategory: 'Витратні матеріали',
+                subCategory: 'Мої матеріали',
+                category: 'Витратні матеріали - Мої матеріали',
+                model: name,
+                description: desc,
+                unit: unit,
+                priceRaw: cost.toString(),
+                price: cost,
+                costUSD: cost,
+                priceCurrency: 'USD',
+                priceUSD: cost,
+                isCustom: true
+            };
+            
+            state.customMaterials.push(newMat);
+            saveCustomMaterials();
+            
+            state.products.push(newMat);
+            if (!state.categories.includes('Витратні матеріали')) {
+                state.categories.push('Витратні матеріали');
+            }
         }
         
         closeModal('materialModal');

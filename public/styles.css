@@ -447,6 +447,10 @@ textarea.form-input { resize: vertical; min-height: 48px; }
 }
 .delete-btn:hover { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
 
+.move-btn { border:none; background:none; cursor:pointer; font-size:10px; color:var(--text-muted); padding:1px; line-height:1; transition:var(--transition); }
+.move-btn:hover:not(:disabled) { color:var(--accent); }
+.move-btn:disabled { opacity: 0.2; cursor:default; }
+
 /* Empty state */
 .empty-state {
     display: flex; flex-direction: column; align-items: center;
