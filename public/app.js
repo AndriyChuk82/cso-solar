@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v38');
+        const cached = localStorage.getItem('cso_products_cache_v39');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v38', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v39', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1320,11 +1320,11 @@ async function sendTelegramPdf() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 
-    // --- 1. Load Cyrillic font (Roboto) ---
-    // Now that we compressed the logo and increased Vercel limits, the ~170KB Roboto font is completely safe to use.
+    // --- 1. Load Cyrillic font (DejaVu Sans) ---
+    // Using the full DejaVu Sans to ensure 100% Cyrillic character support without missing glyphs.
     let fontLoaded = false;
     try {
-        const resp = await fetch('https://cdn.jsdelivr.net/gh/nicholasgasior/gfonts@master/fonts/roboto/Roboto-Regular.ttf'); 
+        const resp = await fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf'); 
         if (resp.ok) {
             const buf = await resp.arrayBuffer();
             const bytes = new Uint8Array(buf);
@@ -1333,16 +1333,16 @@ async function sendTelegramPdf() {
                 binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 10000));
             }
             const b64 = btoa(binary);
-            doc.addFileToVFS('Roboto-Regular.ttf', b64);
-            doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
-            doc.setFont('Roboto');
+            doc.addFileToVFS('DejaVuSans.ttf', b64);
+            doc.addFont('DejaVuSans.ttf', 'DejaVuSans', 'normal');
+            doc.setFont('DejaVuSans');
             fontLoaded = true;
         }
     } catch (e) {
         console.warn('Font load failed:', e);
     }
 
-    const fontName = fontLoaded ? 'Roboto' : 'helvetica';
+    const fontName = fontLoaded ? 'DejaVuSans' : 'helvetica';
     const boldStyle = 'normal'; // Use normal weight throughout (no bold font loaded)
     const pageWidth = 210;
     const marginL = 15;
