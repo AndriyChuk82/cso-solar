@@ -286,36 +286,40 @@ input, textarea, select, button { font-family: var(--font); }
 /* Styles when exporting to PDF/Telegram */
 .input-unit, .input-qty { padding-left: 2px !important; padding-right: 2px !important; }
 
-/* Dedicated container sizing for export to prevent 'mobile-squash' */
+/* Anchor the capture target to the top-left to avoid html2canvas offsets */
 #mainContent.is-exporting {
-    width: 1050px !important;
-    min-width: 1050px !important;
-    max-width: 1050px !important;
-    padding: 30px !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 850px !important;
+    min-width: 850px !important;
+    padding: 40px !important;
     background: #ffffff !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
     box-shadow: none !important;
-    overflow: visible !important;
+    z-index: 99999 !important;
+    display: block !important;
 }
 
-.is-exporting .main-content { padding: 0 !important; margin: 0 !important; overflow: visible !important; }
-.is-exporting body { background: #fff !important; overflow: visible !important; }
+.is-exporting .app-container { display: block !important; }
+.is-exporting .main-content { margin: 0 !important; padding: 0 !important; }
 
-.is-exporting .proposal-row { display: flex !important; flex-direction: row !important; gap: 20px !important; margin-bottom: 8px !important; }
-.is-exporting .proposal-header { padding: 0 !important; margin-bottom: 20px !important; border: none !important; }
-.is-exporting .form-group { flex: 1 !important; width: auto !important; }
-.is-exporting .form-group label { color: #888 !important; font-size: 8pt !important; margin-bottom: 2px !important; text-transform: uppercase; }
-.is-exporting .form-input { background: none !important; border: none !important; padding: 0 !important; font-size: 11pt !important; color: #111 !important; font-weight: 600 !important; }
+.is-exporting .proposal-row { display: flex !important; flex-direction: row !important; margin-bottom: 10px !important; gap: 40px !important; }
+.is-exporting .form-group { flex: 1 !important; }
+.is-exporting .form-input { border: none !important; background: none !important; padding: 0 !important; font-size: 11pt !important; font-weight: 600 !important; color: #000 !important; }
+.is-exporting .form-group label { font-size: 8pt !important; color: #888 !important; text-transform: uppercase !important; }
 
-.is-exporting .proposal-table-section { background: none !important; border: none !important; overflow: visible !important; margin-top: 20px !important; }
-.is-exporting .proposal-table th { padding: 8px 10px !important; background: #f8fafc !important; color: #334155 !important; border-bottom: 2px solid #e2e8f0 !important; font-size: 9pt !important; }
-.is-exporting .proposal-table td { padding: 10px 10px !important; border-bottom: 1px solid #f1f5f9 !important; font-size: 11pt !important; vertical-align: middle !important; }
+.is-exporting .proposal-table-section { margin-top: 30px !important; border: none !important; }
+.is-exporting .proposal-table { width: 100% !important; border-collapse: collapse !important; }
+.is-exporting .proposal-table th { background: #f8fafc !important; border-bottom: 2px solid #cbd5e1 !important; padding: 8px !important; font-size: 9pt !important; }
+.is-exporting .proposal-table td { border-bottom: 1px solid #e2e8f0 !important; padding: 12px 8px !important; font-size: 11pt !important; vertical-align: middle !important; }
 
-.is-exporting .product-model { font-size: 11pt !important; font-weight: 600 !important; color: #0f172a !important; }
-.is-exporting .product-desc { font-size: 9.5pt !important; line-height: 1.4 !important; color: #475569 !important; margin-top: 4px !important; }
+.is-exporting .col-unit { width: 105px !important; text-align: left !important; padding-left: 10px !important; }
+.is-exporting .col-qty { width: 80px !important; text-align: center !important; }
 
-.is-exporting .tbl-input { font-size: 11pt !important; border: none !important; background: none !important; padding: 0 !important; }
-.is-exporting .editable-text { font-size: 11pt !important; line-height: 1.4 !important; }
+.is-exporting .product-model { font-size: 11pt !important; font-weight: 700 !important; }
+.is-exporting .product-desc { font-size: 10pt !important; color: #444 !important; line-height: 1.4 !important; }
+.is-exporting .tbl-input { font-size: 11pt !important; }
 .is-exporting .print-header { border-bottom-width: 1.5px; }
 
 .is-exporting .table-scroll { overflow: visible !important; }
