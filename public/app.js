@@ -150,7 +150,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v33');
+        const cached = localStorage.getItem('cso_products_cache_v34');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +208,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v33', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v34', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -1369,19 +1369,25 @@ async function sendTelegramPdf() {
     let y = 15;
 
     // --- 2. Header ---
-    // Logo (try to load)
+    // Logo: load directly from URL (DOM element is hidden so we fetch it)
     try {
-        const logoImg = document.querySelector('.print-logo');
-        if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
-            const canvas = document.createElement('canvas');
-            canvas.width = logoImg.naturalWidth;
-            canvas.height = logoImg.naturalHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(logoImg, 0, 0);
-            const logoData = canvas.toDataURL('image/png');
-            doc.addImage(logoData, 'PNG', marginL, y, 30, 12);
-        }
-    } catch (e) { /* skip logo */ }
+        const logoUrl = 'https://i.ibb.co/32JD4dc/logo.png';
+        const logoData = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                resolve(canvas.toDataURL('image/png'));
+            };
+            img.onerror = () => reject('Logo load failed');
+            img.src = logoUrl;
+        });
+        doc.addImage(logoData, 'PNG', marginL, y, 30, 12);
+    } catch (e) { console.warn('Logo skip:', e); }
 
     // Company name & info (right side)
     doc.setFont(fontName, boldLoaded ? 'bold' : 'normal');
@@ -1461,7 +1467,8 @@ async function sendTelegramPdf() {
             cellPadding: 3,
             textColor: [30, 30, 30],
             lineColor: [220, 220, 220],
-            lineWidth: 0.3
+            lineWidth: 0.3,
+            valign: 'middle'
         },
         headStyles: {
             fillColor: [245, 245, 245],
@@ -1475,15 +1482,15 @@ async function sendTelegramPdf() {
             textColor: [180, 83, 9],
             fontStyle: boldLoaded ? 'bold' : 'normal',
             fontSize: 9.5,
-            halign: 'right'
+            halign: 'center'
         },
         columnStyles: {
             0: { halign: 'center', cellWidth: 10 },
-            1: { cellWidth: 'auto' },
+            1: { cellWidth: 'auto', halign: 'left' },
             2: { halign: 'center', cellWidth: 18 },
             3: { halign: 'center', cellWidth: 15 },
-            4: { halign: 'right', cellWidth: 25 },
-            5: { halign: 'right', cellWidth: 28 }
+            4: { halign: 'center', cellWidth: 25 },
+            5: { halign: 'center', cellWidth: 28 }
         },
         margin: { left: marginL, right: marginR },
         didDrawPage: function(data) {
