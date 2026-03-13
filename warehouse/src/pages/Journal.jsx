@@ -4,6 +4,7 @@ import { getOperations, getWarehouses, deleteOperation } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { exportToExcel } from '../utils/exportUtils';
+import { formatDate } from '../utils/dateUtils';
 import CONFIG from '../config';
 
 /**
@@ -66,19 +67,6 @@ export default function Journal() {
 
   function getWarehouseName(id) {
     return warehouses.find((w) => w.id === id)?.name || id || '—';
-  }
-
-  function formatDate(dateStr) {
-    if (!dateStr) return '—';
-    try {
-      const parts = dateStr.split('-');
-      if (parts.length === 3) {
-        return `${parts[2]}.${parts[1]}.${parts[0]}`;
-      }
-      return dateStr;
-    } catch (e) {
-      return dateStr;
-    }
   }
 
   function handleExport() {
@@ -201,12 +189,12 @@ export default function Journal() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th style={{ width: '100px' }}>Дата</th>
+                  <th>Дата</th>
                   <th>Склад</th>
-                  <th style={{ minWidth: '300px' }}>Товар</th>
+                  <th>Товар</th>
                   <th>Тип</th>
-                  <th style={{ width: '60px' }}>Од.</th>
-                  <th style={{ width: '80px' }}>Кількість</th>
+                  <th>Од.</th>
+                  <th>Кількість</th>
                   <th>Артикул</th>
                   <th>Залишок</th>
                   <th>Пов'язаний склад</th>
@@ -218,7 +206,7 @@ export default function Journal() {
               <tbody>
                 {operations.map((op) => (
                   <tr key={op.id} className={`row-${op.type}`}>
-                    <td style={{ whiteSpace: 'nowrap' }}>{formatDate(op.date)}</td>
+                    <td>{formatDate(op.date)}</td>
                     <td>{getWarehouseName(op.warehouse_from || op.warehouse_to)}</td>
                     <td style={{ fontWeight: 600, fontSize: '0.95rem' }}>{op.product_name || '—'}</td>
                     <td>
@@ -236,10 +224,8 @@ export default function Journal() {
                         : '—'
                       }
                     </td>
-                    <td style={{ fontSize: '0.8rem', maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {op.comment || '—'}
-                    </td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{op.user || '—'}</td>
+                    <td style={{ fontSize: '0.8rem' }}>{op.comment || '—'}</td>
+                    <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{op.user || '—'}</td>
                     {user?.isAdmin && (
                       <td>
                         <button

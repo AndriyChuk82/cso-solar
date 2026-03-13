@@ -152,9 +152,9 @@ export default function DailyBalance() {
                     <th>Товар</th>
                     <th>Артикул</th>
                     <th>Од.</th>
-                    <th style={{ textAlign: 'center' }}>Облікова к-сть</th>
-                    <th style={{ textAlign: 'center' }}>Фактична к-сть</th>
-                    <th style={{ textAlign: 'center' }}>Різниця</th>
+                    <th>Облікова к-сть</th>
+                    <th>Фактична к-сть</th>
+                    <th>Різниця</th>
                   </tr>
                 </thead>
                 <tbody>

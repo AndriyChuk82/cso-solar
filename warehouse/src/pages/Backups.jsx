@@ -98,7 +98,7 @@ export default function Backups() {
               </tr>
               <tr>
                 <td style={{ fontWeight: 600 }}>Назва файлу</td>
-                <td><code>backup_РРРР-ММ-ДД.xlsx</code></td>
+                <td><code>backup_ДД.ММ.РРРР.xlsx</code></td>
               </tr>
             </tbody>
           </table>

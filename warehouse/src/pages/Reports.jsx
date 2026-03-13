@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getWarehouses, getStockReport, getCompareReport, getMovementReport, getCatalog } from '../api/gasApi';
 import { exportToExcel, exportToPdf } from '../utils/exportUtils';
+import { formatDate } from '../utils/dateUtils';
 import CONFIG from '../config';
 
 /**
@@ -63,7 +64,7 @@ export default function Reports() {
   function getReportTitle() {
     if (activeTab === 'stock') {
       const whName = warehouses.find((w) => w.id === stockFilter.warehouseId)?.name || 'Всі склади';
-      return `Залишки — ${whName} на ${stockFilter.date}`;
+      return `Залишки — ${whName} на ${formatDate(stockFilter.date)}`;
     }
     if (activeTab === 'compare') return 'Порівняння складів';
     return 'Рух товарів';
@@ -77,12 +78,28 @@ export default function Reports() {
 
   function handleExportExcel() {
     if (!reportData?.columns || !reportData?.items) return;
-    exportToExcel(reportData.columns, reportData.items, getFileName());
+    
+    // Форматуємо дати в айтемах перед експортом
+    const items = reportData.items.map(row => {
+      const newRow = { ...row };
+      if (newRow['Дата']) newRow['Дата'] = formatDate(newRow['Дата']);
+      return newRow;
+    });
+
+    exportToExcel(reportData.columns, items, getFileName());
   }
 
   function handleExportPdf() {
     if (!reportData?.columns || !reportData?.items) return;
-    exportToPdf(reportData.columns, reportData.items, getReportTitle(), getFileName());
+
+    // Форматуємо дати в айтемах перед експортом
+    const items = reportData.items.map(row => {
+      const newRow = { ...row };
+      if (newRow['Дата']) newRow['Дата'] = formatDate(newRow['Дата']);
+      return newRow;
+    });
+
+    exportToPdf(reportData.columns, items, getReportTitle(), getFileName());
   }
 
   const tabs = [
@@ -241,7 +258,7 @@ export default function Reports() {
                           fontWeight: col === 'Всього' || col === 'Кількість' ? 700 : 400,
                           textAlign: typeof row[col] === 'number' ? 'right' : 'left'
                         }}>
-                          {row[col] ?? '—'}
+                          {col === 'Дата' ? formatDate(row[col]) : (row[col] ?? '—')}
                         </td>
                       ))}
                     </tr>
