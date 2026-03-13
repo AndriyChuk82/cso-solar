@@ -68,18 +68,31 @@ export default function Journal() {
     return warehouses.find((w) => w.id === id)?.name || id || '—';
   }
 
+  function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    try {
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+      }
+      return dateStr;
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
   function handleExport() {
     if (operations.length === 0) return showToast('Немає операцій для експорту', 'info');
     
-    const columns = ['Дата', 'Склад', 'Товар', 'Артикул', 'Тип', 'К-сть', 'Од.', 'Залишок після', "Пов'язаний склад", 'Коментар', 'Автор'];
+    const columns = ['Дата', 'Склад', 'Товар', 'Тип', 'Од.', 'К-сть', 'Артикул', 'Залишок після', "Пов'язаний склад", 'Коментар', 'Автор'];
     const items = operations.map(op => ({
-      'Дата': op.date,
+      'Дата': formatDate(op.date),
       'Склад': getWarehouseName(op.warehouse_from || op.warehouse_to),
       'Товар': op.product_name || '',
-      'Артикул': op.product_article || '',
       'Тип': CONFIG.OPERATION_LABELS[op.type] || op.type,
-      'К-сть': op.quantity,
       'Од.': op.unit || '',
+      'К-сть': op.quantity,
+      'Артикул': op.product_article || '',
       'Залишок після': op.balance_after != null ? op.balance_after : '',
       "Пов'язаний склад": op.type === 'transfer' ? getWarehouseName(op.warehouse_to) : '',
       'Коментар': op.comment || '',
@@ -188,14 +201,14 @@ export default function Journal() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Дата</th>
+                  <th style={{ width: '100px' }}>Дата</th>
                   <th>Склад</th>
-                  <th>Товар</th>
-                  <th>Артикул</th>
+                  <th style={{ minWidth: '300px' }}>Товар</th>
                   <th>Тип</th>
-                  <th>К-сть</th>
-                  <th>Од.</th>
-                  <th>Залишок після</th>
+                  <th style={{ width: '60px' }}>Од.</th>
+                  <th style={{ width: '80px' }}>Кількість</th>
+                  <th>Артикул</th>
+                  <th>Залишок</th>
                   <th>Пов'язаний склад</th>
                   <th>Коментар</th>
                   <th>Автор</th>
@@ -205,17 +218,17 @@ export default function Journal() {
               <tbody>
                 {operations.map((op) => (
                   <tr key={op.id} className={`row-${op.type}`}>
-                    <td style={{ whiteSpace: 'nowrap' }}>{op.date}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{formatDate(op.date)}</td>
                     <td>{getWarehouseName(op.warehouse_from || op.warehouse_to)}</td>
-                    <td style={{ fontWeight: 500 }}>{op.product_name || '—'}</td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{op.product_article || '—'}</td>
+                    <td style={{ fontWeight: 600, fontSize: '0.95rem' }}>{op.product_name || '—'}</td>
                     <td>
                       <span className={`badge badge-${op.type}`}>
                         {CONFIG.OPERATION_LABELS[op.type] || op.type}
                       </span>
                     </td>
-                    <td style={{ fontWeight: 600 }}>{op.quantity}</td>
                     <td style={{ color: 'var(--text-muted)' }}>{op.unit || '—'}</td>
+                    <td style={{ fontWeight: 700, fontSize: '1rem' }}>{op.quantity}</td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{op.product_article || '—'}</td>
                     <td>{op.balance_after != null ? op.balance_after : '—'}</td>
                     <td>
                       {op.type === 'transfer'
@@ -223,10 +236,10 @@ export default function Journal() {
                         : '—'
                       }
                     </td>
-                    <td style={{ fontSize: '0.8rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <td style={{ fontSize: '0.8rem', maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {op.comment || '—'}
                     </td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{op.user || '—'}</td>
+                    <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{op.user || '—'}</td>
                     {user?.isAdmin && (
                       <td>
                         <button

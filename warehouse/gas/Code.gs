@@ -285,6 +285,29 @@ function handleGetCatalog() {
   return { success: true, products: sheetToObjects(sheet) };
 }
 
+function getNextArticle() {
+  const sheet = getSheet('catalog');
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) return 'арт.№001';
+  
+  const headers = data[0];
+  const artIdx = headers.indexOf('article');
+  if (artIdx === -1) return 'арт.№001';
+
+  let maxNum = 0;
+  for (let i = 1; i < data.length; i++) {
+    const art = String(data[i][artIdx]);
+    const match = art.match(/арт\.№(\d+)/);
+    if (match) {
+      const num = parseInt(match[1]);
+      if (num > maxNum) maxNum = num;
+    }
+  }
+  
+  const nextNum = maxNum + 1;
+  return 'арт.№' + String(nextNum).padStart(3, '0');
+}
+
 function handleAddProduct(product) {
   const sheet = getSheet('catalog');
   const products = sheetToObjects(sheet);
@@ -296,10 +319,12 @@ function handleAddProduct(product) {
   }
 
   const id = generateUUID();
+  const article = product.article || getNextArticle();
+  
   sheet.appendRow([
     id,
     product.name,
-    product.article || '',
+    article,
     product.unit || 'шт',
     product.category || '',
     product.active !== false
@@ -309,7 +334,7 @@ function handleAddProduct(product) {
     product: {
       id: id,
       name: product.name,
-      article: product.article || '',
+      article: article,
       unit: product.unit || 'шт',
       category: product.category || '',
       active: true

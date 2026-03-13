@@ -260,6 +260,7 @@ export default function Catalog() {
                       className="form-input"
                       value={formData.article}
                       onChange={(e) => setFormData({ ...formData, article: e.target.value })}
+                      placeholder="Авто: арт.№000"
                     />
                   </div>
                   <div className="form-group">
