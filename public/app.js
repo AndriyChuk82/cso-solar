@@ -120,7 +120,7 @@ function saveHistory() {
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v9');
+        const cached = localStorage.getItem('cso_products_cache_v10');
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -177,7 +177,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v9', JSON.stringify({
+    localStorage.setItem('cso_products_cache_v10', JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -339,26 +339,27 @@ function parseGvizJson(response, categoryName, mainCat) {
                 subCat = isBMS ? 'BMS / Контролери' : 'Deye';
             } else if (mainCat === 'Інвертори') {
                 const modelLower = model.toLowerCase();
-                const knownBrands = ['deye', 'axioma', 'luxpower', 'solax', 'growatt', 'huawei', 'foxess', 'fox', 'sofar', 'must', 'powmr', 'victron', 'goodwe', 'sungrow', 'sma', 'solaredge', 'easun', 'megarevo', 'srne', 'sumry', 'altek'];
+                const combined = modelLower + ' ' + fallbackCategory.toLowerCase();
                 let foundBrand = '';
-                for (const b of knownBrands) {
-                    if (modelLower.startsWith(b) || modelLower.includes(' ' + b)) {
-                        foundBrand = b.charAt(0).toUpperCase() + b.slice(1);
-                        if (foundBrand === 'Fox') foundBrand = 'FoxESS';
-                        break;
+
+                if (combined.includes('deye')) {
+                    foundBrand = 'Deye';
+                } else if (combined.includes('solis')) {
+                    foundBrand = 'Solis';
+                } else if (combined.includes('prosolax') || combined.includes('solax')) {
+                    foundBrand = 'Prosolax';
+                } else if (combined.includes('huawei') || /\bsun/i.test(modelLower) || combined.includes('luna2000')) {
+                    if (combined.includes('аксесуар') || combined.includes('luna2000') || combined.includes('dongle') || combined.includes('smart power sensor')) {
+                        foundBrand = 'Аксесуари для Huawei';
+                    } else {
+                        foundBrand = 'Huawei';
                     }
                 }
                 
-                if (foundBrand) {
-                    subCat = foundBrand;
-                } else {
-                    const match = model.match(/^[a-zA-Z]+/);
-                    if (match && match[0].length > 2) {
-                        subCat = match[0].charAt(0).toUpperCase() + match[0].slice(1).toLowerCase();
-                    } else if (col0 && col0.toLowerCase() !== 'фото') {
-                        subCat = col0;
-                    }
+                if (!foundBrand) {
+                    continue;
                 }
+                subCat = foundBrand;
             } else if (categoryName !== 'АКБ' && col0 && col0.toLowerCase() !== 'фото') {
                 subCat = col0;
             }
@@ -539,26 +540,27 @@ function parseSheetCSV(csv, categoryName, mainCat) {
                 subCat = isBMS ? 'BMS / Контролери' : 'Deye';
             } else if (mainCat === 'Інвертори') {
                 const modelLower = model.toLowerCase();
-                const knownBrands = ['deye', 'axioma', 'luxpower', 'solax', 'growatt', 'huawei', 'foxess', 'fox', 'sofar', 'must', 'powmr', 'victron', 'goodwe', 'sungrow', 'sma', 'solaredge', 'easun', 'megarevo', 'srne', 'sumry', 'altek'];
+                const combined = modelLower + ' ' + fallbackCategory.toLowerCase();
                 let foundBrand = '';
-                for (const b of knownBrands) {
-                    if (modelLower.startsWith(b) || modelLower.includes(' ' + b)) {
-                        foundBrand = b.charAt(0).toUpperCase() + b.slice(1);
-                        if (foundBrand === 'Fox') foundBrand = 'FoxESS';
-                        break;
+
+                if (combined.includes('deye')) {
+                    foundBrand = 'Deye';
+                } else if (combined.includes('solis')) {
+                    foundBrand = 'Solis';
+                } else if (combined.includes('prosolax') || combined.includes('solax')) {
+                    foundBrand = 'Prosolax';
+                } else if (combined.includes('huawei') || /\bsun/i.test(modelLower) || combined.includes('luna2000')) {
+                    if (combined.includes('аксесуар') || combined.includes('luna2000') || combined.includes('dongle') || combined.includes('smart power sensor')) {
+                        foundBrand = 'Аксесуари для Huawei';
+                    } else {
+                        foundBrand = 'Huawei';
                     }
                 }
                 
-                if (foundBrand) {
-                    subCat = foundBrand;
-                } else {
-                    const match = model.match(/^[a-zA-Z]+/);
-                    if (match && match[0].length > 2) {
-                        subCat = match[0].charAt(0).toUpperCase() + match[0].slice(1).toLowerCase();
-                    } else if (col0 && col0.toLowerCase() !== 'фото') {
-                        subCat = col0;
-                    }
+                if (!foundBrand) {
+                    continue;
                 }
+                subCat = foundBrand;
             } else if (categoryName !== 'АКБ' && col0 && col0.toLowerCase() !== 'фото') {
                 subCat = col0;
             }
