@@ -104,15 +104,22 @@ export function exportToPdf(columns, items, title = 'Звіт', fileName = 'зв
       background: #1a3a6b;
       color: white;
       padding: 6px 8px;
-      text-align: left;
+      text-align: center;
       font-weight: 600;
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
+    th:first-child {
+      text-align: left;
+    }
     td {
       padding: 5px 8px;
       border-bottom: 1px solid #e2e8f0;
+      text-align: center;
+    }
+    td:first-child {
+      text-align: left;
     }
     tr:nth-child(even) { background: #f8fafc; }
     .footer {
