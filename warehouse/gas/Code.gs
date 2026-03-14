@@ -181,13 +181,31 @@ function sheetToObjects(sheet) {
     'склад': 'warehouse_id',
     'дата': 'date',
     'кількість': 'quantity',
-    'товару': 'name',
-    'товар': 'name'
+    'товару': 'product_id', // Для операцій
+    'товар': 'product_id',   // Для операцій
+    'зі складу': 'warehouse_from',
+    'звідки': 'warehouse_from',
+    'на склад': 'warehouse_to',
+    'куди': 'warehouse_to',
+    'тип': 'type',
+    'коментар': 'comment',
+    'користувач': 'user',
+    'автор': 'user',
+    'створено': 'created_at',
+    'редаговано': 'edited_at',
+    'ким': 'edited_by'
   };
 
+  const sheetName = sheet.getName();
   const headers = rawHeaders.map(h => {
     const s = String(h).trim().toLowerCase();
-    return headerMap[s] || s;
+    let mapped = headerMap[s] || s;
+    
+    // Спеціальний випадок для каталогу, де "Товар" — це назва
+    if (sheetName === 'catalog' && (s === 'товар' || s === 'товару' || s === 'назва')) {
+      mapped = 'name';
+    }
+    return mapped;
   });
 
   const objects = [];
@@ -195,10 +213,23 @@ function sheetToObjects(sheet) {
     const obj = {};
     for (let j = 0; j < headers.length; j++) {
       let val = data[i][j];
+      
       // Перетворення системних статусів у boolean
       if (headers[j] === 'active') {
         val = (val === true || String(val).toLowerCase() === 'true' || val === 'АКТИВНИЙ');
       }
+      
+      // Форматування дат (GAS часто повертає об'єкти Date)
+      if (headers[j] === 'date' || headers[j] === 'created_at' || headers[j] === 'edited_at') {
+        if (val instanceof Date) {
+          const tz = getSpreadsheet().getSpreadsheetTimeZone();
+          val = Utilities.formatDate(val, tz, "yyyy-MM-dd HH:mm:ss");
+          if (headers[j] === 'date') val = val.split(' ')[0];
+        } else if (val) {
+          val = String(val);
+        }
+      }
+      
       obj[headers[j]] = val;
     }
     objects.push(obj);
@@ -477,8 +508,13 @@ function handleGetOperations(params) {
 
   // Сортування: найновіші зверху
   operations.sort((a, b) => {
-    if (a.date !== b.date) return b.date.localeCompare(a.date);
-    return (b.created_at || '').localeCompare(a.created_at || '');
+    const dateA = String(a.date || '');
+    const dateB = String(b.date || '');
+    if (dateA !== dateB) return dateB.localeCompare(dateA);
+    
+    const createdA = String(a.created_at || '');
+    const createdB = String(b.created_at || '');
+    return createdB.localeCompare(createdA);
   });
 
   return { success: true, operations: operations };
