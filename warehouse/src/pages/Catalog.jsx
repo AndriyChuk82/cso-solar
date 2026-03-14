@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getCatalog, addProduct, updateProduct, archiveProduct } from '../api/gasApi';
+import { getCatalog, addProduct, updateProduct, archiveProduct, getCategories } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { matchesSearch } from '../utils/searchUtils';
