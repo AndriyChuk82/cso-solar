@@ -20,6 +20,7 @@ export default function Catalog() {
   const [editProduct, setEditProduct] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [sortAsc, setSortAsc] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -136,7 +137,7 @@ export default function Catalog() {
     if (!search.trim()) return true;
     const content = `${p.name} ${p.article} ${p.category}`;
     return matchesSearch(content, search);
-  });
+  }).sort((a, b) => sortAsc ? a.name.localeCompare(b.name) : 0);
 
   return (
     <div>
@@ -163,7 +164,14 @@ export default function Catalog() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}>
+        <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end', gap: '12px' }}>
+          <button 
+            className={`btn btn-sm ${sortAsc ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => setSortAsc(!sortAsc)}
+            title="Сортувати від А до Я за назвою"
+          >
+            {sortAsc ? 'Сортування: А-Я' : 'Сортувати А-Я'}
+          </button>
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.82rem' }}>
             <input
               type="checkbox"

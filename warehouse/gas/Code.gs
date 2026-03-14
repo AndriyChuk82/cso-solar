@@ -485,12 +485,45 @@ function handleGetOperations(params) {
   const catalogMap = {};
   catalog.forEach(p => { catalogMap[p.id] = p; });
 
-  operations = operations.map(op => ({
-    ...op,
-    product_name: catalogMap[op.product_id]?.name || '',
-    product_article: catalogMap[op.product_id]?.article || '',
-    unit: catalogMap[op.product_id]?.unit || ''
-  }));
+  // Розрахуємо залишки ПІСЛЯ кожної операції по кожному складу і товару
+  // Спочатку треба переконатися, що операції відсортовано хронологічно (від найстарішої до найновішої)
+  operations.sort((a, b) => {
+    const dateA = String(a.date || '');
+    const dateB = String(b.date || '');
+    if (dateA !== dateB) return dateA.localeCompare(dateB);
+    const createdA = String(a.created_at || '');
+    const createdB = String(b.created_at || '');
+    return createdA.localeCompare(createdB);
+  });
+
+  const runningBalances = {}; // key: warehouse_id|product_id
+
+  operations = operations.map(op => {
+    const qty = parseFloat(op.quantity) || 0;
+    let balance_after = 0;
+
+    if (op.type === 'income' || op.type === 'balance') {
+      if (op.warehouse_to) {
+        const key = op.warehouse_to + '|' + op.product_id;
+        runningBalances[key] = (runningBalances[key] || 0) + qty;
+        balance_after = runningBalances[key];
+      }
+    } else if (op.type === 'expense') {
+      if (op.warehouse_from) {
+        const key = op.warehouse_from + '|' + op.product_id;
+        runningBalances[key] = (runningBalances[key] || 0) - qty;
+        balance_after = runningBalances[key];
+      }
+    }
+
+    return {
+      ...op,
+      product_name: catalogMap[op.product_id]?.name || '',
+      product_article: catalogMap[op.product_id]?.article || '',
+      unit: catalogMap[op.product_id]?.unit || '',
+      balance_after: balance_after
+    };
+  });
 
   // Фільтри
   if (params.warehouseId) {

@@ -25,6 +25,7 @@ export default function Journal() {
     dateTo: ''
   });
   const [search, setSearch] = useState('');
+  const [sortAsc, setSortAsc] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -70,12 +71,18 @@ export default function Journal() {
     return warehouses.find((w) => w.id === id)?.name || id || '—';
   }
 
-  // Пошукова фільтрація на клієнті
-  const filteredOperations = useMemo(() => operations.filter((op) => {
-    if (!search.trim()) return true;
-    const content = `${op.product_name || ''} ${op.product_article || ''} ${op.comment || ''}`;
-    return matchesSearch(content, search);
-  }), [operations, search]);
+  // Пошукова фільтрація на клієнті та сортування
+  const filteredOperations = useMemo(() => {
+    const list = operations.filter((op) => {
+      if (!search.trim()) return true;
+      const content = `${op.product_name || ''} ${op.product_article || ''} ${op.comment || ''}`;
+      return matchesSearch(content, search);
+    });
+    if (sortAsc) {
+      list.sort((a, b) => (a.product_name || '').localeCompare(b.product_name || ''));
+    }
+    return list;
+  }, [operations, search, sortAsc]);
 
   function handleExport() {
     if (filteredOperations.length === 0) return showToast('Немає операцій для експорту', 'info');
@@ -178,6 +185,17 @@ export default function Journal() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+        </div>
+        
+        <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}>
+          <button 
+            className={`btn btn-sm ${sortAsc ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => setSortAsc(!sortAsc)}
+            title="Сортувати від А до Я за назвою"
+            style={{ height: '38px' }}
+          >
+            {sortAsc ? 'Сортування: А-Я' : 'Сортувати А-Я'}
+          </button>
         </div>
       </div>
 

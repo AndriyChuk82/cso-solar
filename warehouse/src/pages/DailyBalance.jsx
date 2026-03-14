@@ -19,6 +19,7 @@ export default function DailyBalance() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [sortAsc, setSortAsc] = useState(false);
 
   useEffect(() => {
     getWarehouses().then((result) => {
@@ -102,6 +103,10 @@ export default function DailyBalance() {
 
   const changedCount = items.filter((item) => item.diff !== 0).length;
 
+  const displayedItems = sortAsc 
+    ? [...items].sort((a, b) => (a.product_name || '').localeCompare(b.product_name || ''))
+    : items;
+
   return (
     <div>
       <div className="page-header">
@@ -139,8 +144,18 @@ export default function DailyBalance() {
       ) : items.length > 0 ? (
         <form onSubmit={handleSubmit}>
           <div className="card" style={{ marginBottom: '16px' }}>
-            <div className="card-header">
-              <h3>Позиції ({items.length})</h3>
+            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <h3 style={{ margin: 0 }}>Позиції ({items.length})</h3>
+                <button 
+                  type="button"
+                  className={`btn btn-sm ${sortAsc ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => setSortAsc(!sortAsc)}
+                  title="Сортувати від А до Я за назвою"
+                >
+                  {sortAsc ? 'Сортування: А-Я' : 'Сортувати А-Я'}
+                </button>
+              </div>
               {changedCount > 0 && (
                 <span className="badge badge-balance">{changedCount} відхилень</span>
               )}
@@ -158,7 +173,9 @@ export default function DailyBalance() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item, index) => (
+                  {displayedItems.map((item) => {
+                    const originalIndex = items.findIndex(i => i.product_id === item.product_id);
+                    return (
                     <tr
                       key={item.product_id}
                       style={{
@@ -177,10 +194,10 @@ export default function DailyBalance() {
                       <td style={{ textAlign: 'center', fontWeight: 600 }}>{item.quantity}</td>
                       <td style={{ textAlign: 'center' }}>
                         <input
-                          type="number"
+                           type="number"
                           className="form-input"
                           value={item.factQuantity}
-                          onChange={(e) => updateFact(index, e.target.value)}
+                          onChange={(e) => updateFact(originalIndex, e.target.value)}
                           min="0"
                           step="0.01"
                           style={{
@@ -203,7 +220,8 @@ export default function DailyBalance() {
                         {item.diff > 0 ? `+${item.diff}` : item.diff === 0 ? '—' : item.diff}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

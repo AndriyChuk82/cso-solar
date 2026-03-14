@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getWarehouses, getStockReport, getCompareReport, getMovementReport, getCatalog } from '../api/gasApi';
 import { exportToExcel, exportToPdf } from '../utils/exportUtils';
 import { formatDate } from '../utils/dateUtils';
@@ -13,6 +13,7 @@ export default function Reports() {
   const [products, setProducts] = useState([]);
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [sortAsc, setSortAsc] = useState(false);
 
   const [stockFilter, setStockFilter] = useState({
     warehouseId: '',
@@ -232,6 +233,14 @@ export default function Reports() {
           <div className="card-header">
             <h3>{getReportTitle()}</h3>
             <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                className={`btn btn-outline btn-sm ${sortAsc ? 'btn-primary' : ''}`}
+                style={sortAsc ? { color: 'white' } : {}}
+                onClick={() => setSortAsc(!sortAsc)}
+                title="Сортувати від А до Я за назвою"
+              >
+                {sortAsc ? 'Сортування: А-Я' : 'Сортувати А-Я'}
+              </button>
               <button className="btn btn-outline btn-sm" onClick={handleExportExcel}>
                 📥 Завантажити Excel (.csv)
               </button>
@@ -241,7 +250,16 @@ export default function Reports() {
             </div>
           </div>
           <div className="data-table-wrap">
-            {reportData.items && reportData.items.length > 0 ? (
+            {reportData.items && reportData.items.length > 0 ? (() => {
+              const sortedReportItems = sortAsc 
+                ? [...reportData.items].sort((a, b) => {
+                    const nameA = String(a['Товар'] || a['Назва'] || a['Назва категорії'] || '');
+                    const nameB = String(b['Товар'] || b['Назва'] || b['Назва категорії'] || '');
+                    return nameA.localeCompare(nameB);
+                  })
+                : reportData.items;
+              
+              return (
               <table className="data-table">
                 <thead>
                   <tr>
@@ -251,7 +269,7 @@ export default function Reports() {
                   </tr>
                 </thead>
                 <tbody>
-                  {reportData.items.map((row, rowIndex) => (
+                  {sortedReportItems.map((row, rowIndex) => (
                     <tr key={rowIndex}>
                       {reportData.columns?.map((col, colIndex) => (
                         <td key={colIndex} style={{
@@ -265,7 +283,8 @@ export default function Reports() {
                   ))}
                 </tbody>
               </table>
-            ) : (
+              );
+            })() : (
               <div className="empty-state">
                 <span className="empty-icon">📊</span>
                 <p>Немає даних за обраними параметрами</p>
