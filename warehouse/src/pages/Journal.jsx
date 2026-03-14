@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { getOperations, getWarehouses, deleteOperation } from '../api/gasApi';
+import { getOperations, getWarehouses, deleteOperation, updateOperation } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { exportToExcel } from '../utils/exportUtils';
@@ -26,6 +26,8 @@ export default function Journal() {
   });
   const [search, setSearch] = useState('');
   const [sortAsc, setSortAsc] = useState(false);
+  const [editModal, setEditModal] = useState(null); // { op, formData }
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -60,6 +62,43 @@ export default function Journal() {
     } catch (err) {
       console.error('Помилка видалення:', err);
       showToast('Помилка підключення до сервера', 'error');
+    }
+  }
+
+  function handleOpenEdit(op) {
+    setEditModal({
+      op,
+      formData: {
+        date: op.date,
+        quantity: op.quantity,
+        comment: op.comment || '',
+        warehouse_id: op.warehouse_from || op.warehouse_to,
+        type: op.type
+      }
+    });
+  }
+
+  async function handleSaveEdit(e) {
+    e.preventDefault();
+    setSavingEdit(true);
+    try {
+      const result = await updateOperation({
+        id: editModal.op.id,
+        ...editModal.formData,
+        edited_by: user?.email
+      });
+      if (result?.success) {
+        showToast('Операцію успішно оновлено', 'success');
+        setEditModal(null);
+        loadData();
+      } else {
+        showToast(result?.error || 'Помилка оновлення', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Помилка сервера', 'error');
+    } finally {
+      setSavingEdit(false);
     }
   }
 
@@ -254,15 +293,24 @@ export default function Journal() {
                     <td style={{ fontSize: '0.8rem' }}>{op.comment || '—'}</td>
                     <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{op.user || '—'}</td>
                     {user?.isAdmin && (
-                      <td>
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => handleDelete(op.id)}
-                          title="Видалити"
-                          style={{ color: 'var(--danger)' }}
-                        >
-                          🗑️
-                        </button>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => handleOpenEdit(op)}
+                            title="Редагувати"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => handleDelete(op.id)}
+                            title="Видалити"
+                            style={{ color: 'var(--danger)' }}
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -270,8 +318,84 @@ export default function Journal() {
               </tbody>
             </table>
           )}
-        </div>
       </div>
+      
+      {/* Модалка редагування */}
+      {editModal && (
+        <div className="modal-overlay">
+          <div className="modal-container" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3>✏️ Редагування операції</h3>
+              <button className="btn-close" onClick={() => setEditModal(null)}>×</button>
+            </div>
+            <form onSubmit={handleSaveEdit}>
+              <div className="modal-body">
+                <div style={{ marginBottom: '16px', background: 'var(--bg-light)', padding: '10px', borderRadius: '8px', fontSize: '0.85rem' }}>
+                  <strong>Товар:</strong> {editModal.op.product_name}<br/>
+                  <strong>Тип:</strong> {CONFIG.OPERATION_LABELS[editModal.op.type]}
+                </div>
+
+                <div className="form-group">
+                  <label>Дата</label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={editModal.formData.date}
+                    onChange={e => setEditModal({ ...editModal, formData: { ...editModal.formData, date: e.target.value } })}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Кількість ({editModal.op.unit})</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={editModal.formData.quantity}
+                    onChange={e => setEditModal({ ...editModal, formData: { ...editModal.formData, quantity: parseFloat(e.target.value) || 0 } })}
+                    step="0.01"
+                    min="0"
+                    required
+                  />
+                </div>
+
+                {user?.isAdmin && (
+                  <>
+                    <div className="form-group">
+                      <label>Склад</label>
+                      <select
+                        className="form-select"
+                        value={editModal.formData.warehouse_id}
+                        onChange={e => setEditModal({ ...editModal, formData: { ...editModal.formData, warehouse_id: e.target.value } })}
+                      >
+                        {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                <div className="form-group">
+                  <label>Коментар</label>
+                  <textarea
+                    className="form-input"
+                    rows="2"
+                    value={editModal.formData.comment}
+                    onChange={e => setEditModal({ ...editModal, formData: { ...editModal.formData, comment: e.target.value } })}
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-outline" onClick={() => setEditModal(null)}>
+                  Скасувати
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={savingEdit}>
+                  {savingEdit ? '⏳ Збереження...' : 'Зберегти зміни'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
