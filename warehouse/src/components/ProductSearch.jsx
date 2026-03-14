@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { getCatalog, addProduct } from '../api/gasApi';
+import { getCatalog, addProduct, getCategories } from '../api/gasApi';
 import { fetchCPCatalog } from '../api/externalApi';
 import { normalizeForSearch, matchesSearch } from '../utils/searchUtils';
 import CONFIG from '../config';
@@ -19,9 +19,12 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
   const [query, setQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: '', article: '', unit: 'шт' });
+  const [newProduct, setNewProduct] = useState({ name: '', article: '', unit: 'шт', category: '' });
+  const [categories, setCategories] = useState([]);
   const [saving, setSaving] = useState(false);
   const [externalProducts, setExternalProducts] = useState([]);
+  const [extLoading, setExtLoading] = useState(false);
+  const [extError, setExtError] = useState(false);
   const wrapperRef = useRef(null);
 
   // Завантаження зовнішнього каталогу КП
@@ -31,12 +34,27 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
       return;
     }
 
+    setExtLoading(true);
     fetchCPCatalog().then(data => {
       if (data && data.length > 0) {
         externalCatalogCache = data;
         setExternalProducts(data);
+      } else {
+        setExtError(true);
       }
+    }).catch(err => {
+      console.error(err);
+      setExtError(true);
+    }).finally(() => {
+      setExtLoading(false);
     });
+
+    // Завантаження категорій
+    getCategories().then(res => {
+      if (res && res.success) {
+        setCategories(res.categories || []);
+      }
+    }).catch(err => console.error('Помилка завантаження категорій:', err));
   }, []);
 
   // Закрити випадаючий список при кліку за межами
@@ -107,13 +125,13 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
         name: newProduct.name,
         article: newProduct.article,
         unit: newProduct.unit,
-        category: '',
+        category: newProduct.category,
         active: true
       });
 
       if (result.success && result.product) {
         onSelect(result.product);
-        setNewProduct({ name: '', article: '', unit: 'шт' });
+        setNewProduct({ name: '', article: '', unit: 'шт', category: '' });
         setShowAddForm(false);
         setQuery('');
         setShowResults(false);
@@ -211,7 +229,9 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
 
           {filteredLocal.length === 0 && filteredExternal.length === 0 && query.trim() && !showAddForm && (
             <div style={{ padding: '12px 14px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-              Товар не знайдено
+              <div>Товар не знайдено.</div>
+              {extLoading && <div style={{ marginTop: '5px', fontSize: '0.75rem', color: 'var(--primary)' }}>Завантаження каталогу КП... ⏳</div>}
+              {extError && <div style={{ marginTop: '5px', fontSize: '0.75rem', color: 'var(--danger)' }}>Помилка завантаження бази КП (перевірте доступ до таблиці - Anyone with link).</div>}
             </div>
           )}
 
@@ -271,6 +291,20 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
                 >
                   {CONFIG.UNITS.map((u) => (
                     <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group" style={{ marginBottom: '10px' }}>
+                <select
+                  className="form-select"
+                  value={newProduct.category}
+                  onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                  style={{ fontSize: '0.82rem' }}
+                  required
+                >
+                  <option value="">Оберіть категорію *</option>
+                  {categories.filter(c => c.active).map(c => (
+                    <option key={c.name} value={c.name}>{c.name}</option>
                   ))}
                 </select>
               </div>
