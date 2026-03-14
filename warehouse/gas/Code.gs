@@ -35,6 +35,12 @@ function doGet(e) {
       case 'getUser':
         result = handleGetUser(e.parameter.email);
         break;
+      case 'getSyncData':
+        result = handleGetSyncData();
+        break;
+      case 'getProposals':
+        result = handleGetProposals();
+        break;
       case 'getCatalog':
         result = handleGetCatalog();
         break;
@@ -97,6 +103,15 @@ function doPost(e) {
     switch (action) {
       case 'addProduct':
         result = handleAddProduct(data.product);
+        break;
+      case 'saveProposal':
+        result = handleSaveProposal(data.proposal, data.user);
+        break;
+      case 'deleteProposal':
+        result = handleDeleteProposal(data.proposalId);
+        break;
+      case 'saveGlobalData':
+        result = handleSaveGlobalData(data.key, data.value);
         break;
       case 'updateProduct':
         result = handleUpdateProduct(data.product);
@@ -342,6 +357,78 @@ function handleUpdateCategory(category) {
   if (category.name) sheet.getRange(row, 1).setValue(category.name);
   if (category.active !== undefined) sheet.getRange(row, 2).setValue(category.active);
   
+  return { success: true };
+}
+
+// ===== КОМЕРЦІЙНІ ПРОПОЗИЦІЇ ТА ГЛОБАЛЬНІ ДАНІ Додатка (APP) =====
+
+function handleGetSyncData() {
+  const propRes = handleGetProposals();
+  const globRes = handleGetGlobalData();
+  return {
+    success: true,
+    proposals: propRes.proposals || [],
+    globalData: globRes.data || {}
+  };
+}
+
+function handleGetProposals() {
+  const sheet = getSheetWithInit('proposals', ['id', 'date', 'user', 'json'], []);
+  const data = sheet.getDataRange().getValues();
+  const proposals = [];
+  for (let i = 1; i < data.length; i++) {
+    try {
+      const p = JSON.parse(data[i][3]);
+      proposals.push(p);
+    } catch(e) {}
+  }
+  return { success: true, proposals: proposals };
+}
+
+function handleSaveProposal(proposal, user) {
+  const sheet = getSheetWithInit('proposals', ['id', 'date', 'user', 'json'], []);
+  const row = findRowByValue(sheet, 'id', proposal.id);
+  const jsonStr = JSON.stringify(proposal);
+  if (row === -1) {
+    sheet.appendRow([proposal.id, dateStr(proposal.date), user || '', jsonStr]);
+  } else {
+    sheet.getRange(row, 2).setValue(dateStr(proposal.date));
+    sheet.getRange(row, 3).setValue(user || '');
+    sheet.getRange(row, 4).setValue(jsonStr);
+  }
+  return { success: true };
+}
+
+function handleDeleteProposal(proposalId) {
+  const sheet = getSheetWithInit('proposals', ['id', 'date', 'user', 'json'], []);
+  const row = findRowByValue(sheet, 'id', proposalId);
+  if (row !== -1) {
+    sheet.deleteRow(row);
+  }
+  return { success: true };
+}
+
+function handleGetGlobalData() {
+  const sheet = getSheetWithInit('global_data', ['key', 'value'], []);
+  const data = sheet.getDataRange().getValues();
+  const result = {};
+  for (let i = 1; i < data.length; i++) {
+    try {
+      result[data[i][0]] = JSON.parse(data[i][1]);
+    } catch(e) {}
+  }
+  return { success: true, data: result };
+}
+
+function handleSaveGlobalData(key, value) {
+  const sheet = getSheetWithInit('global_data', ['key', 'value'], []);
+  const row = findRowByValue(sheet, 'key', key);
+  const jsonStr = JSON.stringify(value);
+  if (row === -1) {
+    sheet.appendRow([key, jsonStr]);
+  } else {
+    sheet.getRange(row, 2).setValue(jsonStr);
+  }
   return { success: true };
 }
 
