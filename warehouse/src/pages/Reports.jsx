@@ -273,8 +273,7 @@ export default function Reports() {
                     <tr key={rowIndex}>
                       {reportData.columns?.map((col, colIndex) => (
                         <td key={colIndex} style={{
-                          fontWeight: col === 'Всього' || col === 'Кількість' ? 700 : 400,
-                          textAlign: typeof row[col] === 'number' ? 'right' : 'left'
+                          fontWeight: col === 'Всього' || col === 'Кількість' ? 700 : 400
                         }}>
                           {col === 'Дата' ? formatDate(row[col]) : (row[col] ?? '—')}
                         </td>

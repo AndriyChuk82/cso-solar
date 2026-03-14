@@ -293,8 +293,8 @@ export default function Journal() {
                     <td style={{ fontSize: '0.8rem' }}>{op.comment || '—'}</td>
                     <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{op.user || '—'}</td>
                     {user?.isAdmin && (
-                      <td style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                      <td>
+                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                           <button
                             className="btn btn-ghost btn-sm"
                             onClick={() => handleOpenEdit(op)}
@@ -318,6 +318,7 @@ export default function Journal() {
               </tbody>
             </table>
           )}
+        </div>
       </div>
       
       {/* Модалка редагування */}

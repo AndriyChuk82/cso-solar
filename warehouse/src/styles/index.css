@@ -522,6 +522,11 @@ body {
   white-space: nowrap;
   width: 1px;
   font-size: 0.85rem;
+  text-align: center;
+}
+
+.data-table th:first-child {
+  text-align: left;
 }
 
 .data-table td {
@@ -532,6 +537,11 @@ body {
   white-space: nowrap;
   width: 1px;
   font-size: 0.85rem;
+  text-align: center;
+}
+
+.data-table td:first-child {
+  text-align: left;
 }
 
 .data-table tbody tr {

@@ -187,8 +187,8 @@ export default function DailyBalance() {
                     >
                       <td style={{ fontWeight: 500 }}>{item.product_name}</td>
                       <td>{item.unit}</td>
-                      <td style={{ textAlign: 'center', fontWeight: 600 }}>{item.quantity}</td>
-                      <td style={{ textAlign: 'center' }}>
+                      <td style={{ fontWeight: 600 }}>{item.quantity}</td>
+                      <td>
                         <input
                            type="number"
                           className="form-input"
@@ -205,7 +205,6 @@ export default function DailyBalance() {
                         />
                       </td>
                       <td style={{
-                        textAlign: 'center',
                         fontWeight: 700,
                         color: item.diff > 0
                           ? 'var(--income)'
