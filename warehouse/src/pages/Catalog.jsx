@@ -199,7 +199,6 @@ export default function Catalog() {
               <thead>
                 <tr>
                   <th>Назва</th>
-                  <th>Артикул</th>
                   <th>Од. виміру</th>
                   <th>Категорія</th>
                   <th>Статус</th>
@@ -210,7 +209,6 @@ export default function Catalog() {
                 {filtered.map((p) => (
                   <tr key={p.id} style={{ opacity: p.active ? 1 : 0.5 }}>
                     <td style={{ fontWeight: 600 }}>{p.name}</td>
-                    <td style={{ color: 'var(--text-muted)' }}>{p.article || '—'}</td>
                     <td>{p.unit}</td>
                     <td>{p.category || '—'}</td>
                     <td>
@@ -260,29 +258,17 @@ export default function Catalog() {
                     required
                   />
                 </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Артикул</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={formData.article}
-                      onChange={(e) => setFormData({ ...formData, article: e.target.value })}
-                      placeholder="Авто: арт.№000"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Одиниця виміру</label>
-                    <select
-                      className="form-select"
-                      value={formData.unit}
-                      onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    >
-                      {CONFIG.UNITS.map((u) => (
-                        <option key={u} value={u}>{u}</option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Одиниця виміру</label>
+                  <select
+                    className="form-select"
+                    value={formData.unit}
+                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                  >
+                    {CONFIG.UNITS.map((u) => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="form-group">
                   <label>Категорія *</label>

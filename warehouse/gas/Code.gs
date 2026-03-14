@@ -818,20 +818,19 @@ function handleStockReport(warehouseId, date) {
   catalog.forEach(p => { catalogMap[p.id] = p; });
 
   const warehouses = sheetToObjects(getSheet('warehouses'));
-  const whMap = {};
-  warehouses.forEach(w => { whMap[w.id] = w.name; });
+  const warehousesMap = {}; // Renamed from whMap to warehousesMap to match snippet
+  warehouses.forEach(w => { warehousesMap[w.id] = w.name; });
 
   const items = (balResult.balances || []).map(b => ({
     'Товар': catalogMap[b.product_id]?.name || b.product_id,
-    'Артикул': catalogMap[b.product_id]?.article || '',
     'Одиниця': catalogMap[b.product_id]?.unit || '',
-    'Склад': whMap[b.warehouse_id] || b.warehouse_id,
+    'Склад': warehousesMap[b.warehouse_id] || b.warehouse_id,
     'Кількість': b.quantity
   }));
 
   return {
     success: true,
-    columns: ['Товар', 'Артикул', 'Одиниця', 'Склад', 'Кількість'],
+    columns: ['Товар', 'Одиниця', 'Склад', 'Кількість'],
     items: items
   };
 }
@@ -853,7 +852,7 @@ function handleCompareReport() {
     productMap[b.product_id][b.warehouse_id] = parseFloat(b.quantity) || 0;
   });
 
-  const columns = ['Товар', 'Артикул', 'Од.'];
+  const columns = ['Товар', 'Од.'];
   warehouses.forEach(w => { columns.push(w.name); });
   columns.push('Всього');
 
@@ -861,7 +860,6 @@ function handleCompareReport() {
     const product = catalogMap[productId] || {};
     const row = {
       'Товар': product.name || productId,
-      'Артикул': product.article || '',
       'Од.': product.unit || ''
     };
     let total = 0;

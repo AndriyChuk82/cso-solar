@@ -165,7 +165,6 @@ export default function DailyBalance() {
                 <thead>
                   <tr>
                     <th>Товар</th>
-                    <th>Артикул</th>
                     <th>Од.</th>
                     <th>Облікова к-сть</th>
                     <th>Фактична к-сть</th>
@@ -187,9 +186,6 @@ export default function DailyBalance() {
                       }}
                     >
                       <td style={{ fontWeight: 500 }}>{item.product_name}</td>
-                      <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-                        {item.product_article || '—'}
-                      </td>
                       <td>{item.unit}</td>
                       <td style={{ textAlign: 'center', fontWeight: 600 }}>{item.quantity}</td>
                       <td style={{ textAlign: 'center' }}>

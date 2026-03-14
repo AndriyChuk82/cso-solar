@@ -87,7 +87,7 @@ export default function Journal() {
   function handleExport() {
     if (filteredOperations.length === 0) return showToast('Немає операцій для експорту', 'info');
     
-    const columns = ['Дата', 'Склад', 'Товар', 'Тип', 'Од.', 'К-сть', 'Артикул', 'Залишок після', "Пов'язаний склад", 'Коментар', 'Автор'];
+    const columns = ['Дата', 'Склад', 'Товар', 'Тип', 'Од.', 'К-сть', 'Залишок після', "Пов'язаний склад", 'Коментар', 'Автор'];
     const items = filteredOperations.map(op => ({
       'Дата': formatDate(op.date),
       'Склад': getWarehouseName(op.warehouse_from || op.warehouse_to),
@@ -95,9 +95,8 @@ export default function Journal() {
       'Тип': CONFIG.OPERATION_LABELS[op.type] || op.type,
       'Од.': op.unit || '',
       'К-сть': op.quantity,
-      'Артикул': op.product_article || '',
-      'Залишок після': op.balance_after != null ? op.balance_after : '',
-      "Пов'язаний склад": op.type === 'transfer' ? getWarehouseName(op.warehouse_to) : '',
+      'Залишок після': op.balance_after,
+      "Пов'язаний склад": getWarehouseName(op.related_warehouse_id),
       'Коментар': op.comment || '',
       'Автор': op.user || ''
     }));
@@ -218,14 +217,13 @@ export default function Journal() {
           ) : (
             <table className="data-table">
               <thead>
-                <tr>
+                 <tr>
                   <th>Дата</th>
                   <th>Склад</th>
                   <th>Товар</th>
                   <th>Тип</th>
                   <th>Од.</th>
                   <th>Кількість</th>
-                  <th>Артикул</th>
                   <th>Залишок</th>
                   <th>Пов'язаний склад</th>
                   <th>Коментар</th>
@@ -244,9 +242,8 @@ export default function Journal() {
                         {CONFIG.OPERATION_LABELS[op.type] || op.type}
                       </span>
                     </td>
-                    <td style={{ color: 'var(--text-muted)' }}>{op.unit || '—'}</td>
+                     <td style={{ color: 'var(--text-muted)' }}>{op.unit || '—'}</td>
                     <td style={{ fontWeight: 700, fontSize: '1rem' }}>{op.quantity}</td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{op.product_article || '—'}</td>
                     <td>{op.balance_after != null ? op.balance_after : '—'}</td>
                     <td>
                       {op.type === 'transfer'
