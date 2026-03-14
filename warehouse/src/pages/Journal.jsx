@@ -126,7 +126,7 @@ export default function Journal() {
   function handleExport() {
     if (filteredOperations.length === 0) return showToast('Немає операцій для експорту', 'info');
     
-    const columns = ['Дата', 'Склад', 'Товар', 'Тип', 'Од.', 'К-сть', 'Залишок після', "Пов'язаний склад", 'Коментар', 'Автор'];
+    const columns = ['Дата', 'Склад', 'Товар', 'Тип', 'Од.', 'К-сть', 'Залишок після', 'Коментар', 'Автор'];
     const items = filteredOperations.map(op => ({
       'Дата': formatDate(op.date),
       'Склад': getWarehouseName(op.warehouse_from || op.warehouse_to),
@@ -135,7 +135,6 @@ export default function Journal() {
       'Од.': op.unit || '',
       'К-сть': op.quantity,
       'Залишок після': op.balance_after,
-      "Пов'язаний склад": getWarehouseName(op.related_warehouse_id),
       'Коментар': op.comment || '',
       'Автор': op.user || ''
     }));
@@ -264,7 +263,6 @@ export default function Journal() {
                   <th>Од.</th>
                   <th>Кількість</th>
                   <th>Залишок</th>
-                  <th>Пов'язаний склад</th>
                   <th>Коментар</th>
                   <th>Автор</th>
                   {user?.isAdmin && <th></th>}
@@ -284,12 +282,6 @@ export default function Journal() {
                      <td style={{ color: 'var(--text-muted)' }}>{op.unit || '—'}</td>
                     <td style={{ fontWeight: 700, fontSize: '1rem' }}>{op.quantity}</td>
                     <td>{op.balance_after != null ? op.balance_after : '—'}</td>
-                    <td>
-                      {op.type === 'transfer'
-                        ? getWarehouseName(op.warehouse_to)
-                        : '—'
-                      }
-                    </td>
                     <td style={{ fontSize: '0.8rem' }}>{op.comment || '—'}</td>
                     <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{op.user || '—'}</td>
                     {user?.isAdmin && (
