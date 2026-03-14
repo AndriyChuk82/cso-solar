@@ -181,8 +181,8 @@ function sheetToObjects(sheet) {
     'склад': 'warehouse_id',
     'дата': 'date',
     'кількість': 'quantity',
-    'товару': 'product_id', // Для операцій
-    'товар': 'product_id',   // Для операцій
+    'товару': 'product_id', 
+    'товар': 'product_id',   
     'зі складу': 'warehouse_from',
     'звідки': 'warehouse_from',
     'на склад': 'warehouse_to',
@@ -193,7 +193,16 @@ function sheetToObjects(sheet) {
     'автор': 'user',
     'створено': 'created_at',
     'редаговано': 'edited_at',
-    'ким': 'edited_by'
+    'ким': 'edited_by',
+    'артикул': 'article',
+    'категорія': 'category',
+    'категорії': 'category',
+    'одиниця': 'unit',
+    'од. виміру': 'unit',
+    'од.виміру': 'unit',
+    'од виміру': 'unit',
+    'од.': 'unit',
+    'назва': 'name'
   };
 
   const sheetName = sheet.getName();
@@ -499,9 +508,10 @@ function handleGetOperations(params) {
     operations = operations.filter(op => op.date <= params.dateTo);
   }
   if (params.search) {
-    const words = params.search.toLowerCase().split(/\s+/);
+    const searchStr = normalizeForSearch(params.search);
+    const words = searchStr.split(/\s+/);
     operations = operations.filter(op => {
-      const content = ((op.product_name || '') + ' ' + (op.product_article || '')).toLowerCase();
+      const content = normalizeForSearch((op.product_name || '') + ' ' + (op.product_article || ''));
       return words.every(w => content.includes(w));
     });
   }
@@ -933,4 +943,13 @@ function cleanOldBackups(folder, keepCount) {
  */
 function dailyBackupTrigger() {
   handleCreateBackup();
+}
+/** Нормалізація для пошуку (видалення розбіжностей між кирилицею та латиницею) */
+function normalizeForSearch(str) {
+  if (!str) return '';
+  return str.toString().toLowerCase()
+    .replace(/р/g, 'p').replace(/с/g, 'c').replace(/о/g, 'o')
+    .replace(/а/g, 'a').replace(/х/g, 'x').replace(/у/g, 'y')
+    .replace(/е/g, 'e').replace(/і/g, 'i').replace(/м/g, 'm')
+    .replace(/к/g, 'k').replace(/в/g, 'b');
 }

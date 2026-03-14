@@ -3,7 +3,7 @@
  * GAS_URL потрібно замінити після деплою Google Apps Script.
  */
 const CONFIG = {
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbwlU5NKIEfb2Ylg2sG43YAeBJsmLM5ozifvQoPxOT07g38gist2RI8eYeMkzaswiqWt_A/exec',
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbzfgUQnkQFrvXgJiu_A5OYBz1pofH1tWNtobwwkCjVlKCBi3wFDSgNyQvreguL6Nt6P5w/exec',
   VERIFY_URL: '/api/verify',
   UNITS: ['шт', 'компл', 'м'],
   OPERATION_TYPES: {

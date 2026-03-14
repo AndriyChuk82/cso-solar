@@ -14,7 +14,9 @@ export function normalizeForSearch(str) {
         .replace(/у/g, 'y') // кирилична 'у' -> 'y'
         .replace(/е/g, 'e') // кирилична 'е' -> 'e'
         .replace(/і/g, 'i') // кирилична 'і' -> 'i'
-        .replace(/в/g, 'b'); // кирилична 'в' -> 'b' (схожість В та B)
+        .replace(/м/g, 'm') // кирилична 'м' (схожа)
+        .replace(/к/g, 'k') // кирилична 'к' (схожа)
+        .replace(/в/g, 'b'); // кирилична 'в' -> 'b'
 }
 
 /**
@@ -26,7 +28,7 @@ export function normalizeForSearch(str) {
 export function matchesSearch(content, query) {
     if (!query || !query.trim()) return true;
     const searchWords = query.trim().split(/\s+/);
-    const normalizedContent = normalizeForSearch(content);
+    const normalizedContent = normalizeForSearch((content || '').toString());
     
     return searchWords.every(word => normalizedContent.includes(normalizeForSearch(word)));
 }
