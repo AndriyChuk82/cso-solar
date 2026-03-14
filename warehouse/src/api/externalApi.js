@@ -116,6 +116,45 @@ function parseGvizJson(response, categoryName, mainCat) {
 export async function fetchCPCatalog() {
   let allProducts = [];
 
+  // Спочатку спробуємо знайти кеш від головного додатка КП (швидко і без зайвих запитів)
+  try {
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('cso_products_cache_'));
+    if (keys.length > 0) {
+      // Сортуємо ключі, щоб взяти найсвіжіший кеш (v48 > v47 і т.д.)
+      keys.sort();
+      const latestKey = keys[keys.length - 1];
+      const cacheRaw = localStorage.getItem(latestKey);
+      
+      if (cacheRaw) {
+        const cacheData = JSON.parse(cacheRaw);
+        if (cacheData && cacheData.products && cacheData.products.length > 0) {
+          console.log('Використано кеш Комерційних Пропозицій:', latestKey);
+          // Мапаємо товари з КП формату в формат Складського обліку
+          allProducts = cacheData.products.map(p => ({
+            name: p.model || p.name,
+            article: '',
+            unit: p.unit || 'шт',
+            category: p.category ? `КП - ${p.category}` : 'КП - Невідомо',
+            isExternal: true
+          }));
+          
+          const unique = [];
+          const names = new Set();
+          allProducts.forEach(p => {
+            if (!names.has(p.name)) {
+              names.add(p.name);
+              unique.push(p);
+            }
+          });
+          return unique;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Не вдалося прочитати кеш КП:', e);
+  }
+
+  // Якщо кешу немає (наприклад браузер чистий), завантажуємо через JSONP
   const promises = CONFIG.CP_SHEETS.map(sheet => {
     const spreadsheetId = CONFIG.CP_SPREADSHEETS[sheet.sId] || sheet.sId;
     return fetchViaJsonp(sheet.gid, sheet.name, sheet.mainCat, spreadsheetId);
