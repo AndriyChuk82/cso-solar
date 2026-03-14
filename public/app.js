@@ -17,7 +17,8 @@ const CONFIG = {
     ],
     DEFAULT_MARKUP: 15,
     DEFAULT_USD_UAH: 41.50,
-    DEFAULT_EUR_USD: 1.08
+    DEFAULT_EUR_USD: 1.08,
+    CACHE_VERSION: 'v48' // Останню версію кешу для примусового оновлення у всіх клієнтів
 };
 
 // Detect if running on Vercel (HTTPS) vs local file://
@@ -116,6 +117,23 @@ function getNextProposalNumber() {
     return 'КП-' + String(idx).padStart(3, '0');
 }
 
+/**
+ * Нормалізація рядка для пошуку (видалення розбіжностей між кирилицею та латиницею)
+ */
+function normalizeForSearch(str) {
+    if (!str) return '';
+    return str.toLowerCase()
+        .replace(/р/g, 'p') // кирилична 'р' -> 'p'
+        .replace(/с/g, 'c') // кирилична 'с' -> 'c'
+        .replace(/о/g, 'o') // кирилична 'о' -> 'o'
+        .replace(/а/g, 'a') // кирилична 'а' -> 'a'
+        .replace(/х/g, 'x') // кирилична 'х' -> 'x'
+        .replace(/у/g, 'y') // кирилична 'у' -> 'y'
+        .replace(/е/g, 'e') // кирилична 'е' -> 'e'
+        .replace(/і/g, 'i') // кирилична 'і' -> 'i'
+        .replace(/в/g, 'b'); // кирилична 'в' -> 'b' (схожість В та B)
+}
+
 // ===== SETTINGS =====
 function loadSettings() {
     try {
@@ -149,8 +167,9 @@ function saveHistory() {
 
 // ===== DATA FETCHING =====
 async function fetchSheetData(forceRefresh = false) {
+    const cacheKey = 'cso_products_cache_' + CONFIG.CACHE_VERSION;
     if (!forceRefresh) {
-        const cached = localStorage.getItem('cso_products_cache_v47');
+        const cached = localStorage.getItem(cacheKey);
         if (cached) {
             try {
                 const data = JSON.parse(cached);
@@ -208,7 +227,7 @@ async function fetchSheetData(forceRefresh = false) {
         return;
     }
 
-    localStorage.setItem('cso_products_cache_v47', JSON.stringify({
+    localStorage.setItem(cacheKey, JSON.stringify({
         products: allProducts,
         categories: [...new Set(allProducts.map(p => p.mainCategory))],
         timestamp: Date.now()
@@ -385,7 +404,7 @@ function parseGvizJson(response, categoryName, mainCat) {
                 
                 // Aggressive check: brand name or specific series (including Cyrillic B/В)
                 const isDeyeBrand = combined.includes('deye') || 
-                                   /se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|pro-c|prob|pro[вb]|pro\s+[вb]/i.test(modelLower);
+                                   /se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|pro[- ]*[вb]/i.test(modelLower);
                 const isBMS = modelLower.includes('bms');
 
                 if (!isDeyeBrand && !isBMS) {
@@ -484,7 +503,8 @@ function openManualCsvImport() {
         if (products.length > 0) {
             state.products = products;
             state.categories = [...new Set(products.map(p => p.mainCategory))];
-            localStorage.setItem('cso_products_cache_v9', JSON.stringify({
+            const cacheKey = 'cso_products_cache_' + CONFIG.CACHE_VERSION;
+            localStorage.setItem(cacheKey, JSON.stringify({
                 products: state.products,
                 categories: state.categories,
                 timestamp: Date.now()
@@ -607,7 +627,7 @@ function parseSheetCSV(csv, categoryName, mainCat) {
                 const combined = modelLower + ' ' + headLower;
 
                 const isDeyeBrand = combined.includes('deye') || 
-                                   /se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|pro-c|prob|pro[вb]|pro\s+[вb]/i.test(modelLower);
+                                   /se-g|se-f|rw-m|rw-f|bos-g|bos-b|gb-lm|gb-lbs|pro[- ]*[вb]/i.test(modelLower);
                 const isBMS = modelLower.includes('bms');
 
                 if (!isDeyeBrand && !isBMS) {
@@ -737,8 +757,8 @@ function renderCatalog() {
             if (searchWords.length === 0) return p.mainCategory === mCat;
             if (p.mainCategory !== mCat) return false;
             
-            const content = (p.model + ' ' + (p.description || '') + ' ' + p.subCategory + ' ' + p.mainCategory).toLowerCase();
-            return searchWords.every(word => content.includes(word));
+            const content = normalizeForSearch(p.model + ' ' + (p.description || '') + ' ' + p.subCategory + ' ' + p.mainCategory);
+            return searchWords.every(word => content.includes(normalizeForSearch(word)));
         });
         if (mItems.length === 0) continue;
 
@@ -2109,12 +2129,12 @@ function applySettings() {
 function clearAppCache() {
     if (!confirm('Ви дійсно хочете очистити кеш товарів? Після цього каталог буде завантажено заново з Google Таблиць.')) return;
     
-    // Remove all versions of product cache
-    for (let i = 0; i <= 10; i++) {
-        localStorage.removeItem('cso_products_cache_v' + i);
-    }
-    
-    localStorage.removeItem('cso_products_cache'); 
+    // Видаляємо всі ключі, що починаються з cso_products_cache
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('cso_products_cache')) {
+            localStorage.removeItem(key);
+        }
+    });
     
     showToast('Кеш очищено. Перезавантаження...', 'info');
     setTimeout(() => {
