@@ -81,7 +81,7 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
     if (products.some(p => normalizeForSearch(p.name) === normalizeForSearch(ext.name))) return false;
 
     return matchesSearch(ext.name, query);
-  }).slice(0, 10); // Обмежуємо кількість результатів
+  }).slice(0, 50); // Збільшено ліміт, щоб вміщалися всі моделі
 
   async function handleSelect(product) {
     if (product.isExternal) {
