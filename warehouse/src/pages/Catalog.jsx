@@ -140,7 +140,7 @@ export default function Catalog() {
 
   return (
     <div>
-      <div className="page-header">
+      <div className="page-header" style={{ justifyContent: 'flex-start', gap: '32px' }}>
         <div>
           <h1 className="page-title">📦 Каталог товарів</h1>
           <p className="page-subtitle">Управління переліком товарів</p>

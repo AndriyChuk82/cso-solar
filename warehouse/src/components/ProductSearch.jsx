@@ -31,23 +31,22 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
   useEffect(() => {
     if (externalCatalogCache) {
       setExternalProducts(externalCatalogCache);
-      return;
-    }
-
-    setExtLoading(true);
-    fetchCPCatalog().then(data => {
-      if (data && data.length > 0) {
-        externalCatalogCache = data;
-        setExternalProducts(data);
-      } else {
+    } else {
+      setExtLoading(true);
+      fetchCPCatalog().then(data => {
+        if (data && data.length > 0) {
+          externalCatalogCache = data;
+          setExternalProducts(data);
+        } else {
+          setExtError(true);
+        }
+      }).catch(err => {
+        console.error(err);
         setExtError(true);
-      }
-    }).catch(err => {
-      console.error(err);
-      setExtError(true);
-    }).finally(() => {
-      setExtLoading(false);
-    });
+      }).finally(() => {
+        setExtLoading(false);
+      });
+    }
 
     // Завантаження категорій
     getCategories().then(res => {
