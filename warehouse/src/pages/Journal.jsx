@@ -93,14 +93,18 @@ export default function Journal() {
   return (
     <div>
       <div className="page-header">
-        <div>
-          <h1 className="page-title">📋 Журнал операцій</h1>
-          <p className="page-subtitle">Хронологічна історія руху товарів</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+          <div>
+            <h1 className="page-title">📋 Журнал операцій</h1>
+            <p className="page-subtitle">Хронологічна історія руху товарів</p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <Link to="/income" className="btn btn-success btn-sm">📥 Прихід</Link>
+            <Link to="/expense" className="btn btn-danger btn-sm">📤 Розхід</Link>
+            <Link to="/transfer" className="btn btn-primary btn-sm">🔄 Переміщення</Link>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <Link to="/income" className="btn btn-success btn-sm">📥 Прихід</Link>
-          <Link to="/expense" className="btn btn-danger btn-sm">📤 Розхід</Link>
-          <Link to="/transfer" className="btn btn-primary btn-sm">🔄 Переміщення</Link>
+        <div>
           <button className="btn btn-outline btn-sm" onClick={handleExport} disabled={operations.length === 0}>
             📥 Експорт Excel
           </button>
