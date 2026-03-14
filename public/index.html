@@ -128,6 +128,14 @@
                             <input type="number" id="quickMarkup" class="form-input input-sm" style="width:60px" step="1">
                         </div>
                         <button class="btn btn-sm btn-outline" id="btnApplyGlobalMarkup" title="Застосувати націнку до всіх">📈 Застосувати</button>
+                        
+                        <div class="toolbar-item no-print" style="margin-right: 12px; margin-left: 8px;">
+                            <label class="checkbox-label" title="Показати/приховати закупівельні ціни">
+                                <input type="checkbox" id="toolbarShowCost">
+                                <span style="font-size: 0.8rem; font-weight: 600;">Собівартість</span>
+                            </label>
+                        </div>
+
                         <div class="currency-switch">
                             <button class="cur-btn active" data-currency="USD" id="curUSD">$ USD</button>
                             <button class="cur-btn" data-currency="UAH" id="curUAH">₴ UAH</button>
@@ -395,37 +403,7 @@
         </div>
     </div>
 
-    <!-- ===== INVOICE FORMAT MODAL ===== -->
-    <div class="modal-overlay" id="invoiceModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3>🧾 Рахунок-фактура</h3>
-                <button class="modal-close" data-close="invoiceModal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p class="tg-desc">Оберіть формат рахунку:</p>
-                <div class="tg-options">
-                    <label class="tg-option selected">
-                        <input type="radio" name="invFormat" value="pdf" checked>
-                        <span class="tg-option-card">
-                            <span class="tg-option-icon">📄</span>
-                            <span class="tg-option-label">PDF</span>
-                        </span>
-                    </label>
-                    <label class="tg-option">
-                        <input type="radio" name="invFormat" value="xls">
-                        <span class="tg-option-card">
-                            <span class="tg-option-icon">📊</span>
-                            <span class="tg-option-label">Excel</span>
-                        </span>
-                    </label>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" id="btnGenerateInvoice">Створити</button>
-            </div>
-        </div>
-    </div>
+
 
     <!-- ===== TELEGRAM MODAL ===== -->
     <div class="modal-overlay" id="telegramModal">
@@ -442,13 +420,6 @@
                         <span class="tg-option-card">
                             <span class="tg-option-icon">📄</span>
                             <span class="tg-option-label">PDF</span>
-                        </span>
-                    </label>
-                    <label class="tg-option">
-                        <input type="radio" name="tgFormat" value="xls">
-                        <span class="tg-option-card">
-                            <span class="tg-option-icon">📊</span>
-                            <span class="tg-option-label">Excel</span>
                         </span>
                     </label>
                     <label class="tg-option">
@@ -569,7 +540,6 @@
     <!-- ===== CDN LIBS ===== -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="app.js?v=47"></script>

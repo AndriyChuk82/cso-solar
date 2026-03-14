@@ -1195,8 +1195,6 @@ async function sendToTelegram() {
             await sendTelegramText();
         } else if (format === 'photo') {
             await sendTelegramPhoto();
-        } else if (format === 'xls') {
-            await sendTelegramXls();
         } else {
             await sendTelegramPdf();
         }
@@ -1563,199 +1561,8 @@ function printProposal() {
     window.print();
 }
 
-async function sendTelegramXls() {
-    if (typeof XLSX === 'undefined') throw new Error('Бібліотека Excel не завантажена');
-    const wb = generateXlsWorkbook();
-    const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
-    
-    const rawNum = state.proposal.number || 'kp';
-    const safeNum = rawNum.replace(/[^a-zA-Z0-9а-яА-ЯіїєґІЇЄҐ-]/g, '_');
-    const filename = `${safeNum}.xlsx`;
-    const caption = `📊 ${state.proposal.number || 'КП'} | ${state.proposal.clientName || ''}`;
 
-    await telegramRequest('sendDocument', { 
-        base64: b64, 
-        caption, 
-        filename, 
-        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-    });
-}
 
-function generateXlsWorkbook() {
-    const cur = state.activeCurrency;
-    const curSym = cur === 'USD' ? '$' : 'грн';
-
-    const rows = [
-        ["CSO Solar"],
-        ["Офіс та склад: Львівська обл., м. Золочів, вул. І. Труша 1Б"],
-        ["+38 067 374 08 02"],
-        [],
-        ["КОМЕРЦІЙНА ПРОПОЗИЦІЯ"],
-        [],
-        ["Номер:", state.proposal.number || "", "", "Дата:", state.proposal.date || ""],
-        ["Клієнт:", state.proposal.clientName || "", "", "Контакт:", state.proposal.clientContact || ""],
-        [],
-        ["№", "Назва товару", "Од.", "К-сть", `Ціна (${curSym})`, `Сума (${curSym})`]
-    ];
-
-    state.proposal.items.forEach((it, idx) => {
-        const priceValue = convertCurrency(it.price, cur);
-        const sumValue = Math.round(priceValue * it.quantity * 100) / 100;
-        const nameWithDesc = it.description ? `${it.name}\n${it.description}` : it.name;
-        rows.push([idx + 1, nameWithDesc, it.unit, it.quantity, priceValue, sumValue]);
-    });
-
-    const totalSum = state.proposal.items.reduce((s, it) => s + it.price * it.quantity, 0);
-    const convertedTotal = convertCurrency(totalSum, cur);
-    rows.push([], ["", "", "", "", "РАЗОМ:", convertedTotal]);
-
-    if (state.proposal.notes) {
-        rows.push([], ["Примітки:", state.proposal.notes]);
-    }
-    if (cur === 'UAH') {
-        rows.push([], [`Курс: 1 USD = ${state.settings.usdToUah} UAH`]);
-    }
-
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } },
-        { s: { r: 4, c: 0 }, e: { r: 4, c: 5 } }
-    ];
-    ws['!cols'] = [{ wch: 5 }, { wch: 55 }, { wch: 8 }, { wch: 8 }, { wch: 14 }, { wch: 14 }];
-    
-    XLSX.utils.book_append_sheet(wb, ws, "Пропозиція");
-    return wb;
-}
-
-function exportToXls() {
-    readProposalForm();
-    if (state.proposal.items.length === 0) {
-        showToast('Пропозиція порожня', 'warning');
-        return;
-    }
-
-    if (typeof XLSX === 'undefined') {
-        showToast('Помилка: Бібліотека Excel не завантажена', 'error');
-        return;
-    }
-
-    showToast('Генерація Excel...', 'info');
-
-    const cur = state.activeCurrency;
-    const curSym = cur === 'UAH' ? '₴' : '$';
-
-    // Company header rows
-    const rows = [
-        ["CSO Solar"],
-        ["Офіс та склад: Львівська обл., м. Золочів, вул. І. Труша 1Б"],
-        ["+38 067 374 08 02"],
-        [],
-        ["КОМЕРЦІЙНА ПРОПОЗИЦІЯ"],
-        [],
-        ["Номер:", state.proposal.number || "", "", "Дата:", state.proposal.date || ""],
-        ["Клієнт:", state.proposal.clientName || "", "", "Контакт:", state.proposal.clientContact || ""],
-        [],
-        // Table headers
-        ["№", "Назва товару", "Од.", "К-сть", `Ціна (${curSym})`, `Сума (${curSym})`]
-    ];
-
-    // Data rows
-    state.proposal.items.forEach((it, idx) => {
-        const priceValue = convertCurrency(it.price, cur);
-        const sumValue = Math.round(priceValue * it.quantity * 100) / 100;
-        const nameWithDesc = it.description 
-            ? `${it.name}\n${it.description}` 
-            : it.name;
-        rows.push([
-            idx + 1,
-            nameWithDesc,
-            it.unit,
-            it.quantity,
-            priceValue,
-            sumValue
-        ]);
-    });
-
-    // Totals
-    const totalSum = state.proposal.items.reduce((s, it) => s + it.price * it.quantity, 0);
-    const convertedTotal = convertCurrency(totalSum, cur);
-    rows.push([]);
-    rows.push(["", "", "", "", "РАЗОМ:", convertedTotal]);
-
-    // Notes
-    if (state.proposal.notes) {
-        rows.push([]);
-        rows.push(["Примітки:", state.proposal.notes]);
-    }
-
-    // Currency note
-    if (cur === 'UAH') {
-        rows.push([]);
-        rows.push([`Курс: 1 USD = ${state.settings.usdToUah} UAH`]);
-    }
-
-    // Create workbook
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-
-    // Merge cells for header
-    ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },  // CSO Solar
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },  // Address
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } },  // Phone
-        { s: { r: 4, c: 0 }, e: { r: 4, c: 5 } },  // КОМЕРЦІЙНА ПРОПОЗИЦІЯ
-    ];
-
-    // Set column widths
-    ws['!cols'] = [
-        { wch: 5 },   // №
-        { wch: 55 },  // Назва товару
-        { wch: 8 },   // Од.
-        { wch: 8 },   // К-сть
-        { wch: 14 },  // Ціна
-        { wch: 14 }   // Сума
-    ];
-
-    // Set row heights for items with descriptions (wrap text)
-    ws['!rows'] = [];
-    for (let i = 0; i < rows.length; i++) {
-        if (i >= 10 && i < 10 + state.proposal.items.length) {
-            ws['!rows'][i] = { hpt: 36 }; // taller rows for product names
-        }
-    }
-
-    XLSX.utils.book_append_sheet(wb, ws, "Пропозиція");
-
-    // Generate filename
-    const rawNum = state.proposal.number || 'kp';
-    const safeNum = rawNum.replace(/[^a-zA-Z0-9а-яА-ЯіїєґІЇЄҐ-]/g, '_');
-    const filename = `${safeNum}.xlsx`;
-
-    // Download
-    try {
-        const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
-        const url = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + b64;
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        
-        setTimeout(() => {
-            document.body.removeChild(a);
-        }, 100);
-        
-        showToast('Excel файл завантажено', 'success');
-    } catch (err) {
-        console.error('Excel Export Error:', err);
-        showToast('Помилка при експорті', 'error');
-        XLSX.writeFile(wb, filename);
-    }
-}
 
 function exportInvoicePDF() {
     readProposalForm();
@@ -1850,96 +1657,7 @@ function exportInvoicePDF() {
     });
 }
 
-function exportInvoiceXLS() {
-    readProposalForm();
-    if (state.proposal.items.length === 0) {
-        showToast('Пропозиція порожня', 'warning');
-        return;
-    }
 
-    showToast('Генерація рахунку (Excel)...', 'info');
-
-    const uahRate = state.settings.usdToUah;
-    const propNum = state.proposal.number || 'КП-001';
-    const invoiceNum = propNum.replace('КП-', '');
-    const invoiceDate = formatDateUA(state.proposal.date || todayStr());
-
-    const rows = [
-        ["РАХУНОК-ФАКТУРА", "", "", "", "№:", invoiceNum],
-        ["", "", "", "", "Дата:", invoiceDate],
-        [],
-        ["ПОСТАЧАЛЬНИК", "", "", "ПОКУПЕЦЬ"],
-        ["Назва:", "ФОП Пастушок Марія Володимирівна", "", "Назва:", state.proposal.clientName || ""],
-        ["РНОКПП:", "3090406261", "", "ЄДРПОУ:", ""],
-        ["Адреса:", "Україна, 80700, Львівська обл., Золочівський р-н, с. Вороняки, вул. Шкільна, б. 38", "", "Адреса:", ""],
-        ["IBAN:", "UA563003350000000260092475237", "", "IBAN:", ""],
-        ["Банк:", 'АТ "РАЙФФАЙЗЕН БАНК"', "", "Банк:", ""],
-        ["Тел:", "(067)374-08-12", "", "Тел / Email:", state.proposal.clientContact || ""],
-        [],
-        ["№", "Найменування товару", "К-сть", "Од.", "Ціна, грн", "Сума, грн"]
-    ];
-
-    let totalUAH = 0;
-    state.proposal.items.forEach((it, idx) => {
-        const priceUAH = Math.round(it.price * uahRate * 100) / 100;
-        const sumUAH = Math.round(priceUAH * it.quantity * 100) / 100;
-        totalUAH += sumUAH;
-        const nameWithDesc = it.description ? `${it.name} (${it.description})` : it.name;
-        rows.push([idx + 1, nameWithDesc, it.quantity, it.unit, priceUAH, sumUAH]);
-    });
-
-    // Pad to 10 rows
-    for (let i = state.proposal.items.length; i < 10; i++) {
-        rows.push([i + 1, "", "", "шт.", "", ""]);
-    }
-
-    rows.push([]);
-    rows.push(["", "", "", "", "СУМА ДО СПЛАТИ:", totalUAH]);
-    rows.push(["Сума прописом: " + numberToWordsUA(totalUAH) + " грн.", "", "", "", "", ""]);
-
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-
-    ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // Title
-        { s: { r: 3, c: 0 }, e: { r: 3, c: 2 } }, // Supplier header
-        { s: { r: 3, c: 3 }, e: { r: 3, c: 5 } }, // Buyer header
-        { s: { r: rows.length - 1, c: 0 }, e: { r: rows.length - 1, c: 5 } } // Sum in words
-    ];
-
-    ws['!cols'] = [{ wch: 8 }, { wch: 50 }, { wch: 8 }, { wch: 8 }, { wch: 14 }, { wch: 14 }];
-
-    XLSX.utils.book_append_sheet(wb, ws, "Рахунок");
-    const filename = `Рахунок_${invoiceNum}.xlsx`;
-
-    try {
-        const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
-        const url = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + b64;
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => document.body.removeChild(a), 100);
-        showToast('Рахунок (Excel) завантажено', 'success');
-    } catch (err) {
-        XLSX.writeFile(wb, filename);
-    }
-}
-
-function handleInvoiceClick() {
-    openModal('invoiceModal');
-}
-
-function generateSelectedInvoice() {
-    const format = document.querySelector('input[name="invFormat"]:checked').value;
-    closeModal('invoiceModal');
-    if (format === 'pdf') {
-        exportInvoicePDF();
-    } else {
-        exportInvoiceXLS();
-    }
-}
 
 // Format date as DD.MM.YYYY
 function formatDateUA(dateStr) {
@@ -2115,6 +1833,8 @@ function applySettings() {
     state.settings.chatId = document.getElementById('settingChatId').value.trim();
 
     document.body.classList.toggle('hide-cost', !state.settings.showCost);
+    const toolbarToggle = document.getElementById('toolbarShowCost');
+    if (toolbarToggle) toolbarToggle.checked = state.settings.showCost;
     
     // Update quick inputs
     document.getElementById('quickUsdUah').value = state.settings.usdToUah;
@@ -2149,6 +1869,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Apply settings
     document.body.classList.toggle('hide-cost', !state.settings.showCost);
+    const toolbarToggle = document.getElementById('toolbarShowCost');
+    if (toolbarToggle) {
+        toolbarToggle.checked = state.settings.showCost;
+        toolbarToggle.addEventListener('change', (e) => {
+            state.settings.showCost = e.target.checked;
+            document.body.classList.toggle('hide-cost', !state.settings.showCost);
+            const modalToggle = document.getElementById('settingShowCost');
+            if (modalToggle) modalToggle.checked = state.settings.showCost;
+            saveSettings();
+        });
+    }
 
     // Show logout button and hide Telegram settings when deployed on Vercel
     if (IS_DEPLOYED) {
@@ -2168,7 +1899,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnHistory').addEventListener('click', () => { renderHistory(); openModal('historyModal'); });
     document.getElementById('btnSave').addEventListener('click', saveCurrentProposal);
     document.getElementById('btnNewProposal').addEventListener('click', newProposal);
-    document.getElementById('btnInvoice').addEventListener('click', handleInvoiceClick);
+    document.getElementById('btnInvoice').addEventListener('click', exportInvoicePDF);
     
     // TTN Button
     document.getElementById('btnTtn').addEventListener('click', () => {
@@ -2348,7 +2079,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open('/warranty.html', '_blank');
         closeModal('warrantyModal');
     });
-    document.getElementById('btnGenerateInvoice').addEventListener('click', generateSelectedInvoice);
     document.getElementById('btnPrint').addEventListener('click', printProposal);
     document.getElementById('btnTelegram').addEventListener('click', () => openModal('telegramModal'));
     document.getElementById('btnSendTelegram').addEventListener('click', sendToTelegram);
