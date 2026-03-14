@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { getOperations, getWarehouses, deleteOperation } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
@@ -22,9 +22,9 @@ export default function Journal() {
     warehouseId: user?.isStorekeeper ? user.warehouseId : '',
     type: '',
     dateFrom: '',
-    dateTo: '',
-    search: ''
+    dateTo: ''
   });
+  const [search, setSearch] = useState('');
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -71,11 +71,11 @@ export default function Journal() {
   }
 
   // Пошукова фільтрація на клієнті
-  const filteredOperations = operations.filter((op) => {
-    if (!filters.search.trim()) return true;
+  const filteredOperations = useMemo(() => operations.filter((op) => {
+    if (!search.trim()) return true;
     const content = `${op.product_name || ''} ${op.product_article || ''} ${op.comment || ''}`;
-    return matchesSearch(content, filters.search);
-  });
+    return matchesSearch(content, search);
+  }), [operations, search]);
 
   function handleExport() {
     if (filteredOperations.length === 0) return showToast('Немає операцій для експорту', 'info');
@@ -175,8 +175,8 @@ export default function Journal() {
             type="text"
             className="form-input"
             placeholder="Назва або артикул..."
-            value={filters.search}
-            onChange={(e) => updateFilter('search', e.target.value)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
@@ -194,7 +194,7 @@ export default function Journal() {
               <span className="empty-icon">📋</span>
               <p>Операцій не знайдено</p>
               <p style={{ fontSize: '0.8rem', marginTop: '4px' }}>
-                {filters.search ? 'Спробуйте змінити пошуковий запит' : 'Спробуйте змінити фільтри або створіть першу операцію'}
+                {search ? 'Спробуйте змінити пошуковий запит' : 'Спробуйте змінити фільтри або створіть першу операцію'}
               </p>
             </div>
           ) : (

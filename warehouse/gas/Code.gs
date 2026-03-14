@@ -508,11 +508,9 @@ function handleGetOperations(params) {
     operations = operations.filter(op => op.date <= params.dateTo);
   }
   if (params.search) {
-    const searchStr = normalizeForSearch(params.search);
-    const words = searchStr.split(/\s+/);
     operations = operations.filter(op => {
-      const content = normalizeForSearch((op.product_name || '') + ' ' + (op.product_article || ''));
-      return words.every(w => content.includes(w));
+      const content = (op.product_name || '') + ' ' + (op.product_article || '');
+      return matchesSearch(content, params.search);
     });
   }
 
@@ -944,12 +942,47 @@ function cleanOldBackups(folder, keepCount) {
 function dailyBackupTrigger() {
   handleCreateBackup();
 }
-/** Нормалізація для пошуку (видалення розбіжностей між кирилицею та латиницею) */
+/**
+ * Повна транслітерація кирилиці в латиницю для пошуку.
+ * Дозволяє знаходити товари навіть при введенні латинськими літерами.
+ * Наприклад: "prob" знайде "Пробка", "solar" знайде "Солар"
+ * Ця логіка повністю синхронізована з фронтендом (searchUtils.js).
+ */
 function normalizeForSearch(str) {
   if (!str) return '';
-  return str.toString().toLowerCase()
-    .replace(/р/g, 'p').replace(/с/g, 'c').replace(/о/g, 'o')
-    .replace(/а/g, 'a').replace(/х/g, 'x').replace(/у/g, 'y')
-    .replace(/е/g, 'e').replace(/і/g, 'i').replace(/м/g, 'm')
-    .replace(/к/g, 'k').replace(/в/g, 'b');
+  var TRANSLIT_MAP = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'ґ': 'g', 'д': 'd',
+    'е': 'e', 'є': 'ye', 'ж': 'zh', 'з': 'z', 'и': 'y', 'і': 'i',
+    'ї': 'yi', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n',
+    'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+    'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
+    'ь': '', 'ю': 'yu', 'я': 'ya', 'ъ': '', 'ы': 'y', 'э': 'e'
+  };
+  var lower = str.toString().toLowerCase();
+  var result = '';
+  for (var i = 0; i < lower.length; i++) {
+    var ch = lower[i];
+    result += (TRANSLIT_MAP[ch] !== undefined) ? TRANSLIT_MAP[ch] : ch;
+  }
+  return result;
+}
+
+/**
+ * Перевіряє чи рядок content відповідає пошуковому запиту query.
+ * Шукає і по оригіналу (lowercase), і по транслітерації.
+ */
+function matchesSearch(content, query) {
+  if (!query || !query.trim()) return true;
+  var searchWords = query.trim().toLowerCase().split(/\s+/);
+  var original = (content || '').toString().toLowerCase();
+  var transliterated = normalizeForSearch(content);
+
+  for (var i = 0; i < searchWords.length; i++) {
+    var word = searchWords[i];
+    var wordTranslit = normalizeForSearch(word);
+    if (!(original.indexOf(word) >= 0 || transliterated.indexOf(word) >= 0 || transliterated.indexOf(wordTranslit) >= 0)) {
+      return false;
+    }
+  }
+  return true;
 }
