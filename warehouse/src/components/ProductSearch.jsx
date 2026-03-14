@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { getCatalog, addProduct } from '../api/gasApi';
 import { fetchCPCatalog } from '../api/externalApi';
+import { normalizeForSearch, matchesSearch } from '../utils/searchUtils';
 import CONFIG from '../config';
 
 // Глобальний кеш для зовнішнього каталогу (щоб не качати щоразу)
@@ -52,20 +53,17 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
   // Фільтрація локальних товарів
   const filteredLocal = products.filter((p) => {
     if (!query.trim()) return false;
-    const words = query.toLowerCase().split(/\s+/);
-    const content = `${p.name} ${p.article || ''}`.toLowerCase();
-    return words.every((word) => content.includes(word));
+    const content = `${p.name} ${p.article || ''}`;
+    return matchesSearch(content, query);
   });
 
   // Фільтрація зовнішніх товарів (лише тих, яких немає в локальному списку)
   const filteredExternal = externalProducts.filter((ext) => {
     if (!query.trim()) return false;
     // Якщо вже є такий товар локально (по назві), не показуємо як зовнішній
-    if (products.some(p => p.name.toLowerCase() === ext.name.toLowerCase())) return false;
+    if (products.some(p => normalizeForSearch(p.name) === normalizeForSearch(ext.name))) return false;
 
-    const words = query.toLowerCase().split(/\s+/);
-    const content = ext.name.toLowerCase();
-    return words.every((word) => content.includes(word));
+    return matchesSearch(ext.name, query);
   }).slice(0, 10); // Обмежуємо кількість результатів
 
   async function handleSelect(product) {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getCatalog, addProduct, updateProduct, archiveProduct } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { matchesSearch } from '../utils/searchUtils';
 import CONFIG from '../config';
 
 /**
@@ -133,9 +134,8 @@ export default function Catalog() {
   const filtered = products.filter((p) => {
     if (!showArchived && !p.active) return false;
     if (!search.trim()) return true;
-    const words = search.toLowerCase().split(/\s+/);
-    const content = `${p.name} ${p.article} ${p.category}`.toLowerCase();
-    return words.every((w) => content.includes(w));
+    const content = `${p.name} ${p.article} ${p.category}`;
+    return matchesSearch(content, search);
   });
 
   return (
