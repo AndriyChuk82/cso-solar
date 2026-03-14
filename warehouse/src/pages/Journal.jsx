@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { exportToExcel } from '../utils/exportUtils';
 import { formatDate } from '../utils/dateUtils';
+import { matchesSearch } from '../utils/searchUtils';
 import CONFIG from '../config';
 
 /**
@@ -69,11 +70,18 @@ export default function Journal() {
     return warehouses.find((w) => w.id === id)?.name || id || '—';
   }
 
+  // Пошукова фільтрація на клієнті
+  const filteredOperations = operations.filter((op) => {
+    if (!filters.search.trim()) return true;
+    const content = `${op.product_name || ''} ${op.product_article || ''} ${op.comment || ''}`;
+    return matchesSearch(content, filters.search);
+  });
+
   function handleExport() {
-    if (operations.length === 0) return showToast('Немає операцій для експорту', 'info');
+    if (filteredOperations.length === 0) return showToast('Немає операцій для експорту', 'info');
     
     const columns = ['Дата', 'Склад', 'Товар', 'Тип', 'Од.', 'К-сть', 'Артикул', 'Залишок після', "Пов'язаний склад", 'Коментар', 'Автор'];
-    const items = operations.map(op => ({
+    const items = filteredOperations.map(op => ({
       'Дата': formatDate(op.date),
       'Склад': getWarehouseName(op.warehouse_from || op.warehouse_to),
       'Товар': op.product_name || '',
@@ -105,7 +113,7 @@ export default function Journal() {
           </div>
         </div>
         <div>
-          <button className="btn btn-outline btn-sm" onClick={handleExport} disabled={operations.length === 0}>
+          <button className="btn btn-outline btn-sm" onClick={handleExport} disabled={filteredOperations.length === 0}>
             📥 Експорт Excel
           </button>
         </div>
@@ -181,12 +189,12 @@ export default function Journal() {
               <div className="spinner" style={{ margin: '0 auto' }} />
               <p style={{ marginTop: '12px' }}>Завантаження журналу...</p>
             </div>
-          ) : operations.length === 0 ? (
+          ) : filteredOperations.length === 0 ? (
             <div className="empty-state">
               <span className="empty-icon">📋</span>
               <p>Операцій не знайдено</p>
               <p style={{ fontSize: '0.8rem', marginTop: '4px' }}>
-                Спробуйте змінити фільтри або створіть першу операцію
+                {filters.search ? 'Спробуйте змінити пошуковий запит' : 'Спробуйте змінити фільтри або створіть першу операцію'}
               </p>
             </div>
           ) : (
@@ -208,7 +216,7 @@ export default function Journal() {
                 </tr>
               </thead>
               <tbody>
-                {operations.map((op) => (
+                {filteredOperations.map((op) => (
                   <tr key={op.id} className={`row-${op.type}`}>
                     <td>{formatDate(op.date)}</td>
                     <td>{getWarehouseName(op.warehouse_from || op.warehouse_to)}</td>
