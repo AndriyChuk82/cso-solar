@@ -62,6 +62,17 @@ export default function Reports() {
     }
   }
 
+  const sortedItems = useMemo(() => {
+    if (!reportData?.items) return [];
+    if (!sortAsc) return reportData.items;
+
+    return [...reportData.items].sort((a, b) => {
+      const nameA = String(a['Товар'] || a['Назва'] || a['Назва категорії'] || '');
+      const nameB = String(b['Товар'] || b['Назва'] || b['Назва категорії'] || '');
+      return nameA.localeCompare(nameB);
+    });
+  }, [reportData, sortAsc]);
+
   function getReportTitle() {
     if (activeTab === 'stock') {
       const whName = warehouses.find((w) => w.id === stockFilter.warehouseId)?.name || 'Всі склади';
@@ -78,10 +89,10 @@ export default function Reports() {
   }
 
   function handleExportExcel() {
-    if (!reportData?.columns || !reportData?.items) return;
+    if (!reportData?.columns || sortedItems.length === 0) return;
     
     // Форматуємо дати в айтемах перед експортом
-    const items = reportData.items.map(row => {
+    const items = sortedItems.map(row => {
       const newRow = { ...row };
       if (newRow['Дата']) newRow['Дата'] = formatDate(newRow['Дата']);
       return newRow;
@@ -91,10 +102,10 @@ export default function Reports() {
   }
 
   function handleExportPdf() {
-    if (!reportData?.columns || !reportData?.items) return;
+    if (!reportData?.columns || sortedItems.length === 0) return;
 
     // Форматуємо дати в айтемах перед експортом
-    const items = reportData.items.map(row => {
+    const items = sortedItems.map(row => {
       const newRow = { ...row };
       if (newRow['Дата']) newRow['Дата'] = formatDate(newRow['Дата']);
       return newRow;
@@ -250,16 +261,7 @@ export default function Reports() {
             </div>
           </div>
           <div className="data-table-wrap">
-            {reportData.items && reportData.items.length > 0 ? (() => {
-              const sortedReportItems = sortAsc 
-                ? [...reportData.items].sort((a, b) => {
-                    const nameA = String(a['Товар'] || a['Назва'] || a['Назва категорії'] || '');
-                    const nameB = String(b['Товар'] || b['Назва'] || b['Назва категорії'] || '');
-                    return nameA.localeCompare(nameB);
-                  })
-                : reportData.items;
-              
-              return (
+            {sortedItems && sortedItems.length > 0 ? (
               <table className="data-table">
                 <thead>
                   <tr>
@@ -269,7 +271,7 @@ export default function Reports() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedReportItems.map((row, rowIndex) => (
+                  {sortedItems.map((row, rowIndex) => (
                     <tr key={rowIndex}>
                       {reportData.columns?.map((col, colIndex) => (
                         <td key={colIndex} style={{
@@ -282,8 +284,7 @@ export default function Reports() {
                   ))}
                 </tbody>
               </table>
-              );
-            })() : (
+            ) : (
               <div className="empty-state">
                 <span className="empty-icon">📊</span>
                 <p>Немає даних за обраними параметрами</p>
