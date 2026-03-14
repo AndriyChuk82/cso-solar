@@ -521,15 +521,17 @@ body {
   border-bottom: 2px solid var(--border);
   white-space: nowrap;
   width: 1px;
+  font-size: 0.85rem;
 }
 
 .data-table td {
-  padding: 8px 12px;
+  padding: 4px 8px;
   border-bottom: 1px solid var(--border-light);
   color: var(--text);
   vertical-align: middle;
   white-space: nowrap;
   width: 1px;
+  font-size: 0.85rem;
 }
 
 .data-table tbody tr {

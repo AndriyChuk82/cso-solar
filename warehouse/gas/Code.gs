@@ -783,8 +783,10 @@ function handleSubmitDailyBalance(data) {
   const sheet = getSheet('operations');
   const timestamp = now();
   const date = dateStr(data.date);
-  const comment = 'Підсумок дня ' + date;
-
+  
+  // Додаємо тип 'adjustment' для кращої ідентифікації в журналі
+  // або використовуємо стандартні income/expense, але з чітким коментарем
+  
   data.items.forEach(item => {
     const diff = parseFloat(item.diff) || 0;
     if (diff === 0) return;
@@ -794,6 +796,7 @@ function handleSubmitDailyBalance(data) {
     const qty = Math.abs(diff);
     const whFrom = diff < 0 ? data.warehouseId : '';
     const whTo = diff > 0 ? data.warehouseId : '';
+    const comment = `📦 Коригування залишків (Підсумок дня ${date})`;
 
     sheet.appendRow([
       id, date, whFrom, whTo, item.productId,
