@@ -4,6 +4,8 @@ import { addOperation, getCatalog, getWarehouses } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import ProductSearch from '../components/ProductSearch';
+import { formatQuantity } from '../utils/formatUtils';
+import { getBalances } from '../api/gasApi';
 
 /**
  * Форма переміщення товарів між складами.
@@ -16,6 +18,7 @@ export default function Transfer() {
 
   const [warehouses, setWarehouses] = useState([]);
   const [products, setProducts] = useState([]);
+  const [balances, setBalances] = useState({});
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -41,6 +44,18 @@ export default function Transfer() {
     }
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (formData.warehouseFrom) {
+      getBalances(formData.warehouseFrom).then((result) => {
+        if (result?.success) {
+          const map = {};
+          (result.balances || []).forEach((b) => { map[b.product_id] = b.quantity; });
+          setBalances(map);
+        }
+      });
+    }
+  }, [formData.warehouseFrom]);
 
   function handleProductSelect(product) {
     if (formData.items.some((item) => item.productId === product.id)) return;
@@ -203,6 +218,9 @@ export default function Transfer() {
                       <div style={{ fontWeight: 600 }}>{item.productName}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                         {item.productArticle && `Арт: ${item.productArticle}`}
+                      </div>
+                      <div className="stock-warning" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Залишок: {formatQuantity(balances[item.productId] || 0, products.find(p => p.id === item.productId)?.category)} {item.unit}
                       </div>
                     </div>
                     <input

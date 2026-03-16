@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getWarehouses, getDailyBalanceData, submitDailyBalance } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { formatQuantity } from '../utils/formatUtils';
 
 /**
  * Підсумок дня — «Ввести залишки на кінець дня».
@@ -187,7 +188,9 @@ export default function DailyBalance() {
                     >
                       <td style={{ fontWeight: 500 }}>{item.product_name}</td>
                       <td>{item.unit}</td>
-                      <td style={{ fontWeight: 600 }}>{item.quantity}</td>
+                      <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+                        {formatQuantity(item.quantity, item.product_category)}
+                      </td>
                       <td>
                         <input
                            type="number"

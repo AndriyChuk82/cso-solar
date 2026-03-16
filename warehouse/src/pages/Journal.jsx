@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext';
 import { exportToExcel } from '../utils/exportUtils';
 import { formatDate } from '../utils/dateUtils';
 import { matchesSearch } from '../utils/searchUtils';
+import { formatQuantity } from '../utils/formatUtils';
 import CONFIG from '../config';
 
 /**
@@ -133,8 +134,8 @@ export default function Journal() {
       'Товар': op.product_name || '',
       'Тип': CONFIG.OPERATION_LABELS[op.type] || op.type,
       'Од.': op.unit || '',
-      'К-сть': op.quantity,
-      'Залишок після': op.balance_after,
+      'К-сть': formatQuantity(op.quantity, op.product_category),
+      'Залишок після': formatQuantity(op.balance_after, op.product_category),
       'Коментар': op.comment || '',
       'Автор': op.user || ''
     }));
@@ -280,8 +281,12 @@ export default function Journal() {
                       </span>
                     </td>
                      <td style={{ color: 'var(--text-muted)' }}>{op.unit || '—'}</td>
-                    <td style={{ fontWeight: 700, fontSize: '1rem' }}>{op.quantity}</td>
-                    <td>{op.balance_after != null ? op.balance_after : '—'}</td>
+                    <td style={{ fontWeight: 700, fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
+                      {formatQuantity(op.quantity, op.product_category)}
+                    </td>
+                    <td style={{ fontSize: '0.85rem' }}>
+                      {op.balance_after != null ? formatQuantity(op.balance_after, op.product_category) : '—'}
+                    </td>
                     <td style={{ fontSize: '0.8rem' }}>{op.comment || '—'}</td>
                     <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{op.user || '—'}</td>
                     {user?.isAdmin && (

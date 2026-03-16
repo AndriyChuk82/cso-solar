@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { getWarehouses, getStockReport, getCompareReport, getMovementReport, getCatalog } from '../api/gasApi';
 import { exportToExcel, exportToPdf } from '../utils/exportUtils';
 import { formatDate } from '../utils/dateUtils';
+import { formatQuantity } from '../utils/formatUtils';
 import CONFIG from '../config';
 
 /**
@@ -101,10 +102,17 @@ export default function Reports() {
   function handleExportExcel() {
     if (!reportData?.columns || sortedItems.length === 0) return;
     
-    // Форматуємо дати в айтемах перед експортом
+    // Форматуємо дати та кількості в айтемах перед експортом
     const items = sortedItems.map(row => {
       const newRow = { ...row };
       if (newRow['Дата']) newRow['Дата'] = formatDate(newRow['Дата']);
+      
+      reportData.columns.forEach(col => {
+        if (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) {
+          newRow[col] = formatQuantity(newRow[col], row.category);
+        }
+      });
+      
       return newRow;
     });
 
@@ -114,10 +122,17 @@ export default function Reports() {
   function handleExportPdf() {
     if (!reportData?.columns || sortedItems.length === 0) return;
 
-    // Форматуємо дати в айтемах перед експортом
+    // Форматуємо дати та кількості в айтемах перед експортом
     const items = sortedItems.map(row => {
       const newRow = { ...row };
       if (newRow['Дата']) newRow['Дата'] = formatDate(newRow['Дата']);
+      
+      reportData.columns.forEach(col => {
+        if (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) {
+          newRow[col] = formatQuantity(newRow[col], row.category);
+        }
+      });
+      
       return newRow;
     });
 
@@ -287,7 +302,11 @@ export default function Reports() {
                         <td key={colIndex} style={{
                           fontWeight: col === 'Всього' || col === 'Кількість' ? 700 : 400
                         }}>
-                          {col === 'Дата' ? formatDate(row[col]) : (row[col] ?? '—')}
+                          {col === 'Дата' ? formatDate(row[col]) : (
+                            (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) 
+                              ? formatQuantity(row[col], row.category) 
+                              : (row[col] ?? '—')
+                          )}
                         </td>
                       ))}
                     </tr>

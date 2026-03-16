@@ -605,6 +605,7 @@ function handleGetOperations(params) {
       ...op,
       product_name: catalogMap[op.product_id]?.name || '',
       product_article: catalogMap[op.product_id]?.article || '',
+      product_category: catalogMap[op.product_id]?.category || '',
       unit: catalogMap[op.product_id]?.unit || '',
       balance_after: balance_after
     };
@@ -857,6 +858,7 @@ function handleGetDailyBalanceData(warehouseId) {
       product_id: b.product_id,
       product_name: catalogMap[b.product_id]?.name || '',
       product_article: catalogMap[b.product_id]?.article || '',
+      product_category: catalogMap[b.product_id]?.category || '',
       unit: catalogMap[b.product_id]?.unit || 'шт',
       quantity: parseFloat(b.quantity) || 0
     }));
@@ -913,7 +915,8 @@ function handleStockReport(warehouseId, date) {
     'Товар': catalogMap[b.product_id]?.name || b.product_id,
     'Одиниця': catalogMap[b.product_id]?.unit || '',
     'Склад': warehousesMap[b.warehouse_id] || b.warehouse_id,
-    'Кількість': b.quantity
+    'Кількість': b.quantity,
+    'category': catalogMap[b.product_id]?.category || ''
   }));
 
   return {
@@ -948,7 +951,8 @@ function handleCompareReport() {
     const product = catalogMap[productId] || {};
     const row = {
       'Товар': product.name || productId,
-      'Од.': product.unit || ''
+      'Од.': product.unit || '',
+      'category': product.category || ''
     };
     let total = 0;
     warehouses.forEach(w => {

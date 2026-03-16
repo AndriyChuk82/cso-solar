@@ -4,6 +4,7 @@ import { getWarehouses, getCatalog, addOperation, getBalances } from '../api/gas
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import ProductSearch from '../components/ProductSearch';
+import { formatQuantity } from '../utils/formatUtils';
 import CONFIG from '../config';
 
 /**
@@ -235,7 +236,7 @@ export default function OperationForm({ type = 'income' }) {
                         <div className="stock-warning" style={{
                           color: parseFloat(item.quantity) > balances[item.productId] ? 'var(--danger)' : 'var(--text-muted)'
                         }}>
-                          ⚠️ Залишок: {balances[item.productId]} {item.unit}
+                          ⚠️ Залишок: {formatQuantity(balances[item.productId], products.find(p => p.id === item.productId)?.category)} {item.unit}
                         </div>
                       )}
                     </div>
