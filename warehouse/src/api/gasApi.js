@@ -175,10 +175,10 @@ export async function updateCategory(category) {
   return gasRequest('updateCategory', { category }, 'POST');
 }
 
-// ===== КОМЕРЦІЙНІ ПРОПОЗИЦІЇ =====
+// =====КОМЕРЦІЙНІ ПРОПОЗИЦІЇ =====
 
 export async function getProposals() {
-  return gasRequest('getProposals');
+  return gasRequest('getProposals', {}, 'POST');
 }
 
 export async function saveProposal(proposal, user) {
@@ -187,4 +187,12 @@ export async function saveProposal(proposal, user) {
 
 export async function deleteProposal(proposalId) {
   return gasRequest('deleteProposal', { proposalId }, 'POST');
+}
+
+export async function createBackupWithProposals() {
+  return gasRequest('createBackupWithProposals', {}, 'POST');
+}
+
+export async function exportProposalsAsCSV() {
+  return gasRequest('exportProposalsAsCSV', {}, 'POST');
 }

@@ -1040,6 +1040,298 @@ function handleCompareReport() {
   });
 
   return { success: true, columns: columns, items: items };
+// ===== КОМЕРЦІЙНІ ПРОПОЗИЦІЇ - ФУНКЦІЇ ЗБЕРІГАННЯ І БЕКАПУ =====
+ 
+/**
+ * Обробляє збереження комерційної пропозиції у Google Sheets
+ * Викликається з фронтенду при натисканні " Зберегти пропозицію"
+ */
+function handleSaveProposal(proposal, userEmail) {
+  try {
+    // Вибираємо таблицю та аркуш для КП
+    const ss = getProposalsSpreadsheet();
+    let sheet = ss.getSheetByName('proposals');
+    
+    // Якщо аркуша немає - створюємо його
+    if (!sheet) {
+      sheet = ss.insertSheet('proposals');
+      // Додаємо заголовки
+      sheet.appendRow([
+        'ID', 'Номер', 'Дата', 'Клієнт', 'Контакт', 'Курс $', 'Округлення %',
+        'Позиції (JSON)', 'Сума (СОБ)', 'Сума (Продаж)', 'Валюта', 'Примітки', 
+        'Користувач', 'Статус', 'Створено', 'Оновлено'
+      ]);
+    }
+ 
+    // Формуємо запис для збереження
+    const proposalId = proposal.id || generateUUID();
+    const timestamp = now();
+    const positionsJson = JSON.stringify(proposal.positions || []);
+    const costSum = proposal.costSum || 0;
+    const saleSum = proposal.saleSum || 0;
+ 
+    // Перевіряємо, чи КП вже існує (оновлення)
+    const data = sheet.getDataRange().getValues();
+    let existingRowIndex = -1;
+ 
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === proposalId) {
+        existingRowIndex = i + 1; // +1 тому що нумерація в getRange починається з 1
+        break;
+      }
+    }
+ 
+    if (existingRowIndex > 0) {
+      // Оновлюємо існуючий запис
+      const range = sheet.getRange(existingRowIndex, 1, 1, 16);
+      range.setValues([[
+        proposalId,
+        proposal.number || '',
+        proposal.date || new Date().toISOString().split('T')[0],
+        proposal.client || '',
+        proposal.contact || userEmail || '',
+        proposal.courseUSD || 1,
+        proposal.roundingPercent || 0,
+        positionsJson,
+        costSum,
+        saleSum,
+        proposal.currency || 'USD',
+        proposal.notes || '',
+        userEmail || 'невідомо',
+        proposal.status || 'draft',
+        data[existingRowIndex - 1][14], // Зберігаємо оригінальну дату створення
+        timestamp
+      ]]);
+    } else {
+      // Додаємо новий запис
+      sheet.appendRow([
+        proposalId,
+        proposal.number || '',
+        proposal.date || new Date().toISOString().split('T')[0],
+        proposal.client || '',
+        proposal.contact || userEmail || '',
+        proposal.courseUSD || 1,
+        proposal.roundingPercent || 0,
+        positionsJson,
+        costSum,
+        saleSum,
+        proposal.currency || 'USD',
+        proposal.notes || '',
+        userEmail || 'невідомо',
+        proposal.status || 'draft',
+        timestamp,
+        timestamp
+      ]);
+    }
+ 
+    return { 
+      success: true, 
+      proposalId: proposalId,
+      message: 'Пропозиція збережена у Google Sheets'
+    };
+ 
+  } catch (err) {
+    console.error('handleSaveProposal error:', err);
+    return { success: false, error: err.toString() };
+  }
+}
+ 
+/**
+ * Отримує всі КП з Google Sheets
+ * Викликається з фронтенду для завантаження списку збережених КП
+ */
+function handleGetProposals() {
+  try {
+    const ss = getProposalsSpreadsheet();
+    let sheet;
+    
+    try {
+      sheet = ss.getSheetByName('proposals');
+    } catch (e) {
+      // Аркуш не існує - повертаємо порожній список
+      return { success: true, proposals: [] };
+    }
+ 
+    if (!sheet) {
+      return { success: true, proposals: [] };
+    }
+ 
+    const data = sheet.getDataRange().getValues();
+    if (data.length < 2) {
+      return { success: true, proposals: [] };
+    }
+ 
+    const proposals = [];
+    for (let i = 1; i < data.length; i++) {
+      try {
+        const row = data[i];
+        const positionsJson = row[7] || '[]';
+        const positions = typeof positionsJson === 'string' 
+          ? JSON.parse(positionsJson) 
+          : positionsJson;
+ 
+        proposals.push({
+          id: row[0],
+          number: row[1],
+          date: row[2],
+          client: row[3],
+          contact: row[4],
+          courseUSD: parseFloat(row[5]) || 1,
+          roundingPercent: parseFloat(row[6]) || 0,
+          positions: positions,
+          costSum: parseFloat(row[8]) || 0,
+          saleSum: parseFloat(row[9]) || 0,
+          currency: row[10] || 'USD',
+          notes: row[11] || '',
+          user: row[12] || '',
+          status: row[13] || 'draft',
+          createdAt: row[14],
+          updatedAt: row[15]
+        });
+      } catch (parseErr) {
+        console.warn('Помилка парсингу рядка ' + (i + 1) + ':', parseErr);
+      }
+    }
+ 
+    return { success: true, proposals: proposals };
+ 
+  } catch (err) {
+    console.error('handleGetProposals error:', err);
+    return { success: false, error: err.toString() };
+  }
+}
+ 
+/**
+ * Видаляє КП з Google Sheets
+ */
+function handleDeleteProposal(proposalId) {
+  try {
+    const ss = getProposalsSpreadsheet();
+    const sheet = ss.getSheetByName('proposals');
+    
+    if (!sheet) {
+      return { success: false, error: 'Аркуш proposals не знайдено' };
+    }
+ 
+    const data = sheet.getDataRange().getValues();
+    
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === proposalId) {
+        sheet.deleteRow(i + 1); // +1 тому що нумерація починається з 1
+        return { success: true, message: 'Пропозиція видалена' };
+      }
+    }
+ 
+    return { success: false, error: 'Пропозиція не знайдена' };
+ 
+  } catch (err) {
+    console.error('handleDeleteProposal error:', err);
+    return { success: false, error: err.toString() };
+  }
+}
+ 
+/**
+ * Створює резервну копію ВСІХ даних, включаючи КП
+ * Це покращена версія handleCreateBackup()
+ */
+function handleCreateBackupWithProposals() {
+  try {
+    const ss = getProposalsSpreadsheet();
+    const folder = DriveApp.getFolderById(BACKUP_FOLDER_ID);
+    const dateStamp = Utilities.formatDate(new Date(), 'Europe/Kyiv', 'yyyy-MM-dd_HH-mm-ss');
+    
+    // Основна таблиця - складський облік
+    const mainFileName = 'backup_main_' + dateStamp + '.xlsx';
+    const mainBlob = ss.getBlob().setName(mainFileName);
+    const mainFile = folder.createFile(mainBlob);
+ 
+    let proposalsFileName = null;
+    let proposalsFile = null;
+ 
+    // Якщо існує окрема таблиця для КП
+    if (PROPOSALS_SPREADSHEET_ID && PROPOSALS_SPREADSHEET_ID !== SPREADSHEET_ID) {
+      try {
+        const proposalsSs = SpreadsheetApp.openById(PROPOSALS_SPREADSHEET_ID);
+        proposalsFileName = 'backup_proposals_' + dateStamp + '.xlsx';
+        const proposalsBlob = proposalsSs.getBlob().setName(proposalsFileName);
+        proposalsFile = folder.createFile(proposalsBlob);
+      } catch (e) {
+        console.warn('Не вдалося створити бекап КП (окрема таблиця):', e);
+      }
+    }
+ 
+    // Видалити старі копії (залишити 90 днів)
+    cleanOldBackups(folder, 90);
+ 
+    const result = {
+      success: true,
+      mainFileName: mainFileName,
+      mainFileId: mainFile.getId(),
+      timestamp: dateStamp
+    };
+ 
+    if (proposalsFile) {
+      result.proposalsFileName = proposalsFileName;
+      result.proposalsFileId = proposalsFile.getId();
+    }
+ 
+    return result;
+ 
+  } catch (err) {
+    console.error('handleCreateBackupWithProposals error:', err);
+    return { success: false, error: err.toString() };
+  }
+}
+ 
+/**
+ * Тригер для автоматичного щоденного бекапу з КП
+ * Встановити: Edit → Triggers → Add Trigger
+ * → Function: dailyBackupWithProposalsTrigger
+ * → Time-driven → Day timer → 23:00 (11pm)
+ */
+function dailyBackupWithProposalsTrigger() {
+  handleCreateBackupWithProposals();
+  console.log('Щоденний бекап завершено: ' + new Date());
+}
+ 
+/**
+ * Експортує всі КП у CSV формат для завантаження
+ */
+function handleExportProposalsAsCSV() {
+  try {
+    const result = handleGetProposals();
+    if (!result.success) {
+      return result;
+    }
+ 
+    const proposals = result.proposals;
+    let csv = 'Номер,Дата,Клієнт,Контакт,Сума (СОБ),Сума (Продаж),Валюта,Статус,Користувач\n';
+ 
+    proposals.forEach(p => {
+      csv += [
+        p.number || '',
+        p.date || '',
+        p.client || '',
+        p.contact || '',
+        p.costSum || 0,
+        p.saleSum || 0,
+        p.currency || 'USD',
+        p.status || '',
+        p.user || ''
+      ].map(v => '"' + (v.toString().replace(/"/g, '""')) + '"').join(',') + '\n';
+    });
+ 
+    return {
+      success: true,
+      csv: csv,
+      fileName: 'proposals_export_' + Utilities.formatDate(new Date(), 'Europe/Kyiv', 'yyyy-MM-dd') + '.csv'
+    };
+ 
+  } catch (err) {
+    console.error('handleExportProposalsAsCSV error:', err);
+    return { success: false, error: err.toString() };
+  }
+}
 }
 
 function handleMovementReport(params) {
