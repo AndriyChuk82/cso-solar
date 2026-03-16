@@ -177,6 +177,9 @@ function doPost(e) {
         console.log("POST: saveProposal received");
         result = handleSaveProposal(data.proposal, data.userEmail || data.user || data.email);
         break;
+      case 'getProposals':
+        result = handleGetProposals();
+        break;
       case 'deleteProposal':
         result = handleDeleteProposal(data.proposalId);
         break;
@@ -369,8 +372,13 @@ function getSheetWithInit(name, headers, defaultData, ss) {
 function handlePing() {
   try {
     const ss = getProposalsSpreadsheet();
-    // Спробуємо ініціалізувати лист прямо під час пінгу
-    const sheet = getSheetWithInit('proposals', ['id', 'date', 'userEmail', 'clientName', 'totalAmount', 'status', 'itemsJson'], [], ss);
+    // Використовуємо уніфіковані заголовки
+    const headers = [
+      'ID', 'Номер', 'Дата', 'Клієнт', 'Контакт', 
+      'Курс $', 'Націнка %', 'Сума Разом', 'Статус', 
+      'Товари (JSON)', 'Примітки', 'Автор', 'Оновлено'
+    ];
+    const sheet = getSheetWithInit('proposals', headers, [], ss);
     
     return {
       success: true,
@@ -378,7 +386,8 @@ function handlePing() {
       id: ss.getId(),
       sheets: ss.getSheets().map(s => s.getName()),
       user: Session.getActiveUser().getEmail(),
-      proposalsSheetCreated: !!sheet
+      proposalsSheetCreated: !!sheet,
+      version: '1.3'
     };
   } catch (e) {
     return { success: false, error: "Ping failed: " + e.toString() };
@@ -419,95 +428,7 @@ function handleUpdateCategory(category) {
 }
 
 
-// ===== КОМЕРЦІЙНІ ПРОПОЗИЦІЇ =====
-
-function handleGetProposals() {
-  const ss = getProposalsSpreadsheet();
-  const sheet = getSheetWithInit('proposals', ['id', 'date', 'userEmail', 'clientName', 'totalAmount', 'status', 'itemsJson'], [], ss);
-  const data = sheet.getDataRange().getValues();
-  if (data.length < 2) return { success: true, proposals: [] };
-  
-  const headers = data[0];
-  const proposals = [];
-  
-  for (let i = 1; i < data.length; i++) {
-    const p = {};
-    headers.forEach((h, idx) => {
-      let val = data[i][idx];
-      if (h === 'itemsJson') {
-        try { val = JSON.parse(val); } catch(e) { val = []; }
-      }
-      p[h] = val;
-    });
-    proposals.push(p);
-  }
-  
-  return { success: true, proposals: proposals };
-}
-
-function handleSaveProposal(proposal, userParams) {
-  // Витягуємо email з будь-якого можливого поля
-  let userEmail = "";
-  if (typeof userParams === 'string') {
-    userEmail = userParams;
-  } else if (userParams && typeof userParams === 'object') {
-    userEmail = userParams.email || userParams.userEmail || userParams.user || "";
-  }
-  
-  if (!userEmail && proposal.userEmail) userEmail = proposal.userEmail;
-
-  console.log("handleSaveProposal triggered for ID: " + (proposal ? proposal.id : "null") + " by " + userEmail);
-  try {
-    if (!proposal) throw new Error("Дані КП відсутні в запиті");
-    
-    const ss = getProposalsSpreadsheet();
-    if (!ss) throw new Error("Не вдалося відкрити таблицю");
-    
-    const sheetName = 'proposals';
-    const headers = ['id', 'date', 'userEmail', 'clientName', 'totalAmount', 'status', 'itemsJson'];
-    const sheet = getSheetWithInit(sheetName, headers, [], ss);
-    
-    if (!sheet) throw new Error("Не вдалося ініціалізувати лист 'proposals'");
-    
-    const row = findRowByValue(sheet, 'id', proposal.id);
-    
-    const rowData = [
-      String(proposal.id || ""),
-      proposal.date || dateStr(),
-      String(userEmail),
-      String(proposal.clientName || ""),
-      Number(proposal.totalAmount || 0),
-      String(proposal.status || "draft"),
-      JSON.stringify(proposal.items || [])
-    ];
-    
-    if (row === -1) {
-      sheet.appendRow(rowData);
-      console.log("Додано новий рядок у КП");
-    } else {
-      sheet.getRange(row, 1, 1, rowData.length).setValues([rowData]);
-      console.log("Оновлено існуючий рядок у КП (ряд: " + row + ")");
-    }
-    
-    // Примусово скидаємо кеш, щоб дані з'явилися негайно
-    SpreadsheetApp.flush();
-    
-    return { success: true, info: "Успішно збережено в " + ss.getName() };
-  } catch (err) {
-    console.error("Помилка handleSaveProposal: " + err.toString());
-    return { success: false, error: "Помилка збереження: " + err.toString() };
-  }
-}
-
-function handleDeleteProposal(proposalId) {
-  const ss = getProposalsSpreadsheet();
-  const sheet = getSheetWithInit('proposals', ['id', 'date', 'userEmail', 'clientName', 'totalAmount', 'status', 'itemsJson'], [], ss);
-  const row = findRowByValue(sheet, 'id', proposalId);
-  if (row !== -1) {
-    sheet.deleteRow(row);
-  }
-  return { success: true };
-}
+// (Старий блок функцій видалено для уникнення дублювання. Повна логіка нижче у розділі КОМЕРЦІЙНІ ПРОПОЗИЦІЇ)
 
 // ===== КАТАЛОГ =====
 
@@ -1040,98 +961,133 @@ function handleCompareReport() {
   });
 
   return { success: true, columns: columns, items: items };
+}
+
+function handleMovementReport(params) {
+  const operations = sheetToObjects(getSheet('operations'));
+  const catalog = sheetToObjects(getSheet('catalog'));
+  const warehouses = sheetToObjects(getSheet('warehouses'));
+
+  const catalogMap = {};
+  catalog.forEach(p => { catalogMap[p.id] = p; });
+  const whMap = {};
+  warehouses.forEach(w => { whMap[w.id] = w.name; });
+
+  let filtered = operations;
+  if (params.warehouseId) {
+    filtered = filtered.filter(op =>
+      op.warehouse_from === params.warehouseId || op.warehouse_to === params.warehouseId
+    );
+  }
+  if (params.productId) {
+    filtered = filtered.filter(op => op.product_id === params.productId);
+  }
+  if (params.dateFrom) {
+    filtered = filtered.filter(op => op.date >= params.dateFrom);
+  }
+  if (params.dateTo) {
+    filtered = filtered.filter(op => op.date <= params.dateTo);
+  }
+  if (params.type) {
+    filtered = filtered.filter(op => op.type === params.type);
+  }
+
+  filtered.sort((a, b) => a.date.localeCompare(b.date));
+
+  const columns = ['Дата', 'Тип', 'Товар', 'Склад', 'К-сть', 'Коментар', 'Автор'];
+  const items = filtered.map(op => {
+    const typeLabels = { income: 'Прихід', expense: 'Розхід', transfer: 'Переміщення', balance: 'Підсумок дня' };
+    return {
+      'Дата': op.date,
+      'Тип': typeLabels[op.type] || op.type,
+      'Товар': catalogMap[op.product_id]?.name || '',
+      'Склад': whMap[op.warehouse_from || op.warehouse_to] || '',
+      'К-сть': op.quantity,
+      'Коментар': op.comment || '',
+      'Автор': op.user || ''
+    };
+  });
+
+  return { success: true, columns: columns, items: items };
+}
+
 // ===== КОМЕРЦІЙНІ ПРОПОЗИЦІЇ - ФУНКЦІЇ ЗБЕРІГАННЯ І БЕКАПУ =====
  
 /**
  * Обробляє збереження комерційної пропозиції у Google Sheets
  * Викликається з фронтенду при натисканні " Зберегти пропозицію"
  */
-function handleSaveProposal(proposal, userEmail) {
+function handleSaveProposal(proposal, userParams) {
+  // 1. Визначаємо автора (пошту)
+  let userEmail = "";
+  if (typeof userParams === 'string') {
+    userEmail = userParams;
+  } else if (userParams && typeof userParams === 'object') {
+    userEmail = userParams.email || userParams.userEmail || userParams.user || "";
+  }
+  if (!userEmail && proposal.userEmail) userEmail = proposal.userEmail;
+
+  console.log("Saving proposal " + (proposal.number || proposal.id) + " for " + (proposal.clientName || "Unknown"));
+
   try {
-    // Вибираємо таблицю та аркуш для КП
-    const ss = getProposalsSpreadsheet();
-    let sheet = ss.getSheetByName('proposals');
+    if (!proposal) throw new Error("Дані КП відсутні");
     
-    // Якщо аркуша немає - створюємо його
-    if (!sheet) {
-      sheet = ss.insertSheet('proposals');
-      // Додаємо заголовки
-      sheet.appendRow([
-        'ID', 'Номер', 'Дата', 'Клієнт', 'Контакт', 'Курс $', 'Округлення %',
-        'Позиції (JSON)', 'Сума (СОБ)', 'Сума (Продаж)', 'Валюта', 'Примітки', 
-        'Користувач', 'Статус', 'Створено', 'Оновлено'
-      ]);
-    }
- 
-    // Формуємо запис для збереження
-    const proposalId = proposal.id || generateUUID();
-    const timestamp = now();
-    const positionsJson = JSON.stringify(proposal.positions || []);
-    const costSum = proposal.costSum || 0;
-    const saleSum = proposal.saleSum || 0;
- 
-    // Перевіряємо, чи КП вже існує (оновлення)
+    const ss = getProposalsSpreadsheet();
+    const sheetName = 'proposals';
+    
+    // Заголовки згідно зі скріншотом
+    const headers = [
+      'ID', 'Номер', 'Дата', 'Клієнт', 'Контакт', 
+      'Курс $', 'Націнка %', 'Сума Разом', 'Статус', 
+      'Товари (JSON)', 'Примітки', 'Автор', 'Оновлено'
+    ];
+    
+    const sheet = getSheetWithInit(sheetName, headers, [], ss);
+    if (!sheet) throw new Error("Не вдалося відкрити аркуш proposals");
+    
     const data = sheet.getDataRange().getValues();
-    let existingRowIndex = -1;
- 
+    let rowIndex = -1;
+    const pId = String(proposal.id);
+
+    // Шукаємо за ID для оновлення або створення
     for (let i = 1; i < data.length; i++) {
-      if (data[i][0] === proposalId) {
-        existingRowIndex = i + 1; // +1 тому що нумерація в getRange починається з 1
+      if (String(data[i][0]) === pId) {
+        rowIndex = i + 1;
         break;
       }
     }
- 
-    if (existingRowIndex > 0) {
-      // Оновлюємо існуючий запис
-      const range = sheet.getRange(existingRowIndex, 1, 1, 16);
-      range.setValues([[
-        proposalId,
-        proposal.number || '',
-        proposal.date || new Date().toISOString().split('T')[0],
-        proposal.client || '',
-        proposal.contact || userEmail || '',
-        proposal.courseUSD || 1,
-        proposal.roundingPercent || 0,
-        positionsJson,
-        costSum,
-        saleSum,
-        proposal.currency || 'USD',
-        proposal.notes || '',
-        userEmail || 'невідомо',
-        proposal.status || 'draft',
-        data[existingRowIndex - 1][14], // Зберігаємо оригінальну дату створення
-        timestamp
-      ]]);
+    
+    // Формуємо рядок за скріншотом
+    const rowData = [
+      pId,                                              // ID (прихований)
+      proposal.number || "",                            // НОМЕР
+      proposal.date || "",                              // ДАТА
+      proposal.clientName || "",                        // КЛІЄНТ
+      proposal.clientPhone || "",                       // КОНТАКТ
+      Number(proposal.courseUSD || 0),                  // КУРС $
+      Number(proposal.markup || 0),                     // НАЦІНКА %
+      Number(proposal.totalAmount || 0),                // СУМА
+      proposal.status || "Чернетка",                    // СТАТУС
+      JSON.stringify(proposal.items || []),             // ПОЗИЦІЇ
+      proposal.comment || "",                           // ПРИМІТКИ
+      userEmail || "невідомо",                          // АВТОР
+      new Date().toLocaleString('uk-UA')                // ОНОВЛЕНО
+    ];
+    
+    if (rowIndex > 0) {
+      sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
     } else {
-      // Додаємо новий запис
-      sheet.appendRow([
-        proposalId,
-        proposal.number || '',
-        proposal.date || new Date().toISOString().split('T')[0],
-        proposal.client || '',
-        proposal.contact || userEmail || '',
-        proposal.courseUSD || 1,
-        proposal.roundingPercent || 0,
-        positionsJson,
-        costSum,
-        saleSum,
-        proposal.currency || 'USD',
-        proposal.notes || '',
-        userEmail || 'невідомо',
-        proposal.status || 'draft',
-        timestamp,
-        timestamp
-      ]);
+      sheet.appendRow(rowData);
     }
- 
+    
+    SpreadsheetApp.flush();
+    
     return { 
       success: true, 
-      proposalId: proposalId,
-      message: 'Пропозиція збережена у Google Sheets'
+      message: 'КП ' + (proposal.number || '') + ' збережено в таблицю' 
     };
- 
   } catch (err) {
-    console.error('handleSaveProposal error:', err);
+    console.error("Save Error: " + err.toString());
     return { success: false, error: err.toString() };
   }
 }
@@ -1143,58 +1099,43 @@ function handleSaveProposal(proposal, userEmail) {
 function handleGetProposals() {
   try {
     const ss = getProposalsSpreadsheet();
-    let sheet;
+    const sheet = ss.getSheetByName('proposals');
     
-    try {
-      sheet = ss.getSheetByName('proposals');
-    } catch (e) {
-      // Аркуш не існує - повертаємо порожній список
-      return { success: true, proposals: [] };
-    }
- 
-    if (!sheet) {
-      return { success: true, proposals: [] };
-    }
- 
+    if (!sheet) return { success: true, proposals: [] };
+
     const data = sheet.getDataRange().getValues();
-    if (data.length < 2) {
-      return { success: true, proposals: [] };
-    }
- 
+    if (data.length < 2) return { success: true, proposals: [] };
+
     const proposals = [];
     for (let i = 1; i < data.length; i++) {
       try {
         const row = data[i];
-        const positionsJson = row[7] || '[]';
-        const positions = typeof positionsJson === 'string' 
-          ? JSON.parse(positionsJson) 
-          : positionsJson;
- 
+        // Розпаршуємо товари з 10-ї колонки (індекс 9)
+        let items = [];
+        try {
+          items = typeof row[9] === 'string' ? JSON.parse(row[9]) : (row[9] || []);
+        } catch (e) { console.warn("Error parsing items for row " + i); }
+
         proposals.push({
           id: row[0],
           number: row[1],
           date: row[2],
-          client: row[3],
-          contact: row[4],
-          courseUSD: parseFloat(row[5]) || 1,
-          roundingPercent: parseFloat(row[6]) || 0,
-          positions: positions,
-          costSum: parseFloat(row[8]) || 0,
-          saleSum: parseFloat(row[9]) || 0,
-          currency: row[10] || 'USD',
-          notes: row[11] || '',
-          user: row[12] || '',
-          status: row[13] || 'draft',
-          createdAt: row[14],
-          updatedAt: row[15]
+          clientName: row[3],
+          clientPhone: row[4],
+          courseUSD: parseFloat(row[5]) || 0,
+          markup: parseFloat(row[6]) || 0,
+          totalAmount: parseFloat(row[7]) || 0,
+          status: row[8] || 'Чернетка',
+          items: items,
+          comment: row[10] || '',
+          userEmail: row[11] || '',
+          updatedAt: row[12] || ''
         });
       } catch (parseErr) {
-        console.warn('Помилка парсингу рядка ' + (i + 1) + ':', parseErr);
+        console.warn('Помилка рядка ' + (i + 1) + ':', parseErr);
       }
     }
- 
     return { success: true, proposals: proposals };
- 
   } catch (err) {
     console.error('handleGetProposals error:', err);
     return { success: false, error: err.toString() };
@@ -1326,12 +1267,10 @@ function handleExportProposalsAsCSV() {
       csv: csv,
       fileName: 'proposals_export_' + Utilities.formatDate(new Date(), 'Europe/Kyiv', 'yyyy-MM-dd') + '.csv'
     };
- 
   } catch (err) {
     console.error('handleExportProposalsAsCSV error:', err);
     return { success: false, error: err.toString() };
   }
-}
 }
 
 function handleMovementReport(params) {
