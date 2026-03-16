@@ -95,6 +95,9 @@ function doGet(e) {
       case 'getUsers':
         result = handleGetUsers();
         break;
+      case 'getUsersForLogin':
+        result = handleGetUsersForLogin();
+        break;
       case 'getCategories':
         result = handleGetCategories();
         break;
@@ -248,7 +251,8 @@ function sheetToObjects(sheet) {
     'од.виміру': 'unit',
     'од виміру': 'unit',
     'од.': 'unit',
-    'назва': 'name'
+    'назва': 'name',
+    'пароль': 'password'
   };
 
   const sheetName = sheet.getName();
@@ -316,6 +320,15 @@ function handleGetUser(email) {
 
 function handleGetUsers() {
   const sheet = getSheet('users');
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  if (headers.indexOf('пароль') === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('пароль');
+  }
+  return { success: true, users: sheetToObjects(sheet) };
+}
+
+function handleGetUsersForLogin() {
+  const sheet = getSheet('users');
   return { success: true, users: sheetToObjects(sheet) };
 }
 
@@ -326,7 +339,8 @@ function handleAddUser(userData) {
     userData.name,
     userData.role,
     userData.warehouse_id || '',
-    userData.active !== false
+    userData.active !== false,
+    userData.password || ''
   ]);
   return { success: true };
 }
@@ -337,8 +351,10 @@ function handleUpdateUser(userData) {
   if (row === -1) return { success: false, error: 'Користувач не знайдений' };
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   headers.forEach((header, idx) => {
-    if (userData[header] !== undefined) {
-      sheet.getRange(row, idx + 1).setValue(userData[header]);
+    const s = String(header).trim().toLowerCase();
+    const mapped = headerMap[s] || s;
+    if (userData[mapped] !== undefined) {
+      sheet.getRange(row, idx + 1).setValue(userData[mapped]);
     }
   });
   return { success: true };

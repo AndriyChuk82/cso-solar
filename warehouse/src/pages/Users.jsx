@@ -14,7 +14,14 @@ export default function Users() {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({ email: '', name: '', role: 'storekeeper', warehouse_id: '', active: true });
+  const [formData, setFormData] = useState({ 
+    email: '', 
+    name: '', 
+    role: 'storekeeper', 
+    warehouse_id: '', 
+    active: true,
+    password: '' 
+  });
 
   useEffect(() => { loadData(); }, []);
 
@@ -33,13 +40,20 @@ export default function Users() {
 
   function openAdd() {
     setEditItem(null);
-    setFormData({ email: '', name: '', role: 'storekeeper', warehouse_id: '', active: true });
+    setFormData({ email: '', name: '', role: 'storekeeper', warehouse_id: '', active: true, password: '' });
     setShowModal(true);
   }
 
   function openEdit(u) {
     setEditItem(u);
-    setFormData({ email: u.email, name: u.name, role: u.role, warehouse_id: u.warehouse_id || '', active: u.active });
+    setFormData({ 
+      email: u.email, 
+      name: u.name, 
+      role: u.role, 
+      warehouse_id: u.warehouse_id || '', 
+      active: u.active,
+      password: '' // Don't show existing hash
+    });
     setShowModal(true);
   }
 
@@ -131,6 +145,18 @@ export default function Users() {
                 <div className="form-group">
                   <label>Ім'я *</label>
                   <input type="text" className="form-input" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label>{editItem ? 'Змінити пароль (залиште порожнім, щоб не змінювати)' : 'Пароль для входу *'}</label>
+                  <input 
+                    type="password" 
+                    className="form-input" 
+                    value={formData.password} 
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
+                    placeholder={editItem ? '••••••••' : 'Мінімум 6 символів'}
+                    required={!editItem}
+                  />
+                  {!editItem && <span className="form-hint">Цей пароль буде використовуватися для входу на Vercel</span>}
                 </div>
                 <div className="form-row">
                   <div className="form-group">

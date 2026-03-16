@@ -51,13 +51,14 @@ export default async function handler(req, res) {
         const usernames = (process.env.AUTH_USERNAME || '').split(',').map(u => u.trim());
         const hashes = (process.env.AUTH_PASSWORD_HASH || '').split(',').map(h => h.trim());
         const jwtSecret = process.env.JWT_SECRET;
+        const gasUrl = process.env.GAS_URL || 'https://script.google.com/macros/s/AKfycbxqQEMJ4vKBExxmh5-ft-UGVpU9rms4vPd9z0XgZv3b33sJDvXyZoIntOj61TVg9fLK/exec';
 
-        if (usernames.length === 0 || hashes.length === 0 || !jwtSecret) {
-            console.error('Missing auth environment variables');
+        if (!jwtSecret) {
+            console.error('Missing JWT_SECRET environment variable');
             return res.status(500).json({ error: 'Сервер не налаштований' });
         }
 
-        // Find user in the list
+        // 1. Пошук у базових адмінах (env vars)
         const userIndex = usernames.findIndex(u => u.toLowerCase() === username.toLowerCase());
         let passwordMatch = false;
 
@@ -65,7 +66,26 @@ export default async function handler(req, res) {
             passwordMatch = await bcrypt.compare(password, hashes[userIndex]);
         }
 
-        if (userIndex === -1 || !passwordMatch) {
+        // 2. Якщо не знайдено — шукаємо в Google Sheets
+        if (!passwordMatch) {
+            try {
+                const gasRes = await fetch(`${gasUrl}?action=getUsersForLogin`);
+                const data = await gasRes.json();
+                if (data.success && data.users) {
+                    const sheetUser = data.users.find(u => 
+                        (u.email || '').toLowerCase() === username.toLowerCase() && 
+                        u.active
+                    );
+                    if (sheetUser && sheetUser.password) {
+                        passwordMatch = await bcrypt.compare(password, sheetUser.password);
+                    }
+                }
+            } catch (err) {
+                console.error('GAS fetch error:', err);
+            }
+        }
+
+        if (!passwordMatch) {
             // Track failed attempt
             const current = failedAttempts.get(ip) || { count: 0, lastAttempt: 0 };
             failedAttempts.set(ip, { 

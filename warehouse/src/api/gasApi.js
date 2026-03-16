@@ -39,6 +39,17 @@ async function gasRequest(action, params = {}, method = 'GET') {
   return response.json();
 }
 
+/** Спеціальний запит до Vercel API для задач з хешуванням (користувачі) */
+async function vercelAdminRequest(action, userData) {
+  const response = await fetch('/api/admin-user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, userData })
+  });
+  if (!response.ok) throw new Error(`Помилка Vercel API: ${response.status}`);
+  return response.json();
+}
+
 /** Верифікація поточного користувача через основний сайт */
 export async function verifySession() {
   try {
@@ -154,11 +165,11 @@ export async function getUsers() {
 }
 
 export async function addUser(user) {
-  return gasRequest('addUser', { user }, 'POST');
+  return vercelAdminRequest('addUser', user);
 }
 
 export async function updateUser(user) {
-  return gasRequest('updateUser', { user }, 'POST');
+  return vercelAdminRequest('updateUser', user);
 }
 
 // ===== КАТЕГОРІЇ =====
