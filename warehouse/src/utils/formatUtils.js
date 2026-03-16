@@ -1,16 +1,20 @@
-/**
- * Форматує кількість товару.
- * Для сонячних панелей (1 палета = 36 шт) додає відображення в палетах.
- */
-export function formatQuantity(qty, category) {
+export function formatQuantity(qty, category, name = '') {
   const num = parseFloat(qty) || 0;
-  if (!category) return num;
+  if (num === 0) return 0;
 
-  const catLower = category.toLowerCase();
-  // Перевіряємо різні варіанти назви категорії сонячних панелей
-  const isSolarPanel = catLower.includes('сонячні панелі') || catLower.includes('сонячні батареї');
+  const catLower = (category || '').toLowerCase();
+  const nameLower = (name || '').toLowerCase();
+  
+  // Перевіряємо приналежність до сонячних панелей (за категорією або назвою)
+  const isSolar = 
+    catLower.includes('сонячні панелі') || 
+    catLower.includes('сонячні батареї') ||
+    catLower.includes('панелі') ||
+    (catLower === '' && (nameLower.includes('панель') || nameLower.includes('соняч'))) ||
+    nameLower.includes('панель') || 
+    nameLower.includes('батарея сонячна');
 
-  if (!isSolarPanel) {
+  if (!isSolar) {
     return num;
   }
 
@@ -21,7 +25,7 @@ export function formatQuantity(qty, category) {
   const isNegative = num < 0;
 
   if (pallets === 0) {
-    return num; // Менше однієї палети — відображаємо як розпаковані (просто число шт)
+    return num; // Менше 36 — просто число
   }
 
   const sign = isNegative ? '-' : '';

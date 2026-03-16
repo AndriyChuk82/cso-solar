@@ -109,7 +109,7 @@ export default function Reports() {
       
       reportData.columns.forEach(col => {
         if (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) {
-          newRow[col] = formatQuantity(newRow[col], row.category);
+          newRow[col] = formatQuantity(newRow[col], row.category, row['Товар'] || row['Назва']);
         }
       });
       
@@ -129,7 +129,7 @@ export default function Reports() {
       
       reportData.columns.forEach(col => {
         if (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) {
-          newRow[col] = formatQuantity(newRow[col], row.category);
+          newRow[col] = formatQuantity(newRow[col], row.category, row['Товар'] || row['Назва']);
         }
       });
       
@@ -304,7 +304,7 @@ export default function Reports() {
                         }}>
                           {col === 'Дата' ? formatDate(row[col]) : (
                             (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) 
-                              ? formatQuantity(row[col], row.category) 
+                              ? formatQuantity(row[col], row.category, row['Товар'] || row['Назва']) 
                               : (row[col] ?? '—')
                           )}
                         </td>

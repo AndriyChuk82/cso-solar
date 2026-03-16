@@ -134,8 +134,8 @@ export default function Journal() {
       'Товар': op.product_name || '',
       'Тип': CONFIG.OPERATION_LABELS[op.type] || op.type,
       'Од.': op.unit || '',
-      'К-сть': formatQuantity(op.quantity, op.product_category),
-      'Залишок після': formatQuantity(op.balance_after, op.product_category),
+      'К-сть': formatQuantity(op.quantity, op.product_category, op.product_name),
+      'Залишок після': formatQuantity(op.balance_after, op.product_category, op.product_name),
       'Коментар': op.comment || '',
       'Автор': op.user || ''
     }));
@@ -282,10 +282,10 @@ export default function Journal() {
                     </td>
                      <td style={{ color: 'var(--text-muted)' }}>{op.unit || '—'}</td>
                     <td style={{ fontWeight: 700, fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
-                      {formatQuantity(op.quantity, op.product_category)}
+                      {formatQuantity(op.quantity, op.product_category, op.product_name)}
                     </td>
                     <td style={{ fontSize: '0.85rem' }}>
-                      {op.balance_after != null ? formatQuantity(op.balance_after, op.product_category) : '—'}
+                      {op.balance_after != null ? formatQuantity(op.balance_after, op.product_category, op.product_name) : '—'}
                     </td>
                     <td style={{ fontSize: '0.8rem' }}>{op.comment || '—'}</td>
                     <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{op.user || '—'}</td>
