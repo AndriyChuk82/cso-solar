@@ -150,7 +150,7 @@ function doPost(e) {
         result = handleUpdateCategory(data.category);
         break;
       case 'saveProposal':
-        result = handleSaveProposal(data.proposal, data.userEmail);
+        result = handleSaveProposal(data.proposal, data.userEmail || data.user);
         break;
       case 'deleteProposal':
         result = handleDeleteProposal(data.proposalId);
@@ -392,27 +392,36 @@ function handleGetProposals() {
 }
 
 function handleSaveProposal(proposal, userEmail) {
-  const ss = getProposalsSpreadsheet();
-  const sheet = getSheetWithInit('proposals', ['id', 'date', 'userEmail', 'clientName', 'totalAmount', 'status', 'itemsJson'], [], ss);
-  const row = findRowByValue(sheet, 'id', proposal.id);
-  
-  const rowData = [
-    proposal.id,
-    proposal.date || dateStr(),
-    userEmail || proposal.userEmail || '',
-    proposal.clientName || '',
-    proposal.totalAmount || 0,
-    proposal.status || 'draft',
-    JSON.stringify(proposal.items || [])
-  ];
-  
-  if (row === -1) {
-    sheet.appendRow(rowData);
-  } else {
-    sheet.getRange(row, 1, 1, rowData.length).setValues([rowData]);
+  try {
+    const ss = getProposalsSpreadsheet();
+    const sheetName = 'proposals';
+    const headers = ['id', 'date', 'userEmail', 'clientName', 'totalAmount', 'status', 'itemsJson'];
+    const sheet = getSheetWithInit(sheetName, headers, [], ss);
+    
+    if (!sheet) throw new Error("Не вдалося отримати аркуш 'proposals'");
+    
+    const row = findRowByValue(sheet, 'id', proposal.id);
+    
+    const rowData = [
+      proposal.id,
+      proposal.date || dateStr(),
+      userEmail || proposal.userEmail || '',
+      proposal.clientName || '',
+      proposal.totalAmount || 0,
+      proposal.status || 'draft',
+      JSON.stringify(proposal.items || [])
+    ];
+    
+    if (row === -1) {
+      sheet.appendRow(rowData);
+    } else {
+      sheet.getRange(row, 1, 1, rowData.length).setValues([rowData]);
+    }
+    
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: 'Помилка збереження: ' + err.toString() };
   }
-  
-  return { success: true };
 }
 
 function handleDeleteProposal(proposalId) {
