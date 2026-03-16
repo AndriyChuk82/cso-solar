@@ -18,7 +18,8 @@ const CONFIG = {
     DEFAULT_MARKUP: 15,
     DEFAULT_USD_UAH: 41.50,
     DEFAULT_EUR_USD: 1.08,
-    CACHE_VERSION: 'v48' // Останню версію кешу для примусового оновлення у всіх клієнтів
+    CACHE_VERSION: 'v48', // Останню версію кешу для примусового оновлення у всіх клієнтів
+    GAS_URL: 'https://script.google.com/macros/s/AKfycbxqQEMJ4vKBExxmh5-ft-UGVpU9rms4vPd9z0XgZv3b33sJDvXyZoIntOj61TVg9fLK/exec'
 };
 
 // Detect if running on Vercel (HTTPS) vs local file://
@@ -1078,6 +1079,99 @@ function fillProposalForm() {
     document.getElementById('quickMarkup').value = state.settings.markup;
 }
 
+// ===== GOOGLE SHEETS SYNC =====
+async function gasRequest(action, params = {}, method = 'POST') {
+    try {
+        const body = { action, ...params };
+        const response = await fetch(CONFIG.GAS_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(body)
+        });
+        if (!response.ok) throw new Error('Network response was not ok');
+        return await response.json();
+    } catch (e) {
+        console.error('GAS Request Error:', e);
+        return { success: false, error: e.message };
+    }
+}
+
+async function saveProposalToSheet(proposal) {
+    const userEmail = "frontend-user"; 
+    const gasProposal = {
+        id: proposal.id,
+        number: proposal.number,
+        date: proposal.date,
+        clientName: proposal.clientName,
+        clientPhone: proposal.clientContact,
+        courseUSD: state.settings.usdToUah,
+        markup: state.settings.markup,
+        totalAmount: proposal.totalSum,
+        status: "Надіслано",
+        comment: proposal.notes,
+        items: proposal.items.map(it => ({
+            productName: it.name,
+            productArticle: "", 
+            unit: it.unit || "шт",
+            quantity: it.quantity,
+            price: it.price,
+            total: it.price * it.quantity
+        }))
+    };
+    
+    showToast('Синхронізація з Google Sheets...', 'info');
+    const res = await gasRequest('saveProposal', { proposal: gasProposal, user: userEmail });
+    if (res.success) {
+        showToast('Збережено в Google Sheets', 'success');
+    } else {
+        console.error('Sync Error:', res.error);
+        showToast('Помилка синхронізації: ' + res.error, 'error');
+    }
+}
+
+async function syncProposalsFromSheet() {
+    try {
+        const res = await gasRequest('getProposals');
+        if (res.success && res.proposals) {
+            const sheetProposals = res.proposals.map(p => ({
+                id: p.id,
+                number: p.number,
+                date: p.date,
+                clientName: p.clientName,
+                clientContact: p.clientPhone,
+                notes: p.comment,
+                totalSum: p.totalAmount,
+                savedAt: p.updatedAt,
+                items: p.items.map(it => ({
+                    name: it.productName,
+                    quantity: it.quantity,
+                    price: it.price,
+                    unit: it.unit || 'шт.',
+                    costUSD: it.price / (1 + (p.markup || 15) / 100) 
+                }))
+            }));
+            
+            // Merge with local history (prefer sheet data)
+            const localIds = state.history.map(h => h.id);
+            const merged = [...sheetProposals];
+            state.history.forEach(lh => {
+                if (!merged.find(sh => sh.id === lh.id)) {
+                    merged.push(lh);
+                }
+            });
+
+            state.history = merged;
+            saveHistory();
+            renderHistory();
+            return true;
+        }
+    } catch (e) {
+        console.error('Sync failed', e);
+    }
+    return false;
+}
+
 function saveCurrentProposal() {
     readProposalForm();
     const existing = state.history.findIndex(h => h.id === state.proposal.id);
@@ -1091,7 +1185,8 @@ function saveCurrentProposal() {
         state.history.push(copy);
     }
     saveHistory();
-    showToast('Пропозицію збережено', 'success');
+    showToast('Пропозицію збережено локально', 'success');
+    saveProposalToSheet(copy);
 }
 
 function loadProposal(id) {
@@ -1109,7 +1204,12 @@ function deleteProposal(id) {
     state.history = state.history.filter(h => h.id !== id);
     saveHistory();
     renderHistory();
-    showToast('Пропозицію видалено', 'info');
+    showToast('Пропозицію видалено локально', 'info');
+    
+    // Delete from sheet
+    gasRequest('deleteProposal', { proposalId: id }).then(res => {
+        if (res.success) showToast('Пропозицію видалено з Google Sheets', 'success');
+    });
 }
 
 function newProposal() {
@@ -2264,4 +2364,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load data
     fetchSheetData(false);
+    syncProposalsFromSheet();
 });

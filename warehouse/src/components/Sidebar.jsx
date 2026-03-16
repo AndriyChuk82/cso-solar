@@ -27,12 +27,7 @@ export default function Sidebar({ isOpen, onClose }) {
         { path: '/reports', label: 'Звіти', icon: '📈' },
       ]
     },
-    {
-      section: 'Продажі',
-      items: [
-        { path: '/proposals', label: 'Комерційні пропозиції', icon: '📄' },
-      ]
-    },
+
     {
       section: 'Адміністрування',
       adminOnly: true,
