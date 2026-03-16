@@ -46,7 +46,8 @@ function getProposalsSpreadsheet() {
 // ===== WEB APP ENDPOINTS =====
 
 function doGet(e) {
-  const action = e.parameter.action;
+  // Якщо action немає - по замовчуванню робимо ping для діагностики
+  const action = e.parameter.action || 'ping';
   let result;
 
   try {
@@ -89,6 +90,9 @@ function doGet(e) {
         break;
       case 'getProposals':
         result = handleGetProposals();
+        break;
+      case 'ping':
+        result = handlePing();
         break;
       default:
         result = { success: false, error: 'Невідома дія: ' + action };
@@ -160,7 +164,8 @@ function doPost(e) {
         result = handleUpdateCategory(data.category);
         break;
       case 'saveProposal':
-        result = handleSaveProposal(data.proposal, data.userEmail || data.user);
+        console.log("POST: saveProposal received");
+        result = handleSaveProposal(data.proposal, data.userEmail || data.user || data.email);
         break;
       case 'deleteProposal':
         result = handleDeleteProposal(data.proposalId);
@@ -329,16 +334,45 @@ function handleUpdateUser(userData) {
 // ===== КАТЕГОРІЇ =====
 
 function getSheetWithInit(name, headers, defaultData, ss) {
-  const targetSs = ss || getSpreadsheet();
-  let sheet = targetSs.getSheetByName(name);
-  if (!sheet) {
-    sheet = targetSs.insertSheet(name);
-    sheet.appendRow(headers);
-    if (defaultData && defaultData.length > 0) {
-      defaultData.forEach(row => sheet.appendRow(row));
+  try {
+    const targetSs = ss || getSpreadsheet();
+    let sheet = targetSs.getSheetByName(name);
+    if (!sheet) {
+      console.log("Створюю новий аркуш: " + name);
+      sheet = targetSs.insertSheet(name);
+      if (headers && headers.length > 0) {
+        sheet.appendRow(headers);
+        sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#f3f3f3");
+        sheet.setFrozenRows(1);
+      }
+      if (defaultData && defaultData.length > 0) {
+        defaultData.forEach(row => sheet.appendRow(row));
+      }
     }
+    return sheet;
+  } catch (e) {
+    console.error("Помилка getSheetWithInit: " + e.toString());
+    return null;
   }
-  return sheet;
+}
+
+function handlePing() {
+  try {
+    const ss = getProposalsSpreadsheet();
+    // Спробуємо ініціалізувати лист прямо під час пінгу
+    const sheet = getSheetWithInit('proposals', ['id', 'date', 'userEmail', 'clientName', 'totalAmount', 'status', 'itemsJson'], [], ss);
+    
+    return {
+      success: true,
+      spreadsheetName: ss.getName(),
+      id: ss.getId(),
+      sheets: ss.getSheets().map(s => s.getName()),
+      user: Session.getActiveUser().getEmail(),
+      proposalsSheetCreated: !!sheet
+    };
+  } catch (e) {
+    return { success: false, error: "Ping failed: " + e.toString() };
+  }
 }
 
 function handleGetCategories() {
@@ -402,41 +436,43 @@ function handleGetProposals() {
 }
 
 function handleSaveProposal(proposal, userEmail) {
+  console.log("handleSaveProposal triggered for ID: " + (proposal ? proposal.id : "null"));
   try {
+    if (!proposal) throw new Error("Дані КП відсутні в запиті");
+    
     const ss = getProposalsSpreadsheet();
-    if (!ss) throw new Error("Не вдалося відкрити Google Таблицю. Перевірте права доступу та SPREADSHEET_ID.");
+    if (!ss) throw new Error("Не вдалося відкрити таблицю");
     
     const sheetName = 'proposals';
     const headers = ['id', 'date', 'userEmail', 'clientName', 'totalAmount', 'status', 'itemsJson'];
     const sheet = getSheetWithInit(sheetName, headers, [], ss);
     
-    if (!sheet) throw new Error("Не вдалося знайти або створити аркуш 'proposals' у таблиці: " + ss.getName());
+    if (!sheet) throw new Error("Не вдалося ініціалізувати лист 'proposals'");
     
     const row = findRowByValue(sheet, 'id', proposal.id);
     
-    // Формуємо рядок даних
     const rowData = [
-      String(proposal.id),
+      String(proposal.id || ""),
       proposal.date || dateStr(),
-      String(userEmail || proposal.userEmail || ''),
-      String(proposal.clientName || ''),
+      String(userEmail || proposal.userEmail || ""),
+      String(proposal.clientName || ""),
       Number(proposal.totalAmount || 0),
-      String(proposal.status || 'draft'),
+      String(proposal.status || "draft"),
       JSON.stringify(proposal.items || [])
     ];
     
     if (row === -1) {
       sheet.appendRow(rowData);
+      console.log("Додано новий рядок у КП");
     } else {
       sheet.getRange(row, 1, 1, rowData.length).setValues([rowData]);
+      console.log("Оновлено існуючий рядок у КП (ряд: " + row + ")");
     }
     
-    return { 
-      success: true, 
-      info: "Збережено в таблицю: " + ss.getName() + " (вкладка 'proposals')"
-    };
+    return { success: true, info: "Успішно збережено в " + ss.getName() };
   } catch (err) {
-    return { success: false, error: 'Помилка збереження: ' + err.toString() };
+    console.error("Помилка handleSaveProposal: " + err.toString());
+    return { success: false, error: "Помилка збереження: " + err.toString() };
   }
 }
 
