@@ -2362,7 +2362,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    async function checkAuth() {
+        try {
+            const res = await fetch('/api/verify');
+            const data = await res.json();
+            if (data.authenticated) {
+                document.getElementById('headerUser').style.display = 'flex';
+                document.getElementById('userNameDisplay').textContent = data.user;
+                document.getElementById('btnLogout').style.display = 'flex';
+            }
+        } catch (e) {
+            console.error('Auth check failed', e);
+        }
+    }
+
     // Load data
+    checkAuth();
     fetchSheetData(false);
     syncProposalsFromSheet();
 });
