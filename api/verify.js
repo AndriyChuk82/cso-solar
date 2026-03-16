@@ -15,7 +15,8 @@ export default async function handler(req, res) {
 
         return res.status(200).json({ 
             authenticated: true,
-            user: payload.sub
+            user: payload.sub,
+            name: payload.name || payload.sub
         });
     } catch (err) {
         return res.status(401).json({ authenticated: false });

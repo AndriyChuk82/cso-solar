@@ -61,9 +61,14 @@ export default async function handler(req, res) {
         // 1. Пошук у базових адмінах (env vars)
         const userIndex = usernames.findIndex(u => u.toLowerCase() === username.toLowerCase());
         let passwordMatch = false;
+        let displayName = username; // Default to username
 
         if (userIndex !== -1 && hashes[userIndex]) {
             passwordMatch = await bcrypt.compare(password, hashes[userIndex]);
+            if (passwordMatch) {
+                // Можна додати AUTH_NAMES в env, але поки що просто "Адміністратор"
+                displayName = "Адміністратор";
+            }
         }
 
         // 2. Якщо не знайдено — шукаємо в Google Sheets
@@ -78,6 +83,9 @@ export default async function handler(req, res) {
                     );
                     if (sheetUser && sheetUser.password) {
                         passwordMatch = await bcrypt.compare(password, sheetUser.password);
+                        if (passwordMatch) {
+                            displayName = sheetUser.name || username;
+                        }
                     }
                 }
             } catch (err) {
@@ -108,6 +116,7 @@ export default async function handler(req, res) {
         const secret = new TextEncoder().encode(jwtSecret);
         const token = await new SignJWT({ 
             sub: username,
+            name: displayName,
             iat: Math.floor(Date.now() / 1000)
         })
             .setProtectedHeader({ alg: 'HS256' })

@@ -2368,7 +2368,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (data.authenticated) {
                 document.getElementById('headerUser').style.display = 'flex';
-                document.getElementById('userNameDisplay').textContent = data.user;
+                document.getElementById('userNameDisplay').textContent = data.name || data.user;
                 document.getElementById('btnLogout').style.display = 'flex';
             }
         } catch (e) {
