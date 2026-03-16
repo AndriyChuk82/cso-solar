@@ -174,3 +174,17 @@ export async function addCategory(category) {
 export async function updateCategory(category) {
   return gasRequest('updateCategory', { category }, 'POST');
 }
+
+// ===== КОМЕРЦІЙНІ ПРОПОЗИЦІЇ =====
+
+export async function getProposals() {
+  return gasRequest('getProposals');
+}
+
+export async function saveProposal(proposal, user) {
+  return gasRequest('saveProposal', { proposal, user }, 'POST');
+}
+
+export async function deleteProposal(proposalId) {
+  return gasRequest('deleteProposal', { proposalId }, 'POST');
+}

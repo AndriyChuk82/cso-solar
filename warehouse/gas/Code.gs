@@ -14,14 +14,23 @@
 
 // ===== КОНФІГУРАЦІЯ =====
 const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE';
+const PROPOSALS_SPREADSHEET_ID = ''; // Залишити порожнім, якщо КП у тій же таблиці
 const BACKUP_FOLDER_ID = 'YOUR_DRIVE_FOLDER_ID_HERE';
 
-function getSpreadsheet() {
-  return SpreadsheetApp.openById(SPREADSHEET_ID);
+function getSpreadsheet(id = SPREADSHEET_ID) {
+  const ssId = id || SPREADSHEET_ID;
+  return SpreadsheetApp.openById(ssId);
 }
 
-function getSheet(name) {
-  return getSpreadsheet().getSheetByName(name);
+function getSheet(name, ssId = SPREADSHEET_ID) {
+  return getSpreadsheet(ssId).getSheetByName(name);
+}
+
+function getProposalsSpreadsheet() {
+  if (PROPOSALS_SPREADSHEET_ID && PROPOSALS_SPREADSHEET_ID !== 'YOUR_PROPOSALS_SPREADSHEET_ID_HERE') {
+    return SpreadsheetApp.openById(PROPOSALS_SPREADSHEET_ID);
+  }
+  return getSpreadsheet();
 }
 
 // ===== WEB APP ENDPOINTS =====
@@ -315,10 +324,11 @@ function handleUpdateUser(userData) {
 
 // ===== КАТЕГОРІЇ =====
 
-function getSheetWithInit(name, headers, defaultData) {
-  let sheet = getSpreadsheet().getSheetByName(name);
+function getSheetWithInit(name, headers, defaultData, ss) {
+  const targetSs = ss || getSpreadsheet();
+  let sheet = targetSs.getSheetByName(name);
   if (!sheet) {
-    sheet = getSpreadsheet().insertSheet(name);
+    sheet = targetSs.insertSheet(name);
     sheet.appendRow(headers);
     if (defaultData && defaultData.length > 0) {
       defaultData.forEach(row => sheet.appendRow(row));
@@ -373,7 +383,8 @@ function handleGetSyncData() {
 }
 
 function handleGetProposals() {
-  const sheet = getSheetWithInit('proposals', ['id', 'date', 'user', 'json'], []);
+  const ss = getProposalsSpreadsheet();
+  const sheet = getSheetWithInit('proposals', ['id', 'date', 'user', 'json'], [], ss);
   const data = sheet.getDataRange().getValues();
   const proposals = [];
   for (let i = 1; i < data.length; i++) {
@@ -386,21 +397,21 @@ function handleGetProposals() {
 }
 
 function handleSaveProposal(proposal, user) {
-  const sheet = getSheetWithInit('proposals', ['id', 'date', 'user', 'json'], []);
+  const ss = getProposalsSpreadsheet();
+  const sheet = getSheetWithInit('proposals', ['id', 'date', 'user', 'json'], [], ss);
   const row = findRowByValue(sheet, 'id', proposal.id);
   const jsonStr = JSON.stringify(proposal);
   if (row === -1) {
     sheet.appendRow([proposal.id, dateStr(proposal.date), user || '', jsonStr]);
   } else {
-    sheet.getRange(row, 2).setValue(dateStr(proposal.date));
-    sheet.getRange(row, 3).setValue(user || '');
-    sheet.getRange(row, 4).setValue(jsonStr);
+    sheet.getRange(row, 2, 1, 3).setValues([[dateStr(proposal.date), user || '', jsonStr]]);
   }
   return { success: true };
 }
 
 function handleDeleteProposal(proposalId) {
-  const sheet = getSheetWithInit('proposals', ['id', 'date', 'user', 'json'], []);
+  const ss = getProposalsSpreadsheet();
+  const sheet = getSheetWithInit('proposals', ['id', 'date', 'user', 'json'], [], ss);
   const row = findRowByValue(sheet, 'id', proposalId);
   if (row !== -1) {
     sheet.deleteRow(row);

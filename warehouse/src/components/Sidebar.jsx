@@ -28,6 +28,12 @@ export default function Sidebar({ isOpen, onClose }) {
       ]
     },
     {
+      section: 'Продажі',
+      items: [
+        { path: '/proposals', label: 'Комерційні пропозиції', icon: '📄' },
+      ]
+    },
+    {
       section: 'Адміністрування',
       adminOnly: true,
       items: [

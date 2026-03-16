@@ -11,6 +11,9 @@ import Warehouses from './pages/Warehouses';
 import Users from './pages/Users';
 import Categories from './pages/Categories';
 import Reports from './pages/Reports';
+import Proposals from './pages/Proposals';
+import ProposalForm from './pages/ProposalForm';
+import ProposalView from './pages/ProposalView';
 
 function AppContent() {
   const { user, loading, error } = useAuth();
@@ -58,6 +61,12 @@ function AppContent() {
               <Route path="/categories" element={<Categories />} />
             </>
           )}
+
+          {/* Комерційні пропозиції */}
+          <Route path="/proposals" element={<Proposals />} />
+          <Route path="/proposals/new" element={<ProposalForm />} />
+          <Route path="/proposals/edit/:id" element={<ProposalForm />} />
+          <Route path="/proposals/view/:id" element={<ProposalView />} />
         </Route>
       </Routes>
     </BrowserRouter>
