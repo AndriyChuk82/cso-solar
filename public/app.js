@@ -15,70 +15,14 @@ const CONFIG = {
         'https://corsproxy.io/?',
         'https://api.allorigins.win/raw?url='
     ],
-    CACHE_VERSION: 'v49', // Останню версію кешу для примусового оновлення у всіх клієнтів
-    GAS_URL: 'https://script.google.com/macros/s/AKfycbzqB1KybhQRa7zfGKoIcnpcHxsXgxovnifJTfiWT5CguOPQ5HiMGE41o65Hj05ddtpBJw/exec'
+    DEFAULT_MARKUP: 15,
+    DEFAULT_USD_UAH: 41.50,
+    DEFAULT_EUR_USD: 1.08,
+    CACHE_VERSION: 'v48' // Останню версію кешу для примусового оновлення у всіх клієнтів
 };
 
 // Detect if running on Vercel (HTTPS) vs local file://
 const IS_DEPLOYED = window.location.protocol === 'https:';
-
-// ===== LOADERS (Defined before state to ensure availability) =====
-function loadSettings() {
-    try {
-        const s = JSON.parse(localStorage.getItem('cso_settings'));
-        if (s) return s;
-    } catch (e) {}
-    return {
-        markup: CONFIG.DEFAULT_MARKUP,
-        usdToUah: CONFIG.DEFAULT_USD_UAH,
-        eurToUsd: CONFIG.DEFAULT_EUR_USD,
-        showCost: true,
-        botToken: '',
-        chatId: ''
-    };
-}
-
-function loadHistory() {
-    try {
-        const hist = JSON.parse(localStorage.getItem('cso_history'));
-        return Array.isArray(hist) ? hist : [];
-    } catch (e) { return []; }
-}
-
-function loadFavorites() {
-    try {
-        return JSON.parse(localStorage.getItem('cso_favorites')) || [];
-    } catch(e) { return []; }
-}
-
-function loadCustomMaterials() {
-    try {
-        return JSON.parse(localStorage.getItem('cso_custom_materials')) || [];
-    } catch(e) { return []; }
-}
-
-function loadMaterialOverrides() {
-    try {
-        return JSON.parse(localStorage.getItem('cso_material_overrides')) || {};
-    } catch(e) { return {}; }
-}
-
-// ===== SAVERS =====
-function saveSettings() {
-    localStorage.setItem('cso_settings', JSON.stringify(state.settings));
-}
-
-function saveHistory() {
-    localStorage.setItem('cso_history', JSON.stringify(state.history));
-}
-
-function saveMaterialOverrides() {
-    localStorage.setItem('cso_material_overrides', JSON.stringify(state.materialOverrides));
-}
-
-function saveCustomMaterials() {
-    localStorage.setItem('cso_custom_materials', JSON.stringify(state.customMaterials));
-}
 
 let state = {
     products: [],
@@ -89,139 +33,33 @@ let state = {
     activeCurrency: 'USD',
     favorites: loadFavorites(),
     customMaterials: loadCustomMaterials(),
-    materialOverrides: loadMaterialOverrides(),
-    user: null
+    materialOverrides: loadMaterialOverrides()
 };
 
-// ===== REMOTE SYNC =====
-async function verifySession() {
+function loadMaterialOverrides() {
     try {
-        const resp = await fetch('/api/verify');
-        if (resp.ok) {
-            const data = await resp.json();
-            if (data.authenticated) {
-                state.user = data.user;
-                if (document.getElementById('btnLogout')) {
-                    document.getElementById('btnLogout').style.display = 'flex';
-                }
-                // Sync on login
-                syncRemoteData();
-                return;
-            }
-        }
-    } catch (e) {}
+        return JSON.parse(localStorage.getItem('cso_material_overrides')) || {};
+    } catch(e) { return {}; }
 }
 
-async function syncRemoteData() {
-    if (!CONFIG.GAS_URL) return;
-    try {
-        const resp = await fetch(`${CONFIG.GAS_URL}?action=getSyncData`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'text/plain' } // Some CORS setups require this
-        });
-        if (resp.ok) {
-            const result = await resp.json();
-            if (result.success) {
-                // Merge Proposals (History)
-                if (result.proposals) {
-                    const local = state.history;
-                    const remote = result.proposals;
-                    const combined = [...local];
-                    remote.forEach(rp => {
-                        const localIdx = combined.findIndex(lp => lp.id === rp.id);
-                        if (localIdx === -1) {
-                            combined.push(rp);
-                        } else {
-                            const localDate = new Date(combined[localIdx].savedAt || 0);
-                            const remoteDate = new Date(rp.savedAt || 0);
-                            if (remoteDate > localDate) combined[localIdx] = rp;
-                        }
-                    });
-                    state.history = combined.sort((a,b) => new Date(b.savedAt) - new Date(a.savedAt));
-                    localStorage.setItem('cso_history', JSON.stringify(state.history));
-                    if (typeof renderHistory === 'function') renderHistory();
-                }
-
-                // Merge Global Data
-                if (result.globalData) {
-                    if (result.globalData.customMaterials) {
-                        state.customMaterials = result.globalData.customMaterials;
-                        localStorage.setItem('cso_custom_materials', JSON.stringify(state.customMaterials));
-                    }
-                    if (result.globalData.materialOverrides) {
-                        state.materialOverrides = result.globalData.materialOverrides;
-                        localStorage.setItem('cso_material_overrides', JSON.stringify(state.materialOverrides));
-                    }
-                    if (result.globalData.favorites) {
-                        // For favorites, merge unique arrays to keep local + remote favorites
-                        const combinedFavs = [...new Set([...state.favorites, ...(result.globalData.favorites)])];
-                        state.favorites = combinedFavs;
-                        localStorage.setItem('cso_favorites', JSON.stringify(state.favorites));
-                    }
-                    if (typeof renderCatalog === 'function' && state.products.length > 0) {
-                        // Re-apply overrides and custom materials to products list
-                        fetchSheetData(false); 
-                    }
-                }
-            }
-        }
-    } catch (e) {
-        console.error('Remote sync failed:', e);
-    }
+function saveMaterialOverrides() {
+    localStorage.setItem('cso_material_overrides', JSON.stringify(state.materialOverrides));
 }
 
-async function uploadProposalToRemote(proposal) {
-    if (!CONFIG.GAS_URL || !state.user) return;
+function loadCustomMaterials() {
     try {
-        await fetch(CONFIG.GAS_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({
-                action: 'saveProposal',
-                user: state.user,
-                proposal: proposal
-            })
-        });
-    } catch (e) { console.warn('Remote upload failed', e); }
+        return JSON.parse(localStorage.getItem('cso_custom_materials')) || [];
+    } catch(e) { return []; }
 }
 
-async function deleteProposalFromRemote(proposalId) {
-    if (!CONFIG.GAS_URL || !state.user) return;
-    try {
-        await fetch(CONFIG.GAS_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({
-                action: 'deleteProposal',
-                proposalId: proposalId
-            })
-        });
-    } catch (e) { console.warn('Remote delete failed', e); }
+function saveCustomMaterials() {
+    localStorage.setItem('cso_custom_materials', JSON.stringify(state.customMaterials));
 }
 
-async function uploadGlobalDataToRemote(key, value) {
-    if (!CONFIG.GAS_URL) return; // Allow sync even without login if required by user
+function loadFavorites() {
     try {
-        await fetch(CONFIG.GAS_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({
-                action: 'saveGlobalData',
-                key: key,
-                value: value
-            })
-        });
-    } catch (e) { console.warn('Global data sync failed', e); }
-}            user: state.user,
-                proposal: proposal
-            })
-        });
-    } catch (e) {
-        console.warn('Remote upload failed', e);
-    }
+        return JSON.parse(localStorage.getItem('cso_favorites')) || [];
+    } catch(e) { return []; }
 }
 
 function applyMaterialOverrides(productsList) {
@@ -296,20 +134,35 @@ function normalizeForSearch(str) {
         .replace(/в/g, 'b'); // кирилична 'в' -> 'b' (схожість В та B)
 }
 
+// ===== SETTINGS =====
+function loadSettings() {
+    try {
+        const s = JSON.parse(localStorage.getItem('cso_settings'));
+        if (s) return s;
+    } catch (e) {}
+    return {
+        markup: CONFIG.DEFAULT_MARKUP,
+        usdToUah: CONFIG.DEFAULT_USD_UAH,
+        eurToUsd: CONFIG.DEFAULT_EUR_USD,
+        showCost: true,
+        botToken: '',
+        chatId: ''
+    };
+}
 
+function saveSettings() {
+    localStorage.setItem('cso_settings', JSON.stringify(state.settings));
+}
+
+// ===== HISTORY =====
+function loadHistory() {
+    try {
+        return JSON.parse(localStorage.getItem('cso_history')) || [];
+    } catch (e) { return []; }
+}
 
 function saveHistory() {
     localStorage.setItem('cso_history', JSON.stringify(state.history));
-}
-
-function saveCustomMaterials() {
-    localStorage.setItem('cso_custom_materials', JSON.stringify(state.customMaterials));
-    uploadGlobalDataToRemote('customMaterials', state.customMaterials);
-}
-
-function saveMaterialOverrides() {
-    localStorage.setItem('cso_material_overrides', JSON.stringify(state.materialOverrides));
-    uploadGlobalDataToRemote('materialOverrides', state.materialOverrides);
 }
 
 // ===== DATA FETCHING =====
@@ -1015,7 +868,6 @@ function toggleFavorite(e, id) {
         state.favorites.push(id);
     }
     localStorage.setItem('cso_favorites', JSON.stringify(state.favorites));
-    uploadGlobalDataToRemote('favorites', state.favorites);
     renderCatalog();
 }
 
@@ -1231,7 +1083,6 @@ function saveCurrentProposal() {
     const existing = state.history.findIndex(h => h.id === state.proposal.id);
     const copy = JSON.parse(JSON.stringify(state.proposal));
     copy.savedAt = new Date().toISOString();
-    copy.savedBy = state.user || '';
     copy.totalSum = state.proposal.items.reduce((s, it) => s + it.price * it.quantity, 0);
 
     if (existing >= 0) {
@@ -1240,10 +1091,6 @@ function saveCurrentProposal() {
         state.history.push(copy);
     }
     saveHistory();
-    
-    // Remote sync
-    uploadProposalToRemote(copy);
-    
     showToast('Пропозицію збережено', 'success');
 }
 
@@ -1261,7 +1108,6 @@ function deleteProposal(id) {
     if (!confirm('Видалити цю пропозицію?')) return;
     state.history = state.history.filter(h => h.id !== id);
     saveHistory();
-    deleteProposalFromRemote(id);
     renderHistory();
     showToast('Пропозицію видалено', 'info');
 }
@@ -1294,11 +1140,10 @@ function renderHistory() {
     const sorted = [...filtered].sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || ''));
     for (const p of sorted) {
         const sum = p.totalSum || 0;
-        const author = p.savedBy ? ` | 👤 ${escHtml(p.savedBy)}` : '';
         html += `<div class="history-item">
             <div class="history-meta">
                 <div class="history-num">${escHtml(p.number || 'Без номера')}</div>
-                <div class="history-info">${escHtml(p.date || '')} | ${escHtml(p.clientName || 'Без клієнта')} | ${p.items ? p.items.length : 0} поз.${author}</div>
+                <div class="history-info">${escHtml(p.date || '')} | ${escHtml(p.clientName || 'Без клієнта')} | ${p.items ? p.items.length : 0} поз.</div>
             </div>
             <div class="history-sum">${formatMoney(sum, 'USD')}</div>
             <div class="history-actions">
@@ -2416,9 +2261,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-
-    // Verify session and sync
-    verifySession();
 
     // Load data
     fetchSheetData(false);
