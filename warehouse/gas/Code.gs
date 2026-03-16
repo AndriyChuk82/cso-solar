@@ -27,10 +27,20 @@ function getSheet(name, ssId = SPREADSHEET_ID) {
 }
 
 function getProposalsSpreadsheet() {
-  if (PROPOSALS_SPREADSHEET_ID && PROPOSALS_SPREADSHEET_ID !== 'YOUR_PROPOSALS_SPREADSHEET_ID_HERE') {
-    return SpreadsheetApp.openById(PROPOSALS_SPREADSHEET_ID);
+  const customId = String(PROPOSALS_SPREADSHEET_ID || "").trim();
+  if (customId && customId !== 'YOUR_PROPOSALS_SPREADSHEET_ID_HERE') {
+    return SpreadsheetApp.openById(customId);
   }
-  return getSpreadsheet();
+  const mainId = String(SPREADSHEET_ID || "").trim();
+  if (!mainId || mainId === 'YOUR_SPREADSHEET_ID_HERE') {
+    // Якщо ID не вказано або він дефолтний, намагаємося використати активну таблицю
+    try {
+      return SpreadsheetApp.getActiveSpreadsheet();
+    } catch (e) {
+      throw new Error("ID таблиці не вказано. Будь ласка, впишіть SPREADSHEET_ID в Code.gs.");
+    }
+  }
+  return SpreadsheetApp.openById(mainId);
 }
 
 // ===== WEB APP ENDPOINTS =====
@@ -394,21 +404,24 @@ function handleGetProposals() {
 function handleSaveProposal(proposal, userEmail) {
   try {
     const ss = getProposalsSpreadsheet();
+    if (!ss) throw new Error("Не вдалося відкрити Google Таблицю. Перевірте права доступу та SPREADSHEET_ID.");
+    
     const sheetName = 'proposals';
     const headers = ['id', 'date', 'userEmail', 'clientName', 'totalAmount', 'status', 'itemsJson'];
     const sheet = getSheetWithInit(sheetName, headers, [], ss);
     
-    if (!sheet) throw new Error("Не вдалося отримати аркуш 'proposals'");
+    if (!sheet) throw new Error("Не вдалося знайти або створити аркуш 'proposals' у таблиці: " + ss.getName());
     
     const row = findRowByValue(sheet, 'id', proposal.id);
     
+    // Формуємо рядок даних
     const rowData = [
-      proposal.id,
+      String(proposal.id),
       proposal.date || dateStr(),
-      userEmail || proposal.userEmail || '',
-      proposal.clientName || '',
-      proposal.totalAmount || 0,
-      proposal.status || 'draft',
+      String(userEmail || proposal.userEmail || ''),
+      String(proposal.clientName || ''),
+      Number(proposal.totalAmount || 0),
+      String(proposal.status || 'draft'),
       JSON.stringify(proposal.items || [])
     ];
     
@@ -418,7 +431,10 @@ function handleSaveProposal(proposal, userEmail) {
       sheet.getRange(row, 1, 1, rowData.length).setValues([rowData]);
     }
     
-    return { success: true };
+    return { 
+      success: true, 
+      info: "Збережено в таблицю: " + ss.getName() + " (вкладка 'proposals')"
+    };
   } catch (err) {
     return { success: false, error: 'Помилка збереження: ' + err.toString() };
   }
