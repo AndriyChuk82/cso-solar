@@ -13,9 +13,9 @@
  */
 
 // ===== КОНФІГУРАЦІЯ =====
-const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE';
+const SPREADSHEET_ID = '1JzZFwvw6-m5JqP2Nra2azUvoWfuoY6Bsh-3qWtLPZ_k';
 const PROPOSALS_SPREADSHEET_ID = ''; // Залишити порожнім, якщо КП у тій же таблиці
-const BACKUP_FOLDER_ID = 'YOUR_DRIVE_FOLDER_ID_HERE';
+const BACKUP_FOLDER_ID = '14kNr3Ex0bdVb0gddRzShkr8X88BYhtmL';
 
 function getSpreadsheet(id = SPREADSHEET_ID) {
   const ssId = id || SPREADSHEET_ID;
@@ -76,6 +76,9 @@ function doGet(e) {
         break;
       case 'getCategories':
         result = handleGetCategories();
+        break;
+      case 'getProposals':
+        result = handleGetProposals();
         break;
       default:
         result = { success: false, error: 'Невідома дія: ' + action };
@@ -145,6 +148,12 @@ function doPost(e) {
         break;
       case 'updateCategory':
         result = handleUpdateCategory(data.category);
+        break;
+      case 'saveProposal':
+        result = handleSaveProposal(data.proposal, data.userEmail);
+        break;
+      case 'deleteProposal':
+        result = handleDeleteProposal(data.proposalId);
         break;
       default:
         result = { success: false, error: 'Невідома дія: ' + action };
@@ -355,6 +364,66 @@ function handleUpdateCategory(category) {
   return { success: true };
 }
 
+
+// ===== КОМЕРЦІЙНІ ПРОПОЗИЦІЇ =====
+
+function handleGetProposals() {
+  const ss = getProposalsSpreadsheet();
+  const sheet = getSheetWithInit('proposals', ['id', 'date', 'userEmail', 'clientName', 'totalAmount', 'status', 'itemsJson'], [], ss);
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) return { success: true, proposals: [] };
+  
+  const headers = data[0];
+  const proposals = [];
+  
+  for (let i = 1; i < data.length; i++) {
+    const p = {};
+    headers.forEach((h, idx) => {
+      let val = data[i][idx];
+      if (h === 'itemsJson') {
+        try { val = JSON.parse(val); } catch(e) { val = []; }
+      }
+      p[h] = val;
+    });
+    proposals.push(p);
+  }
+  
+  return { success: true, proposals: proposals };
+}
+
+function handleSaveProposal(proposal, userEmail) {
+  const ss = getProposalsSpreadsheet();
+  const sheet = getSheetWithInit('proposals', ['id', 'date', 'userEmail', 'clientName', 'totalAmount', 'status', 'itemsJson'], [], ss);
+  const row = findRowByValue(sheet, 'id', proposal.id);
+  
+  const rowData = [
+    proposal.id,
+    proposal.date || dateStr(),
+    userEmail || proposal.userEmail || '',
+    proposal.clientName || '',
+    proposal.totalAmount || 0,
+    proposal.status || 'draft',
+    JSON.stringify(proposal.items || [])
+  ];
+  
+  if (row === -1) {
+    sheet.appendRow(rowData);
+  } else {
+    sheet.getRange(row, 1, 1, rowData.length).setValues([rowData]);
+  }
+  
+  return { success: true };
+}
+
+function handleDeleteProposal(proposalId) {
+  const ss = getProposalsSpreadsheet();
+  const sheet = getSheetWithInit('proposals', ['id', 'date', 'userEmail', 'clientName', 'totalAmount', 'status', 'itemsJson'], [], ss);
+  const row = findRowByValue(sheet, 'id', proposalId);
+  if (row !== -1) {
+    sheet.deleteRow(row);
+  }
+  return { success: true };
+}
 
 // ===== КАТАЛОГ =====
 
