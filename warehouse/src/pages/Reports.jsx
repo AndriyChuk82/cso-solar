@@ -64,14 +64,24 @@ export default function Reports() {
 
   const sortedItems = useMemo(() => {
     if (!reportData?.items) return [];
-    if (!sortAsc) return reportData.items;
+    
+    let items = [...reportData.items];
 
-    return [...reportData.items].sort((a, b) => {
+    // Фільтрація ненульових залишків
+    if (activeTab === 'stock' && stockFilter.nonZeroOnly) {
+      items = items.filter(item => (parseFloat(item['Кількість']) || 0) !== 0);
+    } else if (activeTab === 'compare' && compareFilter.nonZeroOnly) {
+      items = items.filter(item => (parseFloat(item['Всього']) || 0) !== 0);
+    }
+
+    if (!sortAsc) return items;
+
+    return items.sort((a, b) => {
       const nameA = String(a['Товар'] || a['Назва'] || a['Назва категорії'] || '');
       const nameB = String(b['Товар'] || b['Назва'] || b['Назва категорії'] || '');
       return nameA.localeCompare(nameB);
     });
-  }, [reportData, sortAsc]);
+  }, [reportData, sortAsc, activeTab, stockFilter.nonZeroOnly, compareFilter.nonZeroOnly]);
 
   function getReportTitle() {
     if (activeTab === 'stock') {
