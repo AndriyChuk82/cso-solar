@@ -1027,8 +1027,8 @@ function handleSaveProposal(proposal, userParams) {
   }
   if (!userEmail && proposal.userEmail) userEmail = proposal.userEmail;
 
-  console.log("Saving proposal " + (proposal.number || proposal.id) + " for " + (proposal.clientName || "Unknown"));
-
+  console.log("Raw proposal data received: " + JSON.stringify(proposal));
+  
   try {
     if (!proposal) throw new Error("Дані КП відсутні");
     

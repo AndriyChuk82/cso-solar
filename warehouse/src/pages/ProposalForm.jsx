@@ -23,6 +23,7 @@ export default function ProposalForm() {
 
   const [formData, setFormData] = useState({
     id: id || Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+    number: 'КП-' + String(Date.now()).slice(-3),
     clientName: '',
     clientPhone: '',
     date: new Date().toISOString().split('T')[0],
@@ -31,6 +32,8 @@ export default function ProposalForm() {
     items: [],
     discountValue: 0,
     discountType: 'percentage', // 'percentage' або 'amount'
+    courseUSD: 41.5,
+    markup: 15,
     totalAmount: 0,
     userEmail: user?.email || '',
     comment: ''
@@ -204,7 +207,16 @@ export default function ProposalForm() {
               <h3>Параметри КП</h3>
             </div>
             <div className="card-body">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                <div className="form-group">
+                  <label>Номер КП</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={formData.number}
+                    onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                  />
+                </div>
                 <div className="form-group">
                   <label>Дата КП</label>
                   <input
@@ -214,7 +226,31 @@ export default function ProposalForm() {
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                   />
                 </div>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="form-group">
+                  <label>Курс $</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={formData.courseUSD}
+                    onChange={(e) => setFormData({ ...formData, courseUSD: e.target.value })}
+                    step="0.01"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Націнка %</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={formData.markup}
+                    onChange={(e) => setFormData({ ...formData, markup: e.target.value })}
+                  />
+                </div>
+              </div>
+              
+              <div className="form-group" style={{ marginTop: '12px' }}>
                   <label>Статус</label>
                   <select
                     className="form-select"
@@ -227,7 +263,6 @@ export default function ProposalForm() {
                     <option value="Відхилено">Відхилено</option>
                   </select>
                 </div>
-              </div>
             </div>
           </div>
         </div>
