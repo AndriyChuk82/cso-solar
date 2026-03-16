@@ -33,14 +33,24 @@ function getProposalsSpreadsheet() {
   }
   const mainId = String(SPREADSHEET_ID || "").trim();
   if (!mainId || mainId === 'YOUR_SPREADSHEET_ID_HERE') {
-    // Якщо ID не вказано або він дефолтний, намагаємося використати активну таблицю
     try {
       return SpreadsheetApp.getActiveSpreadsheet();
     } catch (e) {
       throw new Error("ID таблиці не вказано. Будь ласка, впишіть SPREADSHEET_ID в Code.gs.");
     }
   }
-  return SpreadsheetApp.openById(mainId);
+  
+  // Додаємо спробу відкрити через DriveApp, якщо SpreadsheetApp підводить
+  try {
+    return SpreadsheetApp.openById(mainId);
+  } catch (e) {
+    try {
+      const file = DriveApp.getFileById(mainId);
+      return SpreadsheetApp.open(file);
+    } catch (e2) {
+      throw new Error("Не вдалося відкрити таблицю " + mainId + ": " + e.toString());
+    }
+  }
 }
 
 // ===== WEB APP ENDPOINTS =====
@@ -435,8 +445,18 @@ function handleGetProposals() {
   return { success: true, proposals: proposals };
 }
 
-function handleSaveProposal(proposal, userEmail) {
-  console.log("handleSaveProposal triggered for ID: " + (proposal ? proposal.id : "null"));
+function handleSaveProposal(proposal, userParams) {
+  // Витягуємо email з будь-якого можливого поля
+  let userEmail = "";
+  if (typeof userParams === 'string') {
+    userEmail = userParams;
+  } else if (userParams && typeof userParams === 'object') {
+    userEmail = userParams.email || userParams.userEmail || userParams.user || "";
+  }
+  
+  if (!userEmail && proposal.userEmail) userEmail = proposal.userEmail;
+
+  console.log("handleSaveProposal triggered for ID: " + (proposal ? proposal.id : "null") + " by " + userEmail);
   try {
     if (!proposal) throw new Error("Дані КП відсутні в запиті");
     
@@ -454,7 +474,7 @@ function handleSaveProposal(proposal, userEmail) {
     const rowData = [
       String(proposal.id || ""),
       proposal.date || dateStr(),
-      String(userEmail || proposal.userEmail || ""),
+      String(userEmail),
       String(proposal.clientName || ""),
       Number(proposal.totalAmount || 0),
       String(proposal.status || "draft"),
@@ -468,6 +488,9 @@ function handleSaveProposal(proposal, userEmail) {
       sheet.getRange(row, 1, 1, rowData.length).setValues([rowData]);
       console.log("Оновлено існуючий рядок у КП (ряд: " + row + ")");
     }
+    
+    // Примусово скидаємо кеш, щоб дані з'явилися негайно
+    SpreadsheetApp.flush();
     
     return { success: true, info: "Успішно збережено в " + ss.getName() };
   } catch (err) {
