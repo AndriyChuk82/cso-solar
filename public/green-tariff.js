@@ -271,7 +271,24 @@ function loadProject(id) {
         const el = document.getElementById(fieldId);
         if (el) {
             const spreadsheetKeys = gtState.mapping[fieldId];
-            el.value = getProp(p, spreadsheetKeys);
+            let value = getProp(p, spreadsheetKeys);
+            
+            // ФІКСИ ФОРМАТІВ ДЛЯ КОНСОЛІ:
+            if (value) {
+                // 1. Для полів типу "date" (конвертуємо ДД.ММ.РРРР у РРРР-ММ-ДД)
+                if (el.type === 'date') {
+                    const dateMatch = value.toString().match(/(\d{2})\.(\d{2})\.(\d{4})/);
+                    if (dateMatch) {
+                        value = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+                    }
+                }
+                // 2. Для числових полів (замінюємо кому на крапку)
+                if (el.type === 'number') {
+                    value = value.toString().replace(',', '.').replace(/[^\d.]/g, '');
+                }
+            }
+
+            el.value = value;
         }
     }
 
