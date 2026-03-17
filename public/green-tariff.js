@@ -15,6 +15,46 @@ let gtState = {
         inverters: [],
         panels: [],
         batteries: []
+    },
+    mapping: {
+        'field1': 'Стан проєкту',
+        'field2': 'Розрахунок',
+        'field3': '№ проекту',
+        'field4': 'ПІБ фізичної особи',
+        'field5': 'ІПН',
+        'field6': 'реєстраційний номер об’єкта нерухомого майна',
+        'field7': 'Номер запису про право власності',
+        'field8': 'Унікальний номер запису в Єдиному державному демографічному реєстрі (за наявності)',
+        'field9': '№ Договору',
+        'field10': 'Дата договору',
+        'field11': 'Час тестування',
+        'field12': 'EIC-код точки розподілу',
+        'field13': 'Дозволена потужність',
+        'field14': 'Підстанція',
+        'field15': 'Лінія',
+        'field16': 'Опора',
+        'field17': 'Лічильник',
+        'field18': 'Напруга',
+        'field19': 'Вхідний автомат',
+        'field20': 'Відсікач',
+        'field21': 'Місце розташування генеруючої установки',
+        'field22': 'Потужність генеруючих установок споживача, кВт',
+        'field23': 'К-сть панелей',
+        'field24': 'Місце встановлення панелей',
+        'field25': 'електронною поштою',
+        'field26': 'конт телефон',
+        'field27': 'Інвертор',
+        'field28': 'Потужність інвертора, кВт',
+        'field29': 'с/н інвертора',
+        'field30': 'Виробник Інвертора',
+        'field31': 'Прошивка інвертора',
+        'field32': 'Гарантія на інвертор, р.',
+        'field33': 'Виробник сонячних панелей',
+        'field34': 'Сонячна панель',
+        'field35': 'Гарантія на панелі, років',
+        'field36': 'Акумуляторна батарея',
+        'field37': 'Номінальна потужність батарей',
+        'stationType': 'Тип станції'
     }
 };
 
@@ -94,26 +134,55 @@ async function fetchProjects() {
     } catch (e) { console.error('Fetch projects error:', e); }
 }
 
+// Допоміжна функція для пошуку властивості в об'єкті (незалежно від регістру та мови)
+function getProp(obj, keys) {
+    if (!obj) return "";
+    for (let k of keys) {
+        // Прямий пошук
+        if (obj[k] !== undefined) return obj[k];
+        // Пошук без врахування регістру
+        const lowerK = k.toLowerCase();
+        const foundKey = Object.keys(obj).find(actualKey => actualKey.toLowerCase() === lowerK);
+        if (foundKey) return obj[foundKey];
+    }
+    return "";
+}
+
 function renderProjectList() {
     const list   = document.getElementById('projectList');
     const search = document.getElementById('projectSearch').value.toLowerCase();
     
+    console.log('📦 Rendering project list. Total:', gtState.projects.length);
+
     const filtered = gtState.projects.filter(p => {
-        const name = (p.field4 || p['ПІБ'] || "").toString().toLowerCase();
-        const num  = (p.field3 || p['Номер проекту'] || "").toString().toLowerCase();
+        const id = getProp(p, ['id', 'ID']);
+        if (!id) return false; // Пропускаємо порожні рядки
+
+        const name = getProp(p, ['field4', 'ПІБ', 'Прізвище']).toString().toLowerCase();
+        const num  = getProp(p, ['field3', 'Номер проекту', '№']).toString().toLowerCase();
         return name.includes(search) || num.includes(search);
     });
 
-    if (filtered.length === 0) { list.innerHTML = '<div class="empty-state">Проєктів не знайдено</div>'; return; }
+    if (filtered.length === 0) { 
+        list.innerHTML = '<div class="empty-state">Проєктів не знайдено</div>'; 
+        return; 
+    }
     
-    list.innerHTML = filtered.map(p => `
-        <div class="product-item" onclick="loadProject('${p.id || p.ID}')">
-            <div class="product-info">
-                <div class="product-model">${p.field4 || p['ПІБ'] || "Без імені"}</div>
-                <div class="product-desc">${p.field3 || p['Номер проекту'] || "---"} | ${p.field1 || p['Статус'] || ""}</div>
+    list.innerHTML = filtered.map(p => {
+        const id   = getProp(p, ['id', 'ID']);
+        const name = p[gtState.mapping.field4] || p['ПІБ'] || p['field4'] || "Без імені";
+        const num  = p[gtState.mapping.field3] || p['Номер проекту'] || p['field3'] || "---";
+        const stat = p[gtState.mapping.field1] || p['Статус'] || p['field1'] || "";
+
+        return `
+            <div class="product-item" onclick="loadProject('${id}')">
+                <div class="product-info">
+                    <div class="product-model">${name}</div>
+                    <div class="product-desc">${num} | ${stat}</div>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // ===== FORM LOGIC =====
@@ -178,18 +247,24 @@ function resetForm() {
 }
 
 function loadProject(id) {
-    const p = gtState.projects.find(x => (x.id || x.ID) === id);
-    if (!p) return;
-    gtState.currentProject = p;
-    for (let i = 1; i <= 37; i++) {
-        const el = document.getElementById(`field${i}`);
-        if (el) el.value = p[`field${i}`] || "";
+    const p = gtState.projects.find(x => getProp(x, ['id', 'ID']).toString() === id.toString());
+    if (!p) {
+        console.warn('❌ Project not found in state:', id);
+        return;
     }
-    // Окремо для типу станції (може бути не fieldX)
-    const stEl = document.getElementById('stationType');
-    if (stEl) stEl.value = p.stationType || "";
+    
+    gtState.currentProject = p;
+    
+    // Заповнюємо поля за мапінгом
+    for (let fieldId in gtState.mapping) {
+        const el = document.getElementById(fieldId);
+        if (el) {
+            const spreadsheetKey = gtState.mapping[fieldId];
+            el.value = (p[spreadsheetKey] !== undefined) ? p[spreadsheetKey] : (p[fieldId] || "");
+        }
+    }
 
-    showToast(`Завантажено проєкт: ${p.field4 || p['ПІБ']}`, 'info');
+    showToast(`Завантажено проєкт: ${p[gtState.mapping.field4] || p.field4}`, 'info');
 }
 
 // ===== GAS BRIDGE =====

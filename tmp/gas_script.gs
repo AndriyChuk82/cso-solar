@@ -1,5 +1,5 @@
 /**
- * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 2.0 (Виправлено)
+ * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 2.2 (Точний мапінг)
  */
 
 var CONFIG = {
@@ -8,60 +8,99 @@ var CONFIG = {
   ROOT_FOLDER_ID: '1Bhkaot09fCC4rx5udWjHxExqre7LcCrF'
 };
 
+// Точне відображення ID полів у заголовки таблиці користувача
+var FIELD_MAP = {
+  'field1': 'Стан проєкту',
+  'field2': 'Розрахунок',
+  'field3': '№ проекту',
+  'field4': 'ПІБ фізичної особи',
+  'field5': 'ІПН',
+  'field6': 'реєстраційний номер об’єкта нерухомого майна',
+  'field7': 'Номер запису про право власності',
+  'field8': 'Унікальний номер запису в Єдиному державному демографічному реєстрі (за наявності)',
+  'field9': '№ Договору',
+  'field10': 'Дата договору',
+  'field11': 'Час тестування',
+  'field12': 'EIC-код точки розподілу',
+  'field13': 'Дозволена потужність',
+  'field14': 'Підстанція',
+  'field15': 'Лінія',
+  'field16': 'Опора',
+  'field17': 'Лічильник',
+  'field18': 'Напруга',
+  'field19': 'Вхідний автомат',
+  'field20': 'Відсікач',
+  'field21': 'Місце розташування генеруючої установки',
+  'field22': 'Потужність генеруючих установок споживача, кВт', // Це field22 (сумарна панелей) у формі, але в таблиці йде раніше
+  'field23': 'К-сть панелей',
+  'field24': 'Місце встановлення панелей',
+  'field25': 'електронною поштою',
+  'field26': 'конт телефон',
+  'field27': 'Інвертор',
+  'field28': 'Потужність інвертора, кВт',
+  'field29': 'с/н інвертора',
+  'field30': 'Виробник Інвертора',
+  'field31': 'Прошивка інвертора',
+  'field32': 'Гарантія на інвертор, р.',
+  'field33': 'Виробник сонячних панелей',
+  'field34': 'Сонячна панель',
+  'field35': 'Гарантія на панелі, років',
+  'field36': 'Акумуляторна батарея',
+  'field37': 'Номінальна потужність батарей',
+  'stationType': 'Тип станції',
+  'Folder_URL': 'Folder_URL'
+};
+
 function doGet(e) {
-  return ContentService.createTextOutput("CSO Solar Green Tariff Service is running! Please use POST requests for data sync.")
-    .setMimeType(ContentService.MimeType.TEXT);
+  return ContentService.createTextOutput("CSO Solar Green Tariff Service v2.2 is running!").setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doPost(e) {
-  var data;
   try {
-    data = JSON.parse(e.postData.contents);
+    var data = JSON.parse(e.postData.contents);
+    if (data.action === 'saveProject') return sendJson(saveProject(data));
+    if (data.action === 'getProjects') return sendJson(getProjects());
+    return sendJson({success: false, error: "Unknown action"});
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({success: false, error: "Invalid JSON"})).setMimeType(ContentService.MimeType.JSON);
+    return sendJson({success: false, error: err.toString()});
   }
-  var action = data.action;
-  try {
-    if (action === 'saveProject') return ContentService.createTextOutput(JSON.stringify(saveProject(data))).setMimeType(ContentService.MimeType.JSON);
-    if (action === 'getProjects') return ContentService.createTextOutput(JSON.stringify(getProjects())).setMimeType(ContentService.MimeType.JSON);
-    return ContentService.createTextOutput(JSON.stringify({success: false, error: "Unknown action"})).setMimeType(ContentService.MimeType.JSON);
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({success: false, error: err.toString()})).setMimeType(ContentService.MimeType.JSON);
-  }
+}
+
+function sendJson(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
 function saveProject(params) {
   var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
   
-  var headers = ['ID', 'Дата створення', 'Номер проекту', 'ПІБ', 'Статус', 'Оплата'];
-  for (var i = 1; i <= 37; i++) headers.push('field' + i);
-  headers.push('Тип станції');
-  headers.push('Folder_URL');
+  // Визначаємо всі заголовки (ID + Дата)
+  var headers = ['ID', 'Дата створення'];
+  Object.values(FIELD_MAP).forEach(function(v) { headers.push(v); });
 
   if (!sheet) {
     sheet = ss.insertSheet(CONFIG.SHEET_NAME);
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
   } else {
-    var actualHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    if (actualHeaders.indexOf('Тип станції') === -1) {
-       var urlIdx = actualHeaders.indexOf('Folder_URL');
-       if (urlIdx !== -1) { sheet.insertColumnBefore(urlIdx + 1); sheet.getRange(1, urlIdx + 1).setValue('Тип станції').setFontWeight('bold'); }
-       else { sheet.getRange(1, sheet.getLastColumn() + 1).setValue('Тип станції').setFontWeight('bold'); }
-       actualHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    }
-    headers = actualHeaders;
+    // Оновлюємо заголовки якщо їх немає
+    var currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    headers.forEach(function(h) {
+      if (currentHeaders.indexOf(h) === -1) {
+        sheet.getRange(1, sheet.getLastColumn() + 1).setValue(h).setFontWeight('bold');
+      }
+    });
+    headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   }
 
   var project = params.project;
   var files = params.files || [];
   var existingId = params.id;
-  var now = new Date();
   var id = existingId || Utilities.getUuid();
+  var now = new Date();
   
   var folderUrl = "";
   try {
-    var folderName = project.field4 + " " + (project.field21 || "");
+    var folderName = (project.field4 || "Unknown") + " " + (project.field21 || "");
     var parentFolder = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID);
     var targetFolder;
     var folders = parentFolder.getFoldersByName(folderName);
@@ -71,34 +110,35 @@ function saveProject(params) {
     
     files.forEach(function(f) {
       try {
-        var decoded = Utilities.base64Decode(f.base64);
-        var blob = Utilities.newBlob(decoded, f.type || "application/octet-stream", f.name);
+        var blob = Utilities.newBlob(Utilities.base64Decode(f.base64), f.type || "application/octet-stream", f.name);
         targetFolder.createFile(blob);
       } catch (e) {}
     });
   } catch (e) {}
 
   var rowData = new Array(headers.length).fill("");
-  for (var k = 0; k < headers.length; k++) {
-    var h = headers[k];
-    if (h === 'ID') rowData[k] = id;
-    else if (h === 'Дата створення') rowData[k] = now;
-    else if (h === 'Номер проекту') rowData[k] = project.field3 || "";
-    else if (h === 'ПІБ') rowData[k] = project.field4 || "";
-    else if (h === 'Статус') rowData[k] = project.field1 || "";
-    else if (h === 'Оплата') rowData[k] = project.field2 || "";
-    else if (h === 'Тип станції') rowData[k] = project.stationType || "";
-    else if (h === 'Folder_URL') rowData[k] = folderUrl;
-    else if (h.startsWith('field')) rowData[k] = project[h] || "";
+  for (var i = 0; i < headers.length; i++) {
+    var h = headers[i];
+    if (h === 'ID') rowData[i] = id;
+    else if (h === 'Дата створення') rowData[i] = now;
+    else if (h === 'Folder_URL') rowData[i] = folderUrl;
+    else {
+      // Шукаємо за мапінгом
+      for (var fieldId in FIELD_MAP) {
+        if (FIELD_MAP[fieldId] === h) {
+          rowData[i] = project[fieldId] || "";
+          break;
+        }
+      }
+    }
   }
 
   var dataRows = sheet.getDataRange().getValues();
   var rowIndex = -1;
-  if (existingId) {
-    for (var m = 1; m < dataRows.length; m++) {
-      if (dataRows[m][0] === existingId) { rowIndex = m + 1; break; }
-    }
+  for (var j = 1; j < dataRows.length; j++) {
+    if (dataRows[j][0] === id) { rowIndex = j + 1; break; }
   }
+
   if (rowIndex > 0) sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
   else sheet.appendRow(rowData);
 
@@ -111,21 +151,19 @@ function getProjects() {
   if (!sheet) return {success: true, projects: []};
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return {success: true, projects: []};
+  
   var headers = data[0];
   var projects = [];
   for (var i = 1; i < data.length; i++) {
     var p = {};
+    var hasContent = false;
     for (var j = 0; j < headers.length; j++) {
       var val = data[i][j];
       if (val instanceof Date) val = Utilities.formatDate(val, "GMT+2", "dd.MM.yyyy HH:mm");
-      var key = headers[j];
-      p[key] = val;
-      if (key === 'ПІБ') p.field4 = val;
-      if (key === 'Номер проекту') p.field3 = val;
-      if (key === 'Статус') p.field1 = val;
-      if (key === 'Тип станції') p.stationType = val;
+      if (val !== "") hasContent = true;
+      p[headers[j]] = val;
     }
-    projects.push(p);
+    if (hasContent) projects.push(p);
   }
   return {success: true, projects: projects.reverse()};
 }
