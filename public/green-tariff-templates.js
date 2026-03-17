@@ -210,6 +210,10 @@ const GT_TEMPLATES = {
                         ПрАТ «Львівобленерго»
                     </td>
                     <td class="gt-td-value">&nbsp;</td>
+                    <td class="gt-td-value">
+                        <br>
+                        ПрАТ "Львівобленерго"
+                    </td>
                 </tr>
                 <tr>
                     <td class="gt-td-label">
