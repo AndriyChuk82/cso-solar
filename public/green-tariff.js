@@ -155,12 +155,15 @@ function renderProjectList() {
     console.log('📦 Rendering project list. Total:', gtState.projects.length);
 
     const filtered = gtState.projects.filter(p => {
-        const id = getProp(p, ['id', 'ID']);
-        if (!id) return false; // Пропускаємо порожні рядки
+        const id   = getProp(p, ['id', 'ID']);
+        const name = p[gtState.mapping.field4] || p['ПІБ'] || p['field4'] || "";
+        const num  = p[gtState.mapping.field3] || p['Номер проекту'] || p['field3'] || "";
+        
+        // Якщо немає ні ID, ні імені, ні номера - це порожній рядок
+        if (!id && !name && !num) return false;
 
-        const name = getProp(p, ['field4', 'ПІБ', 'Прізвище']).toString().toLowerCase();
-        const num  = getProp(p, ['field3', 'Номер проекту', '№']).toString().toLowerCase();
-        return name.includes(search) || num.includes(search);
+        const searchStr = (name + " " + num).toLowerCase();
+        return searchStr.includes(search);
     });
 
     if (filtered.length === 0) { 
