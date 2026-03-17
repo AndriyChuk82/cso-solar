@@ -17,44 +17,44 @@ let gtState = {
         batteries: []
     },
     mapping: {
-        'field1': 'Стан проєкту',
-        'field2': 'Розрахунок',
-        'field3': '№ проекту',
-        'field4': 'ПІБ фізичної особи',
-        'field5': 'ІПН',
-        'field6': 'реєстраційний номер об’єкта нерухомого майна',
-        'field7': 'Номер запису про право власності',
-        'field8': 'Унікальний номер запису в Єдиному державному демографічному реєстрі (за наявності)',
-        'field9': '№ Договору',
-        'field10': 'Дата договору',
-        'field11': 'Час тестування',
-        'field12': 'EIC-код точки розподілу',
-        'field13': 'Дозволена потужність',
-        'field14': 'Підстанція',
-        'field15': 'Лінія',
-        'field16': 'Опора',
-        'field17': 'Лічильник',
-        'field18': 'Напруга',
-        'field19': 'Вхідний автомат',
-        'field20': 'Відсікач',
-        'field21': 'Місце розташування генеруючої установки',
-        'field22': 'Потужність генеруючих установок споживача, кВт',
-        'field23': 'К-сть панелей',
-        'field24': 'Місце встановлення панелей',
-        'field25': 'електронною поштою',
-        'field26': 'конт телефон',
-        'field27': 'Інвертор',
-        'field28': 'Потужність інвертора, кВт',
-        'field29': 'с/н інвертора',
-        'field30': 'Виробник Інвертора',
-        'field31': 'Прошивка інвертора',
-        'field32': 'Гарантія на інвертор, р.',
-        'field33': 'Виробник сонячних панелей',
-        'field34': 'Сонячна панель',
-        'field35': 'Гарантія на панелі, років',
-        'field36': 'Акумуляторна батарея',
-        'field37': 'Номінальна потужність батарей',
-        'stationType': 'Тип станції'
+        'field1': ['Стан проєкту', 'Статус'],
+        'field2': ['Розрахунок', 'Оплата'],
+        'field3': ['№ проекту', 'Номер'],
+        'field4': ['ПІБ фізичної особи', 'ПІБ', 'Прізвище'],
+        'field5': ['ІПН', 'ІПН/ЄДРПОУ'],
+        'field6': ['реєстраційний номер об’єкта нерухомого майна', 'Реєстраційний номер об’єкта'],
+        'field7': ['Номер запису про право власності'],
+        'field8': ['Унікальний номер запису в Єдиному державному демографічному реєстрі (за наявності)', 'Унікальний номер'],
+        'field9': ['№ Договору', 'Номер договору'],
+        'field10': ['Дата договору'],
+        'field11': ['Час тестування'],
+        'field12': ['EIC-код точки розподілу', 'EIC-код'],
+        'field13': ['Дозволена потужність'],
+        'field14': ['Підстанція'],
+        'field15': ['Лінія'],
+        'field16': ['Опора'],
+        'field17': ['Лічильник'],
+        'field18': ['Напруга'],
+        'field19': ['Вхідний автомат'],
+        'field20': ['Відсікач'],
+        'field21': ['Місце розташування генеруючої установки'],
+        'field22': ['Потужність генеруючих установок споживача, кВт', 'Сумарна потужність'],
+        'field23': ['К-сть панелей'],
+        'field24': ['Місце встановлення панелей'],
+        'field25': ['електронною поштою', 'Email'],
+        'field26': ['конт телефон', 'Телефон'],
+        'field27': ['Інвертор'],
+        'field28': ['Потужність інвертора, кВт'],
+        'field29': ['с/н інвертора'],
+        'field30': ['Виробник Інвертора'],
+        'field31': ['Прошивка інвертора', 'Прошивка'],
+        'field32': ['Гарантія на інвертор, р.'],
+        'field33': ['Виробник сонячних панелей'],
+        'field34': ['Сонячна панель'],
+        'field35': ['Гарантія на панелі, років'],
+        'field36': ['Акумуляторна батарея'],
+        'field37': ['Номінальна потужність батарей'],
+        'stationType': ['Тип станції', 'Модель станції']
     }
 };
 
@@ -134,15 +134,23 @@ async function fetchProjects() {
     } catch (e) { console.error('Fetch projects error:', e); }
 }
 
-// Допоміжна функція для пошуку властивості в об'єкті (незалежно від регістру та мови)
+// Допоміжна функція для пошуку властивості в об'єкті (незалежно від регістру, мови та символів переносу)
 function getProp(obj, keys) {
     if (!obj) return "";
+    
+    // Нормалізація рядка для порівняння: видалення лапок, переносів, зайвих пробілів та в нижній регістр
+    const normalize = (s) => (s || "").toString().toLowerCase()
+        .replace(/[\n\r"]/g, ' ') // замінюємо переноси та лапки пробілом
+        .replace(/\s+/g, ' ')     // схлопуємо пробіли
+        .trim();
+
     for (let k of keys) {
-        // Прямий пошук
+        // 1. Прямий пошук
         if (obj[k] !== undefined) return obj[k];
-        // Пошук без врахування регістру
-        const lowerK = k.toLowerCase();
-        const foundKey = Object.keys(obj).find(actualKey => actualKey.toLowerCase() === lowerK);
+        
+        // 2. Розумний пошук
+        const normalizedK = normalize(k);
+        const foundKey = Object.keys(obj).find(actualKey => normalize(actualKey) === normalizedK);
         if (foundKey) return obj[foundKey];
     }
     return "";
@@ -173,9 +181,9 @@ function renderProjectList() {
     
     list.innerHTML = filtered.map(p => {
         const id   = getProp(p, ['id', 'ID']);
-        const name = p[gtState.mapping.field4] || p['ПІБ'] || p['field4'] || "Без імені";
-        const num  = p[gtState.mapping.field3] || p['Номер проекту'] || p['field3'] || "---";
-        const stat = p[gtState.mapping.field1] || p['Статус'] || p['field1'] || "";
+        const name = getProp(p, gtState.mapping.field4) || "Без імені";
+        const num  = getProp(p, gtState.mapping.field3) || "---";
+        const stat = getProp(p, gtState.mapping.field1) || "";
 
         return `
             <div class="product-item" onclick="loadProject('${id}')">
@@ -262,12 +270,12 @@ function loadProject(id) {
     for (let fieldId in gtState.mapping) {
         const el = document.getElementById(fieldId);
         if (el) {
-            const spreadsheetKey = gtState.mapping[fieldId];
-            el.value = (p[spreadsheetKey] !== undefined) ? p[spreadsheetKey] : (p[fieldId] || "");
+            const spreadsheetKeys = gtState.mapping[fieldId];
+            el.value = getProp(p, spreadsheetKeys);
         }
     }
 
-    showToast(`Завантажено проєкт: ${p[gtState.mapping.field4] || p.field4}`, 'info');
+    showToast(`Завантажено проєкт: ${getProp(p, gtState.mapping.field4)}`, 'info');
 }
 
 // ===== GAS BRIDGE =====
