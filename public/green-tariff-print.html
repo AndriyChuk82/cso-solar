@@ -163,7 +163,7 @@
 
                 // Специфічна логіка для Однолінійної схеми (doc3)
                 if (docId === '3') {
-                    const hasBattery = formData.stationType === 'Гібридна';
+                    const hasBattery = formData.stationType && formData.stationType.toLowerCase().includes('гібрид');
                     template = template
                         .split("{{stationType === 'Гібридна' ? 'block' : 'none'}}")
                         .join(hasBattery ? 'block' : 'none');

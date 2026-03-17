@@ -66,24 +66,23 @@ async function loadEquipmentData() {
             gtState.equipment.inverters = allProducts.filter(p => p.mainCategory === 'Інвертори');
             gtState.equipment.panels    = allProducts.filter(p => p.mainCategory === 'Сонячні батареї');
             gtState.equipment.batteries = allProducts.filter(p => p.mainCategory === 'АКБ та BMS');
-            populateSelect('field27', gtState.equipment.inverters);
-            populateSelect('field34', gtState.equipment.panels);
-            populateSelect('field36', gtState.equipment.batteries);
+            populateDatalist('inverterList', gtState.equipment.inverters);
+            populateDatalist('panelList', gtState.equipment.panels);
+            populateDatalist('batteryList', gtState.equipment.batteries);
         }
     } catch (e) {
         console.error('Error loading equipment data:', e);
     }
 }
 
-function populateSelect(id, items) {
-    const select = document.getElementById(id);
-    if (!select) return;
-    select.innerHTML = '<option value="">Оберіть зі списку...</option>';
+function populateDatalist(id, items) {
+    const list = document.getElementById(id);
+    if (!list) return;
+    list.innerHTML = '';
     items.forEach(item => {
         const opt = document.createElement('option');
         opt.value = item.model;
-        opt.textContent = item.model;
-        select.appendChild(opt);
+        list.appendChild(opt);
     });
 }
 
@@ -214,7 +213,7 @@ async function generateSelectedDocuments() {
         formData[`field${i}`] = el ? el.value : '';
     }
     formData.currentDate = new Date().toLocaleDateString('uk-UA');
-    formData.stationType  = document.getElementById('stationType').value === 'network' ? 'Мережева' : 'Гібридна';
+    formData.stationType  = document.getElementById('stationType').value;
 
     // Завантажуємо та за потреби стискаємо фото для протоколу.
     // Ліміт localStorage — ~5MB на весь origin. Два фото по 3MB = квота вичерпана.

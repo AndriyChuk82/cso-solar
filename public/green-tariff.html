@@ -57,22 +57,24 @@
                             <h3 class="gt-section-title"><span>📝</span> Загальна інформація</h3>
                             <div class="gt-form-group">
                                 <label>Стан проєкту</label>
-                                <select id="field1" class="gt-input">
-                                    <option value="В процесі">В процесі</option>
-                                    <option value="Відкладено">Відкладено</option>
-                                    <option value="Готовий">Готовий</option>
-                                </select>
+                                <input id="field1" class="gt-input" list="statusList" placeholder="Оберіть або введіть...">
+                                <datalist id="statusList">
+                                    <option value="В процесі">
+                                    <option value="Відкладено">
+                                    <option value="Готовий">
+                                </datalist>
                             </div>
                             <div class="gt-form-group">
                                 <label>Розрахунок</label>
-                                <select id="field2" class="gt-input">
-                                    <option value="Оплачено">Оплачено</option>
-                                    <option value="Не оплачено">Не оплачено</option>
-                                </select>
+                                <input id="field2" class="gt-input" list="payList" placeholder="Оберіть або введіть...">
+                                <datalist id="payList">
+                                    <option value="Оплачено">
+                                    <option value="Не оплачено">
+                                </datalist>
                             </div>
                             <div class="gt-form-group">
                                 <label>№ проекту</label>
-                                <input type="text" id="field3" class="gt-input" readonly placeholder="Автоматично">
+                                <input type="text" id="field3" class="gt-input" placeholder="Автоматично">
                             </div>
                         </div>
 
@@ -139,10 +141,11 @@
                             </div>
                             <div class="gt-form-group">
                                 <label>Напруга</label>
-                                <select id="field18" class="gt-input">
-                                    <option value="220 В">220 В</option>
-                                    <option value="380 В">380 В</option>
-                                </select>
+                                <input id="field18" class="gt-input" list="voltList" placeholder="220 В, 380 В...">
+                                <datalist id="voltList">
+                                    <option value="220 В">
+                                    <option value="380 В">
+                                </datalist>
                             </div>
                         </div>
 
@@ -165,23 +168,25 @@
                             </div>
                             <div class="gt-form-group">
                                 <label>Лічильник</label>
-                                <select id="field17" class="gt-input">
-                                    <option value="ISKRA AM 550 5(100)A">ISKRA AM 550 5(100)A</option>
-                                    <option value="NIK 2303 АР1 5(100)А">NIK 2303 АР1 5(100)А</option>
-                                    <option value="NIK 2301 АР3 5(120)А">NIK 2301 АР3 5(120)А</option>
-                                    <option value="NIK 2104 AP2T">NIK 2104 AP2T</option>
-                                </select>
+                                <input id="field17" class="gt-input" list="meterList" placeholder="Оберіть або введіть...">
+                                <datalist id="meterList">
+                                    <option value="ISKRA AM 550 5(100)A">
+                                    <option value="NIK 2303 АР1 5(100)А">
+                                    <option value="NIK 2301 АР3 5(120)А">
+                                    <option value="NIK 2104 AP2T">
+                                </datalist>
                             </div>
                             <div class="gt-form-group">
                                 <label>Вхідний автомат</label>
-                                <select id="field19" class="gt-input">
-                                    <option value="20А">20А</option>
-                                    <option value="25А">25А</option>
-                                    <option value="32А">32А</option>
-                                    <option value="40А">40А</option>
-                                    <option value="50А">50А</option>
-                                    <option value="63А">63А</option>
-                                </select>
+                                <input id="field19" class="gt-input" list="breakerList" placeholder="25А, 32А ...">
+                                <datalist id="breakerList">
+                                    <option value="20А">
+                                    <option value="25А">
+                                    <option value="32А">
+                                    <option value="40А">
+                                    <option value="50А">
+                                    <option value="63А">
+                                </datalist>
                             </div>
                             <div class="gt-form-group">
                                 <label>Відсікач</label>
@@ -194,20 +199,17 @@
                             <h3 class="gt-section-title"><span>📠</span> Інвертор</h3>
                             <div class="gt-form-group">
                                 <label>Виробник Інвертора</label>
-                                <select id="field30" class="gt-input">
-                                    <option value="DEYE Technology Co., Ltd.">DEYE Technology Co., Ltd.</option>
-                                    <option value="Huawei Technologies Co., Ltd.">Huawei Technologies Co., Ltd.</option>
-                                    <option value="Ginlong Solis Technology">Ginlong Solis Technology</option>
-                                </select>
+                                <input id="field30" class="gt-input" list="mfrList" placeholder="Введіть або оберіть...">
+                                <datalist id="mfrList">
+                                    <option value="DEYE Technology Co., Ltd.">
+                                    <option value="Huawei Technologies Co., Ltd.">
+                                    <option value="Ginlong Solis Technology">
+                                </datalist>
                             </div>
                             <div class="gt-form-group">
                                 <label>Інвертор (Модель)</label>
-                                <div style="display:flex; gap:8px;">
-                                    <select id="field27" class="gt-input" style="flex:1;">
-                                        <!-- Will be populated dynamicly -->
-                                    </select>
-                                    <button type="button" class="btn btn-sm btn-outline" id="btnEditInverter">✎</button>
-                                </div>
+                                <input id="field27" class="gt-input" list="inverterList" placeholder="Модель інвертора">
+                                <datalist id="inverterList"></datalist>
                             </div>
                             <div class="gt-form-group">
                                 <label>Потужність інвертора, кВт</label>
@@ -228,12 +230,8 @@
                             <h3 class="gt-section-title"><span>☀️</span> Сонячні панелі</h3>
                             <div class="gt-form-group">
                                 <label>Панель (Модель)</label>
-                                <div style="display:flex; gap:8px;">
-                                    <select id="field34" class="gt-input" style="flex:1;">
-                                        <!-- Will be populated dynamicly -->
-                                    </select>
-                                    <button type="button" class="btn btn-sm btn-outline" id="btnEditPanel">✎</button>
-                                </div>
+                                <input id="field34" class="gt-input" list="panelList" placeholder="Модель панелі">
+                                <datalist id="panelList"></datalist>
                             </div>
                             <div class="gt-form-group">
                                 <label>Сумарна потужність, кВт</label>
@@ -254,12 +252,8 @@
                             <h3 class="gt-section-title"><span>🔋</span> Акумуляторна батарея</h3>
                             <div class="gt-form-group">
                                 <label>Модель АКБ</label>
-                                <div style="display:flex; gap:8px;">
-                                    <select id="field36" class="gt-input" style="flex:1;">
-                                        <!-- Will be populated dynamicly -->
-                                    </select>
-                                    <button type="button" class="btn btn-sm btn-outline" id="btnEditAkb">✎</button>
-                                </div>
+                                <input id="field36" class="gt-input" list="batteryList" placeholder="Модель АКБ">
+                                <datalist id="batteryList"></datalist>
                             </div>
                             <div class="gt-form-group">
                                 <label>Номінальна потужність, кВт*год</label>
@@ -300,10 +294,11 @@
                                 </div>
                             </div>
                             <div style="margin-top:15px; display:flex; gap:8px;">
-                                <select id="stationType" class="gt-input" style="width:auto;">
-                                    <option value="network">Мережева станція</option>
-                                    <option value="hybrid">Гібридна станція</option>
-                                </select>
+                                <input id="stationType" class="gt-input" list="stationList" placeholder="Тип станції" style="width:auto;">
+                                <datalist id="stationList">
+                                    <option value="Мережева станція">
+                                    <option value="Гібридна станція">
+                                </datalist>
                             </div>
                         </div>
                     </div>
