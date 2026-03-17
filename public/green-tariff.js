@@ -300,13 +300,14 @@ async function generateSelectedDocuments() {
     tempContainer.id = 'gt-export-container';
     Object.assign(tempContainer.style, {
         position: 'absolute',
-        top: '0',
-        left: '0',
-        width: '190mm',
-        height: '0',
-        overflow: 'hidden',
+        top: '-9999px',
+        left: '-9999px',
+        width: '210mm',
+        height: 'auto',
+        overflow: 'visible',
         zIndex: '-5000',
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        padding: '10mm'
     });
     document.body.appendChild(tempContainer);
 
@@ -388,16 +389,17 @@ async function generateSelectedDocuments() {
         console.log(`Container HTML length: ${tempContainer.innerHTML.length}`);
 
         const opt = {
-            margin: 10,
+            margin: [10, 10, 10, 10],
             filename: `Зелений_тариф_${formData.field4 || 'Проєкт'}_${formData.field3 || ''}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { 
                 scale: 2, 
                 useCORS: true, 
                 logging: false,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                allowTaint: true
             },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
         };
 
         showToast(`Підготовка PDF (${documentCount} документів)...`, 'info');
@@ -409,8 +411,14 @@ async function generateSelectedDocuments() {
         console.log('First 300 chars:', tempContainer.innerHTML.substring(0, 300));
         console.log('Document count:', documentCount);
         
+        // Тимчасово зробити контейнер видимим для тестування (розкоментуйте якщо потрібно)
+        // tempContainer.style.position = 'static';
+        // tempContainer.style.top = 'auto';
+        // tempContainer.style.left = 'auto';
+        // tempContainer.style.zIndex = '1000';
+        
         // Give browser some time to render internal elements
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise(r => setTimeout(r, 1000));
         
         console.log('Starting PDF generation...');
         await html2pdf().set(opt).from(tempContainer).save();
