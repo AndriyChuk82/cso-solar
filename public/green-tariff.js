@@ -97,15 +97,20 @@ async function fetchProjects() {
 function renderProjectList() {
     const list   = document.getElementById('projectList');
     const search = document.getElementById('projectSearch').value.toLowerCase();
-    const filtered = gtState.projects.filter(p =>
-        p.pib.toLowerCase().includes(search) || p.number.toLowerCase().includes(search)
-    );
+    
+    const filtered = gtState.projects.filter(p => {
+        const name = (p.field4 || p['ПІБ'] || "").toString().toLowerCase();
+        const num  = (p.field3 || p['Номер проекту'] || "").toString().toLowerCase();
+        return name.includes(search) || num.includes(search);
+    });
+
     if (filtered.length === 0) { list.innerHTML = '<div class="empty-state">Проєктів не знайдено</div>'; return; }
+    
     list.innerHTML = filtered.map(p => `
-        <div class="product-item" onclick="loadProject('${p.id}')">
+        <div class="product-item" onclick="loadProject('${p.id || p.ID}')">
             <div class="product-info">
-                <div class="product-model">${p.pib}</div>
-                <div class="product-desc">${p.number} | ${p.status}</div>
+                <div class="product-model">${p.field4 || p['ПІБ'] || "Без імені"}</div>
+                <div class="product-desc">${p.field3 || p['Номер проекту'] || "---"} | ${p.field1 || p['Статус'] || ""}</div>
             </div>
         </div>
     `).join('');
@@ -151,6 +156,8 @@ async function handleFormSubmit(e) {
         const el = document.getElementById(`field${i}`);
         if (el) formData[`field${i}`] = el.value;
     }
+    const stEl = document.getElementById('stationType');
+    if (stEl) formData.stationType = stEl.value;
     showToast('Збереження проєкту та файлів...', 'info');
     try {
         const res = await gasGTRequest('saveProject', {
@@ -171,14 +178,18 @@ function resetForm() {
 }
 
 function loadProject(id) {
-    const p = gtState.projects.find(x => x.id === id);
+    const p = gtState.projects.find(x => (x.id || x.ID) === id);
     if (!p) return;
     gtState.currentProject = p;
     for (let i = 1; i <= 37; i++) {
         const el = document.getElementById(`field${i}`);
-        if (el && p[`field${i}`]) el.value = p[`field${i}`];
+        if (el) el.value = p[`field${i}`] || "";
     }
-    showToast(`Завантажено проєкт: ${p.field4}`, 'info');
+    // Окремо для типу станції (може бути не fieldX)
+    const stEl = document.getElementById('stationType');
+    if (stEl) stEl.value = p.stationType || "";
+
+    showToast(`Завантажено проєкт: ${p.field4 || p['ПІБ']}`, 'info');
 }
 
 // ===== GAS BRIDGE =====
