@@ -299,13 +299,15 @@ async function generateSelectedDocuments() {
     const tempContainer = document.createElement('div');
     tempContainer.id = 'gt-export-container';
     Object.assign(tempContainer.style, {
-        position: 'absolute',
-        top: '-9999px',
-        left: '-9999px',
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        visibility: 'hidden',
+        pointerEvents: 'none',
         width: '210mm',
         height: 'auto',
         overflow: 'visible',
-        zIndex: '-5000',
+        zIndex: '-1',
         backgroundColor: '#ffffff',
         padding: '10mm'
     });
@@ -378,7 +380,7 @@ async function generateSelectedDocuments() {
             console.log(`Processing ${templateKey}, довжина: ${template.length}`);
 
             // Замінюємо {{styles}} на пусто (стилі вже на сторінці як <style> тег)
-            template = template.replace(/{{styles}}/g, '');
+            template = template.replace(/{{styles}}/g, GT_TEMPLATES.styles);
 
             // Replace basic fields using split/join
             for (const [key, value] of Object.entries(formData)) {
