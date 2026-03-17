@@ -1,7 +1,7 @@
 /* ===== CSO Solar — Green Tariff Module Logic ===== */
 
 const GT_CONFIG = {
-    // URL для НОВОГО незалежного скрипта Google Apps Script
+    // URL для НОВОГО незалежного скрипту Google Apps Script
     GAS_URL: '', // КОРИСТУВАЧ ПОВИНЕН ВСТАВИТИ URL ПІСЛЯ РОЗГОРТАННЯ
     PARENT_SPREADSHEET_ID: '1dXuNar4t3aemQSk5LnPOXxcB7DAqqEzraWEFASa2r4g', // Існуючий ID з app.js
     GT_SHEET_NAME: 'Зелений тариф', 
@@ -252,11 +252,18 @@ async function gasGTRequest(action, params = {}) {
     }
 }
 
-// ===== DOCUMENT GENERATION (PLACEHOLDERS) =====
+// ===== DOCUMENT GENERATION =====
 async function generateSelectedDocuments() {
     const selected = Array.from(document.querySelectorAll('input[name="docType"]:checked')).map(cb => cb.value);
     if (selected.length === 0) {
         showToast('Оберіть хоча б один документ', 'warning');
+        return;
+    }
+
+    // Перевіримо наявність шаблонів
+    if (typeof GT_TEMPLATES === 'undefined') {
+        showToast('ПОМИЛКА: Шаблони не завантажені. Перезавантажте сторінку.', 'error');
+        console.error('GT_TEMPLATES is not defined. Ensure green-tariff-templates.js is loaded before green-tariff.js');
         return;
     }
 
@@ -299,9 +306,19 @@ async function generateSelectedDocuments() {
         styleEl.innerHTML = GT_TEMPLATES.styles;
         tempContainer.appendChild(styleEl);
 
+        let documentCount = 0;
+
         for (const [index, docId] of selected.entries()) {
-            let template = GT_TEMPLATES[`doc${docId}`];
-            if (!template) continue;
+            // ВИПРАВКА #1: Правильно звертаємося до шаблону
+            const templateKey = `doc${docId}`;
+            
+            if (!GT_TEMPLATES[templateKey]) {
+                console.warn(`⚠️ Template "${templateKey}" not found. Available templates:`, Object.keys(GT_TEMPLATES).filter(k => k.startsWith('doc')));
+                showToast(`Шаблон документа ${docId} не знайдено`, 'warning');
+                continue;
+            }
+
+            let template = GT_TEMPLATES[templateKey];
 
             // Remove internal styles if present to avoid duplication
             template = template.replace('{{styles}}', '');
@@ -325,8 +342,8 @@ async function generateSelectedDocuments() {
 
             // Photo placeholders for Protocol (doc2)
             if (docId === '2') {
-                template = template.split('{{photo1}}').join(photo1Base64 ? `<img src="${photo1Base64}" style="max-width:100%; max-height:210px;">` : '<span>(Фото 1: Інвертор)</span>');
-                template = template.split('{{photo2}}').join(photo2Base64 ? `<img src="${photo2Base64}" style="max-width:100%; max-height:210px;">` : '<span>(Фото 2: Сонячні панелі)</span>');
+                template = template.split('{{photo1}}').join(photo1Base64 ? `<img src="${photo1Base64}" style="max-width:100%; max-height:210px;">` : '<span style="display:block; text-align:center; padding:20px;">(Фото 1: Інвертор)</span>');
+                template = template.split('{{photo2}}').join(photo2Base64 ? `<img src="${photo2Base64}" style="max-width:100%; max-height:210px;">` : '<span style="display:block; text-align:center; padding:20px;">(Фото 2: Сонячні панелі)</span>');
             }
 
             const docWrapper = document.createElement('div');
@@ -340,6 +357,14 @@ async function generateSelectedDocuments() {
             }
 
             tempContainer.appendChild(docWrapper);
+            documentCount++;
+        }
+
+        // ВИПРАВКА #2: Перевіримо, чи було додано хоча б один документ
+        if (documentCount === 0) {
+            showToast('Помилка: не вдалося завантажити жодного документа', 'error');
+            document.body.removeChild(tempContainer);
+            return;
         }
 
         const opt = {
@@ -355,17 +380,17 @@ async function generateSelectedDocuments() {
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        showToast('Підготовка PDF...', 'info');
+        showToast(`Підготовка PDF (${documentCount} документів)...`, 'info');
         
         // Give browser some time to render internal elements
         await new Promise(r => setTimeout(r, 500));
         
         await html2pdf().set(opt).from(tempContainer).save();
-        showToast('Готово!', 'success');
+        showToast(`✅ PDF готовий! (${documentCount} сторінок)`, 'success');
 
     } catch (err) {
         console.error('PDF Generation Error:', err);
-        showToast('Помилка при генерації PDF', 'error');
+        showToast('Помилка при генерації PDF: ' + err.message, 'error');
     } finally {
         if (tempContainer.parentNode) {
             document.body.removeChild(tempContainer);
