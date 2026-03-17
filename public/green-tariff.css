@@ -42,6 +42,10 @@
     margin-bottom: 12px;
 }
 
+.gt-form-group.span-all {
+    grid-column: 1 / -1;
+}
+
 .gt-form-group label {
     display: block;
     font-size: 0.85rem;

@@ -17,19 +17,19 @@ let gtState = {
         batteries: []
     },
     mapping: {
-        'field1': ['Стан проєкту', 'Статус'],
+        'field1': ['Стан проєкту', 'Статус', 'Стан'],
         'field2': ['Розрахунок', 'Оплата'],
-        'field3': ['№ проекту', 'Номер'],
+        'field3': ['№ проекту', 'Номер', '№'],
         'field4': ['ПІБ фізичної особи', 'ПІБ', 'Прізвище'],
         'field5': ['ІПН', 'ІПН/ЄДРПОУ'],
-        'field6': ['реєстраційний номер об’єкта нерухомого майна', 'Реєстраційний номер об’єкта'],
-        'field7': ['Номер запису про право власності'],
-        'field8': ['Унікальний номер запису в Єдиному державному демографічному реєстрі (за наявності)', 'Унікальний номер'],
+        'field6': ['реєстраційний номер об’єкта нерухомого майна', 'Реєстраційний номер об’єкта', 'Реєстр. номер'],
+        'field7': ['Номер запису про право власності', 'Запис про право власності'],
+        'field8': ['Унікальний номер запису в Єдиному державному демографічному реєстрі (за наявності)', 'Унікальний номер', 'УНЗР'],
         'field9': ['№ Договору', 'Номер договору'],
         'field10': ['Дата договору'],
         'field11': ['Час тестування'],
         'field12': ['EIC-код точки розподілу', 'EIC-код'],
-        'field13': ['Дозволена потужність'],
+        'field13': ['Дозволена потужність', 'Дозволена потужність, кВт'],
         'field14': ['Підстанція'],
         'field15': ['Лінія'],
         'field16': ['Опора'],
@@ -37,23 +37,23 @@ let gtState = {
         'field18': ['Напруга'],
         'field19': ['Вхідний автомат'],
         'field20': ['Відсікач'],
-        'field21': ['Місце розташування генеруючої установки'],
-        'field22': ['Потужність генеруючих установок споживача, кВт', 'Сумарна потужність'],
-        'field23': ['К-сть панелей'],
+        'field21': ['Місце розташування генеруючої установки', 'Адреса об\'єкта'],
+        'field22': ['Потужність генеруючих установок споживача, кВт', 'Сумарна потужність', 'Сумарна потужність, кВт'],
+        'field23': ['К-сть панелей', 'Кількість панелей'],
         'field24': ['Місце встановлення панелей'],
-        'field25': ['електронною поштою', 'Email'],
-        'field26': ['конт телефон', 'Телефон'],
-        'field27': ['Інвертор'],
+        'field25': ['електронною поштою', 'Email', 'Електронна пошта'],
+        'field26': ['конт телефон', 'Телефон', 'Контактний телефон'],
+        'field27': ['Інвертор', 'Модель інвертора'],
         'field28': ['Потужність інвертора, кВт'],
-        'field29': ['с/н інвертора'],
+        'field29': ['с/н інвертора', 'Серійний номер інвертора'],
         'field30': ['Виробник Інвертора'],
         'field31': ['Прошивка інвертора', 'Прошивка'],
         'field32': ['Гарантія на інвертор, р.'],
         'field33': ['Виробник сонячних панелей'],
-        'field34': ['Сонячна панель'],
+        'field34': ['Сонячна панель', 'Модель панелі'],
         'field35': ['Гарантія на панелі, років'],
-        'field36': ['Акумуляторна батарея'],
-        'field37': ['Номінальна потужність батарей'],
+        'field36': ['Акумуляторна батарея', 'Модель АКБ'],
+        'field37': ['Номінальна потужність батарей', 'Номінальна потужність АКБ'],
         'stationType': ['Тип станції', 'Модель станції']
     }
 };
@@ -94,6 +94,9 @@ function initEventListeners() {
 
     document.getElementById('btnRefreshGT').addEventListener('click', fetchProjects);
     document.getElementById('btnGenerateDocs').addEventListener('click', generateSelectedDocuments);
+    
+    // Пошук проектів
+    document.getElementById('projectSearch').addEventListener('input', renderProjectList);
 }
 
 // ===== DATA FETCHING =====
@@ -138,19 +141,28 @@ async function fetchProjects() {
 function getProp(obj, keys) {
     if (!obj) return "";
     
-    // Нормалізація рядка для порівняння: видалення лапок, переносів, зайвих пробілів та в нижній регістр
+    // Нормалізація рядка для порівняння
     const normalize = (s) => (s || "").toString().toLowerCase()
-        .replace(/[\n\r"]/g, ' ') // замінюємо переноси та лапки пробілом
-        .replace(/\s+/g, ' ')     // схлопуємо пробіли
+        .replace(/[\n\r"]/g, ' ') 
+        .replace(/\s+/g, ' ')     
         .trim();
 
     for (let k of keys) {
-        // 1. Прямий пошук
+        // 1. Прямий пошук (найшвидший)
         if (obj[k] !== undefined) return obj[k];
         
-        // 2. Розумний пошук
+        // 2. Нормалізований точний пошук
         const normalizedK = normalize(k);
-        const foundKey = Object.keys(obj).find(actualKey => normalize(actualKey) === normalizedK);
+        let foundKey = Object.keys(obj).find(actualKey => normalize(actualKey) === normalizedK);
+        if (foundKey) return obj[foundKey];
+
+        // 3. "М'який" пошук (містить частину тексту)
+        foundKey = Object.keys(obj).find(actualKey => {
+            if (!actualKey) return false;
+            const normActual = normalize(actualKey);
+            // Перевіряємо чи одна назва містить іншу (це покриває випадки з "..., кВт" тощо)
+            return normActual.includes(normalizedK) || (normalizedK.length > 5 && normalizedK.includes(normActual));
+        });
         if (foundKey) return obj[foundKey];
     }
     return "";
@@ -164,8 +176,8 @@ function renderProjectList() {
 
     const filtered = gtState.projects.filter(p => {
         const id   = getProp(p, ['id', 'ID']);
-        const name = p[gtState.mapping.field4] || p['ПІБ'] || p['field4'] || "";
-        const num  = p[gtState.mapping.field3] || p['Номер проекту'] || p['field3'] || "";
+        const name = getProp(p, gtState.mapping.field4) || "";
+        const num  = getProp(p, gtState.mapping.field3) || "";
         
         // Якщо немає ні ID, ні імені, ні номера - це порожній рядок
         if (!id && !name && !num) return false;
@@ -264,6 +276,7 @@ function loadProject(id) {
         return;
     }
     
+    console.log('🔍 Loading project data:', p);
     gtState.currentProject = p;
     
     // Заповнюємо поля за мапінгом
