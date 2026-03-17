@@ -15,6 +15,11 @@ var CONFIG = {
   ROOT_FOLDER_ID: '1Bhkaot09fCC4rx5udWjHxExqre7LcCrF'
 };
 
+function doGet(e) {
+  return ContentService.createTextOutput("CSO Solar Green Tariff Service is running! Please use POST requests for data sync.")
+    .setMimeType(ContentService.MimeType.TEXT);
+}
+
 function doPost(e) {
   var data;
   try {
