@@ -21,6 +21,16 @@ let gtState = {
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Green Tariff Module Initializing...');
+    
+    // Test GT_TEMPLATES availability
+    if (typeof GT_TEMPLATES !== 'undefined') {
+        const templates = Object.keys(GT_TEMPLATES).filter(k => k.startsWith('doc'));
+        console.log(`✅ GT_TEMPLATES loaded with ${templates.length} documents:`, templates);
+    } else {
+        console.error('❌ GT_TEMPLATES not found! Check if green-tariff-templates.js is loaded.');
+    }
+    
     initEventListeners();
     loadEquipmentData();
     fetchProjects();
@@ -301,31 +311,39 @@ async function generateSelectedDocuments() {
     document.body.appendChild(tempContainer);
 
     try {
-        // Inject styles once at the beginning
-        const styleEl = document.createElement('div');
-        styleEl.innerHTML = GT_TEMPLATES.styles;
-        tempContainer.appendChild(styleEl);
+        // Inject styles ONCE at the beginning (before any content)
+        if (GT_TEMPLATES.styles) {
+            const styleEl = document.createElement('div');
+            styleEl.innerHTML = GT_TEMPLATES.styles;
+            tempContainer.appendChild(styleEl);
+            console.log('✓ Styles injected');
+        }
 
         let documentCount = 0;
 
         for (const [index, docId] of selected.entries()) {
-            // ВИПРАВКА #1: Правильно звертаємося до шаблону
+            // ВИПРАВКА: docId вже це число (1,2,3,4,5), його можна використовувати напряму
             const templateKey = `doc${docId}`;
             
             if (!GT_TEMPLATES[templateKey]) {
-                console.warn(`⚠️ Template "${templateKey}" not found. Available templates:`, Object.keys(GT_TEMPLATES).filter(k => k.startsWith('doc')));
+                console.warn(`⚠️ Шаблон "${templateKey}" не знайдено в GT_TEMPLATES`);
+                console.log('Доступні шаблони:', Object.keys(GT_TEMPLATES).filter(k => k.startsWith('doc')));
                 showToast(`Шаблон документа ${docId} не знайдено`, 'warning');
                 continue;
             }
 
             let template = GT_TEMPLATES[templateKey];
+            console.log(`Processing ${templateKey}, довжина: ${template.length}`);
 
-            // Remove internal styles if present to avoid duplication
-            template = template.replace('{{styles}}', '');
+            // Замінюємо {{styles}} на пусто (стилі вже на сторінці)
+            template = template.replace(/{{styles}}/g, '');
 
             // Replace basic fields using split/join
             for (const [key, value] of Object.entries(formData)) {
-                template = template.split(`{{${key}}}`).join(value || '__________');
+                const placeholder = `{{${key}}}`;
+                if (template.includes(placeholder)) {
+                    template = template.split(placeholder).join(value || '__________');
+                }
             }
 
             // Handle specific logic for Diagram (doc3)
@@ -346,18 +364,17 @@ async function generateSelectedDocuments() {
                 template = template.split('{{photo2}}').join(photo2Base64 ? `<img src="${photo2Base64}" style="max-width:100%; max-height:210px;">` : '<span style="display:block; text-align:center; padding:20px;">(Фото 2: Сонячні панелі)</span>');
             }
 
+            // Обгортаємо в div з правильними стилями для PDF
             const docWrapper = document.createElement('div');
             docWrapper.className = 'gt-export-wrapper';
             docWrapper.style.backgroundColor = '#ffffff';
             docWrapper.style.color = '#000000';
+            docWrapper.style.pageBreakAfter = index < selected.length - 1 ? 'always' : 'avoid';
             docWrapper.innerHTML = template;
-            
-            if (index < selected.length - 1) {
-                docWrapper.style.pageBreakAfter = 'always';
-            }
 
             tempContainer.appendChild(docWrapper);
             documentCount++;
+            console.log(`✓ Added ${templateKey} (total: ${documentCount})`);
         }
 
         // ВИПРАВКА #2: Перевіримо, чи було додано хоча б один документ
@@ -366,6 +383,9 @@ async function generateSelectedDocuments() {
             document.body.removeChild(tempContainer);
             return;
         }
+
+        console.log(`✓ All ${documentCount} documents prepared for PDF`);
+        console.log(`Container HTML length: ${tempContainer.innerHTML.length}`);
 
         const opt = {
             margin: 10,
@@ -382,9 +402,17 @@ async function generateSelectedDocuments() {
 
         showToast(`Підготовка PDF (${documentCount} документів)...`, 'info');
         
-        // Give browser some time to render internal elements
-        await new Promise(r => setTimeout(r, 500));
+        // Debug: Check what's actually in the container
+        console.log('=== DEBUG INFO ===');
+        console.log('Container children:', tempContainer.children.length);
+        console.log('Total HTML length:', tempContainer.innerHTML.length);
+        console.log('First 300 chars:', tempContainer.innerHTML.substring(0, 300));
+        console.log('Document count:', documentCount);
         
+        // Give browser some time to render internal elements
+        await new Promise(r => setTimeout(r, 800));
+        
+        console.log('Starting PDF generation...');
         await html2pdf().set(opt).from(tempContainer).save();
         showToast(`✅ PDF готовий! (${documentCount} сторінок)`, 'success');
 
