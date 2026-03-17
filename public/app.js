@@ -2370,12 +2370,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('headerUser').style.display = 'flex';
                 document.getElementById('userNameDisplay').textContent = data.name || data.user;
                 document.getElementById('btnLogout').style.display = 'flex';
-
-                // Hide Warehouse button for Managers
-                if (data.role === 'manager') {
-                    const btnWarehouse = document.getElementById('btnWarehouse');
-                    if (btnWarehouse) btnWarehouse.style.display = 'none';
-                }
             }
         } catch (e) {
             console.error('Auth check failed', e);
