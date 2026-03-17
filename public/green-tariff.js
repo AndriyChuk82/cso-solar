@@ -263,164 +263,100 @@ async function generateSelectedDocuments() {
     if (photo2File) photo2Base64 = await fileToBase64(photo2File);
 
     // ------------------------------------------------------------------
-    // Контейнер спочатку розміщуємо ПОЗА viewport (зверху, за верхнім
-    // краєм) — браузер його рендерить (на відміну від visibility:hidden),
-    // але юзер не бачить. Перед самим знімком переміщуємо в top:0 на
-    // долю секунди, після — прибираємо. Це єдиний надійний спосіб з
-    // html2canvas: елемент мусить бути в межах (0,0,w,h) вікна.
+    // НОВА СТРАТЕГІЯ: Розміщуємо контейнер в самому верху документа (absolute).
+    // Ставимо мінімальну прозорість (0.01), щоб відрізнялося від 0, 
+    // бо деякі браузери не рендерять об'єкти з opacity: 0.
     // ------------------------------------------------------------------
     const tempContainer = document.createElement('div');
     tempContainer.id = 'gt-export-container';
     Object.assign(tempContainer.style, {
-        position:        'fixed',
-        top:             '-99999px',   // далеко вгорі — не видно, але рендериться
+        position:        'absolute',
+        top:             '0',
         left:            '0',
-        visibility:      'visible',
-        opacity:         '1',
-        pointerEvents:   'none',
         width:           '210mm',
         height:          'auto',
-        overflow:        'visible',
-        zIndex:          '9999',
         backgroundColor: '#ffffff',
-        padding:         '10mm',
-        boxSizing:       'border-box',
+        zIndex:          '-9999',
+        opacity:         '0.01', 
+        pointerEvents:   'none',
+        overflow:        'visible'
     });
     document.body.appendChild(tempContainer);
 
-    // Стилі ін'єктуємо в <head> — браузер ігнорує <style> всередині div
+    // Стилі ін'єктуємо в <head> (якщо ще немає)
     const GT_STYLES_ID = 'gt-pdf-injected-styles';
-    const styleTag = document.createElement('style');
-    styleTag.id = GT_STYLES_ID;
-    styleTag.textContent = GT_TEMPLATES.styles.replace(/<\/?style[^>]*>/gi, '').trim();
-    document.head.appendChild(styleTag);
-    console.log('✓ GT styles injected into <head>');
+    if (!document.getElementById(GT_STYLES_ID)) {
+        const styleTag = document.createElement('style');
+        styleTag.id = GT_STYLES_ID;
+        styleTag.textContent = GT_TEMPLATES.styles.replace(/<\/?style[^>]*>/gi, '').trim();
+        document.head.appendChild(styleTag);
+    }
 
     try {
         let documentCount = 0;
 
         for (const [index, docId] of selected.entries()) {
             const templateKey = `doc${docId}`;
-
-            if (!GT_TEMPLATES[templateKey]) {
-                console.warn(`⚠️ Шаблон "${templateKey}" не знайдено`);
-                showToast(`Шаблон документа ${docId} не знайдено`, 'warning');
-                continue;
-            }
+            if (!GT_TEMPLATES[templateKey]) continue;
 
             let template = GT_TEMPLATES[templateKey];
-            console.log(`Processing ${templateKey}, довжина: ${template.length}`);
+            template = template.replace(/{{styles}}/g, ''); // Вже в хедері
 
-            // Видаляємо {{styles}} — вже в <head>
-            template = template.replace(/{{styles}}/g, '');
-
-            // Підставляємо поля форми
+            // Підстановка полів
             for (const [key, value] of Object.entries(formData)) {
-                const ph = `{{${key}}}`;
-                if (template.includes(ph)) {
-                    template = template.split(ph).join(value || '__________');
-                }
+                template = template.split(`{{${key}}}`).join(value || '__________');
             }
 
-            // doc3: видимість блоку АКБ
+            // doc3: АКБ
             if (docId === '3') {
                 const hasBattery = formData.stationType === 'Гібридна';
-                template = template
-                    .split("{{stationType === 'Гібридна' ? 'block' : 'none'}}")
-                    .join(hasBattery ? 'block' : 'none');
+                template = template.split("{{stationType === 'Гібридна' ? 'block' : 'none'}}").join(hasBattery ? 'block' : 'none');
             }
 
-            // doc4: рядок АКБ в таблиці
+            // doc4: АКБ рядок
             if (docId === '4') {
-                const batteryInfo = formData.field36
-                    ? `<tr><td class="gt-center">4</td><td>Акумуляторна батарея ${formData.field36} (${formData.field37} кВт*год)</td><td class="gt-center">1 шт.</td></tr>`
-                    : '';
+                const batteryInfo = formData.field36 ? `<tr><td class="gt-center">4</td><td>Акумуляторна батарея ${formData.field36} (${formData.field37} кВт*год)</td><td class="gt-center">1 шт.</td></tr>` : '';
                 template = template.split('{{batteryListItem}}').join(batteryInfo);
             }
 
-            // doc2: фото
+            // doc2: Фото
             if (docId === '2') {
-                template = template.split('{{photo1}}').join(
-                    photo1Base64
-                        ? `<img src="${photo1Base64}" style="max-width:100%; max-height:210px;">`
-                        : '<span style="display:block;text-align:center;padding:20px;">(Фото 1: Інвертор)</span>'
-                );
-                template = template.split('{{photo2}}').join(
-                    photo2Base64
-                        ? `<img src="${photo2Base64}" style="max-width:100%; max-height:210px;">`
-                        : '<span style="display:block;text-align:center;padding:20px;">(Фото 2: Сонячні панелі)</span>'
-                );
+                template = template.split('{{photo1}}').join(photo1Base64 ? `<img src="${photo1Base64}" style="max-width:100%; max-height:210px;">` : '<span style="display:block;text-align:center;padding:20px;">(Фото 1: Інвертор)</span>');
+                template = template.split('{{photo2}}').join(photo2Base64 ? `<img src="${photo2Base64}" style="max-width:100%; max-height:210px;">` : '<span style="display:block;text-align:center;padding:20px;">(Фото 2: Сонячні панелі)</span>');
             }
 
             const docWrapper = document.createElement('div');
             docWrapper.className = 'gt-export-wrapper';
-            docWrapper.style.cssText = `
-                background-color: #ffffff;
-                color: #000000;
-                page-break-after: ${index < selected.length - 1 ? 'always' : 'avoid'};
-            `;
+            docWrapper.style.cssText = `background: #fff; color: #000; page-break-after: ${index < selected.length - 1 ? 'always' : 'avoid'}; padding: 10mm; box-sizing: border-box;`;
             docWrapper.innerHTML = template;
             tempContainer.appendChild(docWrapper);
             documentCount++;
-            console.log(`✓ Added ${templateKey} (total: ${documentCount})`);
         }
 
-        if (documentCount === 0) {
-            showToast('Помилка: не вдалося завантажити жодного документа', 'error');
-            return;
-        }
+        if (documentCount === 0) return;
 
-        // Чекаємо першого layout-paint браузера
-        await new Promise(r => setTimeout(r, 600));
-
-        const realHeight = tempContainer.scrollHeight;
-        console.log(`✓ Container scrollHeight: ${realHeight}px`);
-
-        if (realHeight === 0) {
-            console.error('❌ scrollHeight=0 — контент не відрендерився, PDF буде порожнім');
-            showToast('Помилка рендерингу контенту. Спробуйте ще раз.', 'error');
-            return;
-        }
-
-        tempContainer.style.height = realHeight + 'px';
-
-        // ------------------------------------------------------------------
-        // КЛЮЧОВИЙ МОМЕНТ: переміщуємо контейнер у top:0 прямо перед
-        // знімком. html2canvas знімає координати (0,0) → (width, height)
-        // відносно документа. Елемент з top:-99999px знаходиться поза цією
-        // зоною і потрапляє в PDF як порожній прямокутник.
-        // overflow:hidden на body/html заховає його від юзера на час знімку.
-        // ------------------------------------------------------------------
-        const prevOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden'; // забороняємо скрол-стрибок
-        tempContainer.style.top = '0';
-
-        await new Promise(r => setTimeout(r, 200)); // браузер перемальовує
+        showToast(`Формування PDF (${documentCount} документів)...`, 'info');
+        
+        // Даємо браузеру час відрендерити все в пам'яті
+        await new Promise(r => setTimeout(r, 800));
 
         const opt = {
-            margin:      [10, 10, 10, 10],
-            filename:    `Зелений_тариф_${formData.field4 || 'Проєкт'}_${formData.field3 || ''}.pdf`,
+            margin:      0, // Маргінали вже є в стилях
+            filename:    `Зелений_тариф_${formData.field4 || 'Проєкт'}.pdf`,
             image:       { type: 'jpeg', quality: 0.98 },
             html2canvas: {
                 scale:           2,
                 useCORS:         true,
-                logging:         false,
                 backgroundColor: '#ffffff',
-                allowTaint:      true,
-                windowWidth:     794,   // 210mm при 96dpi
+                scrollY:         0, // ПРИМУСОВО ЗНІМАЄМО З ПОЧАТКУ ДОКУМЕНТА
                 scrollX:         0,
-                scrollY:         0,
+                windowWidth:     document.documentElement.offsetWidth // Фіксуємо ширину для короктого рендерингу
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
         };
 
-        showToast(`Формування PDF (${documentCount} документів)...`, 'info');
-        console.log('Starting PDF generation...');
-
+        // Генерація
         await html2pdf().set(opt).from(tempContainer).save();
-
-        // Повертаємо overflow після завершення
-        document.body.style.overflow = prevOverflow;
 
         showToast(`✅ PDF готовий! (${documentCount} сторінок)`, 'success');
 
