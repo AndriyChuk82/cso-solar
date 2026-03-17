@@ -282,7 +282,7 @@ async function generateSelectedDocuments() {
     tempContainer.style.background = '#fff';
     tempContainer.style.color = '#000';
     tempContainer.style.padding = '0';
-    tempContainer.style.width = '210mm'; // A4 width
+    tempContainer.style.width = '210mm';
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
     document.body.appendChild(tempContainer);
@@ -291,26 +291,30 @@ async function generateSelectedDocuments() {
         let template = GT_TEMPLATES[`doc${docId}`];
         if (!template) continue;
 
+        // Replace global styles
+        template = template.replace('{{styles}}', GT_TEMPLATES.styles);
+
         // Replace basic fields
         for (const [key, value] of Object.entries(formData)) {
             template = template.replace(new RegExp(`{{${key}}}`, 'g'), value || '__________');
         }
 
-        // Handle specific logic (batteries, graphics)
+        // Handle specific logic for Diagram (doc3)
         if (docId === '3') {
             const hasBattery = formData.stationType === 'Гібридна';
-            template = template.replace('{{batteryGraphic}}', hasBattery ? 
-                '<div style="position:absolute; left:60%; top:50%; border:1px solid #000; padding:10px;">АКУМУЛЯТОР</div>' : '');
+            template = template.replace("{{stationType === 'Гібридна' ? 'block' : 'none'}}", hasBattery ? 'block' : 'none');
         }
+        
+        // Handle specific logic for Act (doc4)
         if (docId === '4') {
-            const batteryInfo = formData.field36 ? `<li>АКБ: ${formData.field36}, потужність: ${formData.field37} кВт*год</li>` : '';
+            const batteryInfo = formData.field36 ? `<tr><td>4</td><td>Акумуляторна батарея ${formData.field36} (${formData.field37} кВт*год)</td><td>1 шт.</td></tr>` : '';
             template = template.replace('{{batteryListItem}}', batteryInfo);
         }
 
-        // Photo placeholders for Protocol
+        // Photo placeholders for Protocol (doc2)
         if (docId === '2') {
-            template = template.replace('{{photo1}}', photo1Base64 ? `<img src="${photo1Base64}" style="max-width:100%; max-height:100%;">` : '(Фото 1)');
-            template = template.replace('{{photo2}}', photo2Base64 ? `<img src="${photo2Base64}" style="max-width:100%; max-height:100%;">` : '(Фото 2)');
+            template = template.replace('{{photo1}}', photo1Base64 ? `<img src="${photo1Base64}">` : '<span>(Фото 1: Інвертор)</span>');
+            template = template.replace('{{photo2}}', photo2Base64 ? `<img src="${photo2Base64}">` : '<span>(Фото 2: Сонячні панелі)</span>');
         }
 
         const docWrapper = document.createElement('div');
