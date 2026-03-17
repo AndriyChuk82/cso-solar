@@ -216,47 +216,95 @@ async function generateSelectedDocuments() {
     formData.currentDate = new Date().toLocaleDateString('uk-UA');
     formData.stationType  = document.getElementById('stationType').value === 'network' ? 'Мережева' : 'Гібридна';
 
-    // Photos for protocol
+    // Завантажуємо та за потреби стискаємо фото для протоколу.
+    // Ліміт localStorage — ~5MB на весь origin. Два фото по 3MB = квота вичерпана.
+    // Стискаємо все що перевищує 1.5MB у base64 (~1.1MB реального файлу).
+    const PHOTO_LIMIT = 1_500_000; // символів base64
+
     const photo1File = document.getElementById('protoPhoto1').files[0];
     const photo2File = document.getElementById('protoPhoto2').files[0];
-    
     let photo1Base64 = '';
     let photo2Base64 = '';
 
-    if (photo1File) photo1Base64 = await fileToBase64(photo1File);
-    if (photo2File) photo2Base64 = await fileToBase64(photo2File);
+    if (photo1File) {
+        photo1Base64 = await fileToBase64(photo1File);
+        if (photo1Base64.length > PHOTO_LIMIT) {
+            showToast('Стискаємо фото 1...', 'info');
+            photo1Base64 = await compressImage(photo1Base64, 0.75);
+            console.log(`📷 Фото 1 стиснено: ${Math.round(photo1Base64.length / 1024)} KB`);
+        }
+    }
+    if (photo2File) {
+        photo2Base64 = await fileToBase64(photo2File);
+        if (photo2Base64.length > PHOTO_LIMIT) {
+            showToast('Стискаємо фото 2...', 'info');
+            photo2Base64 = await compressImage(photo2Base64, 0.75);
+            console.log(`📷 Фото 2 стиснено: ${Math.round(photo2Base64.length / 1024)} KB`);
+        }
+    }
 
     try {
         showToast('Готуємо документи...', 'info');
 
-        // Save data to sessionStorage for the print page
-        const printData = {
-            selected,
-            formData,
-            photos: {
-                photo1: photo1Base64,
-                photo2: photo2Base64
-            }
-        };
+        const printData = { selected, formData, photos: { photo1: photo1Base64, photo2: photo2Base64 } };
 
-        sessionStorage.setItem('gt_print_data', JSON.stringify(printData));
+        // Використовуємо localStorage з унікальним ключем (timestamp).
+        //
+        // Чому НЕ sessionStorage:
+        //   sessionStorage є per-tab сховищем. Нова вкладка (window.open '_blank')
+        //   отримує КОПІЮ sessionStorage тільки в Chrome. Firefox і Safari
+        //   відкривають нову вкладку з ПОРОЖНІМ sessionStorage — дані зникають.
+        //
+        // Чому унікальний ключ:
+        //   Дозволяє одночасно відкрити кілька вікон друку без конфліктів.
+        //   Print-сторінка одразу видаляє ключ після зчитування.
+        const printKey = 'gt_print_' + Date.now();
+        localStorage.setItem(printKey, JSON.stringify(printData));
 
-        // Open print page in a new window/tab
-        window.open('/green-tariff-print.html', '_blank');
+        // Мікропауза: гарантуємо що localStorage.setItem завершився
+        // до того як нова вкладка спробує зчитати дані.
+        await new Promise(r => setTimeout(r, 50));
+
+        window.open(`/green-tariff-print.html?key=${printKey}`, '_blank');
 
     } catch (err) {
-        console.error('Print Error:', err);
-        showToast('Помилка при підготовці до друку', 'error');
+        if (err.name === 'QuotaExceededError') {
+            showToast('Помилка: фото занадто великі. Зменшіть розмір файлів і спробуйте ще раз.', 'error');
+        } else {
+            console.error('Print Error:', err);
+            showToast('Помилка при підготовці до друку: ' + err.message, 'error');
+        }
     }
 }
 
 // ===== HELPERS =====
+
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload  = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
+        reader.onerror = reject;
+    });
+}
+
+// Стискає зображення через canvas.
+// dataUrl  — вхідний Data URL (data:image/...;base64,...)
+// quality  — якість JPEG 0..1 (0.75 = 75%, добре для друку)
+// maxWidth — максимальна ширина px (1600 = достатньо для A4 при 150dpi)
+function compressImage(dataUrl, quality = 0.75, maxWidth = 1600) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const scale  = Math.min(1, maxWidth / img.width);
+            const canvas = document.createElement('canvas');
+            canvas.width  = Math.round(img.width  * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => resolve(dataUrl); // не вдалося — повертаємо оригінал
+        img.src = dataUrl;
     });
 }
 

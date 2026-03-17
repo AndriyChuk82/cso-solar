@@ -38,9 +38,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             font-size: 16px;
         }
-        .btn-print:hover {
-            background: #1d4ed8;
-        }
+        .btn-print:hover { background: #1d4ed8; }
         .print-container {
             width: 210mm;
             margin: 0 auto;
@@ -57,16 +55,19 @@
         .doc-wrapper:last-child {
             page-break-after: avoid;
         }
-        
-        /* Styles from GT_TEMPLATES.styles will be injected here */
-
+        .error-state {
+            padding: 40px;
+            text-align: center;
+            color: #ef4444;
+            font-size: 16px;
+        }
         @media print {
-            body { 
+            body {
                 background: white;
                 padding: 0;
             }
-            .no-print { 
-                display: none !important; 
+            .no-print {
+                display: none !important;
             }
             .print-container {
                 width: 100%;
@@ -80,43 +81,79 @@
     </style>
 </head>
 <body>
+
     <div class="no-print">
-        <button class="btn-print" onclick="window.print()">🖨️ ДРУКУВАТИ (PDF)</button>
-        <button class="btn-print" style="background: #ef4444;" onclick="window.close()">Закрити</button>
+        <button class="btn-print" onclick="window.print()">🖨️ ДРУКУВАТИ / ЗБЕРЕГТИ PDF</button>
+        <button class="btn-print" style="background: #ef4444;" onclick="window.close()">✕ Закрити</button>
     </div>
 
     <div class="print-container" id="printContainer">
-        <!-- Documents will be injected here -->
+        <div class="error-state" id="loadingState">Завантаження документів...</div>
     </div>
 
     <script src="green-tariff-templates.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const dataStr = sessionStorage.getItem('gt_print_data');
-            if (!dataStr) {
-                alert('Дані для друку не знайдені');
+
+            // Читаємо унікальний ключ з URL (?key=gt_print_1234567890)
+            const printKey = new URLSearchParams(location.search).get('key');
+
+            if (!printKey) {
+                showError('Ключ даних не знайдено в URL. Закрийте цю вкладку і спробуйте ще раз.');
                 return;
             }
 
-            const printData = JSON.parse(dataStr);
+            const dataStr = localStorage.getItem(printKey);
+
+            // Одразу видаляємо дані з localStorage — вони більше не потрібні.
+            // Це важливо: фото в base64 можуть займати 2-4MB,
+            // і якщо не прибирати — localStorage швидко заповниться.
+            localStorage.removeItem(printKey);
+
+            if (!dataStr) {
+                showError('Дані для друку не знайдені або вже були використані. Закрийте цю вкладку і сформуйте документи ще раз.');
+                return;
+            }
+
+            let printData;
+            try {
+                printData = JSON.parse(dataStr);
+            } catch (e) {
+                showError('Помилка читання даних: ' + e.message);
+                return;
+            }
+
             const { selected, formData, photos } = printData;
             const container = document.getElementById('printContainer');
 
-            // Inject global styles
-            const styleTag = document.createElement('style');
-            styleTag.textContent = GT_TEMPLATES.styles.replace(/<\/?style[^>]*>/gi, '').trim();
-            document.head.appendChild(styleTag);
+            // Очищаємо повідомлення про завантаження
+            container.innerHTML = '';
 
-            selected.forEach((docId, index) => {
+            // Ін'єктуємо стилі з GT_TEMPLATES в <head>.
+            // <style> всередині div ігнорується браузером — тому в head.
+            if (typeof GT_TEMPLATES !== 'undefined' && GT_TEMPLATES.styles) {
+                const styleTag = document.createElement('style');
+                styleTag.textContent = GT_TEMPLATES.styles.replace(/<\/?style[^>]*>/gi, '').trim();
+                document.head.appendChild(styleTag);
+            }
+
+            // Рендеримо документи
+            let renderedCount = 0;
+
+            selected.forEach((docId) => {
+                if (typeof GT_TEMPLATES === 'undefined') return;
+
                 const templateKey = `doc${docId}`;
                 let template = GT_TEMPLATES[templateKey];
-                
-                if (!template) return;
+                if (!template) {
+                    console.warn(`⚠️ Шаблон "${templateKey}" не знайдено`);
+                    return;
+                }
 
-                // 1. Remove internal styles placeholder
+                // Видаляємо плейсхолдер стилів — вони вже в <head>
                 template = template.replace(/{{styles}}/g, '');
 
-                // 2. Replace basic fields
+                // Підставляємо значення полів форми
                 for (const [key, value] of Object.entries(formData)) {
                     const ph = `{{${key}}}`;
                     if (template.includes(ph)) {
@@ -124,23 +161,33 @@
                     }
                 }
 
-                // 3. Handle logic (doc3, doc4)
+                // Специфічна логіка для Однолінійної схеми (doc3)
                 if (docId === '3') {
                     const hasBattery = formData.stationType === 'Гібридна';
-                    template = template.split("{{stationType === 'Гібридна' ? 'block' : 'none'}}").join(hasBattery ? 'block' : 'none');
+                    template = template
+                        .split("{{stationType === 'Гібридна' ? 'block' : 'none'}}")
+                        .join(hasBattery ? 'block' : 'none');
                 }
+
+                // Специфічна логіка для Акту (doc4)
                 if (docId === '4') {
-                    const batteryInfo = formData.field36 
+                    const batteryInfo = formData.field36
                         ? `<tr><td class="gt-center">4</td><td>Акумуляторна батарея ${formData.field36} (${formData.field37} кВт*год)</td><td class="gt-center">1 шт.</td></tr>`
                         : '';
                     template = template.split('{{batteryListItem}}').join(batteryInfo);
                 }
+
+                // Фото для Протоколу (doc2)
                 if (docId === '2') {
                     template = template.split('{{photo1}}').join(
-                        photos.photo1 ? `<img src="${photos.photo1}" style="max-width:100%; max-height:210px;">` : '<span>(Фото 1: Інвертор)</span>'
+                        photos.photo1
+                            ? `<img src="${photos.photo1}" style="max-width:100%; max-height:210px;">`
+                            : '<span style="display:block; text-align:center; padding:20px; border:1px dashed #ccc;">(Фото 1: Інвертор)</span>'
                     );
                     template = template.split('{{photo2}}').join(
-                        photos.photo2 ? `<img src="${photos.photo2}" style="max-width:100%; max-height:210px;">` : '<span>(Фото 2: Сонячні панелі)</span>'
+                        photos.photo2
+                            ? `<img src="${photos.photo2}" style="max-width:100%; max-height:210px;">`
+                            : '<span style="display:block; text-align:center; padding:20px; border:1px dashed #ccc;">(Фото 2: Сонячні панелі)</span>'
                     );
                 }
 
@@ -148,11 +195,20 @@
                 wrapper.className = 'doc-wrapper';
                 wrapper.innerHTML = template;
                 container.appendChild(wrapper);
+                renderedCount++;
             });
-            
-            // Auto-trigger print after a short delay (optional)
-            // setTimeout(() => window.print(), 500);
+
+            if (renderedCount === 0) {
+                showError('Жодного документа не вдалося відрендерити. Перевірте шаблони.');
+            } else {
+                console.log(`✅ Відрендеровано ${renderedCount} документів`);
+            }
         });
+
+        function showError(msg) {
+            const container = document.getElementById('printContainer');
+            container.innerHTML = `<div class="error-state">❌ ${msg}</div>`;
+        }
     </script>
 </body>
 </html>
