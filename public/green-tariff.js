@@ -312,13 +312,54 @@ async function generateSelectedDocuments() {
     document.body.appendChild(tempContainer);
 
     try {
-        // Inject styles ONCE at the beginning (before any content)
-        if (GT_TEMPLATES.styles) {
-            const styleEl = document.createElement('div');
-            styleEl.innerHTML = GT_TEMPLATES.styles;
-            tempContainer.appendChild(styleEl);
-            console.log('✓ Styles injected');
-        }
+        // Додаємо глобальні стилі як атрибут style на контейнер
+        const globalStyles = `
+            * { box-sizing: border-box; }
+            body { font-family: "Times New Roman", Times, serif; }
+            .gt-doc-page {
+                font-family: "Times New Roman", Times, serif;
+                font-size: 11pt;
+                line-height: 1.35;
+                color: #000;
+                background: white;
+                padding: 0;
+                margin: 0;
+                width: 100%;
+                position: relative;
+            }
+            .gt-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 8px 0;
+                font-size: 10.5pt;
+            }
+            .gt-table td {
+                border: 1px solid black;
+                padding: 4px 8px;
+                vertical-align: top;
+            }
+            .gt-center { text-align: center; }
+            .gt-right { text-align: right; }
+            .gt-justify { text-align: justify; }
+            .gt-bold { font-weight: bold; }
+            .gt-title { font-size: 13pt; font-weight: bold; text-align: center; margin-bottom: 12px; text-transform: uppercase; }
+            .gt-subtitle { font-size: 11pt; font-weight: bold; text-align: center; margin-bottom: 8px; }
+            .gt-section-header { font-weight: bold; margin-top: 10px; border-bottom: 1px solid #000; padding-bottom: 2px; font-size: 11pt; }
+            .gt-signature-block { margin-top: 30px; display: flex; justify-content: space-between; gap: 20px; }
+            .gt-signature-line { border-bottom: 1px solid black; width: 180px; display: inline-block; }
+            .gt-field-value { font-weight: bold; color: #000; }
+            .gt-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 70pt; color: rgba(200, 200, 200, 0.1); z-index: -1; pointer-events: none; white-space: nowrap; }
+            .gt-photo-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+            .gt-photo-box { border: 1px solid #000; height: 240px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #fff; overflow: hidden; }
+            .gt-photo-box img { max-width: 95%; max-height: 200px; object-fit: contain; }
+            p { margin: 6px 0; }
+            .gt-export-wrapper { page-break-after: always; background: white; color: black; }
+        `;
+        
+        const styleElement = document.createElement('style');
+        styleElement.textContent = globalStyles;
+        tempContainer.appendChild(styleElement);
+        console.log('✓ Global styles added as <style> tag');
 
         let documentCount = 0;
 
@@ -336,7 +377,7 @@ async function generateSelectedDocuments() {
             let template = GT_TEMPLATES[templateKey];
             console.log(`Processing ${templateKey}, довжина: ${template.length}`);
 
-            // Замінюємо {{styles}} на пусто (стилі вже на сторінці)
+            // Замінюємо {{styles}} на пусто (стилі вже на сторінці як <style> тег)
             template = template.replace(/{{styles}}/g, '');
 
             // Replace basic fields using split/join
