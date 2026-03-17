@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Зелений тариф — Друк документів</title>
+    <link rel="icon" type="image/png" href="https://i.ibb.co/32JD4dc/logo.png">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 11pt;
+            line-height: 1.35;
+            color: #000;
+            background: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .no-print {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+        .btn-print {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 16px;
+        }
+        .btn-print:hover {
+            background: #1d4ed8;
+        }
+        .print-container {
+            width: 210mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .doc-wrapper {
+            background: white;
+            padding: 10mm;
+            box-sizing: border-box;
+            page-break-after: always;
+            position: relative;
+        }
+        .doc-wrapper:last-child {
+            page-break-after: avoid;
+        }
+        
+        /* Styles from GT_TEMPLATES.styles will be injected here */
+
+        @media print {
+            body { 
+                background: white;
+                padding: 0;
+            }
+            .no-print { 
+                display: none !important; 
+            }
+            .print-container {
+                width: 100%;
+                box-shadow: none;
+            }
+            .doc-wrapper {
+                padding: 0;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button class="btn-print" onclick="window.print()">🖨️ ДРУКУВАТИ (PDF)</button>
+        <button class="btn-print" style="background: #ef4444;" onclick="window.close()">Закрити</button>
+    </div>
+
+    <div class="print-container" id="printContainer">
+        <!-- Documents will be injected here -->
+    </div>
+
+    <script src="green-tariff-templates.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dataStr = sessionStorage.getItem('gt_print_data');
+            if (!dataStr) {
+                alert('Дані для друку не знайдені');
+                return;
+            }
+
+            const printData = JSON.parse(dataStr);
+            const { selected, formData, photos } = printData;
+            const container = document.getElementById('printContainer');
+
+            // Inject global styles
+            const styleTag = document.createElement('style');
+            styleTag.textContent = GT_TEMPLATES.styles.replace(/<\/?style[^>]*>/gi, '').trim();
+            document.head.appendChild(styleTag);
+
+            selected.forEach((docId, index) => {
+                const templateKey = `doc${docId}`;
+                let template = GT_TEMPLATES[templateKey];
+                
+                if (!template) return;
+
+                // 1. Remove internal styles placeholder
+                template = template.replace(/{{styles}}/g, '');
+
+                // 2. Replace basic fields
+                for (const [key, value] of Object.entries(formData)) {
+                    const ph = `{{${key}}}`;
+                    if (template.includes(ph)) {
+                        template = template.split(ph).join(value || '__________');
+                    }
+                }
+
+                // 3. Handle logic (doc3, doc4)
+                if (docId === '3') {
+                    const hasBattery = formData.stationType === 'Гібридна';
+                    template = template.split("{{stationType === 'Гібридна' ? 'block' : 'none'}}").join(hasBattery ? 'block' : 'none');
+                }
+                if (docId === '4') {
+                    const batteryInfo = formData.field36 
+                        ? `<tr><td class="gt-center">4</td><td>Акумуляторна батарея ${formData.field36} (${formData.field37} кВт*год)</td><td class="gt-center">1 шт.</td></tr>`
+                        : '';
+                    template = template.split('{{batteryListItem}}').join(batteryInfo);
+                }
+                if (docId === '2') {
+                    template = template.split('{{photo1}}').join(
+                        photos.photo1 ? `<img src="${photos.photo1}" style="max-width:100%; max-height:210px;">` : '<span>(Фото 1: Інвертор)</span>'
+                    );
+                    template = template.split('{{photo2}}').join(
+                        photos.photo2 ? `<img src="${photos.photo2}" style="max-width:100%; max-height:210px;">` : '<span>(Фото 2: Сонячні панелі)</span>'
+                    );
+                }
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'doc-wrapper';
+                wrapper.innerHTML = template;
+                container.appendChild(wrapper);
+            });
+            
+            // Auto-trigger print after a short delay (optional)
+            // setTimeout(() => window.print(), 500);
+        });
+    </script>
+</body>
+</html>
