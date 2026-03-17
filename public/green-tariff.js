@@ -1,10 +1,10 @@
 /* ===== CSO Solar — Green Tariff Module Logic ===== */
 
 const GT_CONFIG = {
-    GAS_URL: '',
-    PARENT_SPREADSHEET_ID: '1dXuNar4t3aemQSk5LnPOXxcB7DAqqEzraWEFASa2r4g',
+    GAS_URL: 'https://script.google.com/macros/s/AKfycbxbAmZSiC8c66XblVwJlXSa5YRbGJCZoN0RcObTKmPvOMSgZvSwHrqBDtbdvNT17a_6uA/exec',
+    PARENT_SPREADSHEET_ID: '1FbzOPKEroa6QyghgqMFGJMRCdYx_yS0RDXoHzuI_GmY',
     GT_SHEET_NAME: 'Зелений тариф',
-    DRIVE_FOLDER_ID: '',
+    DRIVE_FOLDER_ID: '1Bhkaot09fCC4rx5udWjHxExqre7LcCrF',
 };
 
 let gtState = {
