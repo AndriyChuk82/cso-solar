@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Зелений тариф — CSO Solar</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="green-tariff.css">
+    <link rel="icon" type="image/png" href="https://i.ibb.co/32JD4dc/logo.png">
+</head>
+<body class="gt-body">
+    <header class="app-header">
+        <div class="header-brand">
+            <div class="logo-container">
+                <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" class="logo">
+                <div class="brand-text">
+                    <span class="brand-name">CSO Solar</span>
+                    <span class="brand-sub">Зелений тариф</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button id="btnBack" class="btn btn-icon" title="Назад до КП" onclick="window.close()">
+                <span class="btn-icon-svg">&#x2b05;</span>
+                <span class="btn-label">Назад</span>
+            </button>
+            <button id="btnRefreshGT" class="btn btn-icon" title="Оновити дані">
+                <span class="btn-icon-svg">&#x21bb;</span>
+                <span class="btn-label">Оновити</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="app-container">
+        <aside class="sidebar" id="gtSidebar">
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">Проєкти</h2>
+                <button id="btnNewProject" class="btn btn-sm btn-primary">+ Новий проєкт</button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="projectSearch" placeholder="Пошук проєкту..." class="search-input">
+            </div>
+            <div class="catalog-list" id="projectList">
+                <div class="empty-state" style="padding: 20px; text-align: center;">
+                    <p>Завантаження проектів...</p>
+                </div>
+            </div>
+        </aside>
+
+        <section class="main-content">
+            <div class="gt-container" id="gtFormContainer">
+                <form id="greenTariffForm">
+                    <div class="gt-form-grid">
+                        <!-- Секція 1: Стан та Розрахунок -->
+                        <div class="gt-section">
+                            <h3 class="gt-section-title"><span>📝</span> Загальна інформація</h3>
+                            <div class="gt-form-group">
+                                <label>Стан проєкту</label>
+                                <select id="field1" class="gt-input">
+                                    <option value="В процесі">В процесі</option>
+                                    <option value="Відкладено">Відкладено</option>
+                                    <option value="Готовий">Готовий</option>
+                                </select>
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Розрахунок</label>
+                                <select id="field2" class="gt-input">
+                                    <option value="Оплачено">Оплачено</option>
+                                    <option value="Не оплачено">Не оплачено</option>
+                                </select>
+                            </div>
+                            <div class="gt-form-group">
+                                <label>№ проекту</label>
+                                <input type="text" id="field3" class="gt-input" readonly placeholder="Автоматично">
+                            </div>
+                        </div>
+
+                        <!-- Секція 2: Особисті дані -->
+                        <div class="gt-section">
+                            <h3 class="gt-section-title"><span>👤</span> Данні замовника</h3>
+                            <div class="gt-form-group">
+                                <label>ПІБ фізичної особи</label>
+                                <input type="text" id="field4" class="gt-input" placeholder="Прізвище Ім'я По батькові">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>ІПН / РНОКПП</label>
+                                <input type="text" id="field5" class="gt-input">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>УНЗР (за наявності)</label>
+                                <input type="text" id="field8" class="gt-input">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Email</label>
+                                <input type="email" id="field25" class="gt-input">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Контактний телефон</label>
+                                <input type="tel" id="field26" class="gt-input">
+                            </div>
+                        </div>
+
+                        <!-- Секція 3: Нерухомість -->
+                        <div class="gt-section">
+                            <h3 class="gt-section-title"><span>🏠</span> Об'єкт нерухомості</h3>
+                            <div class="gt-form-group">
+                                <label>Реєстраційний номер об’єкта</label>
+                                <input type="text" id="field6" class="gt-input">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Номер запису про право власності</label>
+                                <input type="text" id="field7" class="gt-input">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Місце розташування установки</label>
+                                <input type="text" id="field21" class="gt-input" placeholder="Адреса об'єкта">
+                            </div>
+                        </div>
+
+                        <!-- Секція 4: Договір та Мережа -->
+                        <div class="gt-section">
+                            <h3 class="gt-section-title"><span>🔌</span> Договір та Мережа</h3>
+                            <div class="gt-form-group">
+                                <label>№ Договору</label>
+                                <input type="text" id="field9" class="gt-input">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Дата договору</label>
+                                <input type="date" id="field10" class="gt-input">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>№ EIC-код точки розподілу</label>
+                                <input type="text" id="field12" class="gt-input">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Дозволена потужність, кВт</label>
+                                <input type="number" id="field13" class="gt-input" step="0.1">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Напруга</label>
+                                <select id="field18" class="gt-input">
+                                    <option value="220 В">220 В</option>
+                                    <option value="380 В">380 В</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Секція 5: Технічні деталі мережі -->
+                        <div class="gt-section">
+                            <h3 class="gt-section-title"><span>🏗️</span> Підстанція та Обладнання</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div class="gt-form-group">
+                                    <label>Підстанція</label>
+                                    <input type="text" id="field14" class="gt-input">
+                                </div>
+                                <div class="gt-form-group">
+                                    <label>Лінія</label>
+                                    <input type="text" id="field15" class="gt-input">
+                                </div>
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Опора №</label>
+                                <input type="text" id="field16" class="gt-input">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Лічильник</label>
+                                <select id="field17" class="gt-input">
+                                    <option value="ISKRA AM 550 5(100)A">ISKRA AM 550 5(100)A</option>
+                                    <option value="NIK 2303 АР1 5(100)А">NIK 2303 АР1 5(100)А</option>
+                                    <option value="NIK 2301 АР3 5(120)А">NIK 2301 АР3 5(120)А</option>
+                                    <option value="NIK 2104 AP2T">NIK 2104 AP2T</option>
+                                </select>
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Вхідний автомат</label>
+                                <select id="field19" class="gt-input">
+                                    <option value="20А">20А</option>
+                                    <option value="25А">25А</option>
+                                    <option value="32А">32А</option>
+                                    <option value="40А">40А</option>
+                                    <option value="50А">50А</option>
+                                    <option value="63А">63А</option>
+                                </select>
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Відсікач</label>
+                                <input type="text" id="field20" class="gt-input">
+                            </div>
+                        </div>
+
+                        <!-- Секція 6: Інвертор -->
+                        <div class="gt-section">
+                            <h3 class="gt-section-title"><span>📠</span> Інвертор</h3>
+                            <div class="gt-form-group">
+                                <label>Виробник Інвертора</label>
+                                <select id="field30" class="gt-input">
+                                    <option value="DEYE Technology Co., Ltd.">DEYE Technology Co., Ltd.</option>
+                                    <option value="Huawei Technologies Co., Ltd.">Huawei Technologies Co., Ltd.</option>
+                                    <option value="Ginlong Solis Technology">Ginlong Solis Technology</option>
+                                </select>
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Інвертор (Модель)</label>
+                                <div style="display:flex; gap:8px;">
+                                    <select id="field27" class="gt-input" style="flex:1;">
+                                        <!-- Will be populated dynamicly -->
+                                    </select>
+                                    <button type="button" class="btn btn-sm btn-outline" id="btnEditInverter">✎</button>
+                                </div>
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Потужність інвертора, кВт</label>
+                                <input type="number" id="field28" class="gt-input" step="0.1">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Серійний номер (с/н)</label>
+                                <input type="text" id="field29" class="gt-input">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Прошивка</label>
+                                <input type="text" id="field31" class="gt-input">
+                            </div>
+                        </div>
+
+                        <!-- Секція 7: Сонячні панелі -->
+                        <div class="gt-section">
+                            <h3 class="gt-section-title"><span>☀️</span> Сонячні панелі</h3>
+                            <div class="gt-form-group">
+                                <label>Панель (Модель)</label>
+                                <div style="display:flex; gap:8px;">
+                                    <select id="field34" class="gt-input" style="flex:1;">
+                                        <!-- Will be populated dynamicly -->
+                                    </select>
+                                    <button type="button" class="btn btn-sm btn-outline" id="btnEditPanel">✎</button>
+                                </div>
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Сумарна потужність, кВт</label>
+                                <input type="number" id="field22" class="gt-input" step="0.01">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>К-сть панелей</label>
+                                <input type="number" id="field23" class="gt-input">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Місце встановлення панелей</label>
+                                <input type="text" id="field24" class="gt-input" placeholder="Дах / Земля">
+                            </div>
+                        </div>
+
+                        <!-- Секція 8: Акумулятори -->
+                        <div class="gt-section">
+                            <h3 class="gt-section-title"><span>🔋</span> Акумуляторна батарея</h3>
+                            <div class="gt-form-group">
+                                <label>Модель АКБ</label>
+                                <div style="display:flex; gap:8px;">
+                                    <select id="field36" class="gt-input" style="flex:1;">
+                                        <!-- Will be populated dynamicly -->
+                                    </select>
+                                    <button type="button" class="btn btn-sm btn-outline" id="btnEditAkb">✎</button>
+                                </div>
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Номінальна потужність, кВт*год</label>
+                                <input type="number" id="field37" class="gt-input" step="0.1">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Час тестування</label>
+                                <input type="text" id="field11" class="gt-input" placeholder="напр. 10:00 - 12:00">
+                            </div>
+                        </div>
+
+                        <!-- Секція 9: Додатки та Фото -->
+                        <div class="gt-section" style="grid-column: span 1;">
+                            <h3 class="gt-section-title"><span>📎</span> Додатки (Google Drive)</h3>
+                            <div class="gt-upload-zone" id="uploadZone">
+                                <p>Перетягніть файли сюди або натисніть для вибору</p>
+                                <span style="font-size:0.7rem; color:var(--text-muted)">PDF, JPEG, PNG</span>
+                                <input type="file" id="fileInput" multiple style="display:none">
+                            </div>
+                            <div class="gt-file-list" id="fileList"></div>
+                        </div>
+
+                        <!-- Секція 10: Генерація документів -->
+                        <div class="gt-section" style="grid-column: span 1;">
+                            <h3 class="gt-section-title"><span>📄</span> Генерація документів</h3>
+                            <div class="doc-selector">
+                                <label class="doc-checkbox"><input type="checkbox" name="docType" value="1"> 1. Заява на встановлення</label>
+                                <label class="doc-checkbox"><input type="checkbox" name="docType" value="2"> 2. Протокол відповідності (+фото)</label>
+                                <label class="doc-checkbox"><input type="checkbox" name="docType" value="3"> 3. Однолінійна схема</label>
+                                <label class="doc-checkbox"><input type="checkbox" name="docType" value="4"> 4. Акт приймання-передачі</label>
+                                <label class="doc-checkbox"><input type="checkbox" name="docType" value="5"> 5. Договір про встановлення</label>
+                            </div>
+                            <div style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
+                                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Фото для Протоколу:</label>
+                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                                    <input type="file" id="protoPhoto1" accept="image/*" class="gt-input" style="font-size:0.7rem;">
+                                    <input type="file" id="protoPhoto2" accept="image/*" class="gt-input" style="font-size:0.7rem;">
+                                </div>
+                            </div>
+                            <div style="margin-top:15px; display:flex; gap:8px;">
+                                <select id="stationType" class="gt-input" style="width:auto;">
+                                    <option value="network">Мережева станція</option>
+                                    <option value="hybrid">Гібридна станція</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gt-actions">
+                        <button type="button" class="gt-btn gt-btn-outline" id="btnResetGT">❌ Очистити</button>
+                        <button type="submit" class="gt-btn gt-btn-primary" id="btnSaveGT">💾 Зберегти проєкт</button>
+                        <button type="button" class="gt-btn gt-btn-primary" id="btnGenerateDocs">📝 Сформувати документи</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="green-tariff-templates.js"></script>
+    <script src="green-tariff.js"></script>
+</body>
+</html>
