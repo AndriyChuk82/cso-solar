@@ -1,27 +1,58 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import CONFIG from '../config';
+import { verifySession, getUser } from '../api/gasApi';
 
 const AuthContext = createContext(null);
 
-/**
- * Провайдер авторизації.
- * При завантаженні додатку:
- * 1. Перевіряє JWT сесію основного сайту через /api/verify
- * 2. Шукає користувача в Google Sheets таблиці users
- * 3. Встановлює роль та доступний склад
- */
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState({
-    email: 'admin@cso-solar.com.ua',
-    name: 'Адміністратор (Публічний доступ)',
-    role: CONFIG.ROLES.ADMIN,
-    warehouseId: '',
-    isAdmin: true,
-    isStorekeeper: false,
-    isManager: false
-  });
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        setLoading(true);
+        const email = await verifySession();
+        
+        if (!email) {
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        const res = await getUser(email);
+        if (res.success && res.user) {
+          const u = res.user;
+
+          // Block Manager from Warehouse
+          if (u.role === 'manager') {
+            setError('Менеджерам доступний лише розділ Комерційних пропозицій.');
+            setUser(null);
+          } else {
+            setUser({
+              email: u.email,
+              name: u.name,
+              role: u.role,
+              warehouseId: u.warehouse_id,
+              isAdmin: u.role === CONFIG.ROLES.ADMIN,
+              isStorekeeper: u.role === CONFIG.ROLES.STOREKEEPER,
+              isManager: u.role === CONFIG.ROLES.MANAGER
+            });
+          }
+        } else {
+          setError('Користувача не знайдено в системі.');
+        }
+      } catch (err) {
+        console.error('Auth error:', err);
+        setError('Помилка авторизації.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    checkAuth();
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading, error }}>

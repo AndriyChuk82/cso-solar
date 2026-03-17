@@ -33,9 +33,15 @@ export default async function middleware(request) {
 
     try {
         const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-        await jwtVerify(token, secret, {
+        const { payload } = await jwtVerify(token, secret, {
             algorithms: ['HS256']
         });
+
+        // Block Managers from accessing /warehouse/
+        if (payload.role === 'manager' && pathname.startsWith('/warehouse')) {
+            return Response.redirect(new URL('/', request.url), 302);
+        }
+
         return undefined; // pass through — authenticated
     } catch (err) {
         // Invalid or expired token — redirect to login and clear cookie
