@@ -73,8 +73,6 @@ function initEventListeners() {
 
 // ===== DATA FETCHING =====
 async function loadEquipmentData() {
-    // В ідеалі беремо з кешу або того ж джерела, що й основний додаток
-    // Поки що спробуємо взяти з localStorage, якщо воно там є від app.js
     try {
         const cached = localStorage.getItem('cso_products_cache_v48');
         if (cached) {
@@ -153,7 +151,6 @@ function generateProjectNumber() {
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const yyyy = now.getFullYear();
     
-    // В реальності треба брати наступний номер із бази
     const count = (gtState.projects.length + 1).toString().padStart(2, '0');
     const num = `${count}/${mm}-${yyyy}-ЦСО`;
     document.getElementById('field3').value = num;
@@ -270,13 +267,13 @@ async function generateSelectedDocuments() {
         return;
     }
 
-    // Перевіримо наявність шаблонів
     if (typeof GT_TEMPLATES === 'undefined') {
         showToast('ПОМИЛКА: Шаблони не завантажені. Перезавантажте сторінку.', 'error');
         console.error('GT_TEMPLATES is not defined. Ensure green-tariff-templates.js is loaded before green-tariff.js');
         return;
     }
 
+    // Збираємо дані форми
     const formData = {};
     for (let i = 1; i <= 37; i++) {
         const el = document.getElementById(`field${i}`);
@@ -285,45 +282,60 @@ async function generateSelectedDocuments() {
     formData.currentDate = new Date().toLocaleDateString('uk-UA');
     formData.stationType = document.getElementById('stationType').value === 'network' ? 'Мережева' : 'Гібридна';
 
-    // Load Protocol Photos
+    // Завантажуємо фото для протоколу
     const photo1File = document.getElementById('protoPhoto1').files[0];
     const photo2File = document.getElementById('protoPhoto2').files[0];
-    
     let photo1Base64 = '';
     let photo2Base64 = '';
-
     if (photo1File) photo1Base64 = await fileToBase64(photo1File);
     if (photo2File) photo2Base64 = await fileToBase64(photo2File);
 
-    // Create a temporary container for PDF generation
+    // ---------------------------------------------------------------
+    // ВИПРАВЛЕННЯ 1: Контейнер розміщуємо ПОЗА viewport праворуч.
+    // НЕ використовуємо visibility:hidden або opacity:0 — браузер не
+    // рендерить приховані елементи, тому html2canvas отримує порожній
+    // bitmap. left:100vw = не видно юзеру, але пікселі малюються.
+    // ---------------------------------------------------------------
     const tempContainer = document.createElement('div');
     tempContainer.id = 'gt-export-container';
     Object.assign(tempContainer.style, {
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        opacity: '0',
-        pointerEvents: 'none',
-        width: '210mm',
-        height: 'auto',
-        overflow: 'visible',
-        zIndex: '-1',
+        position:        'fixed',
+        top:             '0',
+        left:            '100vw',      // за правим краєм екрана — не видно юзеру
+        visibility:      'visible',    // але браузер РЕНДЕРИТЬ пікселі
+        opacity:         '1',
+        pointerEvents:   'none',
+        width:           '210mm',
+        height:          'auto',
+        overflow:        'visible',
+        zIndex:          '9999',       // поверх усього, щоб не перекривався іншими шарами
         backgroundColor: '#ffffff',
-        padding: '10mm'
+        padding:         '10mm',
+        boxSizing:       'border-box',
     });
     document.body.appendChild(tempContainer);
 
-    try {
-        // Стилі тепер підставляються в кожен документ через GT_TEMPLATES.styles
-        // Окремий <style> тег не потрібен
-        console.log('✓ Styles will be injected per-document via GT_TEMPLATES.styles');
+    // ---------------------------------------------------------------
+    // ВИПРАВЛЕННЯ 2: <style> ін'єктуємо в <head>, а НЕ через innerHTML.
+    // Браузер ігнорує тег <style> всередині довільного div — тому всі
+    // CSS-класи (gt-table, gt-bold, gt-signature-block тощо) не
+    // працювали і контент "схлопувався" до нульової висоти.
+    // ---------------------------------------------------------------
+    const GT_STYLES_ID = 'gt-pdf-injected-styles';
+    const styleTag = document.createElement('style');
+    styleTag.id = GT_STYLES_ID;
+    // Витягуємо чистий CSS без обгортки <style>...</style>
+    const rawCSS = GT_TEMPLATES.styles.replace(/<\/?style[^>]*>/gi, '').trim();
+    styleTag.textContent = rawCSS;
+    document.head.appendChild(styleTag);
+    console.log('✓ GT styles injected into <head>');
 
+    try {
         let documentCount = 0;
 
         for (const [index, docId] of selected.entries()) {
-            // ВИПРАВКА: docId вже це число (1,2,3,4,5), його можна використовувати напряму
             const templateKey = `doc${docId}`;
-            
+
             if (!GT_TEMPLATES[templateKey]) {
                 console.warn(`⚠️ Шаблон "${templateKey}" не знайдено в GT_TEMPLATES`);
                 console.log('Доступні шаблони:', Object.keys(GT_TEMPLATES).filter(k => k.startsWith('doc')));
@@ -334,10 +346,10 @@ async function generateSelectedDocuments() {
             let template = GT_TEMPLATES[templateKey];
             console.log(`Processing ${templateKey}, довжина: ${template.length}`);
 
-            // Підставляємо реальні стилі з GT_TEMPLATES.styles
-            template = template.replace(/{{styles}}/g, GT_TEMPLATES.styles);
+            // Видаляємо {{styles}} з тіла — стилі вже в <head>
+            template = template.replace(/{{styles}}/g, '');
 
-            // Replace basic fields using split/join
+            // Підставляємо значення полів форми
             for (const [key, value] of Object.entries(formData)) {
                 const placeholder = `{{${key}}}`;
                 if (template.includes(placeholder)) {
@@ -345,81 +357,96 @@ async function generateSelectedDocuments() {
                 }
             }
 
-            // Handle specific logic for Diagram (doc3)
+            // Специфічна логіка для Однолінійної схеми (doc3)
             if (docId === '3') {
                 const hasBattery = formData.stationType === 'Гібридна';
-                template = template.split("{{stationType === 'Гібридна' ? 'block' : 'none'}}").join(hasBattery ? 'block' : 'none');
+                template = template
+                    .split("{{stationType === 'Гібридна' ? 'block' : 'none'}}")
+                    .join(hasBattery ? 'block' : 'none');
             }
-            
-            // Handle specific logic for Act (doc4)
+
+            // Специфічна логіка для Акту (doc4)
             if (docId === '4') {
-                const batteryInfo = formData.field36 ? `<tr><td class="gt-center">4</td><td>Акумуляторна батарея ${formData.field36} (${formData.field37} кВт*год)</td><td class="gt-center">1 шт.</td></tr>` : '';
+                const batteryInfo = formData.field36
+                    ? `<tr><td class="gt-center">4</td><td>Акумуляторна батарея ${formData.field36} (${formData.field37} кВт*год)</td><td class="gt-center">1 шт.</td></tr>`
+                    : '';
                 template = template.split('{{batteryListItem}}').join(batteryInfo);
             }
 
-            // Photo placeholders for Protocol (doc2)
+            // Фото для Протоколу (doc2)
             if (docId === '2') {
-                template = template.split('{{photo1}}').join(photo1Base64 ? `<img src="${photo1Base64}" style="max-width:100%; max-height:210px;">` : '<span style="display:block; text-align:center; padding:20px;">(Фото 1: Інвертор)</span>');
-                template = template.split('{{photo2}}').join(photo2Base64 ? `<img src="${photo2Base64}" style="max-width:100%; max-height:210px;">` : '<span style="display:block; text-align:center; padding:20px;">(Фото 2: Сонячні панелі)</span>');
+                template = template
+                    .split('{{photo1}}')
+                    .join(photo1Base64
+                        ? `<img src="${photo1Base64}" style="max-width:100%; max-height:210px;">`
+                        : '<span style="display:block; text-align:center; padding:20px;">(Фото 1: Інвертор)</span>');
+                template = template
+                    .split('{{photo2}}')
+                    .join(photo2Base64
+                        ? `<img src="${photo2Base64}" style="max-width:100%; max-height:210px;">`
+                        : '<span style="display:block; text-align:center; padding:20px;">(Фото 2: Сонячні панелі)</span>');
             }
 
-            // Обгортаємо в div з правильними стилями для PDF
+            // Обгортка сторінки з розривом між документами
             const docWrapper = document.createElement('div');
             docWrapper.className = 'gt-export-wrapper';
-            docWrapper.style.backgroundColor = '#ffffff';
-            docWrapper.style.color = '#000000';
-            docWrapper.style.pageBreakAfter = index < selected.length - 1 ? 'always' : 'avoid';
+            docWrapper.style.cssText = `
+                background-color: #ffffff;
+                color: #000000;
+                page-break-after: ${index < selected.length - 1 ? 'always' : 'avoid'};
+            `;
             docWrapper.innerHTML = template;
-
             tempContainer.appendChild(docWrapper);
             documentCount++;
             console.log(`✓ Added ${templateKey} (total: ${documentCount})`);
         }
 
-        // ВИПРАВКА #2: Перевіримо, чи було додано хоча б один документ
         if (documentCount === 0) {
             showToast('Помилка: не вдалося завантажити жодного документа', 'error');
-            document.body.removeChild(tempContainer);
             return;
         }
 
-        console.log(`✓ All ${documentCount} documents prepared for PDF`);
-        console.log(`Container HTML length: ${tempContainer.innerHTML.length}`);
+        console.log(`✓ Підготовлено ${documentCount} документів`);
+
+        // ---------------------------------------------------------------
+        // ВИПРАВЛЕННЯ 3: Даємо браузеру час відрендерити layout, потім
+        // явно фіксуємо висоту контейнера. При position:fixed + height:auto
+        // scrollHeight може бути 0 до першого paint — тоді html2canvas
+        // знімає порожній прямокутник нульової висоти.
+        // ---------------------------------------------------------------
+        await new Promise(r => setTimeout(r, 600));
+
+        const realHeight = tempContainer.scrollHeight;
+        if (realHeight > 0) {
+            tempContainer.style.height = realHeight + 'px';
+            console.log(`✓ Container height fixed: ${realHeight}px`);
+        } else {
+            console.warn('⚠️ scrollHeight=0 — контент, можливо, не відрендерився');
+        }
+
+        // Ще невелика пауза після зміни висоти
+        await new Promise(r => setTimeout(r, 400));
 
         const opt = {
-            margin: [10, 10, 10, 10],
-            filename: `Зелений_тариф_${formData.field4 || 'Проєкт'}_${formData.field3 || ''}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2, 
-                useCORS: true, 
-                logging: false,
+            margin:      [10, 10, 10, 10],
+            filename:    `Зелений_тариф_${formData.field4 || 'Проєкт'}_${formData.field3 || ''}.pdf`,
+            image:       { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale:           2,
+                useCORS:         true,
+                logging:         false,
                 backgroundColor: '#ffffff',
-                allowTaint: true,
-                windowWidth: 794  // 210mm при 96dpi
+                allowTaint:      true,
+                windowWidth:     794,   // 210mm при 96dpi
+                scrollX:         0,
+                scrollY:         0,
             },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
         };
 
-        showToast(`Підготовка PDF (${documentCount} документів)...`, 'info');
-        
-        // Debug: Check what's actually in the container
-        console.log('=== DEBUG INFO ===');
-        console.log('Container children:', tempContainer.children.length);
-        console.log('Total HTML length:', tempContainer.innerHTML.length);
-        console.log('First 300 chars:', tempContainer.innerHTML.substring(0, 300));
-        console.log('Document count:', documentCount);
-        
-        // Тимчасово зробити контейнер видимим для тестування (розкоментуйте якщо потрібно)
-        // tempContainer.style.position = 'static';
-        // tempContainer.style.top = 'auto';
-        // tempContainer.style.left = 'auto';
-        // tempContainer.style.zIndex = '1000';
-        
-        // Give browser some time to render internal elements
-        await new Promise(r => setTimeout(r, 1000));
-        
+        showToast(`Формування PDF (${documentCount} документів)...`, 'info');
         console.log('Starting PDF generation...');
+
         await html2pdf().set(opt).from(tempContainer).save();
         showToast(`✅ PDF готовий! (${documentCount} сторінок)`, 'success');
 
@@ -427,13 +454,18 @@ async function generateSelectedDocuments() {
         console.error('PDF Generation Error:', err);
         showToast('Помилка при генерації PDF: ' + err.message, 'error');
     } finally {
+        // Прибираємо тимчасовий контейнер і ін'єктовані стилі
         if (tempContainer.parentNode) {
             document.body.removeChild(tempContainer);
+        }
+        const injected = document.getElementById(GT_STYLES_ID);
+        if (injected) {
+            document.head.removeChild(injected);
         }
     }
 }
 
-
+// ===== HELPERS =====
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
