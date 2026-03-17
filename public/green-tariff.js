@@ -266,17 +266,27 @@ async function generateSelectedDocuments() {
         formData[`field${i}`] = el ? el.value : '';
     }
     formData.currentDate = new Date().toLocaleDateString('uk-UA');
-    formDa    // Create a temporary container for PDF generation
+    formData.stationType = document.getElementById('stationType').value === 'network' ? 'Мережева' : 'Гібридна';
+
+    // Load Protocol Photos
+    const photo1File = document.getElementById('protoPhoto1').files[0];
+    const photo2File = document.getElementById('protoPhoto2').files[0];
+    
+    let photo1Base64 = '';
+    let photo2Base64 = '';
+
+    if (photo1File) photo1Base64 = await fileToBase64(photo1File);
+    if (photo2File) photo2Base64 = await fileToBase64(photo2File);
+
+    // Create a temporary container for PDF generation
     const tempContainer = document.createElement('div');
     tempContainer.id = 'gt-export-container';
     Object.assign(tempContainer.style, {
-        position: 'absolute',
+        position: 'fixed',
         top: '0',
-        left: '0',
-        width: '190mm', // Inner width of A4 with margins
-        opacity: '0',
-        pointerEvents: 'none',
-        zIndex: '-1000'
+        left: '-9999px', // Put it far off-screen
+        width: '190mm',
+        backgroundColor: '#fff'
     });
     document.body.appendChild(tempContainer);
 
