@@ -266,84 +266,92 @@ async function generateSelectedDocuments() {
         formData[`field${i}`] = el ? el.value : '';
     }
     formData.currentDate = new Date().toLocaleDateString('uk-UA');
-    formData.stationType = document.getElementById('stationType').value === 'network' ? 'Мережева' : 'Гібридна';
-
-    // Load Protocol Photos
-    const photo1File = document.getElementById('protoPhoto1').files[0];
-    const photo2File = document.getElementById('protoPhoto2').files[0];
-    
-    let photo1Base64 = '';
-    let photo2Base64 = '';
-
-    if (photo1File) photo1Base64 = await fileToBase64(photo1File);
-    if (photo2File) photo2Base64 = await fileToBase64(photo2File);
-
+    formDa    // Create a temporary container for PDF generation
     const tempContainer = document.createElement('div');
-    tempContainer.style.background = '#fff';
-    tempContainer.style.color = '#000';
-    tempContainer.style.padding = '0';
-    tempContainer.style.width = '210mm';
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-9999px';
+    tempContainer.id = 'gt-export-container';
+    Object.assign(tempContainer.style, {
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        width: '190mm', // Inner width of A4 with margins
+        opacity: '0',
+        pointerEvents: 'none',
+        zIndex: '-1000'
+    });
     document.body.appendChild(tempContainer);
 
-    for (const [index, docId] of selected.entries()) {
-        let template = GT_TEMPLATES[`doc${docId}`];
-        if (!template) continue;
+    try {
+        for (const [index, docId] of selected.entries()) {
+            let template = GT_TEMPLATES[`doc${docId}`];
+            if (!template) continue;
 
-        // Replace global styles
-        template = template.replace('{{styles}}', GT_TEMPLATES.styles);
+            // Replace global styles
+            template = template.replace('{{styles}}', GT_TEMPLATES.styles);
 
-        // Replace basic fields
-        for (const [key, value] of Object.entries(formData)) {
-            template = template.replace(new RegExp(`{{${key}}}`, 'g'), value || '__________');
+            // Replace basic fields using split/join for safety
+            for (const [key, value] of Object.entries(formData)) {
+                template = template.split(`{{${key}}}`).join(value || '__________');
+            }
+
+            // Handle specific logic for Diagram (doc3)
+            if (docId === '3') {
+                const hasBattery = formData.stationType === 'Гібридна';
+                template = template.replace("{{stationType === 'Гібридна' ? 'block' : 'none'}}", hasBattery ? 'block' : 'none');
+            }
+            
+            // Handle specific logic for Act (doc4)
+            if (docId === '4') {
+                const batteryInfo = formData.field36 ? `<tr><td class="gt-center">4</td><td>Акумуляторна батарея ${formData.field36} (${formData.field37} кВт*год)</td><td class="gt-center">1 шт.</td></tr>` : '';
+                template = template.replace('{{batteryListItem}}', batteryInfo);
+            }
+
+            // Photo placeholders for Protocol (doc2)
+            if (docId === '2') {
+                template = template.replace('{{photo1}}', photo1Base64 ? `<img src="${photo1Base64}" style="max-width:100%; max-height:210px;">` : '<span>(Фото 1: Інвертор)</span>');
+                template = template.replace('{{photo2}}', photo2Base64 ? `<img src="${photo2Base64}" style="max-width:100%; max-height:210px;">` : '<span>(Фото 2: Сонячні панелі)</span>');
+            }
+
+            const docWrapper = document.createElement('div');
+            docWrapper.className = 'gt-export-wrapper';
+            docWrapper.style.backgroundColor = '#fff';
+            docWrapper.style.marginBottom = '0';
+            docWrapper.innerHTML = template;
+            
+            if (index < selected.length - 1) {
+                docWrapper.style.pageBreakAfter = 'always';
+            }
+
+            tempContainer.appendChild(docWrapper);
         }
 
-        // Handle specific logic for Diagram (doc3)
-        if (docId === '3') {
-            const hasBattery = formData.stationType === 'Гібридна';
-            template = template.replace("{{stationType === 'Гібридна' ? 'block' : 'none'}}", hasBattery ? 'block' : 'none');
-        }
+        const opt = {
+            margin: 10,
+            filename: `Зелений_тариф_${formData.field4 || 'Проєкт'}_${formData.field3 || ''}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff'
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        showToast('Створення PDF...', 'info');
         
-        // Handle specific logic for Act (doc4)
-        if (docId === '4') {
-            const batteryInfo = formData.field36 ? `<tr><td>4</td><td>Акумуляторна батарея ${formData.field36} (${formData.field37} кВт*год)</td><td>1 шт.</td></tr>` : '';
-            template = template.replace('{{batteryListItem}}', batteryInfo);
-        }
-
-        // Photo placeholders for Protocol (doc2)
-        if (docId === '2') {
-            template = template.replace('{{photo1}}', photo1Base64 ? `<img src="${photo1Base64}">` : '<span>(Фото 1: Інвертор)</span>');
-            template = template.replace('{{photo2}}', photo2Base64 ? `<img src="${photo2Base64}">` : '<span>(Фото 2: Сонячні панелі)</span>');
-        }
-
-        const docWrapper = document.createElement('div');
-        docWrapper.className = 'gt-export-wrapper';
-        docWrapper.innerHTML = template;
-        
-        // Add page break if it's not the last one
-        if (index < selected.length - 1) {
-            docWrapper.style.pageBreakAfter = 'always';
-        }
-
-        tempContainer.appendChild(docWrapper);
-    }
-
-    const opt = {
-        margin: 10,
-        filename: `Зелений_тариф_${formData.field4}_${formData.field3}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    showToast('Створення PDF...', 'info');
-    
-    html2pdf().set(opt).from(tempContainer).toPdf().get('pdf').then(function (pdf) {
-        document.body.removeChild(tempContainer);
+        await html2pdf().set(opt).from(tempContainer).save();
         showToast('Готово!', 'success');
-    }).save();
+
+    } catch (err) {
+        console.error('PDF Generation Error:', err);
+        showToast('Помилка при генерації PDF', 'error');
+    } finally {
+        if (tempContainer.parentNode) {
+            document.body.removeChild(tempContainer);
+        }
+    }
 }
+
 
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {

@@ -7,78 +7,78 @@ const GT_TEMPLATES = {
     // Common styles for all documents to ensure consistent look in PDF
     styles: `
         <style>
-            @page {
-                size: A4;
-                margin: 20mm;
-            }
             .gt-doc-page {
                 font-family: "Times New Roman", Times, serif;
                 font-size: 11pt;
-                line-height: 1.4;
+                line-height: 1.35;
                 color: #000;
                 background: white;
-                padding: 10px;
-                min-height: 290mm;
+                padding: 0;
+                margin: 0;
+                width: 100%;
+                position: relative;
             }
             .gt-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin: 10px 0;
+                margin: 8px 0;
+                font-size: 10.5pt;
             }
             .gt-table td {
                 border: 1px solid black;
-                padding: 6px 10px;
+                padding: 4px 8px;
                 vertical-align: top;
             }
             .gt-center { text-align: center; }
             .gt-right { text-align: right; }
             .gt-justify { text-align: justify; }
             .gt-bold { font-weight: bold; }
-            .gt-title { font-size: 13pt; font-weight: bold; text-align: center; margin-bottom: 20px; text-transform: uppercase; }
-            .gt-subtitle { font-size: 12pt; font-weight: bold; text-align: center; margin-bottom: 10px; }
-            .gt-section-header { font-weight: bold; margin-top: 15px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
-            .gt-signature-block { margin-top: 40px; display: flex; justify-content: space-between; }
-            .gt-signature-line { border-bottom: 1px solid black; width: 200px; display: inline-block; }
-            .gt-field-value { font-weight: bold; }
+            .gt-title { font-size: 13pt; font-weight: bold; text-align: center; margin-bottom: 12px; text-transform: uppercase; }
+            .gt-subtitle { font-size: 11pt; font-weight: bold; text-align: center; margin-bottom: 8px; }
+            .gt-section-header { font-weight: bold; margin-top: 10px; border-bottom: 1px solid #000; padding-bottom: 2px; font-size: 11pt; }
+            .gt-signature-block { margin-top: 30px; display: flex; justify-content: space-between; gap: 20px; }
+            .gt-signature-line { border-bottom: 1px solid black; width: 180px; display: inline-block; min-height: 1pt; }
+            .gt-field-value { font-weight: bold; color: #000; }
             .gt-photo-container {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 20px;
-                margin-top: 20px;
+                gap: 15px;
+                margin-top: 15px;
             }
             .gt-photo-box {
                 border: 1px solid #000;
-                height: 250px;
+                height: 240px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 text-align: center;
-                background: #f9f9f9;
+                background: #fff;
                 overflow: hidden;
             }
             .gt-photo-box img {
-                max-width: 100%;
-                max-height: 220px;
+                max-width: 95%;
+                max-height: 200px;
                 object-fit: contain;
             }
             .gt-diagram-container {
-                border: 2px solid #000;
-                padding: 30px;
-                height: 600px;
-                margin-top: 20px;
+                border: 1.5px solid #000;
+                padding: 20px;
+                height: 520px;
+                margin-top: 15px;
                 position: relative;
                 background: #fff;
+                overflow: hidden;
             }
             .gt-node {
-                border: 2px solid #000;
-                padding: 10px;
+                border: 1.5px solid #000;
+                padding: 6px;
                 background: #fff;
                 position: absolute;
                 text-align: center;
                 font-weight: bold;
-                width: 150px;
-                box-shadow: 2px 2px 0 #000;
+                width: 140px;
+                font-size: 9pt;
             }
             .gt-line {
                 position: absolute;
@@ -88,20 +88,20 @@ const GT_TEMPLATES = {
             .gt-arrow-down::after {
                 content: '';
                 position: absolute;
-                bottom: -10px;
+                bottom: -8px;
                 left: 50%;
                 transform: translateX(-50%);
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 10px solid #000;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-top: 8px solid #000;
             }
             .gt-watermark {
                 position: absolute;
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%) rotate(-45deg);
-                font-size: 80pt;
-                color: rgba(200, 200, 200, 0.2);
+                font-size: 70pt;
+                color: rgba(200, 200, 200, 0.1);
                 z-index: -1;
                 pointer-events: none;
                 white-space: nowrap;
@@ -195,8 +195,8 @@ const GT_TEMPLATES = {
                 <div>Підпис: <span class="gt-signature-line"></span></div>
             </div>
             
-            <div style="margin-top:30px; font-size:9pt; color:#666;">
-                * Підготовлено за допомогою модуля "Зелений тариф" CSO Solar
+            <div style="margin-top:20px; font-size:9pt; color:#666; text-align:center;">
+                Підготовлено за допомогою модуля "Зелений тариф" CSO Solar
             </div>
         </div>
     `,
@@ -207,9 +207,9 @@ const GT_TEMPLATES = {
         <div class="gt-doc-page">
             <div class="gt-watermark">CSO SOLAR</div>
             <p class="gt-bold gt-center" style="font-size:14pt;">ТОВ «Центр сервісного обслуговування»</p>
-            <p class="gt-bold gt-center" style="font-size:16pt; margin: 20px 0;">ПРОТОКОЛ ВІДПОВІДНОСТІ ТЕХНІЧНИХ ВИМОГ</p>
+            <p class="gt-bold gt-center" style="font-size:16pt; margin: 15px 0;">ПРОТОКОЛ ВІДПОВІДНОСТІ ТЕХНІЧНИХ ВИМОГ</p>
             
-            <div style="margin:20px 0;">
+            <div style="margin:15px 0;">
                 <p><span class="gt-bold">Об’єкт:</span> {{field21}}</p>
                 <p><span class="gt-bold">Власник/Замовник:</span> {{field4}}</p>
                 <p><span class="gt-bold">№ Проекту:</span> {{field3}}</p>
@@ -241,19 +241,19 @@ const GT_TEMPLATES = {
             <p class="gt-section-header">2. Фотофіксація встановленого обладнання:</p>
             <div class="gt-photo-container">
                 <div class="gt-photo-box">
-                    <div style="padding:10px;">{{photo1}}</div>
-                    <div style="font-size:10pt;">Фото 1: Інвертор та щит захисту</div>
+                    <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">{{photo1}}</div>
+                    <div style="font-size:9pt; padding:4px; border-top:1px solid #eee; width:100%;">Фото 1: Інвертор та щит захисту</div>
                 </div>
                 <div class="gt-photo-box">
-                    <div style="padding:10px;">{{photo2}}</div>
-                    <div style="font-size:10pt;">Фото 2: Сонячні панелі</div>
+                    <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">{{photo2}}</div>
+                    <div style="font-size:9pt; padding:4px; border-top:1px solid #eee; width:100%;">Фото 2: Сонячні панелі</div>
                 </div>
             </div>
 
             <p class="gt-section-header">3. Висновки:</p>
             <div class="gt-justify">
                 Обладнання встановлено згідно вимог ПУЕ та технічних умов. Параметри інвертора налаштовані на автоматичне відключення 
-                при зникненні напруги в мережі. Система готова до експлуатації за схемою «Зелений тариф».
+                при зникненні напруги в мережі. Система готова до експлуатації.
             </div>
 
             <div class="gt-signature-block">
@@ -272,68 +272,68 @@ const GT_TEMPLATES = {
 
             <div class="gt-diagram-container">
                 <!-- Solar Panels -->
-                <div class="gt-node" style="left: 50%; top: 20px; transform: translateX(-50%); border-radius: 5px; background: #e3f2fd;">
+                <div class="gt-node" style="left: 50%; top: 15px; transform: translateX(-50%); background: #e3f2fd;">
                     СОНЯЧНІ ПАНЕЛІ<br>
                     <small>{{field34}}<br>{{field23}} шт. / {{field22}} кВт</small>
                 </div>
                 
-                <div class="gt-line gt-arrow-down" style="left: 50%; top: 85px; width: 2px; height: 40px; transform: translateX(-50%);"></div>
+                <div class="gt-line gt-arrow-down" style="left: 50%; top: 70px; width: 2px; height: 35px; transform: translateX(-50%);"></div>
 
                 <!-- Inverter -->
-                <div class="gt-node" style="left: 50%; top: 125px; transform: translateX(-50%); background: #f1f8e9;">
+                <div class="gt-node" style="left: 50%; top: 105px; transform: translateX(-50%); background: #f1f8e9;">
                     ІНВЕРТОР<br>
                     <small>{{field27}}<br>{{field28}} кВт</small>
                 </div>
 
-                <div class="gt-line gt-arrow-down" style="left: 50%; top: 190px; width: 2px; height: 120px; transform: translateX(-50%);"></div>
+                <div class="gt-line gt-arrow-down" style="left: 50%; top: 160px; width: 2px; height: 100px; transform: translateX(-50%);"></div>
 
-                <!-- Battery (if hybrid) -->
+                <!-- Battery Visual -->
                 <div id="batteryVisual" style="display: {{stationType === 'Гібридна' ? 'block' : 'none'}}">
-                    <div class="gt-line" style="left: 50%; top: 240px; width: 60px; height: 2px; transform: translateX(0);"></div>
-                    <div class="gt-node" style="left: calc(50% + 60px); top: 220px; background: #fffde7;">
-                        АКУМУЛЯТОРНА<br>БАТАРЕЯ
+                    <div class="gt-line" style="left: 50%; top: 210px; width: 50px; height: 2px; transform: translateX(0);"></div>
+                    <div class="gt-node" style="left: calc(50% + 50px); top: 190px; background: #fffde7; width: 120px;">
+                        АКБ<br><small>{{field36}}</small>
                     </div>
                 </div>
 
                 <!-- Main Switchboard / Protection -->
-                <div class="gt-node" style="left: 50%; top: 310px; transform: translateX(-50%); border-style: dashed;">
+                <div class="gt-node" style="left: 50%; top: 260px; transform: translateX(-50%); border-style: dashed;">
                     ЩИТ ЗАХИСТУ<br>
                     <small>Автомат: {{field19}}</small>
                 </div>
 
-                <div class="gt-line gt-arrow-down" style="left: 50%; top: 375px; width: 2px; height: 50px; transform: translateX(-50%);"></div>
+                <div class="gt-line gt-arrow-down" style="left: 50%; top: 315px; width: 2px; height: 45px; transform: translateX(-50%);"></div>
 
                 <!-- Meter -->
-                <div class="gt-node" style="left: 50%; top: 425px; transform: translateX(-50%); border-radius: 50%; height: 70px; width: 150px; display: flex; align-items: center; justify-content: center;">
+                <div class="gt-node" style="left: 50%; top: 360px; transform: translateX(-50%); border-radius: 40px; height: 60px; display: flex; align-items: center; justify-content: center;">
                     ЛІЧИЛЬНИК<br>
                     <small>{{field17}}</small>
                 </div>
 
-                <div class="gt-line gt-arrow-down" style="left: 50%; top: 495px; width: 2px; height: 40px; transform: translateX(-50%);"></div>
+                <div class="gt-line gt-arrow-down" style="left: 50%; top: 420px; width: 2px; height: 35px; transform: translateX(-50%);"></div>
 
                 <!-- External Network -->
-                <div class="gt-node" style="left: 50%; top: 535px; transform: translateX(-50%); background: #eceff1; border-width: 3px;">
+                <div class="gt-node" style="left: 50%; top: 455px; transform: translateX(-50%); background: #eceff1; border-width: 2px;">
                     МЕРЕЖА ОСР<br>
-                    <small>{{field18}}<br>ПС: {{field14}}, Л: {{field15}}</small>
+                    <small>{{field18}}<br>ПС: {{field14}}, Л: {{field15}}, Оп: {{field16}}</small>
                 </div>
             </div>
 
-            <div style="margin-top:30px;">
+            <div style="margin-top:20px; font-size:10pt;">
                 <p><span class="gt-bold">Умовні позначення:</span></p>
-                <div style="display:flex; gap:20px; font-size:10pt;">
-                    <div><span style="border:1px solid #000; padding:0 10px;">&nbsp;</span> Лінія зв'язку</div>
-                    <div><span style="border:1px dashed #000; padding:0 10px;">&nbsp;</span> Межа балансової належності</div>
+                <div style="display:flex; gap:20px;">
+                    <div><span style="border:1px solid #000; padding:0 8px;">&nbsp;</span> Лінія зв'язку</div>
+                    <div><span style="border:1.5px dashed #000; padding:0 8px;">&nbsp;</span> Межа балансової належності</div>
                 </div>
             </div>
             
-            <div class="gt-signature-block">
-                <div>Схему склав (CSO): <span class="gt-signature-line"></span></div>
-                <div>Узгоджено (Замовник): <span class="gt-signature-line"></span></div>
+            <div class="gt-signature-block" style="margin-top:20px;">
+                <div>Схему склав (CSO Solar): <br><br><span class="gt-signature-line"></span></div>
+                <div>Узгоджено (Замовник): <br><br><span class="gt-signature-line"></span></div>
             </div>
         </div>
     `,
 
-    // 4. Акт приймання передачі (placeholder pending template)
+    // 4. Акт приймання передачі
     doc4: `
         {{styles}}
         <div class="gt-doc-page">
@@ -348,26 +348,27 @@ const GT_TEMPLATES = {
 
             <p class="gt-section-header">Перелік переданого обладнання та виконаних робіт:</p>
             <table class="gt-table">
-                <tr>
+                <tr class="gt-bold gt-center">
                     <td style="width:10%;">№</td>
                     <td>Найменування</td>
-                    <td>К-сть</td>
+                    <td>Кількість</td>
                 </tr>
                 <tr>
-                    <td>1</td>
+                    <td class="gt-center">1</td>
                     <td>Мережевий інвертор {{field27}}</td>
-                    <td>1 шт.</td>
+                    <td class="gt-center">1 шт.</td>
                 </tr>
                 <tr>
-                    <td>2</td>
+                    <td class="gt-center">2</td>
                     <td>Сонячні панелі {{field34}}</td>
-                    <td>{{field23}} шт.</td>
+                    <td class="gt-center">{{field23}} шт.</td>
                 </tr>
                 <tr>
-                    <td>3</td>
+                    <td class="gt-center">3</td>
                     <td>Монтажні та пусконалагоджувальні роботи</td>
-                    <td>1 к-кт</td>
+                    <td class="gt-center">1 к-кт</td>
                 </tr>
+                {{batteryListItem}}
             </table>
 
             <p class="gt-justify" style="margin-top:20px;">
@@ -382,7 +383,7 @@ const GT_TEMPLATES = {
         </div>
     `,
 
-    // 5. Договір (placeholder pending template)
+    // 5. Договір
     doc5: `
         {{styles}}
         <div class="gt-doc-page">
