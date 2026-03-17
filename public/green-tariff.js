@@ -282,23 +282,31 @@ async function generateSelectedDocuments() {
     const tempContainer = document.createElement('div');
     tempContainer.id = 'gt-export-container';
     Object.assign(tempContainer.style, {
-        position: 'fixed',
+        position: 'absolute',
         top: '0',
-        left: '-9999px', // Put it far off-screen
+        left: '0',
         width: '190mm',
-        backgroundColor: '#fff'
+        height: '0',
+        overflow: 'hidden',
+        zIndex: '-5000',
+        backgroundColor: '#ffffff'
     });
     document.body.appendChild(tempContainer);
 
     try {
+        // Inject styles once at the beginning
+        const styleEl = document.createElement('div');
+        styleEl.innerHTML = GT_TEMPLATES.styles;
+        tempContainer.appendChild(styleEl);
+
         for (const [index, docId] of selected.entries()) {
             let template = GT_TEMPLATES[`doc${docId}`];
             if (!template) continue;
 
-            // Replace global styles
-            template = template.replace('{{styles}}', GT_TEMPLATES.styles);
+            // Remove internal styles if present to avoid duplication
+            template = template.replace('{{styles}}', '');
 
-            // Replace basic fields using split/join for safety
+            // Replace basic fields using split/join
             for (const [key, value] of Object.entries(formData)) {
                 template = template.split(`{{${key}}}`).join(value || '__________');
             }
@@ -306,25 +314,25 @@ async function generateSelectedDocuments() {
             // Handle specific logic for Diagram (doc3)
             if (docId === '3') {
                 const hasBattery = formData.stationType === 'Гібридна';
-                template = template.replace("{{stationType === 'Гібридна' ? 'block' : 'none'}}", hasBattery ? 'block' : 'none');
+                template = template.split("{{stationType === 'Гібридна' ? 'block' : 'none'}}").join(hasBattery ? 'block' : 'none');
             }
             
             // Handle specific logic for Act (doc4)
             if (docId === '4') {
                 const batteryInfo = formData.field36 ? `<tr><td class="gt-center">4</td><td>Акумуляторна батарея ${formData.field36} (${formData.field37} кВт*год)</td><td class="gt-center">1 шт.</td></tr>` : '';
-                template = template.replace('{{batteryListItem}}', batteryInfo);
+                template = template.split('{{batteryListItem}}').join(batteryInfo);
             }
 
             // Photo placeholders for Protocol (doc2)
             if (docId === '2') {
-                template = template.replace('{{photo1}}', photo1Base64 ? `<img src="${photo1Base64}" style="max-width:100%; max-height:210px;">` : '<span>(Фото 1: Інвертор)</span>');
-                template = template.replace('{{photo2}}', photo2Base64 ? `<img src="${photo2Base64}" style="max-width:100%; max-height:210px;">` : '<span>(Фото 2: Сонячні панелі)</span>');
+                template = template.split('{{photo1}}').join(photo1Base64 ? `<img src="${photo1Base64}" style="max-width:100%; max-height:210px;">` : '<span>(Фото 1: Інвертор)</span>');
+                template = template.split('{{photo2}}').join(photo2Base64 ? `<img src="${photo2Base64}" style="max-width:100%; max-height:210px;">` : '<span>(Фото 2: Сонячні панелі)</span>');
             }
 
             const docWrapper = document.createElement('div');
             docWrapper.className = 'gt-export-wrapper';
-            docWrapper.style.backgroundColor = '#fff';
-            docWrapper.style.marginBottom = '0';
+            docWrapper.style.backgroundColor = '#ffffff';
+            docWrapper.style.color = '#000000';
             docWrapper.innerHTML = template;
             
             if (index < selected.length - 1) {
@@ -340,14 +348,17 @@ async function generateSelectedDocuments() {
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { 
                 scale: 2, 
-                useCORS: true,
+                useCORS: true, 
                 logging: false,
                 backgroundColor: '#ffffff'
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        showToast('Створення PDF...', 'info');
+        showToast('Підготовка PDF...', 'info');
+        
+        // Give browser some time to render internal elements
+        await new Promise(r => setTimeout(r, 500));
         
         await html2pdf().set(opt).from(tempContainer).save();
         showToast('Готово!', 'success');
