@@ -87,8 +87,10 @@ const GT_TEMPLATES = {
 
             <p class="gt-title">Заява про встановлення генеруючої установки споживачем</p>
 
-            <!-- Шапка: вхідний номер / дата реєстрації -->
-            <table class="gt-table" style="margin-bottom:10px;">
+            <!-- Основна таблиця даних -->
+            <table class="gt-table">
+
+                <!-- Реєстраційні дані (колишня шапка) -->
                 <tr>
                     <td style="width:50%; text-align:center;">
                         Вхідний номер<br>
@@ -103,10 +105,6 @@ const GT_TEMPLATES = {
                     <td style="height:22px;">&nbsp;</td>
                     <td>&nbsp;</td>
                 </tr>
-            </table>
-
-            <!-- Основна таблиця даних -->
-            <table class="gt-table">
 
                 <!-- Кому: ПрАТ «Львівобленерго» перенесено у праву клітинку -->
                 <tr>
