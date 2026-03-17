@@ -302,7 +302,7 @@ async function generateSelectedDocuments() {
         position: 'fixed',
         top: '0',
         left: '0',
-        visibility: 'hidden',
+        opacity: '0',
         pointerEvents: 'none',
         width: '210mm',
         height: 'auto',
