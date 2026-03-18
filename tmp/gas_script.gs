@@ -1,5 +1,5 @@
 /**
- * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 3.3 (Авто-фолбек для папок)
+ * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 3.4 (Перевірка доступу через Файл Таблиці)
  */
 
 var CONFIG = {
@@ -34,7 +34,7 @@ function sanitizeName(s) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput("CSO Solar Green Tariff Service v3.3 is running!").setMimeType(ContentService.MimeType.TEXT);
+  return ContentService.createTextOutput("CSO Solar Green Tariff Service v3.4 is running!").setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doPost(e) {
@@ -61,11 +61,9 @@ function getParentFolder() {
   if (CONFIG.ROOT_FOLDER_ID) {
     try {
       parentFolder = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID);
-      parentFolder.getName(); // перевірка доступу
+      parentFolder.getName();
       return { folder: parentFolder, method: "ID" };
-    } catch (e) {
-      errors.push("По ID не знайдено: " + e.toString());
-    }
+    } catch (e) { errors.push("По ID не знайдено: " + e.toString()); }
   }
   
   // Спроба 2: По імені в корені
@@ -75,19 +73,25 @@ function getParentFolder() {
       parentFolder = folders.next();
       return { folder: parentFolder, method: "Fallback Name" };
     }
-  } catch (e) {
-    errors.push("Пошук по імені не вдався: " + e.toString());
-  }
+  } catch (e) { errors.push("Пошук по імені не вдався: " + e.toString()); }
   
-  // Спроба 3: Створити нову в корені
+  // Спроба 3: Спробувати знайти папку самої таблиці (вона точно доступна!)
+  try {
+    var ssFile = DriveApp.getFileById(CONFIG.SPREADSHEET_ID);
+    var parents = ssFile.getParents();
+    if (parents.hasNext()) {
+      parentFolder = parents.next();
+      return { folder: parentFolder, method: "Spreadsheet Folder" };
+    }
+  } catch (e) { errors.push("Доступ до папки таблиці не вдався: " + e.toString()); }
+  
+  // Спроба 4: Створити нову в корені
   try {
     parentFolder = DriveApp.getRootFolder().createFolder(CONFIG.FALLBACK_FOLDER_NAME);
     return { folder: parentFolder, method: "Created New" };
-  } catch (e) {
-    errors.push("Створення нової папки не вдалося: " + e.toString());
-  }
+  } catch (e) { errors.push("Створення нової папки не вдалося: " + e.toString()); }
   
-  throw new Error("Не вдалося отримати доступ до Drive. Помилки: " + errors.join("; "));
+  throw new Error("Drive-сервіс заблокований або недоступний. Помилки: " + errors.join("; "));
 }
 
 function testDriveConnection() {
@@ -161,7 +165,7 @@ function saveProject(params) {
   try {
     var res = getParentFolder();
     var parentFolder = res.folder;
-    if (res.method !== "ID") warning = "Використано резервну папку: " + parentFolder.getName();
+    if (res.method !== "ID") warning = "Використано резервну папку [" + res.method + "]: " + parentFolder.getName();
 
     var clientName = sanitizeName(project.field4 || "Unknown_Client");
     var address = sanitizeName(project.field21 || "");
@@ -204,12 +208,7 @@ function saveProject(params) {
   if (rowIndex > 0) sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
   else sheet.appendRow(rowData);
 
-  return { 
-    success: true, id: id, 
-    filesUploaded: filesUploaded, 
-    warning: warning,
-    errors: errors.length > 0 ? errors : null 
-  };
+  return { success: true, id: id, filesUploaded: filesUploaded, warning: warning, errors: errors.length > 0 ? errors : null };
 }
 
 function getProjects() {
