@@ -152,6 +152,26 @@ const GT_TEMPLATES = {
                 border-right: 4px solid transparent;
                 border-top: 7px solid #000;
             }
+            .gt-overlay-container {
+                position: relative;
+                width: 100%;
+                background: #fff;
+                border: 1.5px solid #000;
+                overflow: hidden;
+            }
+            .gt-overlay-img {
+                display: block;
+                width: 100%;
+                height: auto;
+            }
+            .gt-overlay-label {
+                position: absolute;
+                font-size: 8.5pt;
+                line-height: 1.2;
+                color: #000;
+                font-weight: bold;
+                pointer-events: none;
+            }
             p { margin: 5px 0; }
         </style>
     `,
@@ -734,6 +754,84 @@ const GT_TEMPLATES = {
                 Об'єкт: <b>{{field21}}</b> &nbsp;|&nbsp; Замовник: <b>{{field4}}</b> &nbsp;|&nbsp; № {{field3}}
             </div>
             <div class="p2-photo-body" style="background:#fff; flex:1;">{{photo2}}</div>
+        </div>
+        <!-- ══════════ ДОДАТОК 3: ОДНОЛІНІЙНА СХЕМА (ГІБРИДНА) ══════════ -->
+        <div class="p2-page p2-appendix-page">
+            <div style="text-align:right; font-size:11pt; margin-bottom:10px;">
+                <p style="font-weight:bold; margin:0;">«ЗАТВЕРДЖУЮ»</p>
+                <p style="margin:16px 0 0;">_________________ Петро ПАСТУШОК</p>
+            </div>
+
+            <p style="font-size:14pt; font-weight:bold; text-align:center; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 10px;">
+                Схема електрична однолінійна
+            </p>
+
+            <div class="gt-overlay-container">
+                <img src="doc/shema_merezeva.jpg" class="gt-overlay-img">
+                
+                <!-- Підстанція -->
+                <div class="gt-overlay-label" style="top: 2%; left: 3%;">
+                    «{{field14}}»
+                </div>
+                
+                <!-- Опора -->
+                <div class="gt-overlay-label" style="top: 2%; left: 31%;">
+                    Опора №{{field16}}
+                </div>
+                
+                <!-- Лінія -->
+                <div class="gt-overlay-label" style="top: 10%; left: 19%;">
+                    {{field15}}
+                </div>
+                
+                <!-- Вхідний автомат -->
+                <div class="gt-overlay-label" style="top: 14%; left: 43%;">
+                    Вхідний автомат<br>
+                    Напруга: 0.4 кВ<br>
+                    Струм: {{field19}}
+                </div>
+                
+                <!-- Лічильник -->
+                <div class="gt-overlay-label" style="top: 32%; left: 45%;">
+                    Двонаправлений лічильник<br>
+                    «{{field17}}»
+                </div>
+                
+                <!-- Навантаження -->
+                <div class="gt-overlay-label" style="top: 74%; left: 5%;">
+                    Навантаження<br>
+                    житлового будинку<br>
+                    «{{field13}} кВт»
+                </div>
+                
+                <!-- Інвертор -->
+                <div class="gt-overlay-label" style="top: 68%; left: 66%;">
+                    Гібридний інвертор:<br>
+                    Модель: «{{field27}}»<br>
+                    Верхній рівень напруги: 253 В<br>
+                    Нижній рівень напруги: 207 В<br>
+                    Номінальна потужність:<br>
+                    «{{field28}} кВт»
+                </div>
+                
+                <!-- Панелі -->
+                <div class="gt-overlay-label" style="top: 85%; left: 68%;">
+                    Номінальна потужність:<br>
+                    «{{field22}} кВт»<br>
+                    Модель:<br>
+                    «{{field34}}»
+                </div>
+            </div>
+
+            <div style="margin-top:15px; font-size:11pt; border:1px solid #000; padding:10px;">
+                <p><b>Умовні позначення:</b></p>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:10pt;">
+                    <div>— Лінія електропередач 0.4 кВ</div>
+                    <div>— Вузол обліку (лічильник)</div>
+                    <div>— Сонячні панелі</div>
+                    <div>— Гібридний інвертор</div>
+                </div>
+            </div>
         </div>
     `
 };
