@@ -390,9 +390,12 @@ const GT_TEMPLATES = {
 
         </div>
     `,
-    // ─── 2. Протокол відповідності технічних вимог (з Додатками) ─────────────
-    // Сторінка 1: Титульна (як у зразку)
-    // Сторінка 2+: Зміст, розділи 1-2, Додатки
+
+    // ─── 2. Протокол відповідності технічних вимог ───────────────────────────
+    // Стор. 1: Титульна
+    // Стор. 2: Зміст (окрема сторінка)
+    // Стор. 3+: Вступ, розділи 1-2, Додаток 1 (VDE)
+    // Стор. остання: Фотофіксація (фото 1 зверху 50%, фото 2 знизу 50%)
     doc2: `
         {{styles}}
         <style>
@@ -403,16 +406,52 @@ const GT_TEMPLATES = {
                 page-break-after: always;
                 font-family: "Times New Roman", Times, serif;
             }
-            .gt-stamp-table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 12px;
-                font-size: 10pt;
+            .gt-toc-page {
+                page-break-after: always;
+                font-family: "Times New Roman", Times, serif;
+                font-size: 12pt;
             }
-            .gt-stamp-table td {
-                border: 1px solid #000;
-                padding: 3px 5px;
-                vertical-align: middle;
+            .gt-content-page {
+                font-family: "Times New Roman", Times, serif;
+                font-size: 12pt;
+                line-height: 1.5;
+            }
+            .gt-photo-page {
+                page-break-before: always;
+                min-height: 257mm;
+                display: flex;
+                flex-direction: column;
+                font-family: "Times New Roman", Times, serif;
+            }
+            .gt-photo-half {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                border: 1.5px solid #000;
+                overflow: hidden;
+                position: relative;
+            }
+            .gt-photo-half img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            }
+            .gt-photo-label {
+                font-size: 11pt;
+                font-weight: bold;
+                padding: 6px 10px;
+                background: #f5f5f5;
+                border-bottom: 1px solid #000;
+            }
+            .gt-photo-placeholder {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #fafafa;
+                color: #aaa;
+                font-size: 13pt;
+                font-style: italic;
             }
         </style>
 
@@ -426,7 +465,7 @@ const GT_TEMPLATES = {
             <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 10mm;">
 
                 <p style="font-size:24pt; font-weight:bold; letter-spacing:2px; margin:0 0 16px;">
-                    ПРОТОКОЛ ВІДПОВІДНОСТІ
+                    ПРОТОКОЛ ВІДПОВІДНОСТІ №&nbsp;{{field3}}
                 </p>
 
                 <div style="align-self:flex-end; text-align:right; margin-right:10mm; margin-top:20px; font-size:12pt;">
@@ -447,98 +486,89 @@ const GT_TEMPLATES = {
                 </div>
             </div>
 
-            <div style="text-align:center; font-size:12pt; margin-bottom:10px;">
+            <div style="text-align:center; font-size:12pt; margin-bottom:20px;">
                 м. Золочів - 2025 р.
             </div>
+        </div>
 
-            <!-- Штамп -->
-            <table class="gt-stamp-table">
+        <!-- ══════════ СТОРІНКА 2: ЗМІСТ (окрема сторінка) ══════════ -->
+        <div class="gt-toc-page">
+            <p style="font-size:14pt; font-weight:bold; margin-bottom:12px;">Зміст</p>
+            <table style="width:100%; border-collapse:collapse; font-size:12pt; line-height:2;">
                 <tr>
-                    <td rowspan="3" style="width:5%; text-align:center; font-size:9pt;">Зм.</td>
-                    <td rowspan="3" style="width:5%; text-align:center; font-size:9pt;">Арк.</td>
-                    <td rowspan="3" style="width:12%; text-align:center; font-size:9pt;">№ докум.</td>
-                    <td rowspan="3" style="width:7%; text-align:center; font-size:9pt;">Підпис</td>
-                    <td rowspan="3" style="width:7%; text-align:center; font-size:9pt;">Дата</td>
-                    <td colspan="4" style="text-align:center; font-weight:bold; font-size:11pt;">«{{field3}}»</td>
+                    <td style="padding:2px 6px; width:12%;">1.</td>
+                    <td style="padding:2px 6px;">ВСТУП</td>
+                    <td style="padding:2px 6px; text-align:right; width:8%;">3</td>
                 </tr>
                 <tr>
-                    <td style="text-align:center; font-size:9pt;">Стад.</td>
-                    <td style="text-align:center; font-size:9pt;">Аркуш</td>
-                    <td colspan="2" style="text-align:center; font-size:9pt;">Аркушів</td>
+                    <td style="padding:2px 6px;">1.1.</td>
+                    <td style="padding:2px 6px;">Примітки</td>
+                    <td style="padding:2px 6px; text-align:right;">3</td>
                 </tr>
                 <tr>
-                    <td style="text-align:center;">РП</td>
-                    <td style="text-align:center;">1</td>
-                    <td colspan="2" style="text-align:center;">4</td>
+                    <td style="padding:2px 6px;">1.2.</td>
+                    <td style="padding:2px 6px;">Вхідні дані для складання протоколу</td>
+                    <td style="padding:2px 6px; text-align:right;">3</td>
                 </tr>
                 <tr>
-                    <td style="font-size:9pt;">Затвердив</td>
-                    <td colspan="2" style="font-size:9pt;">П. В. Пастушок</td>
-                    <td></td><td></td>
-                    <td rowspan="2" colspan="2" style="font-size:9pt; text-align:center;">Пояснювальна записка</td>
-                    <td rowspan="2" colspan="2" style="font-size:10pt; font-style:italic; text-align:center;">ТОВ «Центр сервісного обслуговування»</td>
+                    <td style="padding:2px 6px;">2.</td>
+                    <td style="padding:2px 6px;">АКТ ДОТРИМАННЯ ВІДПОВІДНОСТІ ТЕХНІЧНИХ ВИМОГ</td>
+                    <td style="padding:2px 6px; text-align:right;">3</td>
                 </tr>
                 <tr>
-                    <td style="font-size:9pt;">ГІП</td>
-                    <td colspan="2" style="font-size:9pt;">Ю. П. Пастушок</td>
-                    <td></td><td></td>
+                    <td style="padding:2px 6px;">2.1.</td>
+                    <td style="padding:2px 6px;">Дотримання стандартного порогу напруг в низковольтових мережах</td>
+                    <td style="padding:2px 6px; text-align:right;">3</td>
+                </tr>
+                <tr>
+                    <td style="padding:2px 6px;">2.2.</td>
+                    <td style="padding:2px 6px;">Відповідність електрогенеруючого устаткування (інвертора) стандарту VDE-AR-N 4105</td>
+                    <td style="padding:2px 6px; text-align:right;">4</td>
                 </tr>
             </table>
         </div>
 
-        <!-- ══════════ СТОРІНКА 2: ЗМІСТ ══════════ -->
-        <div class="gt-doc-page">
+        <!-- ══════════ СТОРІНКА 3+: ВСТУП І РОЗДІЛИ ══════════ -->
+        <div class="gt-content-page">
+            <hr style="border:none; border-top:1px solid #000; margin-bottom:14px;">
 
-            <p class="gt-bold" style="font-size:14pt; margin-bottom:10px;">Зміст</p>
-            <table style="width:100%; border-collapse:collapse; font-size:12pt; line-height:1.8;">
-                <tr><td style="padding:2px 6px; width:12%;">1.</td><td style="padding:2px 6px;">ВСТУП</td><td style="padding:2px 6px; text-align:right; width:8%;">3</td></tr>
-                <tr><td style="padding:2px 6px;">1.1.</td><td style="padding:2px 6px;">Примітки</td><td style="padding:2px 6px; text-align:right;">3</td></tr>
-                <tr><td style="padding:2px 6px;">1.2.</td><td style="padding:2px 6px;">Вхідні дані для складання протоколу</td><td style="padding:2px 6px; text-align:right;">3</td></tr>
-                <tr><td style="padding:2px 6px;">2.</td><td style="padding:2px 6px;">АКТ ДОТРИМАННЯ ВІДПОВІДНОСТІ ТЕХНІЧНИХ ВИМОГ</td><td style="padding:2px 6px; text-align:right;">3</td></tr>
-                <tr><td style="padding:2px 6px;">2.1.</td><td style="padding:2px 6px;">Дотримання стандартного порогу напруг в низковольтових мережах</td><td style="padding:2px 6px; text-align:right;">3</td></tr>
-                <tr><td style="padding:2px 6px;">2.2.</td><td style="padding:2px 6px;">Відповідність електрогенеруючого устаткування (інвертора) стандарту VDE-AR-N 4105</td><td style="padding:2px 6px; text-align:right;">4</td></tr>
-            </table>
-            <hr style="border:none; border-top:1px solid #000; margin:12px 0;">
-
-            <!-- Розділ 1 -->
-            <p class="gt-bold" style="margin-top:14px; font-size:12pt;">1. ВСТУП</p>
-            <p class="gt-justify">
+            <p style="font-weight:bold; font-size:12pt;">1. ВСТУП</p>
+            <p style="text-align:justify;">
                 Даний протокол розроблений для відображення системних налаштувань для безпечної інтеграції
                 електрогенеруючого обладнання в розподільну мережу низької напруги згідно стандарту VDE-AR-N 4105:
-                <span class="gt-bold">{{field21}}</span>
+                <span style="font-weight:bold;">{{field21}}</span>
             </p>
 
-            <p class="gt-bold" style="margin-top:10px;">1.1. Примітки</p>
-            <p class="gt-justify">
+            <p style="font-weight:bold; margin-top:10px;">1.1. Примітки</p>
+            <p style="text-align:justify;">
                 Електрогенеруюче обладнання — комплекс функціонально взаємопов'язаного устаткування, що здійснює
                 виробництво електричної енергії та складається з одного або більшої кількості генераторів чи іншого
                 обладнання, що використовується для перетворення енергетичних ресурсів будь-якого походження на
                 електричну енергію.
             </p>
-            <p class="gt-justify" style="margin-top:6px;">
+            <p style="text-align:justify; margin-top:6px;">
                 VDE-AR-N 4105 — технічний стандарт для забезпечення системи виробництва електроенергії, які підключені
                 до низьковольтних розподільних мереж. Даний стандарт вимагає дотримання мінімальних технічних вимог
                 до підключення та паралельної роботи електрогенеруючого обладнання з низьковольтними розподільними мережами.
             </p>
 
-            <p class="gt-bold" style="margin-top:10px;">1.2. Вхідні дані для складання протоколу</p>
-            <p class="gt-justify">
+            <p style="font-weight:bold; margin-top:10px;">1.2. Вхідні дані для складання протоколу</p>
+            <p style="text-align:justify;">
                 Вихідні дані на розробку представлені в паспорті точки розподілу електричної енергії
                 (Додаток №2 до Договору {{field9}} від {{field10}})
             </p>
-            <ul style="margin:6px 0 0 20px; font-size:12pt; line-height:1.7;">
+            <ul style="margin:6px 0 0 20px; line-height:1.8;">
                 <li>Дозволена приєднана потужність – {{field13}} кВт;</li>
                 <li>Категорія надійності електропостачання – третя – {{field13}} кВт;</li>
-                <li>Напруга в точці приєднання – 0,4 кВ.</li>
+                <li>Напруга в точці приєднання – 0,4 кВ;</li>
                 <li>Технічні сертифікати на розумний стринговий інвертор.</li>
             </ul>
 
-            <!-- Розділ 2 -->
-            <p class="gt-bold" style="margin-top:14px; font-size:12pt;">2. АКТ ДОТРИМАННЯ ВІДПОВІДНОСТІ ТЕХНІЧНИХ ВИМОГ</p>
+            <p style="font-weight:bold; margin-top:14px; font-size:12pt;">2. АКТ ДОТРИМАННЯ ВІДПОВІДНОСТІ ТЕХНІЧНИХ ВИМОГ</p>
 
-            <p class="gt-bold" style="margin-top:8px;">2.1. Дотримання стандартного порогу напруг в низковольтових мережах</p>
-            <p class="gt-justify">
-                Виробник фотовольтаїчного інвертора <span class="gt-bold">{{field27}}</span> пройшов процедуру
+            <p style="font-weight:bold; margin-top:8px;">2.1. Дотримання стандартного порогу напруг в низковольтових мережах</p>
+            <p style="text-align:justify;">
+                Виробник фотовольтаїчного інвертора <span style="font-weight:bold;">{{field27}}</span> пройшов процедуру
                 сертифікації обладнання згідно європейського стандарту VDE 0100-551 та VDE 0124-100. Відповідно
                 до основних налаштувань інвертора, різниця між стандартною напругою в низьковольтовій мережі
                 та її піковою напругою при роботі електрогенеруючого обладнання не може перевищувати значення
@@ -548,47 +578,35 @@ const GT_TEMPLATES = {
                 Порогові напруги: <em><b>U</b></em>min = <b>207 В</b>, <em><b>U</b></em>max = <b>253 В</b>.
             </p>
 
-            <p class="gt-bold" style="margin-top:10px;">2.2. Відповідність електрогенеруючого устаткування (інвертора) стандарту VDE-AR-N 4105</p>
-            <p class="gt-justify">
+            <p style="font-weight:bold; margin-top:10px;">2.2. Відповідність електрогенеруючого устаткування (інвертора) стандарту VDE-AR-N 4105</p>
+            <p style="text-align:justify;">
                 Серійний номер інвертора, на якому здійснювались налаштування стандарту мережі та параметрів
-                робочої напруги — <span class="gt-bold">{{field29}}</span>
-                (Дивитися додаток №1 і додаток №2)
+                робочої напруги — <span style="font-weight:bold;">{{field29}}</span>
+                (Дивитися Додаток №1)
             </p>
 
-            <!-- Фотофіксація -->
-            <p class="gt-bold" style="margin-top:14px;">Фотофіксація встановленого обладнання:</p>
-            <div class="gt-photo-container">
-                <div class="gt-photo-box">
-                    <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">{{photo1}}</div>
-                    <div style="font-size:9pt; padding:3px; border-top:1px solid #eee; width:100%;">Фото 1: Інвертор та щит захисту</div>
-                </div>
-                <div class="gt-photo-box">
-                    <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">{{photo2}}</div>
-                    <div style="font-size:9pt; padding:3px; border-top:1px solid #eee; width:100%;">Фото 2: Сонячні панелі</div>
-                </div>
-            </div>
-
-            <div class="gt-signature-block">
-                <div>Склав:<br><span class="gt-signature-line"></span><br><small>ТОВ «Центр сервісного обслуговування»</small></div>
-                <div>Замовник:<br><span class="gt-signature-line"></span><br><small>{{field4}}</small></div>
-            </div>
-
             <!-- ══════════ ДОДАТОК 1: Сертифікат VDE ══════════ -->
-            <div style="margin-top:30px; border-top:2px solid #000; padding-top:16px;">
-                <p class="gt-right" style="font-size:11pt;">«ЗАТВЕРДЖУЮ»</p>
-                <p class="gt-right" style="font-size:11pt; margin-top:24px;">_________________ Петро ПАСТУШОК</p>
+            <div style="margin-top:28px; border-top:2px solid #000; padding-top:14px;">
+                <div style="text-align:right; font-size:11pt; margin-bottom:20px;">
+                    <p style="font-weight:bold; margin:0;">«ЗАТВЕРДЖУЮ»</p>
+                    <p style="margin:24px 0 0;">_________________ Петро ПАСТУШОК</p>
+                </div>
 
-                <p class="gt-title" style="margin-top:16px;">ДОДАТОК №1</p>
-                <p class="gt-bold gt-center">G.3 Сертифікат відповідності захисту мережі та системи</p>
+                <p style="font-size:14pt; font-weight:bold; text-align:center; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 6px;">
+                    ДОДАТОК №1
+                </p>
+                <p style="font-weight:bold; text-align:center; margin-bottom:12px;">
+                    G.3 Сертифікат відповідності захисту мережі та системи
+                </p>
 
-                <table class="gt-table" style="margin-top:12px; font-size:11pt;">
+                <table class="gt-table" style="font-size:11pt;">
                     <tr>
                         <td style="width:55%;" class="gt-bold">Сертифікат відповідності захисту електромережі та системи (<em>NS protection</em>)</td>
                         <td class="gt-bold">No. 70.409.16.086.03-02</td>
                     </tr>
                     <tr>
                         <td class="gt-bold">Виробник</td>
-                        <td class="gt-bold" style="text-decoration:underline;">{{field30}}</td>
+                        <td style="font-weight:bold; text-decoration:underline;">{{field30}}</td>
                     </tr>
                     <tr><td colspan="2" class="gt-bold">Тип захисту електромережі та системи</td></tr>
                     <tr>
@@ -601,7 +619,7 @@ const GT_TEMPLATES = {
                     </tr>
                     <tr>
                         <td class="gt-bold">Серійний номер інвертора</td>
-                        <td class="gt-bold" style="text-decoration:underline;">{{field29}}</td>
+                        <td style="font-weight:bold; text-decoration:underline;">{{field29}}</td>
                     </tr>
                     <tr>
                         <td class="gt-bold">Правила підключення до мережі</td>
@@ -609,7 +627,7 @@ const GT_TEMPLATES = {
                     </tr>
                     <tr>
                         <td class="gt-bold">Версія прошивки</td>
-                        <td class="gt-bold" style="text-decoration:underline;">{{field31}}</td>
+                        <td style="font-weight:bold; text-decoration:underline;">{{field31}}</td>
                     </tr>
                     <tr>
                         <td class="gt-bold">Тип вбудованого інтерфейсного перемикача</td>
@@ -617,7 +635,7 @@ const GT_TEMPLATES = {
                     </tr>
                     <tr>
                         <td class="gt-bold">Час тестування</td>
-                        <td class="gt-bold" style="text-decoration:underline;">{{field11}}</td>
+                        <td style="font-weight:bold; text-decoration:underline;">{{field11}}</td>
                     </tr>
                     <tr><td colspan="2">Захист мережі та системи відповідає вимогам VDE-AR-N 4105</td></tr>
                 </table>
@@ -642,54 +660,37 @@ const GT_TEMPLATES = {
                     <sup>c</sup> Допуск: напруга ±1%, частота ±0,1%.
                 </p>
             </div>
+        </div>
 
-            <!-- ══════════ ДОДАТОК 2: Однолінійна схема ══════════ -->
-            <div style="margin-top:30px; border-top:2px solid #000; padding-top:16px;">
-                <p class="gt-right" style="font-size:11pt;">«ЗАТВЕРДЖУЮ»</p>
-                <p class="gt-right" style="font-size:11pt; margin-top:24px;">_________________ Петро ПАСТУШОК</p>
+        <!-- ══════════ ОСТАННЯ СТОРІНКА: ФОТОФІКСАЦІЯ ══════════
+             Фото 1 — верхні 50% сторінки
+             Фото 2 — нижні 50% сторінки
+             Кожне фото займає рівно половину висоти аркуша A4
+        -->
+        <div class="gt-photo-page">
 
-                <p class="gt-title" style="margin-top:16px;">ДОДАТОК №2</p>
-                <p class="gt-bold gt-center">Серійний номер інвертора «{{field27}}»</p>
-                <p class="gt-center" style="font-size:11pt; margin-top:6px;">
-                    Улаштування вузла обліку генеруючої установки приватного домогосподарства за адресою:<br>
-                    <span class="gt-bold">{{field21}}</span>
-                </p>
-                <p class="gt-center gt-italic" style="font-size:11pt;">Електропостачання та облік електричної енергії, однолінійна схема</p>
+            <p style="font-size:13pt; font-weight:bold; margin:0 0 8px;">
+                Фотофіксація встановленого обладнання
+            </p>
+            <p style="font-size:11pt; margin:0 0 10px;">
+                Об'єкт: <span style="font-weight:bold;">{{field21}}</span> &nbsp;|&nbsp;
+                Замовник: <span style="font-weight:bold;">{{field4}}</span> &nbsp;|&nbsp;
+                № {{field3}}
+            </p>
 
-                <div class="gt-diagram-container" style="height:560px;">
-                    <div class="gt-node" style="left:50%; top:15px; transform:translateX(-50%); background:#e3f2fd;">
-                        СОНЯЧНІ ПАНЕЛІ<br><small>{{field34}}<br>{{field23}} шт. / {{field22}} кВт</small>
-                    </div>
-                    <div class="gt-line gt-arrow-down" style="left:50%; top:70px; width:2px; height:30px; transform:translateX(-50%);"></div>
-                    <div class="gt-node" style="left:50%; top:100px; transform:translateX(-50%); background:#f1f8e9;">
-                        ІНВЕРТОР<br><small>{{field27}}<br>{{field28}} кВт · с/н: {{field29}}</small>
-                    </div>
-                    <div class="gt-line gt-arrow-down" style="left:50%; top:165px; width:2px; height:30px; transform:translateX(-50%);"></div>
-                    <div style="display:{{stationType === 'Гібридна' ? 'block' : 'none'}}">
-                        <div class="gt-line" style="left:50%; top:185px; width:55px; height:2px; transform:translateX(0);"></div>
-                        <div class="gt-node" style="left:calc(50% + 55px); top:165px; background:#fffde7; width:120px;">АКБ<br><small>{{field36}}<br>{{field37}} кВт·год</small></div>
-                    </div>
-                    <div class="gt-node" style="left:50%; top:195px; transform:translateX(-50%); border-style:dashed;">
-                        ЩИТ ЗАХИСТУ<br><small>Автомат: {{field19}}</small>
-                    </div>
-                    <div class="gt-line gt-arrow-down" style="left:50%; top:250px; width:2px; height:30px; transform:translateX(-50%);"></div>
-                    <div class="gt-node" style="left:50%; top:280px; transform:translateX(-50%); border-radius:40px; height:55px; display:flex; align-items:center; justify-content:center; flex-direction:column;">
-                        ЛІЧИЛЬНИК<br><small>{{field17}}</small>
-                    </div>
-                    <div class="gt-line gt-arrow-down" style="left:50%; top:335px; width:2px; height:30px; transform:translateX(-50%);"></div>
-                    <div class="gt-node" style="left:50%; top:365px; transform:translateX(-50%); background:#eceff1; border-width:2px;">
-                        МЕРЕЖА ОСР<br><small>{{field18}}<br>ПС: {{field14}}, Л: {{field15}}, Оп: {{field16}}</small>
-                    </div>
-                    <div style="position:absolute; bottom:12px; left:12px; font-size:9pt;">
-                        <b>Умовні позначення:</b><br>
-                        <span style="border:1px solid #000; padding:0 5px;">&nbsp;</span> Лінія зв'язку &nbsp;
-                        <span style="border:1.5px dashed #000; padding:0 5px;">&nbsp;</span> Межа балансової належності
-                    </div>
+            <!-- Фото 1 — 50% висоти -->
+            <div class="gt-photo-half" style="margin-bottom:6px;">
+                <div class="gt-photo-label">Фото 1 — Інвертор та щит захисту</div>
+                <div class="gt-photo-placeholder">
+                    {{photo1}}
                 </div>
+            </div>
 
-                <div style="display:flex; justify-content:space-between; margin-top:12px; font-size:11pt;">
-                    <div>Затвердив: П. В. Пастушок<br>ГІП: Ю. П. Пастушок</div>
-                    <div style="text-align:right;"><em>ТОВ «Центр сервісного обслуговування»</em><br>Стад.: РП &nbsp; Аркуш: 1 &nbsp; Аркушів: 1</div>
+            <!-- Фото 2 — 50% висоти -->
+            <div class="gt-photo-half">
+                <div class="gt-photo-label">Фото 2 — Сонячні панелі</div>
+                <div class="gt-photo-placeholder">
+                    {{photo2}}
                 </div>
             </div>
 
