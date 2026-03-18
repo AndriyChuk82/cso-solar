@@ -402,7 +402,7 @@ const GT_TEMPLATES = {
                 color: #000;
             }
             .p2-title-page {
-                min-height: 257mm;
+                min-height: 275mm; /* Збільшено для того щоб футер був у самому низу */
                 display: flex;
                 flex-direction: column;
                 page-break-after: always;
