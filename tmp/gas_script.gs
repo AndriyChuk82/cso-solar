@@ -1,9 +1,9 @@
 /**
- * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 2.4 (Фікс колонок та завантаження файлів)
+ * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 2.5 (Фікс SPREADSHEET_ID)
  */
 
 var CONFIG = {
-  SPREADSHEET_ID: '1FbzOPKEroa1FbzOPKEroa6QyghgqMFGJMRCdYx_yS0RDXoHzuI_GmY', // ID вашої таблиці
+  SPREADSHEET_ID: '1FbzOPKEroa6QyghgqMFGJMRCdYx_yS0RDXoHzuI_GmY', // ВИПРАВЛЕНО
   SHEET_NAME: 'Зелений тариф',
   ROOT_FOLDER_ID: '1Bhkaot09fCC4rx5udWjHxExqre7LcCrF'
 };
@@ -29,7 +29,7 @@ function normalizeHeader(s) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput("CSO Solar Green Tariff Service v2.4 is running!").setMimeType(ContentService.MimeType.TEXT);
+  return ContentService.createTextOutput("CSO Solar Green Tariff Service v2.5 is running!").setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doPost(e) {
@@ -58,11 +58,9 @@ function saveProject(params) {
     sheet.getRange(1, 1, 1, initHeaders.length).setValues([initHeaders]).setFontWeight('bold');
   }
 
-  // Отримуємо поточні заголовки та нормалізуємо їх для порівняння
   var currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   var normalizedSheetHeaders = currentHeaders.map(normalizeHeader);
 
-  // Перевіряємо чи є всі потрібні колонки (якщо немає - додаємо)
   Object.values(FIELD_MAP).forEach(function(h) {
     var normH = normalizeHeader(h);
     if (normalizedSheetHeaders.indexOf(normH) === -1) {
@@ -105,7 +103,6 @@ function saveProject(params) {
     if (normH === 'дата створення') return now;
     if (normH === 'folder_url') return folderUrl;
     
-    // Шукаємо який fieldId відповідає цьому заголовку
     for (var fieldId in FIELD_MAP) {
       if (normalizeHeader(FIELD_MAP[fieldId]) === normH) {
         return project[fieldId] || "";
@@ -130,23 +127,27 @@ function saveProject(params) {
 }
 
 function getProjects() {
-  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-  var sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
-  if (!sheet) return {success: true, projects: []};
-  var data = sheet.getDataRange().getValues(), headers = data[0], projects = [];
-  
-  for (var i = 1; i < data.length; i++) {
-    var p = {}, hasVal = false;
-    for (var j = 0; j < headers.length; j++) {
-      var val = data[i][j];
-      if (val instanceof Date) val = Utilities.formatDate(val, "GMT+2", "dd.MM.yyyy HH:mm");
-      if (val !== "") hasVal = true;
-      p[headers[j]] = val;
+  try {
+    var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
+    if (!sheet) return {success: true, projects: []};
+    var data = sheet.getDataRange().getValues(), headers = data[0], projects = [];
+    
+    for (var i = 1; i < data.length; i++) {
+      var p = {}, hasVal = false;
+      for (var j = 0; j < headers.length; j++) {
+        var val = data[i][j];
+        if (val instanceof Date) val = Utilities.formatDate(val, "GMT+2", "dd.MM.yyyy HH:mm");
+        if (val !== "") hasVal = true;
+        p[headers[j]] = val;
+      }
+      if (hasVal) {
+        if (!p['ID'] && !p['id']) p['ID'] = "row-" + (i + 1);
+        projects.push(p);
+      }
     }
-    if (hasVal) {
-      if (!p['ID'] && !p['id']) p['ID'] = "row-" + (i + 1);
-      projects.push(p);
-    }
+    return {success: true, projects: projects.reverse()};
+  } catch (err) {
+    return {success: false, error: err.toString()};
   }
-  return {success: true, projects: projects.reverse()};
 }
