@@ -1,5 +1,5 @@
 /**
- * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 3.4 (Перевірка доступу через Файл Таблиці)
+ * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 3.5 (Додано Logger для тесту)
  */
 
 var CONFIG = {
@@ -34,7 +34,7 @@ function sanitizeName(s) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput("CSO Solar Green Tariff Service v3.4 is running!").setMimeType(ContentService.MimeType.TEXT);
+  return ContentService.createTextOutput("CSO Solar Green Tariff Service v3.5 is running!").setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doPost(e) {
@@ -57,7 +57,6 @@ function getParentFolder() {
   var parentFolder;
   var errors = [];
   
-  // Спроба 1: По ID
   if (CONFIG.ROOT_FOLDER_ID) {
     try {
       parentFolder = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID);
@@ -66,7 +65,6 @@ function getParentFolder() {
     } catch (e) { errors.push("По ID не знайдено: " + e.toString()); }
   }
   
-  // Спроба 2: По імені в корені
   try {
     var folders = DriveApp.getRootFolder().getFoldersByName(CONFIG.FALLBACK_FOLDER_NAME);
     if (folders.hasNext()) {
@@ -75,7 +73,6 @@ function getParentFolder() {
     }
   } catch (e) { errors.push("Пошук по імені не вдався: " + e.toString()); }
   
-  // Спроба 3: Спробувати знайти папку самої таблиці (вона точно доступна!)
   try {
     var ssFile = DriveApp.getFileById(CONFIG.SPREADSHEET_ID);
     var parents = ssFile.getParents();
@@ -85,7 +82,6 @@ function getParentFolder() {
     }
   } catch (e) { errors.push("Доступ до папки таблиці не вдався: " + e.toString()); }
   
-  // Спроба 4: Створити нову в корені
   try {
     parentFolder = DriveApp.getRootFolder().createFolder(CONFIG.FALLBACK_FOLDER_NAME);
     return { folder: parentFolder, method: "Created New" };
@@ -97,14 +93,18 @@ function getParentFolder() {
 function testDriveConnection() {
   try {
     var res = getParentFolder();
-    return {
+    var result = {
       success: true,
       folderName: res.folder.getName(),
       method: res.method,
       canEdit: true
     };
+    Logger.log("SUCCESS: " + JSON.stringify(result));
+    return result;
   } catch (e) {
-    return { success: false, error: e.toString() };
+    var errResult = { success: false, error: e.toString() };
+    Logger.log("ERROR: " + JSON.stringify(errResult));
+    return errResult;
   }
 }
 
