@@ -184,12 +184,12 @@
                 if (docId === '2') {
                     template = template.split('{{photo1}}').join(
                         photos.photo1
-                            ? `<img src="${photos.photo1}" style="width:100%; height:100%; object-fit:contain;">`
+                            ? `<img src="${photos.photo1}" style="width:100%; height:100%; object-fit:fill;">`
                             : '<span style="display:block; text-align:center; padding:20px; border:1px dashed #ccc;">(Фото 1: Інвертор)</span>'
                     );
                     template = template.split('{{photo2}}').join(
                         photos.photo2
-                            ? `<img src="${photos.photo2}" style="width:100%; height:100%; object-fit:contain;">`
+                            ? `<img src="${photos.photo2}" style="width:100%; height:100%; object-fit:fill;">`
                             : '<span style="display:block; text-align:center; padding:20px; border:1px dashed #ccc;">(Фото 2: С/н інвертора)</span>'
                     );
                 }
