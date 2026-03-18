@@ -1,9 +1,9 @@
 /**
- * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 2.3 (Фікс завантаження списку)
+ * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 2.4 (Фікс колонок та завантаження файлів)
  */
 
 var CONFIG = {
-  SPREADSHEET_ID: '1FbzOPKEroa6QyghgqMFGJMRCdYx_yS0RDXoHzuI_GmY',
+  SPREADSHEET_ID: '1FbzOPKEroa1FbzOPKEroa6QyghgqMFGJMRCdYx_yS0RDXoHzuI_GmY', // ID вашої таблиці
   SHEET_NAME: 'Зелений тариф',
   ROOT_FOLDER_ID: '1Bhkaot09fCC4rx5udWjHxExqre7LcCrF'
 };
@@ -24,8 +24,12 @@ var FIELD_MAP = {
   'stationType': 'Тип станції', 'Folder_URL': 'Folder_URL'
 };
 
+function normalizeHeader(s) {
+  return (s || "").toString().toLowerCase().replace(/[\n\r"]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 function doGet(e) {
-  return ContentService.createTextOutput("CSO Solar Green Tariff Service v2.3 is running!").setMimeType(ContentService.MimeType.TEXT);
+  return ContentService.createTextOutput("CSO Solar Green Tariff Service v2.4 is running!").setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doPost(e) {
@@ -46,21 +50,27 @@ function sendJson(obj) {
 function saveProject(params) {
   var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
-  var headers = ['ID', 'Дата створення'];
-  Object.values(FIELD_MAP).forEach(function(v) { headers.push(v); });
-
+  
   if (!sheet) {
     sheet = ss.insertSheet(CONFIG.SHEET_NAME);
-    sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
-  } else {
-    var currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    headers.forEach(function(h) {
-      if (currentHeaders.indexOf(h) === -1) {
-        sheet.getRange(1, sheet.getLastColumn() + 1).setValue(h).setFontWeight('bold');
-      }
-    });
-    headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var initHeaders = ['ID', 'Дата створення'];
+    Object.values(FIELD_MAP).forEach(function(v) { initHeaders.push(v); });
+    sheet.getRange(1, 1, 1, initHeaders.length).setValues([initHeaders]).setFontWeight('bold');
   }
+
+  // Отримуємо поточні заголовки та нормалізуємо їх для порівняння
+  var currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var normalizedSheetHeaders = currentHeaders.map(normalizeHeader);
+
+  // Перевіряємо чи є всі потрібні колонки (якщо немає - додаємо)
+  Object.values(FIELD_MAP).forEach(function(h) {
+    var normH = normalizeHeader(h);
+    if (normalizedSheetHeaders.indexOf(normH) === -1) {
+      sheet.getRange(1, sheet.getLastColumn() + 1).setValue(h).setFontWeight('bold');
+      normalizedSheetHeaders.push(normH);
+      currentHeaders.push(h);
+    }
+  });
 
   var project = params.project;
   var files = params.files || [];
@@ -75,25 +85,46 @@ function saveProject(params) {
     if (folders.hasNext()) targetFolder = folders.next();
     else targetFolder = parentFolder.createFolder(folderName);
     folderUrl = targetFolder.getUrl();
+    
     files.forEach(function(f) {
-      var blob = Utilities.newBlob(Utilities.base64Decode(f.base64), f.type || "application/octet-stream", f.name);
-      targetFolder.createFile(blob);
+      try {
+        var bytes = Utilities.base64Decode(f.base64);
+        var blob = Utilities.newBlob(bytes, f.type || "application/octet-stream", f.name);
+        targetFolder.createFile(blob);
+      } catch (fileErr) {
+        console.log("Error saving file: " + f.name + " - " + fileErr.toString());
+      }
     });
-  } catch (e) {}
+  } catch (err) {
+    console.log("Folder/File error: " + err.toString());
+  }
 
-  var rowData = headers.map(function(h) {
-    if (h === 'ID') return id;
-    if (h === 'Дата створення') return now;
-    if (h === 'Folder_URL') return folderUrl;
-    for (var key in FIELD_MAP) { if (FIELD_MAP[key] === h) return project[key] || ""; }
+  var rowData = currentHeaders.map(function(h) {
+    var normH = normalizeHeader(h);
+    if (normH === 'id') return id;
+    if (normH === 'дата створення') return now;
+    if (normH === 'folder_url') return folderUrl;
+    
+    // Шукаємо який fieldId відповідає цьому заголовку
+    for (var fieldId in FIELD_MAP) {
+      if (normalizeHeader(FIELD_MAP[fieldId]) === normH) {
+        return project[fieldId] || "";
+      }
+    }
     return "";
   });
 
   var dataRows = sheet.getDataRange().getValues();
   var rowIndex = -1;
-  for (var j = 1; j < dataRows.length; j++) { if (dataRows[j][0] === id) { rowIndex = j + 1; break; } }
-  if (rowIndex > 0) sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
-  else sheet.appendRow(rowData);
+  for (var j = 1; j < dataRows.length; j++) { 
+    if (dataRows[j][0] === id) { rowIndex = j + 1; break; } 
+  }
+  
+  if (rowIndex > 0) {
+    sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
+  } else {
+    sheet.appendRow(rowData);
+  }
 
   return {success: true, id: id, folderUrl: folderUrl};
 }
@@ -112,7 +143,6 @@ function getProjects() {
       if (val !== "") hasVal = true;
       p[headers[j]] = val;
     }
-    // ГЕНЕРУЄМО ID ЯКЩО ЙОГО НЕМАЄ (для існуючих рядків)
     if (hasVal) {
       if (!p['ID'] && !p['id']) p['ID'] = "row-" + (i + 1);
       projects.push(p);
