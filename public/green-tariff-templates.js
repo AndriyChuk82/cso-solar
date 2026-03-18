@@ -755,8 +755,12 @@ const GT_TEMPLATES = {
             </div>
             <div class="p2-photo-body" style="background:#fff; flex:1;">{{photo2}}</div>
         </div>
-        <!-- ══════════ ДОДАТОК 3: ОДНОЛІНІЙНА СХЕМА (ГІБРИДНА) ══════════ -->
-        <div class="p2-page p2-appendix-page">
+    `,
+
+    // ─── 3. Схема електрична однолінійна ─────────────────────────────────────
+    doc3: `
+        {{styles}}
+        <div class="p2-page p2-appendix-page" style="padding: 15mm;">
             <div style="text-align:right; font-size:11pt; margin-bottom:10px;">
                 <p style="font-weight:bold; margin:0;">«ЗАТВЕРДЖУЮ»</p>
                 <p style="margin:16px 0 0;">_________________ Петро ПАСТУШОК</p>
