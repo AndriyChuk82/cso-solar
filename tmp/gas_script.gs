@@ -1,5 +1,5 @@
 /**
- * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 2.6 (Фікс завантаження файлів)
+ * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 2.8 (Фікс формату дат)
  */
 
 var CONFIG = {
@@ -29,7 +29,7 @@ function normalizeHeader(s) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput("CSO Solar Green Tariff Service v2.6 is running!").setMimeType(ContentService.MimeType.TEXT);
+  return ContentService.createTextOutput("CSO Solar Green Tariff Service v2.8 is running!").setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doPost(e) {
@@ -80,19 +80,13 @@ function saveProject(params) {
   var errors = [];
 
   try {
-    // Назва папки: ПІБ + Адреса (field4 + field21)
     var clientName = project.field4 || "Unknown_Client";
     var address = project.field21 || "";
     var folderName = clientName + (address ? " - " + address : "");
-    
     var parentFolder = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID);
     var targetFolder, folders = parentFolder.getFoldersByName(folderName);
-    
-    if (folders.hasNext()) {
-      targetFolder = folders.next();
-    } else {
-      targetFolder = parentFolder.createFolder(folderName);
-    }
+    if (folders.hasNext()) targetFolder = folders.next();
+    else targetFolder = parentFolder.createFolder(folderName);
     folderUrl = targetFolder.getUrl();
     
     files.forEach(function(f) {
@@ -103,11 +97,11 @@ function saveProject(params) {
         targetFolder.createFile(blob);
         filesUploaded++;
       } catch (fileErr) {
-        errors.push("File " + f.name + ": " + fileErr.toString());
+        errors.push("Помилка файлу " + f.name + ": " + fileErr.toString());
       }
     });
   } catch (err) {
-    errors.push("Folder/Drive error: " + err.toString());
+    errors.push("Помилка папки: " + err.toString());
   }
 
   var rowData = currentHeaders.map(function(h) {
@@ -115,11 +109,8 @@ function saveProject(params) {
     if (normH === 'id') return id;
     if (normH === 'дата створення') return now;
     if (normH === 'folder_url') return folderUrl;
-    
     for (var fieldId in FIELD_MAP) {
-      if (normalizeHeader(FIELD_MAP[fieldId]) === normH) {
-        return project[fieldId] || "";
-      }
+      if (normalizeHeader(FIELD_MAP[fieldId]) === normH) return project[fieldId] || "";
     }
     return "";
   });
@@ -127,22 +118,16 @@ function saveProject(params) {
   var dataRows = sheet.getDataRange().getValues();
   var rowIndex = -1;
   for (var j = 1; j < dataRows.length; j++) { 
-    if (dataRows[j][0] === id) { rowIndex = j + 1; break; } 
+    if (dataRows[j][0].toString().toLowerCase() === id.toString().toLowerCase()) { 
+      rowIndex = j + 1; 
+      break; 
+    } 
   }
   
-  if (rowIndex > 0) {
-    sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
-  } else {
-    sheet.appendRow(rowData);
-  }
+  if (rowIndex > 0) sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
+  else sheet.appendRow(rowData);
 
-  return {
-    success: true, 
-    id: id, 
-    folderUrl: folderUrl, 
-    filesUploaded: filesUploaded,
-    errors: errors.length > 0 ? errors : null
-  };
+  return { success: true, id: id, filesUploaded: filesUploaded, errors: errors.length > 0 ? errors : null };
 }
 
 function getProjects() {
@@ -151,12 +136,19 @@ function getProjects() {
     var sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
     if (!sheet) return {success: true, projects: []};
     var data = sheet.getDataRange().getValues(), headers = data[0], projects = [];
-    
     for (var i = 1; i < data.length; i++) {
       var p = {}, hasVal = false;
       for (var j = 0; j < headers.length; j++) {
         var val = data[i][j];
-        if (val instanceof Date) val = Utilities.formatDate(val, "GMT+2", "dd.MM.yyyy HH:mm");
+        if (val instanceof Date) {
+          var h = normalizeHeader(headers[j]);
+          // Якщо це Дата створення - залишаємо з часом, решта - тільки дата
+          if (h === 'дата створення' || h.indexOf('created') !== -1) {
+            val = Utilities.formatDate(val, "GMT+2", "dd.MM.yyyy HH:mm");
+          } else {
+            val = Utilities.formatDate(val, "GMT+2", "dd.MM.yyyy"); // ТІЛЬКИ ДАТА
+          }
+        }
         if (val !== "") hasVal = true;
         p[headers[j]] = val;
       }
@@ -166,7 +158,5 @@ function getProjects() {
       }
     }
     return {success: true, projects: projects.reverse()};
-  } catch (err) {
-    return {success: false, error: err.toString()};
-  }
+  } catch (err) { return {success: false, error: err.toString()}; }
 }

@@ -254,11 +254,17 @@ async function handleFormSubmit(e) {
     try {
         const res = await gasGTRequest('saveProject', {
             action: 'saveProject', project: formData,
-            files: gtState.files, id: gtState.currentProject?.id || null
+            files: gtState.files, 
+            id: getProp(gtState.currentProject, ['id', 'ID']) || null
         });
         if (res.success) { 
-            showToast(`Проєкт збережено! Файлів: ${res.filesUploaded || 0}`, 'success'); 
-            gtState.files = []; // Очищуємо після успішного завантаження
+            let msg = `Проєкт збережено! Файлів: ${res.filesUploaded || 0}`;
+            if (res.errors) {
+                console.error('Drive Errors:', res.errors);
+                msg += " (Помилки завантаження файлів)";
+            }
+            showToast(msg, res.errors ? 'warning' : 'success'); 
+            gtState.files = []; 
             renderFileList();
             fetchProjects(); 
         }
