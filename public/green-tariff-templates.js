@@ -439,7 +439,8 @@ const GT_TEMPLATES = {
 
             <div style="text-align:center; margin-bottom:20mm;">
                 <p style="font-size:20pt; font-weight:bold; margin:0; text-transform:uppercase; letter-spacing:1px;">
-                    ПРОТОКОЛ ВІДПОВІДНОСТІ №&nbsp;{{field3}}
+                    ПРОТОКОЛ ВІДПОВІДНОСТІ 
+                <p>&nbsp;{{field3}}</p>
                 </p>
             </div>
 
