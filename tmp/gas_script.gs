@@ -1,5 +1,5 @@
 /**
- * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 3.1 (Глибока діагностика Drive)
+ * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 3.2 (Перевірка доступу до Drive)
  */
 
 var CONFIG = {
@@ -33,7 +33,7 @@ function sanitizeName(s) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput("CSO Solar Green Tariff Service v3.1 is running!").setMimeType(ContentService.MimeType.TEXT);
+  return ContentService.createTextOutput("CSO Solar Green Tariff Service v3.2 is running!").setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doPost(e) {
@@ -41,6 +41,7 @@ function doPost(e) {
     var data = JSON.parse(e.postData.contents);
     if (data.action === 'saveProject') return sendJson(saveProject(data));
     if (data.action === 'getProjects') return sendJson(getProjects());
+    if (data.action === 'testDrive') return sendJson(testDriveConnection()); // Нова дія для тесту
     return sendJson({success: false, error: "Unknown action"});
   } catch (err) {
     return sendJson({success: false, error: err.toString()});
@@ -49,6 +50,20 @@ function doPost(e) {
 
 function sendJson(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function testDriveConnection() {
+  try {
+    var folder = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID);
+    return {
+      success: true,
+      folderName: folder.getName(),
+      owner: folder.getOwner().getEmail(),
+      canEdit: folder.getAccess(Session.getEffectiveUser()) === DriveApp.Permission.EDIT || folder.getAccess(Session.getEffectiveUser()) === DriveApp.Permission.OWNER
+    };
+  } catch (e) {
+    return { success: false, error: e.toString(), rootId: CONFIG.ROOT_FOLDER_ID };
+  }
 }
 
 function saveProject(params) {
@@ -100,7 +115,7 @@ function saveProject(params) {
 
   if (rowIndex === -1) id = Utilities.getUuid();
 
-  // --- DRIVE LOGIC WITH GRANULAR DIAGNOSTICS ---
+  // --- DRIVE LOGIC ---
   var folderUrl = "";
   var filesUploaded = 0;
   var errors = [];
@@ -108,7 +123,6 @@ function saveProject(params) {
     var parentFolder;
     try {
       parentFolder = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID);
-      // Перевірка що ми можемо прочитати хоча б ім'я
       parentFolder.getName();
     } catch (e) {
       throw new Error("[ROOT access] Не знайдено папку ROOT (ID: " + CONFIG.ROOT_FOLDER_ID + "). Перевірте цей ID або наявність прав [Edit] до цієї папки у вашому акаунті.");
@@ -122,10 +136,7 @@ function saveProject(params) {
     try {
       var folders = parentFolder.getFoldersByName(folderName);
       if (folders.hasNext()) targetFolder = folders.next();
-      else {
-        // ТУТ може бути серверна помилка через права у Shared Drive
-        targetFolder = parentFolder.createFolder(folderName);
-      }
+      else targetFolder = parentFolder.createFolder(folderName);
     } catch (e) {
       throw new Error("[Folder processing] Не вдалося створити або відкрити папку '" + folderName + "'. Помилка Google Drive: " + e.toString());
     }
@@ -142,7 +153,6 @@ function saveProject(params) {
       } catch (fileErr) { errors.push("Файл " + f.name + ": " + fileErr.toString()); }
     });
   } catch (err) { errors.push("Помилка Drive: " + err.toString()); }
-  // --- END DRIVE LOGIC ---
 
   var rowData = currentHeaders.map(function(h) {
     var normH = normalizeHeader(h);
