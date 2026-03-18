@@ -711,6 +711,68 @@ const GT_TEMPLATES = {
             </p>
         </div>
 
+
+        <!-- ══════════ ДОДАТОК 2: Налаштування інвертора — з НОВОГО ЛИСТА ══════════ -->
+        <div class="p2-page p2-appendix-page">
+            <div style="text-align:right; font-size:12pt; margin-bottom:20px;">
+                <p style="font-weight:bold; margin:0;">«ЗАТВЕРДЖУЮ»</p>
+                <p style="margin:24px 0 0;">_________________ Петро ПАСТУШОК</p>
+            </div>
+
+            <p style="font-size:15pt; font-weight:bold; text-align:center; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 6px;">
+                ДОДАТОК №2
+            </p>
+            <p style="font-size:13pt; text-align:justify; margin-bottom:16px; line-height:1.9;">
+                В даному додатку відображені базові налаштування параметрів робочих характеристик
+                напруг інвертора, вибраний відповідний стандарт електромережі та надано серійний номер інвертора.
+            </p>
+
+            <p style="font-weight:bold; font-size:14pt; margin-bottom:14px;">2.1 Налаштування параметрів напруги інвертора</p>
+
+            <!-- Фото скріншота налаштувань -->
+            <div style="
+                border: 1.5px solid #000;
+                min-height: 320px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                background: #fafafa;
+                margin-bottom: 14px;
+            ">
+                {{photo_inverter_settings}}
+            </div>
+
+            <!-- Пояснення до скріншота -->
+            <table class="p2-vde-table" style="font-size:12.5pt;">
+                <tr>
+                    <td style="width:55%;">Стандарт мережі</td>
+                    <td style="font-weight:bold;">VDE-AR-N-4105</td>
+                </tr>
+                <tr>
+                    <td>Верхній поріг відключення від мережі</td>
+                    <td style="font-weight:bold;">253.0 V</td>
+                </tr>
+                <tr>
+                    <td>Нижній поріг відключення від мережі</td>
+                    <td style="font-weight:bold;">207.0 V</td>
+                </tr>
+                <tr>
+                    <td>Верхня межа частоти</td>
+                    <td style="font-weight:bold;">50.10 Hz</td>
+                </tr>
+                <tr>
+                    <td>Нижня межа частоти</td>
+                    <td style="font-weight:bold;">47.50 Hz</td>
+                </tr>
+                <tr>
+                    <td>Серійний номер інвертора</td>
+                    <td style="font-weight:bold; text-decoration:underline;">{{field29}}</td>
+                </tr>
+            </table>
+        </div>
+
         <!-- ══════════ ФОТОФІКСАЦІЯ — ОСТАННЯ СТОРІНКА ══════════ -->
         <div class="p2-photo-page">
             <p style="font-size:14pt; font-weight:bold; margin:0 0 6px;">
