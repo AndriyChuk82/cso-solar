@@ -349,12 +349,11 @@ const GT_TEMPLATES = {
                 color: #000;
             }
             .p2-title-page {
-                min-height: 282mm; /* Збільшено для того щоб футер був у самому низу А4 */
+                min-height: 265mm; /* 297mm - 30mm margins ~ 265mm */
                 display: flex;
                 flex-direction: column;
                 page-break-after: always;
                 font-family: "Times New Roman", Times, serif;
-                padding: 15mm 15mm 10mm;
                 box-sizing: border-box;
             }
             .p2-toc-page {
@@ -368,7 +367,7 @@ const GT_TEMPLATES = {
             }
             .p2-photo-full {
                 page-break-before: always;
-                height: 275mm; /* Повна висота листа А4 */
+                min-height: 265mm; /* Повна висота контентної області А4 */
                 display: flex;
                 flex-direction: column;
                 border: 1.5px solid #000;

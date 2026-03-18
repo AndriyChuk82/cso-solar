@@ -8,7 +8,7 @@
     <style>
         @page {
             size: A4 portrait;
-            margin: 10mm;
+            margin: 0; /* Вимикаємо поля браузера, щоб контролювати їх лише через CSS */
         }
         body {
             font-family: "Times New Roman", Times, serif;
@@ -18,6 +18,8 @@
             background: #f0f0f0;
             margin: 0;
             padding: 20px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
         .no-print {
             position: fixed;
@@ -47,10 +49,12 @@
         }
         .doc-wrapper {
             background: white;
-            padding: 10mm;
+            padding: 15mm 15mm; /* Стандартні поля документів */
             box-sizing: border-box;
             page-break-after: always;
             position: relative;
+            width: 210mm;
+            min-height: 297mm;
         }
         .doc-wrapper:last-child {
             page-break-after: avoid;
@@ -70,12 +74,15 @@
                 display: none !important;
             }
             .print-container {
-                width: 100%;
+                width: 210mm;
                 box-shadow: none;
+                margin: 0;
             }
             .doc-wrapper {
-                padding: 0;
+                padding: 15mm 15mm;
                 margin: 0;
+                width: 210mm;
+                min-height: 297mm;
             }
         }
     </style>
