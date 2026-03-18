@@ -380,8 +380,10 @@ async function generateSelectedDocuments() {
 
     const photo1File = document.getElementById('protoPhoto1').files[0];
     const photo2File = document.getElementById('protoPhoto2').files[0];
+    const photo3File = document.getElementById('protoPhoto3').files[0];
     let photo1Base64 = '';
     let photo2Base64 = '';
+    let photo3Base64 = '';
 
     if (photo1File) {
         photo1Base64 = await fileToBase64(photo1File);
@@ -399,11 +401,27 @@ async function generateSelectedDocuments() {
             console.log(`📷 Фото 2 стиснено: ${Math.round(photo2Base64.length / 1024)} KB`);
         }
     }
+    if (photo3File) {
+        photo3Base64 = await fileToBase64(photo3File);
+        if (photo3Base64.length > PHOTO_LIMIT) {
+            showToast('Стискаємо фото 3...', 'info');
+            photo3Base64 = await compressImage(photo3Base64, 0.75);
+            console.log(`📷 Фото 3 стиснено: ${Math.round(photo3Base64.length / 1024)} KB`);
+        }
+    }
 
     try {
         showToast('Готуємо документи...', 'info');
 
-        const printData = { selected, formData, photos: { photo1: photo1Base64, photo2: photo2Base64 } };
+        const printData = { 
+            selected, 
+            formData, 
+            photos: { 
+                photo1: photo1Base64, 
+                photo2: photo2Base64, 
+                photo3: photo3Base64 
+            } 
+        };
 
         // Використовуємо localStorage з унікальним ключем (timestamp).
         //

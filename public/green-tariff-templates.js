@@ -786,13 +786,13 @@ const GT_TEMPLATES = {
 
             <!-- Фото 1 — 50% висоти -->
             <div class="p2-photo-half" style="margin-bottom:5px;">
-                <div class="p2-photo-label">Фото 1 — Інвертор та щит захисту</div>
+                <div class="p2-photo-label">Фото 1 — Встановлений інвертор</div>
                 <div class="p2-photo-body">{{photo1}}</div>
             </div>
 
             <!-- Фото 2 — 50% висоти -->
             <div class="p2-photo-half">
-                <div class="p2-photo-label">Фото 2 — Сонячні панелі</div>
+                <div class="p2-photo-label">Фото 2 — Серійний номер встановленого інвертора</div>
                 <div class="p2-photo-body">{{photo2}}</div>
             </div>
         </div>

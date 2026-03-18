@@ -177,7 +177,10 @@
                     template = template.split('{{batteryListItem}}').join(batteryInfo);
                 }
 
-                // Фото для Протоколу (doc2)
+                const wrapper = document.createElement('div');
+                wrapper.className = 'doc-wrapper';
+
+                // Специфічна логіка для фото (Додаток 1 та 2)
                 if (docId === '2') {
                     template = template.split('{{photo1}}').join(
                         photos.photo1
@@ -187,12 +190,19 @@
                     template = template.split('{{photo2}}').join(
                         photos.photo2
                             ? `<img src="${photos.photo2}" style="max-width:100%; max-height:210px;">`
-                            : '<span style="display:block; text-align:center; padding:20px; border:1px dashed #ccc;">(Фото 2: Сонячні панелі)</span>'
+                            : '<span style="display:block; text-align:center; padding:20px; border:1px dashed #ccc;">(Фото 2: С/н інвертора)</span>'
+                    );
+                }
+                
+                // Додаток №2: Скріншот налаштувань інвертора
+                if (template.includes('{{photo_inverter_settings}}')) {
+                    template = template.split('{{photo_inverter_settings}}').join(
+                        photos.photo3
+                            ? `<img src="${photos.photo3}" style="max-width:100%; max-height:600px; object-fit:contain;">`
+                            : '<span style="display:block; text-align:center; padding:40px; border:1px dashed #ccc;">(Скріншот налаштувань інвертора — Додаток №2)</span>'
                     );
                 }
 
-                const wrapper = document.createElement('div');
-                wrapper.className = 'doc-wrapper';
                 wrapper.innerHTML = template;
                 container.appendChild(wrapper);
                 renderedCount++;

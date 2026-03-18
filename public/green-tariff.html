@@ -293,11 +293,21 @@
                                 <label class="doc-checkbox"><input type="checkbox" name="docType" value="5"> 5. Договір про встановлення</label>
                             </div>
                             <div style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
-                                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Фото для Протоколу:</label>
+                                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Фото для Протоколу (Додаток №1):</label>
                                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                                    <input type="file" id="protoPhoto1" accept="image/*" class="gt-input" style="font-size:0.7rem;">
-                                    <input type="file" id="protoPhoto2" accept="image/*" class="gt-input" style="font-size:0.7rem;">
+                                    <div>
+                                        <label style="font-size:0.7rem; color: #666; display:block; margin-bottom:3px;">1. Фото інвертора:</label>
+                                        <input type="file" id="protoPhoto1" accept="image/*" class="gt-input" style="font-size:0.7rem;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:0.7rem; color: #666; display:block; margin-bottom:3px;">2. С/н інвертора:</label>
+                                        <input type="file" id="protoPhoto2" accept="image/*" class="gt-input" style="font-size:0.7rem;">
+                                    </div>
                                 </div>
+                            </div>
+                            <div style="margin-top:10px;">
+                                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Скріншот налаштувань інвертора (Додаток №2):</label>
+                                <input type="file" id="protoPhoto3" accept="image/*" class="gt-input" style="font-size:0.7rem;">
                             </div>
                             <div style="margin-top:15px; display:flex; gap:8px;">
                                 <input id="stationType" class="gt-input" list="stationList" placeholder="Тип станції" style="width:auto;">
