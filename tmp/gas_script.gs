@@ -1,5 +1,5 @@
 /**
- * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 3.0 (Фікс оновлення існуючих рядків)
+ * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 3.1 (Глибока діагностика Drive)
  */
 
 var CONFIG = {
@@ -28,8 +28,12 @@ function normalizeHeader(s) {
   return (s || "").toString().toLowerCase().replace(/[\n\r"]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+function sanitizeName(s) {
+  return (s || "").toString().replace(/[\/\\:\*\?"<>|]/g, '_').replace(/[\x00-\x1F\x7F]/g, '').trim();
+}
+
 function doGet(e) {
-  return ContentService.createTextOutput("CSO Solar Green Tariff Service v3.0 is running!").setMimeType(ContentService.MimeType.TEXT);
+  return ContentService.createTextOutput("CSO Solar Green Tariff Service v3.1 is running!").setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doPost(e) {
@@ -61,7 +65,6 @@ function saveProject(params) {
   var currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   var normalizedSheetHeaders = currentHeaders.map(normalizeHeader);
 
-  // Переконуємось що всі поля з FIELD_MAP є в таблиці
   Object.values(FIELD_MAP).forEach(function(h) {
     var normH = normalizeHeader(h);
     if (normalizedSheetHeaders.indexOf(normH) === -1) {
@@ -76,45 +79,59 @@ function saveProject(params) {
   var id = params.id;
   var now = new Date();
   
-  // Визначаємо індекс колонки ID
   var idColumnIdx = normalizedSheetHeaders.indexOf('id');
-  if (idColumnIdx === -1) idColumnIdx = 0; // По дефолту перша
+  if (idColumnIdx === -1) idColumnIdx = 0;
 
   var rowIndex = -1;
   var dataRows = sheet.getDataRange().getValues();
 
   if (id) {
-    // 1. Пошук по реальному ID в колонці
     for (var j = 1; j < dataRows.length; j++) { 
       if (dataRows[j][idColumnIdx] && dataRows[j][idColumnIdx].toString().toLowerCase() === id.toString().toLowerCase()) { 
         rowIndex = j + 1; 
         break; 
       } 
     }
-    // 2. Fallback для "row-N" (для існуючих проектів без прописаного ID)
     if (rowIndex === -1 && id.toString().indexOf('row-') === 0) {
       var potentialIdx = parseInt(id.toString().split('-')[1]);
-      if (!isNaN(potentialIdx) && potentialIdx <= dataRows.length) {
-        rowIndex = potentialIdx;
-      }
+      if (!isNaN(potentialIdx) && potentialIdx <= dataRows.length) { rowIndex = potentialIdx; }
     }
   }
 
-  // Якщо це новий проект або ID не знайдено - генеруємо новий ID
   if (rowIndex === -1) id = Utilities.getUuid();
 
+  // --- DRIVE LOGIC WITH GRANULAR DIAGNOSTICS ---
   var folderUrl = "";
   var filesUploaded = 0;
   var errors = [];
   try {
-    var clientName = project.field4 || "Unknown_Client";
-    var address = project.field21 || "";
+    var parentFolder;
+    try {
+      parentFolder = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID);
+      // Перевірка що ми можемо прочитати хоча б ім'я
+      parentFolder.getName();
+    } catch (e) {
+      throw new Error("[ROOT access] Не знайдено папку ROOT (ID: " + CONFIG.ROOT_FOLDER_ID + "). Перевірте цей ID або наявність прав [Edit] до цієї папки у вашому акаунті.");
+    }
+
+    var clientName = sanitizeName(project.field4 || "Unknown_Client");
+    var address = sanitizeName(project.field21 || "");
     var folderName = clientName + (address ? " - " + address : "");
-    var parentFolder = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID);
-    var targetFolder, folders = parentFolder.getFoldersByName(folderName);
-    if (folders.hasNext()) targetFolder = folders.next();
-    else targetFolder = parentFolder.createFolder(folderName);
+    
+    var targetFolder;
+    try {
+      var folders = parentFolder.getFoldersByName(folderName);
+      if (folders.hasNext()) targetFolder = folders.next();
+      else {
+        // ТУТ може бути серверна помилка через права у Shared Drive
+        targetFolder = parentFolder.createFolder(folderName);
+      }
+    } catch (e) {
+      throw new Error("[Folder processing] Не вдалося створити або відкрити папку '" + folderName + "'. Помилка Google Drive: " + e.toString());
+    }
+    
     folderUrl = targetFolder.getUrl();
+    
     files.forEach(function(f) {
       try {
         if (!f.base64) return;
@@ -125,12 +142,12 @@ function saveProject(params) {
       } catch (fileErr) { errors.push("Файл " + f.name + ": " + fileErr.toString()); }
     });
   } catch (err) { errors.push("Помилка Drive: " + err.toString()); }
+  // --- END DRIVE LOGIC ---
 
   var rowData = currentHeaders.map(function(h) {
     var normH = normalizeHeader(h);
     if (normH === 'id') return id;
     if (normH === 'дата створення') {
-      // Якщо оновлюємо існуючий рядок - зберігаємо стару дату
       if (rowIndex > 0) {
         var oldDate = dataRows[rowIndex-1][normalizedSheetHeaders.indexOf('дата створення')];
         return oldDate || now;
@@ -158,7 +175,6 @@ function getProjects() {
     var data = sheet.getDataRange().getValues(), headers = data[0], projects = [];
     var normHeaders = headers.map(normalizeHeader);
     var idIdx = normHeaders.indexOf('id');
-    
     for (var i = 1; i < data.length; i++) {
       var p = {}, hasVal = false;
       for (var j = 0; j < headers.length; j++) {
@@ -172,12 +188,8 @@ function getProjects() {
         p[headers[j]] = val;
       }
       if (hasVal) {
-        // Якщо в колонці ID порожньо - даємо тимчасовий ID за номером рядка
-        if (idIdx !== -1 && !data[i][idIdx]) {
-          p[headers[idIdx]] = "row-" + (i + 1);
-        } else if (idIdx === -1) {
-          p['ID'] = "row-" + (i + 1);
-        }
+        if (idIdx !== -1 && !data[i][idIdx]) p[headers[idIdx]] = "row-" + (i + 1);
+        else if (idIdx === -1) p['ID'] = "row-" + (i + 1);
         projects.push(p);
       }
     }
