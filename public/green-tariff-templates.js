@@ -392,71 +392,103 @@ const GT_TEMPLATES = {
     `,
 
     // ─── 2. Протокол відповідності технічних вимог ───────────────────────────
-    // Стор. 1: Титульна
-    // Стор. 2: Зміст (окрема сторінка)
-    // Стор. 3+: Вступ, розділи 1-2, Додаток 1 (VDE)
-    // Стор. остання: Фотофіксація (фото 1 зверху 50%, фото 2 знизу 50%)
     doc2: `
         {{styles}}
         <style>
-            .gt-title-page {
+            .p2-page {
+                font-family: "Times New Roman", Times, serif;
+                font-size: 13pt;
+                line-height: 1.9;
+                color: #000;
+            }
+            .p2-title-page {
                 min-height: 257mm;
                 display: flex;
                 flex-direction: column;
                 page-break-after: always;
                 font-family: "Times New Roman", Times, serif;
             }
-            .gt-toc-page {
+            .p2-toc-page {
                 page-break-after: always;
-                font-family: "Times New Roman", Times, serif;
-                font-size: 12pt;
             }
-            .gt-content-page {
-                font-family: "Times New Roman", Times, serif;
-                font-size: 12pt;
-                line-height: 1.5;
+            .p2-content-page {
+                page-break-after: always;
             }
-            .gt-photo-page {
+            .p2-appendix-page {
+                page-break-before: always;
+            }
+            .p2-photo-page {
                 page-break-before: always;
                 min-height: 257mm;
                 display: flex;
                 flex-direction: column;
                 font-family: "Times New Roman", Times, serif;
             }
-            .gt-photo-half {
+            .p2-photo-half {
                 flex: 1;
                 display: flex;
                 flex-direction: column;
                 border: 1.5px solid #000;
                 overflow: hidden;
-                position: relative;
             }
-            .gt-photo-half img {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-            }
-            .gt-photo-label {
-                font-size: 11pt;
+            .p2-photo-label {
+                font-size: 12pt;
                 font-weight: bold;
-                padding: 6px 10px;
+                padding: 6px 12px;
                 background: #f5f5f5;
                 border-bottom: 1px solid #000;
             }
-            .gt-photo-placeholder {
+            .p2-photo-body {
                 flex: 1;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 background: #fafafa;
-                color: #aaa;
+            }
+            .p2-photo-body img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+            }
+            .p2-toc-table {
+                width: 100%;
+                border-collapse: collapse;
                 font-size: 13pt;
-                font-style: italic;
+                margin-top: 12px;
+            }
+            .p2-toc-table td {
+                border: 1px solid #000;
+                padding: 7px 10px;
+                vertical-align: middle;
+            }
+            .p2-toc-num {
+                width: 10%;
+                text-align: center;
+            }
+            .p2-toc-page-num {
+                width: 8%;
+                text-align: center;
+            }
+            .p2-vde-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 12pt;
+                margin: 10px 0;
+            }
+            .p2-vde-table td, .p2-vde-table th {
+                border: 1px solid #000;
+                padding: 6px 9px;
+                vertical-align: top;
+            }
+            .p2-vde-table th {
+                font-weight: bold;
+                background: #f5f5f5;
+                text-align: center;
             }
         </style>
 
         <!-- ══════════ СТОРІНКА 1: ТИТУЛЬНА ══════════ -->
-        <div class="gt-title-page">
+        <div class="p2-title-page">
 
             <div style="text-align:center; font-size:13pt; font-weight:bold; padding-top:8mm;">
                 ТОВ «Центр сервісного обслуговування»
@@ -486,214 +518,221 @@ const GT_TEMPLATES = {
                 </div>
             </div>
 
-            <div style="text-align:center; font-size:12pt; margin-bottom:20px;">
-                м. Золочів - 2025 р.
+            <!-- м. Золочів внизу сторінки -->
+            <div style="text-align:center; font-size:12pt; padding-bottom:8mm; margin-top:auto;">
+                м. Золочів - 2026 р.
             </div>
         </div>
 
-        <!-- ══════════ СТОРІНКА 2: ЗМІСТ (окрема сторінка) ══════════ -->
-        <div class="gt-toc-page">
-            <p style="font-size:14pt; font-weight:bold; margin-bottom:12px;">Зміст</p>
-            <table style="width:100%; border-collapse:collapse; font-size:12pt; line-height:2;">
+        <!-- ══════════ СТОРІНКА 2: ЗМІСТ У ТАБЛИЦІ ══════════ -->
+        <div class="p2-page p2-toc-page">
+
+            <p style="font-size:15pt; font-weight:bold; text-align:center; margin-bottom:14px;">Зміст</p>
+
+            <table class="p2-toc-table">
                 <tr>
-                    <td style="padding:2px 6px; width:12%;">1.</td>
-                    <td style="padding:2px 6px;">ВСТУП</td>
-                    <td style="padding:2px 6px; text-align:right; width:8%;">3</td>
+                    <td class="p2-toc-num">1.</td>
+                    <td>ВСТУП</td>
+                    <td class="p2-toc-page-num">3</td>
                 </tr>
                 <tr>
-                    <td style="padding:2px 6px;">1.1.</td>
-                    <td style="padding:2px 6px;">Примітки</td>
-                    <td style="padding:2px 6px; text-align:right;">3</td>
+                    <td class="p2-toc-num">1.1.</td>
+                    <td>Примітки</td>
+                    <td class="p2-toc-page-num">3</td>
                 </tr>
                 <tr>
-                    <td style="padding:2px 6px;">1.2.</td>
-                    <td style="padding:2px 6px;">Вхідні дані для складання протоколу</td>
-                    <td style="padding:2px 6px; text-align:right;">3</td>
+                    <td class="p2-toc-num">1.2.</td>
+                    <td>Вхідні дані для складання протоколу</td>
+                    <td class="p2-toc-page-num">3</td>
                 </tr>
                 <tr>
-                    <td style="padding:2px 6px;">2.</td>
-                    <td style="padding:2px 6px;">АКТ ДОТРИМАННЯ ВІДПОВІДНОСТІ ТЕХНІЧНИХ ВИМОГ</td>
-                    <td style="padding:2px 6px; text-align:right;">3</td>
+                    <td class="p2-toc-num">2.</td>
+                    <td>АКТ ДОТРИМАННЯ ВІДПОВІДНОСТІ ТЕХНІЧНИХ ВИМОГ</td>
+                    <td class="p2-toc-page-num">3</td>
                 </tr>
                 <tr>
-                    <td style="padding:2px 6px;">2.1.</td>
-                    <td style="padding:2px 6px;">Дотримання стандартного порогу напруг в низковольтових мережах</td>
-                    <td style="padding:2px 6px; text-align:right;">3</td>
+                    <td class="p2-toc-num">2.1.</td>
+                    <td>Дотримання стандартного порогу напруг в низьковольтових мережах</td>
+                    <td class="p2-toc-page-num">3</td>
                 </tr>
                 <tr>
-                    <td style="padding:2px 6px;">2.2.</td>
-                    <td style="padding:2px 6px;">Відповідність електрогенеруючого устаткування (інвертора) стандарту VDE-AR-N 4105</td>
-                    <td style="padding:2px 6px; text-align:right;">4</td>
+                    <td class="p2-toc-num">2.2.</td>
+                    <td>Відповідність електрогенеруючого устаткування (інвертора) стандарту VDE-AR-N 4105</td>
+                    <td class="p2-toc-page-num">4</td>
                 </tr>
             </table>
         </div>
 
         <!-- ══════════ СТОРІНКА 3+: ВСТУП І РОЗДІЛИ ══════════ -->
-        <div class="gt-content-page">
-            <hr style="border:none; border-top:1px solid #000; margin-bottom:14px;">
+        <div class="p2-page p2-content-page">
+            <hr style="border:none; border-top:1.5px solid #000; margin-bottom:16px;">
 
-            <p style="font-weight:bold; font-size:12pt;">1. ВСТУП</p>
+            <p style="font-weight:bold; font-size:14pt; margin-bottom:8px;">1. ВСТУП</p>
             <p style="text-align:justify;">
                 Даний протокол розроблений для відображення системних налаштувань для безпечної інтеграції
                 електрогенеруючого обладнання в розподільну мережу низької напруги згідно стандарту VDE-AR-N 4105:
                 <span style="font-weight:bold;">{{field21}}</span>
             </p>
 
-            <p style="font-weight:bold; margin-top:10px;">1.1. Примітки</p>
+            <p style="font-weight:bold; margin-top:16px; font-size:13pt;">1.1. Примітки</p>
             <p style="text-align:justify;">
                 Електрогенеруюче обладнання — комплекс функціонально взаємопов'язаного устаткування, що здійснює
                 виробництво електричної енергії та складається з одного або більшої кількості генераторів чи іншого
                 обладнання, що використовується для перетворення енергетичних ресурсів будь-якого походження на
                 електричну енергію.
             </p>
-            <p style="text-align:justify; margin-top:6px;">
+            <p style="text-align:justify; margin-top:10px;">
                 VDE-AR-N 4105 — технічний стандарт для забезпечення системи виробництва електроенергії, які підключені
                 до низьковольтних розподільних мереж. Даний стандарт вимагає дотримання мінімальних технічних вимог
                 до підключення та паралельної роботи електрогенеруючого обладнання з низьковольтними розподільними мережами.
             </p>
 
-            <p style="font-weight:bold; margin-top:10px;">1.2. Вхідні дані для складання протоколу</p>
+            <p style="font-weight:bold; margin-top:16px; font-size:13pt;">1.2. Вхідні дані для складання протоколу</p>
             <p style="text-align:justify;">
                 Вихідні дані на розробку представлені в паспорті точки розподілу електричної енергії
                 (Додаток №2 до Договору {{field9}} від {{field10}})
             </p>
-            <ul style="margin:6px 0 0 20px; line-height:1.8;">
+            <ul style="margin:10px 0 0 24px; line-height:2.1;">
                 <li>Дозволена приєднана потужність – {{field13}} кВт;</li>
                 <li>Категорія надійності електропостачання – третя – {{field13}} кВт;</li>
                 <li>Напруга в точці приєднання – 0,4 кВ;</li>
                 <li>Технічні сертифікати на розумний стринговий інвертор.</li>
             </ul>
 
-            <p style="font-weight:bold; margin-top:14px; font-size:12pt;">2. АКТ ДОТРИМАННЯ ВІДПОВІДНОСТІ ТЕХНІЧНИХ ВИМОГ</p>
+            <p style="font-weight:bold; margin-top:20px; font-size:14pt; margin-bottom:8px;">2. АКТ ДОТРИМАННЯ ВІДПОВІДНОСТІ ТЕХНІЧНИХ ВИМОГ</p>
 
-            <p style="font-weight:bold; margin-top:8px;">2.1. Дотримання стандартного порогу напруг в низковольтових мережах</p>
+            <p style="font-weight:bold; margin-top:12px; font-size:13pt;">2.1. Дотримання стандартного порогу напруг в низьковольтових мережах</p>
             <p style="text-align:justify;">
                 Виробник фотовольтаїчного інвертора <span style="font-weight:bold;">{{field27}}</span> пройшов процедуру
-                сертифікації обладнання згідно європейського стандарту VDE 0100-551 та VDE 0124-100. Відповідно
-                до основних налаштувань інвертора, різниця між стандартною напругою в низьковольтовій мережі
-                та її піковою напругою при роботі електрогенеруючого обладнання не може перевищувати значення
-                <em>U</em>max/<em>U</em>min 10% (<em>U</em>max=<em>U</em>st×1.1, <em>U</em>min=<em>U</em>st/1.1).
+                сертифікації обладнання згідно європейського стандарту VDE 0100-551 та VDE 0124-100 (стандарти захисту
+                електромереж для від'єднання системи генерації електроенергії від мережі у разі неприпустимих значень
+                напруги та частоти). Відповідно до основних налаштувань інвертора, різниця між стандартною напругою
+                в низьковольтовій мережі та її піковою напругою при роботі електрогенеруючого обладнання не може
+                перевищувати значення <em>U</em>max/<em>U</em>min 10%
+                (<em>U</em>max=<em>U</em>st×1.1, <em>U</em>min=<em>U</em>st/1.1).
             </p>
-            <p style="margin-top:6px;">
+            <p style="margin-top:10px;">
                 Порогові напруги: <em><b>U</b></em>min = <b>207 В</b>, <em><b>U</b></em>max = <b>253 В</b>.
             </p>
 
-            <p style="font-weight:bold; margin-top:10px;">2.2. Відповідність електрогенеруючого устаткування (інвертора) стандарту VDE-AR-N 4105</p>
+            <p style="font-weight:bold; margin-top:16px; font-size:13pt;">2.2. Відповідність електрогенеруючого устаткування (інвертора) стандарту VDE-AR-N 4105</p>
             <p style="text-align:justify;">
                 Серійний номер інвертора, на якому здійснювались налаштування стандарту мережі та параметрів
                 робочої напруги — <span style="font-weight:bold;">{{field29}}</span>
                 (Дивитися Додаток №1)
             </p>
-
-            <!-- ══════════ ДОДАТОК 1: Сертифікат VDE ══════════ -->
-            <div style="margin-top:28px; border-top:2px solid #000; padding-top:14px;">
-                <div style="text-align:right; font-size:11pt; margin-bottom:20px;">
-                    <p style="font-weight:bold; margin:0;">«ЗАТВЕРДЖУЮ»</p>
-                    <p style="margin:24px 0 0;">_________________ Петро ПАСТУШОК</p>
-                </div>
-
-                <p style="font-size:14pt; font-weight:bold; text-align:center; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 6px;">
-                    ДОДАТОК №1
-                </p>
-                <p style="font-weight:bold; text-align:center; margin-bottom:12px;">
-                    G.3 Сертифікат відповідності захисту мережі та системи
-                </p>
-
-                <table class="gt-table" style="font-size:11pt;">
-                    <tr>
-                        <td style="width:55%;" class="gt-bold">Сертифікат відповідності захисту електромережі та системи (<em>NS protection</em>)</td>
-                        <td class="gt-bold">No. 70.409.16.086.03-02</td>
-                    </tr>
-                    <tr>
-                        <td class="gt-bold">Виробник</td>
-                        <td style="font-weight:bold; text-decoration:underline;">{{field30}}</td>
-                    </tr>
-                    <tr><td colspan="2" class="gt-bold">Тип захисту електромережі та системи</td></tr>
-                    <tr>
-                        <td>Централізований захист електромережі та системи</td>
-                        <td>☐</td>
-                    </tr>
-                    <tr>
-                        <td>Інтегрований захист електромережі та системи</td>
-                        <td>☒ &nbsp; Тип системи: <span class="gt-bold">{{field27}}</span></td>
-                    </tr>
-                    <tr>
-                        <td class="gt-bold">Серійний номер інвертора</td>
-                        <td style="font-weight:bold; text-decoration:underline;">{{field29}}</td>
-                    </tr>
-                    <tr>
-                        <td class="gt-bold">Правила підключення до мережі</td>
-                        <td><span class="gt-bold">VDE-AR-N 4105</span> — «Системи виробництва електроенергії, підключені до мережі низької напруги»</td>
-                    </tr>
-                    <tr>
-                        <td class="gt-bold">Версія прошивки</td>
-                        <td style="font-weight:bold; text-decoration:underline;">{{field31}}</td>
-                    </tr>
-                    <tr>
-                        <td class="gt-bold">Тип вбудованого інтерфейсного перемикача</td>
-                        <td class="gt-bold">HE1aN-W-DC12V-Y6</td>
-                    </tr>
-                    <tr>
-                        <td class="gt-bold">Час тестування</td>
-                        <td style="font-weight:bold; text-decoration:underline;">{{field11}}</td>
-                    </tr>
-                    <tr><td colspan="2">Захист мережі та системи відповідає вимогам VDE-AR-N 4105</td></tr>
-                </table>
-
-                <table class="gt-table" style="margin-top:8px; font-size:10.5pt;">
-                    <tr>
-                        <th style="width:42%;">Функція захисту</th>
-                        <th style="width:20%;">Значення налаштування</th>
-                        <th style="width:20%;">Значення відключення <sup>c</sup></th>
-                        <th style="width:18%;">Час відключення <sup>a</sup></th>
-                    </tr>
-                    <tr><td>Відключення при відсутності напруги від мережі <em>U &lt;&lt;</em></td><td class="gt-center">0,0 · Un</td><td class="gt-center">0 V</td><td class="gt-center">≤ 5,6 мс</td></tr>
-                    <tr><td>Відключення при заниженій напрузі <em>U &lt;</em></td><td class="gt-center">0,9 · Un</td><td class="gt-center">207 V</td><td class="gt-center">≤ 182,4 мс</td></tr>
-                    <tr><td>Відключення при завищеній напрузі (опціонально) <em>U &gt;</em></td><td class="gt-center">1,05 · Un</td><td class="gt-center">1,05 · Un</td><td class="gt-center">≤ 300,0 мс</td></tr>
-                    <tr><td>Відключення при завищеній напрузі <em>U &gt;&gt;</em></td><td class="gt-center">1,1 · Un</td><td class="gt-center">253 V</td><td class="gt-center">≤ 181,2 мс</td></tr>
-                    <tr><td>Відключення при заниженій частоті <em>f &lt;</em></td><td class="gt-center">47,5 Hz</td><td class="gt-center">47,49 Hz</td><td class="gt-center">≤ 188,8 мс</td></tr>
-                    <tr><td>Відключення при завищеній частоті <em>f &gt;</em></td><td class="gt-center">51,5 Hz</td><td class="gt-center">51,50 Hz</td><td class="gt-center">≤ 185,4 мс</td></tr>
-                    <tr><td>Належний час перемикання інтерфейсу</td><td class="gt-center">—</td><td class="gt-center">—</td><td class="gt-center">—</td></tr>
-                </table>
-                <p style="font-size:10pt; margin-top:6px;">
-                    <sup>a</sup> Час розриву не повинен перевищувати 200 мс. &nbsp;
-                    <sup>c</sup> Допуск: напруга ±1%, частота ±0,1%.
-                </p>
-            </div>
         </div>
 
-        <!-- ══════════ ОСТАННЯ СТОРІНКА: ФОТОФІКСАЦІЯ ══════════
-             Фото 1 — верхні 50% сторінки
-             Фото 2 — нижні 50% сторінки
-             Кожне фото займає рівно половину висоти аркуша A4
-        -->
-        <div class="gt-photo-page">
+        <!-- ══════════ ДОДАТОК 1: Сертифікат VDE — з НОВОГО ЛИСТА ══════════ -->
+        <div class="p2-page p2-appendix-page">
+            <div style="text-align:right; font-size:12pt; margin-bottom:20px;">
+                <p style="font-weight:bold; margin:0;">«ЗАТВЕРДЖУЮ»</p>
+                <p style="margin:24px 0 0;">_________________ Петро ПАСТУШОК</p>
+            </div>
 
-            <p style="font-size:13pt; font-weight:bold; margin:0 0 8px;">
+            <p style="font-size:15pt; font-weight:bold; text-align:center; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 6px;">
+                ДОДАТОК №1
+            </p>
+            <p style="font-weight:bold; text-align:center; font-size:13pt; margin-bottom:14px;">
+                G.3 Сертифікат відповідності захисту мережі та системи
+            </p>
+
+            <table class="p2-vde-table">
+                <tr>
+                    <td style="width:58%; font-weight:bold;">
+                        Сертифікат відповідності захисту електромережі та системи (<em>NS protection — Network and system protection</em>)
+                    </td>
+                    <td style="font-weight:bold;">No. 70.409.16.086.03-02</td>
+                </tr>
+                <tr>
+                    <td style="font-weight:bold;">Виробник</td>
+                    <td style="font-weight:bold; text-decoration:underline;">{{field30}}</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="font-weight:bold;">Тип захисту електромережі та системи</td>
+                </tr>
+                <tr>
+                    <td>Централізований захист електромережі та системи</td>
+                    <td style="text-align:center;">☐</td>
+                </tr>
+                <tr>
+                    <td>Інтегрований захист електромережі та системи</td>
+                    <td>☒ &nbsp; Тип системи: <span style="font-weight:bold;">{{field27}}</span></td>
+                </tr>
+                <tr>
+                    <td style="font-weight:bold;">Серійний номер інвертора</td>
+                    <td style="font-weight:bold; text-decoration:underline;">{{field29}}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight:bold;">Правила підключення до мережі</td>
+                    <td>
+                        <span style="font-weight:bold;">VDE-AR-N 4105</span><br>
+                        «Системи виробництва електроенергії, підключені до мережі низької напруги»<br>
+                        Мінімальні технічні вимоги до підключення та паралельної роботи систем виробництва
+                        електроенергії, які підключені до низьковольтної мережі
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight:bold;">Версія прошивки</td>
+                    <td style="font-weight:bold; text-decoration:underline;">{{field31}}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight:bold;">Тип вбудованого інтерфейсного перемикача</td>
+                    <td style="font-weight:bold;">HE1aN-W-DC12V-Y6</td>
+                </tr>
+                <tr>
+                    <td style="font-weight:bold;">Час тестування</td>
+                    <td style="font-weight:bold; text-decoration:underline;">{{field11}}</td>
+                </tr>
+                <tr>
+                    <td colspan="2">Захист мережі та системи відповідає вимогам VDE-AR-N 4105</td>
+                </tr>
+            </table>
+
+            <table class="p2-vde-table" style="margin-top:10px; font-size:11.5pt;">
+                <tr>
+                    <th style="width:40%;">Функція захисту</th>
+                    <th style="width:20%;">Значення налаштування</th>
+                    <th style="width:22%;">Значення відключення <sup>c</sup></th>
+                    <th style="width:18%;">Час відключення <sup>a</sup></th>
+                </tr>
+                <tr><td>Відключення при відсутності напруги від мережі <em>U &lt;&lt;</em></td><td style="text-align:center;">0,0 · Un</td><td style="text-align:center;">0 V</td><td style="text-align:center;">≤ 5,6 мс</td></tr>
+                <tr><td>Відключення при заниженій напрузі <em>U &lt;</em></td><td style="text-align:center;">0,9 · Un</td><td style="text-align:center;">207 V</td><td style="text-align:center;">≤ 182,4 мс</td></tr>
+                <tr><td>Відключення при завищеній напрузі (опціонально) <em>U &gt;</em></td><td style="text-align:center;">1,05 · Un</td><td style="text-align:center;">1,05 · Un</td><td style="text-align:center;">≤ 300,0 мс</td></tr>
+                <tr><td>Відключення при завищеній напрузі <em>U &gt;&gt;</em></td><td style="text-align:center;">1,1 · Un</td><td style="text-align:center;">253 V</td><td style="text-align:center;">≤ 181,2 мс</td></tr>
+                <tr><td>Відключення при заниженій частоті <em>f &lt;</em></td><td style="text-align:center;">47,5 Hz</td><td style="text-align:center;">47,49 Hz</td><td style="text-align:center;">≤ 188,8 мс</td></tr>
+                <tr><td>Відключення при завищеній частоті <em>f &gt;</em></td><td style="text-align:center;">51,5 Hz</td><td style="text-align:center;">51,50 Hz</td><td style="text-align:center;">≤ 185,4 мс</td></tr>
+                <tr><td>Належний час перемикання інтерфейсу</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td></tr>
+            </table>
+            <p style="font-size:10.5pt; margin-top:8px; line-height:1.5;">
+                <sup>a</sup> Час розриву (сума часу відключення та власного часу перемикання інтерфейсу) не повинен перевищувати 200 мс.<br>
+                <sup>c</sup> Максимальне відхилення від необхідних значень реєструється в межах допустимого допуску:
+                напруга ±1%, частота ±0,1%.
+            </p>
+        </div>
+
+        <!-- ══════════ ФОТОФІКСАЦІЯ — ОСТАННЯ СТОРІНКА ══════════ -->
+        <div class="p2-photo-page">
+            <p style="font-size:14pt; font-weight:bold; margin:0 0 6px;">
                 Фотофіксація встановленого обладнання
             </p>
-            <p style="font-size:11pt; margin:0 0 10px;">
-                Об'єкт: <span style="font-weight:bold;">{{field21}}</span> &nbsp;|&nbsp;
-                Замовник: <span style="font-weight:bold;">{{field4}}</span> &nbsp;|&nbsp;
+            <p style="font-size:12pt; margin:0 0 10px;">
+                Об'єкт: <b>{{field21}}</b> &nbsp;|&nbsp;
+                Замовник: <b>{{field4}}</b> &nbsp;|&nbsp;
                 № {{field3}}
             </p>
 
             <!-- Фото 1 — 50% висоти -->
-            <div class="gt-photo-half" style="margin-bottom:6px;">
-                <div class="gt-photo-label">Фото 1 — Інвертор та щит захисту</div>
-                <div class="gt-photo-placeholder">
-                    {{photo1}}
-                </div>
+            <div class="p2-photo-half" style="margin-bottom:5px;">
+                <div class="p2-photo-label">Фото 1 — Інвертор та щит захисту</div>
+                <div class="p2-photo-body">{{photo1}}</div>
             </div>
 
             <!-- Фото 2 — 50% висоти -->
-            <div class="gt-photo-half">
-                <div class="gt-photo-label">Фото 2 — Сонячні панелі</div>
-                <div class="gt-photo-placeholder">
-                    {{photo2}}
-                </div>
+            <div class="p2-photo-half">
+                <div class="p2-photo-label">Фото 2 — Сонячні панелі</div>
+                <div class="p2-photo-body">{{photo2}}</div>
             </div>
-
         </div>
     `
 };
