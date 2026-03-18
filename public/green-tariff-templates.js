@@ -419,7 +419,7 @@ const GT_TEMPLATES = {
             }
             .p2-photo-page {
                 page-break-before: always;
-                height: 255mm; /* Обмеження висоти під один лист А4 */
+                height: 247mm; /* Зменшено для надійної посадки на 1 лист без обрізки */
                 display: flex;
                 flex-direction: column;
                 font-family: "Times New Roman", Times, serif;
@@ -437,9 +437,9 @@ const GT_TEMPLATES = {
                 margin-bottom: 0;
             }
             .p2-photo-label {
-                font-size: 12pt;
+                font-size: 11pt;
                 font-weight: bold;
-                padding: 6px 12px;
+                padding: 4px 10px;
                 background: #f5f5f5;
                 border-bottom: 1px solid #000;
             }
@@ -448,12 +448,13 @@ const GT_TEMPLATES = {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background: #fafafa;
+                background: #fff;
+                overflow: hidden;
             }
             .p2-photo-body img {
-                max-width: 100%;
-                max-height: 100%;
-                object-fit: contain;
+                width: 100%;
+                height: 100%;
+                object-fit: fill; /* Примусове розтягування по висоті та ширині рамки */
             }
             .p2-toc-table {
                 width: 100%;
