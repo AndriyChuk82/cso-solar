@@ -154,12 +154,12 @@ const GT_TEMPLATES = {
             }
             .gt-overlay-container {
                 position: relative;
-                width: 100%;
-                min-height: 500px; /* Запобігає зхлопуванню, якщо фото вантажиться повільно */
+                width: 80%; /* Зменшено на 20% */
+                margin: 15px auto;
+                min-height: 400px;
                 background: #fff;
-                border: 1.5px solid #000;
+                border: 1px solid #ccc;
                 overflow: hidden;
-                margin: 10px 0;
             }
             .gt-overlay-img {
                 display: block;
@@ -773,56 +773,56 @@ const GT_TEMPLATES = {
                 <img src="doc/shema_merezeva.jpg" class="gt-overlay-img">
                 
                 <!-- Підстанція -->
-                <div class="gt-overlay-label" style="top: 5.5%; left: 3%;">
-                    «{{field14}}»
+                <div class="gt-overlay-label" style="top: 1%; left: 1%;">
+                    {{field14}}
                 </div>
                 
                 <!-- Опора -->
-                <div class="gt-overlay-label" style="top: 5.5%; left: 31%;">
+                <div class="gt-overlay-label" style="top: 1%; left: 35%;">
                     Опора №{{field16}}
                 </div>
                 
                 <!-- Лінія -->
-                <div class="gt-overlay-label" style="top: 10.5%; left: 19%;">
+                <div class="gt-overlay-label" style="top: 6%; left: 24%;">
                     {{field15}}
                 </div>
                 
                 <!-- Вхідний автомат -->
-                <div class="gt-overlay-label" style="top: 15%; left: 43%;">
+                <div class="gt-overlay-label" style="top: 13.5%; left: 49%;">
                     Вхідний автомат<br>
                     Напруга: 0.4 кВ<br>
                     Струм: {{field19}}
                 </div>
                 
                 <!-- Лічильник -->
-                <div class="gt-overlay-label" style="top: 33.5%; left: 45%;">
+                <div class="gt-overlay-label" style="top: 31%; left: 52%;">
                     Двонаправлений лічильник<br>
-                    «{{field17}}»
+                    {{field17}}
                 </div>
                 
                 <!-- Навантаження -->
-                <div class="gt-overlay-label" style="top: 75.5%; left: 5%;">
+                <div class="gt-overlay-label" style="top: 73.5%; left: 5%;">
                     Навантаження<br>
                     житлового будинку<br>
-                    «{{field13}} кВт»
+                    {{field13}} кВт
                 </div>
                 
                 <!-- Інвертор -->
-                <div class="gt-overlay-label" style="top: 69%; left: 66%;">
+                <div class="gt-overlay-label" style="top: 68.5%; left: 66%;">
                     Гібридний інвертор:<br>
-                    Модель: «{{field27}}»<br>
+                    Модель: {{field27}}<br>
                     Верхній рівень напруги: 253 В<br>
                     Нижній рівень напруги: 207 В<br>
                     Номінальна потужність:<br>
-                    «{{field28}} кВт»
+                    {{field28}} кВт
                 </div>
                 
                 <!-- Панелі -->
-                <div class="gt-overlay-label" style="top: 86.5%; left: 68%;">
+                <div class="gt-overlay-label" style="top: 83%; left: 66%;">
                     Номінальна потужність:<br>
-                    «{{field22}} кВт»<br>
+                    {{field22}} кВт<br>
                     Модель:<br>
-                    «{{field34}}»
+                    {{field34}}
                 </div>
             </div>
 
