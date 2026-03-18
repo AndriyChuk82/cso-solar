@@ -419,10 +419,11 @@ const GT_TEMPLATES = {
             }
             .p2-photo-page {
                 page-break-before: always;
-                min-height: 257mm;
+                height: 255mm; /* Обмеження висоти під один лист А4 */
                 display: flex;
                 flex-direction: column;
                 font-family: "Times New Roman", Times, serif;
+                overflow: hidden;
             }
             .p2-photo-half {
                 flex: 1;
@@ -430,6 +431,10 @@ const GT_TEMPLATES = {
                 flex-direction: column;
                 border: 1.5px solid #000;
                 overflow: hidden;
+                margin-bottom: 5px;
+            }
+            .p2-photo-half:last-child {
+                margin-bottom: 0;
             }
             .p2-photo-label {
                 font-size: 12pt;
@@ -625,91 +630,84 @@ const GT_TEMPLATES = {
 
         <!-- ══════════ ДОДАТОК 1: Сертифікат VDE — з НОВОГО ЛИСТА ══════════ -->
         <div class="p2-page p2-appendix-page">
-            <div style="text-align:right; font-size:12pt; margin-bottom:20px;">
+            <div style="text-align:right; font-size:11pt; margin-bottom:10px;">
                 <p style="font-weight:bold; margin:0;">«ЗАТВЕРДЖУЮ»</p>
-                <p style="margin:24px 0 0;">_________________ Петро ПАСТУШОК</p>
+                <p style="margin:16px 0 0;">_________________ Петро ПАСТУШОК</p>
             </div>
 
-            <p style="font-size:15pt; font-weight:bold; text-align:center; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 6px;">
+            <p style="font-size:14pt; font-weight:bold; text-align:center; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 4px;">
                 ДОДАТОК №1
             </p>
-            <p style="font-weight:bold; text-align:center; font-size:13pt; margin-bottom:14px;">
+            <p style="font-weight:bold; text-align:center; font-size:12pt; margin-bottom:8px;">
                 G.3 Сертифікат відповідності захисту мережі та системи
             </p>
 
-            <table class="p2-vde-table">
+            <table class="p2-vde-table" style="font-size:10.5pt; margin:4px 0;">
                 <tr>
-                    <td style="width:58%; font-weight:bold;">
+                    <td style="width:58%; font-weight:bold; padding:4px 8px;">
                         Сертифікат відповідності захисту електромережі та системи (<em>NS protection — Network and system protection</em>)
                     </td>
-                    <td style="font-weight:bold;">No. 70.409.16.086.03-02</td>
+                    <td style="font-weight:bold; padding:4px 8px;">No. 70.409.16.086.03-02</td>
                 </tr>
                 <tr>
-                    <td style="font-weight:bold;">Виробник</td>
-                    <td style="font-weight:bold; text-decoration:underline;">{{field30}}</td>
+                    <td style="font-weight:bold; padding:4px 8px;">Виробник</td>
+                    <td style="font-weight:bold; text-decoration:underline; padding:4px 8px;">{{field30}}</td>
+                </tr>
+                <tr><td colspan="2" style="font-weight:bold; padding:2px 8px; background:#f9f9f9;">Тип захисту електромережі та системи</td></tr>
+                <tr>
+                    <td style="padding:3px 8px;">Централізований захист електромережі та системи</td>
+                    <td style="text-align:center; padding:3px 8px;">☐</td>
                 </tr>
                 <tr>
-                    <td colspan="2" style="font-weight:bold;">Тип захисту електромережі та системи</td>
+                    <td style="padding:3px 8px;">Інтегрований захист електромережі та системи</td>
+                    <td style="padding:3px 8px;">☒ &nbsp; Тип системи: <span style="font-weight:bold;">{{field27}}</span></td>
                 </tr>
                 <tr>
-                    <td>Централізований захист електромережі та системи</td>
-                    <td style="text-align:center;">☐</td>
+                    <td style="font-weight:bold; padding:4px 8px;">Серійний номер інвертора</td>
+                    <td style="font-weight:bold; text-decoration:underline; padding:4px 8px;">{{field29}}</td>
                 </tr>
                 <tr>
-                    <td>Інтегрований захист електромережі та системи</td>
-                    <td>☒ &nbsp; Тип системи: <span style="font-weight:bold;">{{field27}}</span></td>
-                </tr>
-                <tr>
-                    <td style="font-weight:bold;">Серійний номер інвертора</td>
-                    <td style="font-weight:bold; text-decoration:underline;">{{field29}}</td>
-                </tr>
-                <tr>
-                    <td style="font-weight:bold;">Правила підключення до мережі</td>
-                    <td>
+                    <td style="font-weight:bold; padding:4px 8px;">Правила підключення до мережі</td>
+                    <td style="padding:4px 8px;">
                         <span style="font-weight:bold;">VDE-AR-N 4105</span><br>
-                        «Системи виробництва електроенергії, підключені до мережі низької напруги»<br>
-                        Мінімальні технічні вимоги до підключення та паралельної роботи систем виробництва
-                        електроенергії, які підключені до низьковольтної мережі
+                        «Системи виробництва електроенергії, підключені до мережі низької напруги»
                     </td>
                 </tr>
                 <tr>
-                    <td style="font-weight:bold;">Версія прошивки</td>
-                    <td style="font-weight:bold; text-decoration:underline;">{{field31}}</td>
+                    <td style="font-weight:bold; padding:4px 8px;">Версія прошивки</td>
+                    <td style="font-weight:bold; text-decoration:underline; padding:4px 8px;">{{field31}}</td>
                 </tr>
                 <tr>
-                    <td style="font-weight:bold;">Тип вбудованого інтерфейсного перемикача</td>
-                    <td style="font-weight:bold;">HE1aN-W-DC12V-Y6</td>
+                    <td style="font-weight:bold; padding:4px 8px;">Тип вбудованого інтерфейсного перемикача</td>
+                    <td style="font-weight:bold; padding:4px 8px;">HE1aN-W-DC12V-Y6</td>
                 </tr>
                 <tr>
-                    <td style="font-weight:bold;">Час тестування</td>
-                    <td style="font-weight:bold; text-decoration:underline;">{{field11}}</td>
-                </tr>
-                <tr>
-                    <td colspan="2">Захист мережі та системи відповідає вимогам VDE-AR-N 4105</td>
+                    <td style="font-weight:bold; padding:4px 8px;">Час тестування</td>
+                    <td style="font-weight:bold; text-decoration:underline; padding:4px 8px;">{{field11}}</td>
                 </tr>
             </table>
 
-            <table class="p2-vde-table" style="margin-top:10px; font-size:11.5pt;">
-                <tr>
-                    <th style="width:40%;">Функція захисту</th>
-                    <th style="width:20%;">Значення налаштування</th>
-                    <th style="width:22%;">Значення відключення <sup>c</sup></th>
-                    <th style="width:18%;">Час відключення <sup>a</sup></th>
+            <table class="p2-vde-table" style="margin-top:6px; font-size:10pt;">
+                <tr style="background:#f5f5f5;">
+                    <th style="width:40%; padding:4px;">Функція захисту</th>
+                    <th style="width:20%; padding:4px;">Значення нал.</th>
+                    <th style="width:22%; padding:4px;">Знач. відкл.<sup>c</sup></th>
+                    <th style="width:18%; padding:4px;">Час відкл.<sup>a</sup></th>
                 </tr>
-                <tr><td>Відключення при відсутності напруги від мережі <em>U &lt;&lt;</em></td><td style="text-align:center;">0,0 · Un</td><td style="text-align:center;">0 V</td><td style="text-align:center;">≤ 5,6 мс</td></tr>
-                <tr><td>Відключення при заниженій напрузі <em>U &lt;</em></td><td style="text-align:center;">0,9 · Un</td><td style="text-align:center;">207 V</td><td style="text-align:center;">≤ 182,4 мс</td></tr>
-                <tr><td>Відключення при завищеній напрузі (опціонально) <em>U &gt;</em></td><td style="text-align:center;">1,05 · Un</td><td style="text-align:center;">1,05 · Un</td><td style="text-align:center;">≤ 300,0 мс</td></tr>
-                <tr><td>Відключення при завищеній напрузі <em>U &gt;&gt;</em></td><td style="text-align:center;">1,1 · Un</td><td style="text-align:center;">253 V</td><td style="text-align:center;">≤ 181,2 мс</td></tr>
-                <tr><td>Відключення при заниженій частоті <em>f &lt;</em></td><td style="text-align:center;">47,5 Hz</td><td style="text-align:center;">47,49 Hz</td><td style="text-align:center;">≤ 188,8 мс</td></tr>
-                <tr><td>Відключення при завищеній частоті <em>f &gt;</em></td><td style="text-align:center;">51,5 Hz</td><td style="text-align:center;">51,50 Hz</td><td style="text-align:center;">≤ 185,4 мс</td></tr>
-                <tr><td>Належний час перемикання інтерфейсу</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td></tr>
+                <tr><td style="padding:3px 6px;">Відключення при відсутності напруги <em>U &lt;&lt;</em></td><td style="text-align:center;">0,0 · Un</td><td style="text-align:center;">0 V</td><td style="text-align:center;">≤ 5,6 мс</td></tr>
+                <tr><td style="padding:3px 6px;">Відключення при заниженій напрузі <em>U &lt;</em></td><td style="text-align:center;">0,9 · Un</td><td style="text-align:center;">207 V</td><td style="text-align:center;">≤ 182,4 мс</td></tr>
+                <tr><td style="padding:3px 6px;">Відкл. при завищеній напрузі (опц) <em>U &gt;</em></td><td style="text-align:center;">1,05 · Un</td><td style="text-align:center;">1,05 · Un</td><td style="text-align:center;">≤ 300,0 мс</td></tr>
+                <tr><td style="padding:3px 6px;">Відключення при завищеній напрузі <em>U &gt;&gt;</em></td><td style="text-align:center;">1,1 · Un</td><td style="text-align:center;">253 V</td><td style="text-align:center;">≤ 181,2 мс</td></tr>
+                <tr><td style="padding:3px 6px;">Відключення при заниженій частоті <em>f &lt;</em></td><td style="text-align:center;">47,5 Hz</td><td style="text-align:center;">47,49 Hz</td><td style="text-align:center;">≤ 188,8 мс</td></tr>
+                <tr><td style="padding:3px 6px;">Відключення при завищеній частоті <em>f &gt;</em></td><td style="text-align:center;">51,5 Hz</td><td style="text-align:center;">51,50 Hz</td><td style="text-align:center;">≤ 185,4 мс</td></tr>
+                <tr><td style="padding:3px 6px;">Належний час перемикання інтерфейсу</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td></tr>
             </table>
-            <p style="font-size:10.5pt; margin-top:8px; line-height:1.5;">
-                <sup>a</sup> Час розриву (сума часу відключення та власного часу перемикання інтерфейсу) не повинен перевищувати 200 мс.<br>
-                <sup>c</sup> Максимальне відхилення від необхідних значень реєструється в межах допустимого допуску:
-                напруга ±1%, частота ±0,1%.
+            <p style="font-size:9.5pt; margin-top:4px; line-height:1.3;">
+                <sup>a</sup> Час розриву (сума часу відкл. та власн. часу перемик.) не повинен перевищувати 200 мс.<br>
+                <sup>c</sup> Максимальне відхилення реєструється в межах допуску: напруга ±1%, частота ±0,1%.
             </p>
         </div>
+
 
 
         <!-- ══════════ ДОДАТОК 2: Налаштування інвертора — з НОВОГО ЛИСТА ══════════ -->
@@ -774,26 +772,24 @@ const GT_TEMPLATES = {
         </div>
 
         <!-- ══════════ ФОТОФІКСАЦІЯ — ОСТАННЯ СТОРІНКА ══════════ -->
-        <div class="p2-photo-page">
-            <p style="font-size:14pt; font-weight:bold; margin:0 0 6px;">
+        <div class="p2-photo-page" style="page-break-after: avoid;">
+            <p style="font-size:13pt; font-weight:bold; margin:0 0 2px;">
                 Фотофіксація встановленого обладнання
             </p>
-            <p style="font-size:12pt; margin:0 0 10px;">
-                Об'єкт: <b>{{field21}}</b> &nbsp;|&nbsp;
-                Замовник: <b>{{field4}}</b> &nbsp;|&nbsp;
-                № {{field3}}
+            <p style="font-size:10pt; margin:0 0 4px;">
+                Об'єкт: <b>{{field21}}</b> &nbsp;|&nbsp; Замовник: <b>{{field4}}</b> &nbsp;|&nbsp; № {{field3}}
             </p>
 
             <!-- Фото 1 — 50% висоти -->
-            <div class="p2-photo-half" style="margin-bottom:5px;">
+            <div class="p2-photo-half">
                 <div class="p2-photo-label">Фото 1 — Встановлений інвертор</div>
-                <div class="p2-photo-body">{{photo1}}</div>
+                <div class="p2-photo-body" style="background:#fff;">{{photo1}}</div>
             </div>
 
             <!-- Фото 2 — 50% висоти -->
             <div class="p2-photo-half">
                 <div class="p2-photo-label">Фото 2 — Серійний номер встановленого інвертора</div>
-                <div class="p2-photo-body">{{photo2}}</div>
+                <div class="p2-photo-body" style="background:#fff;">{{photo2}}</div>
             </div>
         </div>
     `
