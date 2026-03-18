@@ -417,24 +417,14 @@ const GT_TEMPLATES = {
             .p2-appendix-page {
                 page-break-before: always;
             }
-            .p2-photo-page {
+            .p2-photo-full {
                 page-break-before: always;
-                height: 247mm; /* Зменшено для надійної посадки на 1 лист без обрізки */
-                display: flex;
-                flex-direction: column;
-                font-family: "Times New Roman", Times, serif;
-                overflow: hidden;
-            }
-            .p2-photo-half {
-                flex: 1;
+                height: 275mm; /* Повна висота листа А4 */
                 display: flex;
                 flex-direction: column;
                 border: 1.5px solid #000;
                 overflow: hidden;
-                margin-bottom: 5px;
-            }
-            .p2-photo-half:last-child {
-                margin-bottom: 0;
+                box-sizing: border-box;
             }
             .p2-photo-label {
                 font-size: 11pt;
@@ -772,26 +762,26 @@ const GT_TEMPLATES = {
             </table>
         </div>
 
-        <!-- ══════════ ФОТОФІКСАЦІЯ — ОСТАННЯ СТОРІНКА ══════════ -->
-        <div class="p2-photo-page" style="page-break-after: avoid;">
-            <p style="font-size:13pt; font-weight:bold; margin:0 0 2px;">
-                Фотофіксація встановленого обладнання
-            </p>
-            <p style="font-size:10pt; margin:0 0 4px;">
+        <!-- ══════════ ФОТОФІКСАЦІЯ — ЛИСТ 1 (ФОТО 1) ══════════ -->
+        <div class="p2-photo-full">
+            <div class="p2-photo-label" style="font-size:14pt; padding:10px 15px;">
+                ФОТОФІКСАЦІЯ: Фото 1 — Встановлений інвертор
+            </div>
+            <div style="font-size:11pt; padding:5px 15px; border-bottom:1px solid #000; background:#fff;">
                 Об'єкт: <b>{{field21}}</b> &nbsp;|&nbsp; Замовник: <b>{{field4}}</b> &nbsp;|&nbsp; № {{field3}}
-            </p>
-
-            <!-- Фото 1 — 50% висоти -->
-            <div class="p2-photo-half">
-                <div class="p2-photo-label">Фото 1 — Встановлений інвертор</div>
-                <div class="p2-photo-body" style="background:#fff;">{{photo1}}</div>
             </div>
+            <div class="p2-photo-body" style="background:#fff; flex:1;">{{photo1}}</div>
+        </div>
 
-            <!-- Фото 2 — 50% висоти -->
-            <div class="p2-photo-half">
-                <div class="p2-photo-label">Фото 2 — Серійний номер встановленого інвертора</div>
-                <div class="p2-photo-body" style="background:#fff;">{{photo2}}</div>
+        <!-- ══════════ ФОТОФІКСАЦІЯ — ЛИСТ 2 (ФОТО 2) ══════════ -->
+        <div class="p2-photo-full">
+            <div class="p2-photo-label" style="font-size:14pt; padding:10px 15px;">
+                ФОТОФІКСАЦІЯ: Фото 2 — Серійний номер встановленого інвертора
             </div>
+            <div style="font-size:11pt; padding:5px 15px; border-bottom:1px solid #000; background:#fff;">
+                Об'єкт: <b>{{field21}}</b> &nbsp;|&nbsp; Замовник: <b>{{field4}}</b> &nbsp;|&nbsp; № {{field3}}
+            </div>
+            <div class="p2-photo-body" style="background:#fff; flex:1;">{{photo2}}</div>
         </div>
     `
 };
