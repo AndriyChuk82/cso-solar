@@ -314,60 +314,7 @@ const GT_TEMPLATES = {
                 </tr>
             </table>
 
-            <p class="gt-section-label">
-                Інформація щодо виконання технічних вимог для приєднання генеруючої установки
-                <span class="gt-italic">без можливості відпуску</span> електричної енергії в електричну мережу ОСП, ОСР:
-            </p>
-            <table class="gt-table">
-                <tr>
-                    <td class="gt-td-label">Виконання налаштувань параметрів обладнання (інвертора) у межах, визначених державними стандартами (так/ні)</td>
-                    <td class="gt-td-value">Так</td>
-                </tr>
-                <tr>
-                    <td class="gt-td-label">
-                        Улаштування технічних засобів (смартметр, пристрій для обмеження генерації тощо) та/або проведення відповідного
-                        налаштування протиаварійної автоматики для недопущення видачі в електричну мережу електричної енергії,
-                        виробленої генеруючою установкою (необхідно вказати, які саме технічні засоби улаштовано або які
-                        налаштування обладнання (інвертора) проведено)
-                    </td>
-                    <td class="gt-td-value">
-                        Налаштовано інвертор з неможливістю генерації при виході напруги за межі 207 В нижнього порогу і 253 В вищого порогу
-                    </td>
-                </tr>
-            </table>
-
-            <p class="gt-section-label">Повідомлення про результати розгляду цієї заяви прошу надати:</p>
-            <table class="gt-table">
-                <tr>
-                    <td class="gt-td-label">електронною поштою (необхідно вказати адресу)</td>
-                    <td class="gt-td-value">{{field25}}</td>
-                </tr>
-                <tr>
-                    <td class="gt-td-label">поштою (необхідно вказати поштову адресу)</td>
-                    <td class="gt-td-value">&nbsp;</td>
-                </tr>
-                <tr>
-                    <td class="gt-td-label">виключно в особистому кабінеті споживача на веб-сайті ОСР (так/ні)</td>
-                    <td class="gt-td-value">&nbsp;</td>
-                </tr>
-                <tr>
-                    <td class="gt-td-label">Адреса для листування</td>
-                    <td class="gt-td-value">{{field21}}</td>
-                </tr>
-                <tr>
-                    <td class="gt-td-label">Номер мобільного телефону</td>
-                    <td class="gt-td-value">{{field26}}</td>
-                </tr>
-            </table>
-
             <p class="gt-justify" style="margin-top:14px; font-size:11.5pt;">
-                Цією заявою повідомляю про встановлення генеруючої установки та прошу оформити у порядку,
-                визначеному ПРРЕЕ, паспорт точки розподілу. У випадках, визначених Кодексом, гарантую
-                забезпечення доступу представників ОСР для здійснення обстеження генеруючої установки
-                щодо відповідності її встановлення вимогам цього Кодексу та перевірки впливу на показники
-                якості електричної енергії.
-            </p>
-            <p class="gt-justify" style="font-size:11.5pt; margin-top:6px;">
                 Відповідальність за достовірність даних, наданих у заяві, несе заявник.
             </p>
             <p class="gt-bold" style="font-size:11.5pt; margin-top:8px;">Достовірність наданих даних підтверджую</p>
@@ -402,11 +349,13 @@ const GT_TEMPLATES = {
                 color: #000;
             }
             .p2-title-page {
-                min-height: 275mm; /* Збільшено для того щоб футер був у самому низу */
+                min-height: 282mm; /* Збільшено для того щоб футер був у самому низу А4 */
                 display: flex;
                 flex-direction: column;
                 page-break-after: always;
                 font-family: "Times New Roman", Times, serif;
+                padding: 15mm 15mm 10mm;
+                box-sizing: border-box;
             }
             .p2-toc-page {
                 page-break-after: always;
@@ -484,38 +433,38 @@ const GT_TEMPLATES = {
         </style>
 
         <!-- ══════════ СТОРІНКА 1: ТИТУЛЬНА ══════════ -->
-        <div class="p2-title-page">
-
-            <div style="text-align:center; font-size:13pt; font-weight:bold; padding-top:8mm;">
+        <div class="p2-page p2-title-page">
+            <div style="text-align:center; font-size:12pt; margin-bottom:50mm;">
                 ТОВ «Центр сервісного обслуговування»
             </div>
 
-            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 10mm;">
-
-                <p style="font-size:24pt; font-weight:bold; letter-spacing:2px; margin:0 0 16px;">
+            <div style="text-align:center; margin-bottom:20mm;">
+                <p style="font-size:20pt; font-weight:bold; margin:0; text-transform:uppercase; letter-spacing:1px;">
                     ПРОТОКОЛ ВІДПОВІДНОСТІ №&nbsp;{{field3}}
                 </p>
+            </div>
 
-                <div style="align-self:flex-end; text-align:right; margin-right:10mm; margin-top:20px; font-size:12pt;">
+            <div style="display:flex; justify-content:flex-end; margin-bottom:40mm;">
+                <div style="text-align:right; font-size:12pt; margin-right:5mm;">
                     <p style="font-weight:bold; margin:0;">"ЗАТВЕРДЖУЮ"</p>
-                    <p style="margin:28px 0 0; font-size:12pt;">_________________ Петро ПАСТУШОК</p>
-                </div>
-
-                <div style="margin-top:50px; font-size:13pt; text-align:center; line-height:1.8;">
-                    <p style="font-weight:bold; margin:0 0 16px;">Пояснювальна записка</p>
-                    <p style="font-weight:bold; margin:0;">
-                        Параметризація робочих характеристик<br>
-                        мережевої сонячної електростанції для безпечної<br>
-                        інтеграції в систему низьковольтових мереж:
-                    </p>
-                    <p style="font-weight:bold; text-decoration:underline; margin:12px 0 0; letter-spacing:1px;">
-                        «{{field21}}»
-                    </p>
+                    <p style="margin:20px 0 0;">_________________ Петро ПАСТУШОК</p>
                 </div>
             </div>
 
-            <!-- м. Золочів внизу сторінки -->
-            <div style="text-align:center; font-size:12pt; padding-bottom:8mm; margin-top:auto;">
+            <div style="text-align:center; flex-grow:1;">
+                <p style="font-weight:bold; font-size:14pt; margin-bottom:15px;">Пояснювальна записка</p>
+                <p style="font-weight:bold; font-size:13pt; line-height:1.6; max-width:90%; margin:0 auto;">
+                    Параметризація робочих характеристик<br>
+                    мережевої сонячної електростанції для безпечної<br>
+                    інтеграції в систему низьковольтних мереж:
+                </p>
+                <p style="font-weight:bold; text-decoration:underline; margin:20px 0 0; letter-spacing:0.5px; font-size:13pt;">
+                    «{{field21}}»
+                </p>
+            </div>
+
+            <!-- м. Золочів в самому низу сторінки -->
+            <div style="text-align:center; font-size:12pt; margin-top:auto; padding-bottom:5mm;">
                 м. Золочів - 2026 р.
             </div>
         </div>
@@ -601,7 +550,7 @@ const GT_TEMPLATES = {
             <p style="text-align:justify;">
                 Виробник фотовольтаїчного інвертора <span style="font-weight:bold;">{{field27}}</span> пройшов процедуру
                 сертифікації обладнання згідно європейського стандарту VDE 0100-551 та VDE 0124-100 (стандарти захисту
-                електромереж для від'єднання системи генерації електроенергії від мережі у разі неприпустимих значень
+                электромереж для від'єднання системи генерації електроенергії від мережі у разі неприпустимих значень
                 напруги та частоти). Відповідно до основних налаштувань інвертора, різниця між стандартною напругою
                 в низьковольтовій мережі та її піковою напругою при роботі електрогенеруючого обладнання не може
                 перевищувати значення <em>U</em>max/<em>U</em>min 10%
@@ -699,8 +648,6 @@ const GT_TEMPLATES = {
             </p>
         </div>
 
-
-
         <!-- ══════════ ДОДАТОК 2: Налаштування інвертора — з НОВОГО ЛИСТА ══════════ -->
         <div class="p2-page p2-appendix-page">
             <div style="text-align:right; font-size:11pt; margin-bottom:10px;">
@@ -733,31 +680,36 @@ const GT_TEMPLATES = {
                 {{photo_inverter_settings}}
             </div>
 
-            <!-- Пояснення до скріншота -->
-            <table class="p2-vde-table" style="font-size:11.5pt;">
-                <tr>
-                    <td style="width:55%; padding:4px 8px;">Стандарт мережі</td>
-                    <td style="font-weight:bold; padding:4px 8px;">VDE-AR-N-4105</td>
+            <table class="gt-table" style="font-size:11pt;">
+                <tr style="background:#f5f5f5;">
+                    <th style="width:10%;">№</th>
+                    <th style="width:60%;">Параметр</th>
+                    <th style="width:30%;">Значення</th>
                 </tr>
                 <tr>
-                    <td style="padding:4px 8px;">Верхній поріг відключення від мережі</td>
-                    <td style="font-weight:bold; padding:4px 8px;">253.0 V</td>
+                    <td class="gt-center">1</td>
+                    <td>Вибраний стандарт мережі (Grid Standard)</td>
+                    <td class="gt-center gt-bold">VDE-AR-N 4105</td>
                 </tr>
                 <tr>
-                    <td style="padding:4px 8px;">Нижній поріг відключення від мережі</td>
-                    <td style="font-weight:bold; padding:4px 8px;">207.0 V</td>
+                    <td class="gt-center">2</td>
+                    <td>Порогове значення нижньої напруги (Umin)</td>
+                    <td class="gt-center gt-bold">207 В</td>
                 </tr>
                 <tr>
-                    <td style="padding:4px 8px;">Верхня межа частоти</td>
-                    <td style="font-weight:bold; padding:4px 8px;">50.10 Hz</td>
+                    <td class="gt-center">3</td>
+                    <td>Порогове значення верхньої напруги (Umax)</td>
+                    <td class="gt-center gt-bold">253 В</td>
                 </tr>
                 <tr>
-                    <td style="padding:4px 8px;">Нижня межа частоти</td>
-                    <td style="font-weight:bold; padding:4px 8px;">47.50 Hz</td>
+                    <td class="gt-center">4</td>
+                    <td>Захист від острівкування (Anti-islanding)</td>
+                    <td class="gt-center gt-bold">Увімкнено</td>
                 </tr>
                 <tr>
-                    <td style="font-weight:bold; padding:4px 8px;">Серійний номер інвертора</td>
-                    <td style="font-weight:bold; text-decoration:underline; padding:4px 8px;">{{field29}}</td>
+                    <td class="gt-center">5</td>
+                    <td>Модель та серійний номер інвертора</td>
+                    <td class="gt-center gt-bold">{{field27}} / {{field29}}</td>
                 </tr>
             </table>
         </div>
