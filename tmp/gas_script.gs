@@ -1,5 +1,5 @@
 /**
- * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 3.5 (Додано Logger для тесту)
+ * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 3.6 (Використання Advanced Drive Service)
  */
 
 var CONFIG = {
@@ -34,7 +34,7 @@ function sanitizeName(s) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput("CSO Solar Green Tariff Service v3.5 is running!").setMimeType(ContentService.MimeType.TEXT);
+  return ContentService.createTextOutput("CSO Solar Green Tariff Service v3.6 is running!").setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doPost(e) {
@@ -53,10 +53,32 @@ function sendJson(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
+// Функція-обгортка для створення папки (якщо DriveApp заблоковано - спробуємо через Advanced Service)
+function createFolderSafely(parentFolderId, folderName) {
+  try {
+    // Спосіб 1: DriveApp
+    var parentFolder = DriveApp.getFolderById(parentFolderId);
+    return { folder: parentFolder.createFolder(folderName), method: "DriveApp" };
+  } catch (e) {
+    // Спосіб 2: Drive API (Advanced Service) - для Shared Drives та специфічних акаунтів
+    if (typeof Drive !== 'undefined') {
+      var folderMetadata = {
+        title: folderName,
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: [{id: parentFolderId}]
+      };
+      var folder = Drive.Files.insert(folderMetadata);
+      return { folder: DriveApp.getFolderById(folder.id), method: "AdvancedDriveAPI" };
+    }
+    throw e;
+  }
+}
+
 function getParentFolder() {
   var parentFolder;
   var errors = [];
   
+  // Спроба 1: По ID
   if (CONFIG.ROOT_FOLDER_ID) {
     try {
       parentFolder = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID);
@@ -65,6 +87,7 @@ function getParentFolder() {
     } catch (e) { errors.push("По ID не знайдено: " + e.toString()); }
   }
   
+  // Спроба 2: По імені в корені
   try {
     var folders = DriveApp.getRootFolder().getFoldersByName(CONFIG.FALLBACK_FOLDER_NAME);
     if (folders.hasNext()) {
@@ -73,6 +96,7 @@ function getParentFolder() {
     }
   } catch (e) { errors.push("Пошук по імені не вдався: " + e.toString()); }
   
+  // Спроба 3: Спробувати знайти папку самої таблиці
   try {
     var ssFile = DriveApp.getFileById(CONFIG.SPREADSHEET_ID);
     var parents = ssFile.getParents();
@@ -82,12 +106,13 @@ function getParentFolder() {
     }
   } catch (e) { errors.push("Доступ до папки таблиці не вдався: " + e.toString()); }
   
+  // Спроба 4: Створити нову в корені
   try {
     parentFolder = DriveApp.getRootFolder().createFolder(CONFIG.FALLBACK_FOLDER_NAME);
     return { folder: parentFolder, method: "Created New" };
   } catch (e) { errors.push("Створення нової папки не вдалося: " + e.toString()); }
   
-  throw new Error("Drive-сервіс заблокований або недоступний. Помилки: " + errors.join("; "));
+  throw new Error("Всі спроби доступу до Drive заблоковані. Перевірте обмеження акаунта. Помилки: " + errors.join("; "));
 }
 
 function testDriveConnection() {
@@ -165,15 +190,23 @@ function saveProject(params) {
   try {
     var res = getParentFolder();
     var parentFolder = res.folder;
-    if (res.method !== "ID") warning = "Використано резервну папку [" + res.method + "]: " + parentFolder.getName();
+    if (res.method !== "ID") warning = "Папка [" + res.method + "]: " + parentFolder.getName();
 
     var clientName = sanitizeName(project.field4 || "Unknown_Client");
     var address = sanitizeName(project.field21 || "");
     var folderName = clientName + (address ? " - " + address : "");
     
-    var targetFolder, folders = parentFolder.getFoldersByName(folderName);
-    if (folders.hasNext()) targetFolder = folders.next();
-    else targetFolder = parentFolder.createFolder(folderName);
+    var targetFolder;
+    try {
+      var folders = parentFolder.getFoldersByName(folderName);
+      if (folders.hasNext()) targetFolder = folders.next();
+      else {
+        var createRes = createFolderSafely(parentFolder.getId(), folderName);
+        targetFolder = createRes.folder;
+      }
+    } catch (e) {
+      throw new Error("[Folder processing] Не вдалося створити або відкрити папку '" + folderName + "'. Помилка: " + e.toString());
+    }
     
     folderUrl = targetFolder.getUrl();
     
@@ -182,8 +215,19 @@ function saveProject(params) {
         if (!f.base64) return;
         var bytes = Utilities.base64Decode(f.base64);
         var blob = Utilities.newBlob(bytes, f.type || "application/octet-stream", f.name);
-        targetFolder.createFile(blob);
-        filesUploaded++;
+        
+        // Спроба 1: DriveApp
+        try {
+          targetFolder.createFile(blob);
+          filesUploaded++;
+        } catch (e) {
+          // Спроба 2: Advanced API
+          if (typeof Drive !== 'undefined') {
+            var fileMetadata = { title: f.name, parents: [{id: targetFolder.getId()}] };
+            Drive.Files.insert(fileMetadata, blob);
+            filesUploaded++;
+          } else throw e;
+        }
       } catch (fileErr) { errors.push("Файл " + f.name + ": " + fileErr.toString()); }
     });
   } catch (err) { errors.push("Помилка Drive: " + err.toString()); }
