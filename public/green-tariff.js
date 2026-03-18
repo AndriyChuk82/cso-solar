@@ -250,13 +250,18 @@ async function handleFormSubmit(e) {
     }
     const stEl = document.getElementById('stationType');
     if (stEl) formData.stationType = stEl.value;
-    showToast('Збереження проєкту та файлів...', 'info');
+    console.log(`📤 Saving project. Files to upload: ${gtState.files.length}`);
     try {
         const res = await gasGTRequest('saveProject', {
             action: 'saveProject', project: formData,
             files: gtState.files, id: gtState.currentProject?.id || null
         });
-        if (res.success) { showToast('Проєкт успішно збережено!', 'success'); fetchProjects(); }
+        if (res.success) { 
+            showToast(`Проєкт збережено! Файлів: ${res.filesUploaded || 0}`, 'success'); 
+            gtState.files = []; // Очищуємо після успішного завантаження
+            renderFileList();
+            fetchProjects(); 
+        }
         else showToast('Помилка: ' + res.error, 'error');
     } catch (e) { showToast('Помилка мережі', 'error'); }
 }

@@ -1,9 +1,9 @@
 /**
- * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 2.5 (Фікс SPREADSHEET_ID)
+ * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 2.6 (Фікс завантаження файлів)
  */
 
 var CONFIG = {
-  SPREADSHEET_ID: '1FbzOPKEroa6QyghgqMFGJMRCdYx_yS0RDXoHzuI_GmY', // ВИПРАВЛЕНО
+  SPREADSHEET_ID: '1FbzOPKEroa6QyghgqMFGJMRCdYx_yS0RDXoHzuI_GmY',
   SHEET_NAME: 'Зелений тариф',
   ROOT_FOLDER_ID: '1Bhkaot09fCC4rx5udWjHxExqre7LcCrF'
 };
@@ -29,7 +29,7 @@ function normalizeHeader(s) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput("CSO Solar Green Tariff Service v2.5 is running!").setMimeType(ContentService.MimeType.TEXT);
+  return ContentService.createTextOutput("CSO Solar Green Tariff Service v2.6 is running!").setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doPost(e) {
@@ -76,25 +76,38 @@ function saveProject(params) {
   var now = new Date();
   
   var folderUrl = "";
+  var filesUploaded = 0;
+  var errors = [];
+
   try {
-    var folderName = (project.field4 || "Unknown") + " " + (project.field21 || "");
+    // Назва папки: ПІБ + Адреса (field4 + field21)
+    var clientName = project.field4 || "Unknown_Client";
+    var address = project.field21 || "";
+    var folderName = clientName + (address ? " - " + address : "");
+    
     var parentFolder = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID);
     var targetFolder, folders = parentFolder.getFoldersByName(folderName);
-    if (folders.hasNext()) targetFolder = folders.next();
-    else targetFolder = parentFolder.createFolder(folderName);
+    
+    if (folders.hasNext()) {
+      targetFolder = folders.next();
+    } else {
+      targetFolder = parentFolder.createFolder(folderName);
+    }
     folderUrl = targetFolder.getUrl();
     
     files.forEach(function(f) {
       try {
+        if (!f.base64) return;
         var bytes = Utilities.base64Decode(f.base64);
         var blob = Utilities.newBlob(bytes, f.type || "application/octet-stream", f.name);
         targetFolder.createFile(blob);
+        filesUploaded++;
       } catch (fileErr) {
-        console.log("Error saving file: " + f.name + " - " + fileErr.toString());
+        errors.push("File " + f.name + ": " + fileErr.toString());
       }
     });
   } catch (err) {
-    console.log("Folder/File error: " + err.toString());
+    errors.push("Folder/Drive error: " + err.toString());
   }
 
   var rowData = currentHeaders.map(function(h) {
@@ -123,7 +136,13 @@ function saveProject(params) {
     sheet.appendRow(rowData);
   }
 
-  return {success: true, id: id, folderUrl: folderUrl};
+  return {
+    success: true, 
+    id: id, 
+    folderUrl: folderUrl, 
+    filesUploaded: filesUploaded,
+    errors: errors.length > 0 ? errors : null
+  };
 }
 
 function getProjects() {
