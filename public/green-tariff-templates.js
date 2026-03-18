@@ -440,7 +440,7 @@ const GT_TEMPLATES = {
             <div style="text-align:center; margin-bottom:20mm;">
                 <p style="font-size:20pt; font-weight:bold; margin:0; text-transform:uppercase; letter-spacing:1px;">
                     ПРОТОКОЛ ВІДПОВІДНОСТІ 
-                <p>№{{field3}}</p>
+                <p>№ {{field3}}</p>
                 </p>
             </div>
 
@@ -459,7 +459,7 @@ const GT_TEMPLATES = {
                     інтеграції в систему низьковольтних мереж:
                 </p>
                 <p style="font-weight:bold; text-decoration:underline; margin:20px 0 0; letter-spacing:0.5px; font-size:13pt;">
-                    «{{field21}}»
+                    {{field21}}
                 </p>
             </div>
 
