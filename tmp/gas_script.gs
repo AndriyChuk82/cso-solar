@@ -1,11 +1,12 @@
 /**
- * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 3.2 (Перевірка доступу до Drive)
+ * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 3.3 (Авто-фолбек для папок)
  */
 
 var CONFIG = {
   SPREADSHEET_ID: '1FbzOPKEroa6QyghgqMFGJMRCdYx_yS0RDXoHzuI_GmY',
   SHEET_NAME: 'Зелений тариф',
-  ROOT_FOLDER_ID: '1Bhkaot09fCC4rx5udWjHxExqre7LcCrF'
+  ROOT_FOLDER_ID: '1Bhkaot09fCC4rx5udWjHxExqre7LcCrF',
+  FALLBACK_FOLDER_NAME: 'Зелений тариф - Файли проектів'
 };
 
 var FIELD_MAP = {
@@ -33,7 +34,7 @@ function sanitizeName(s) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput("CSO Solar Green Tariff Service v3.2 is running!").setMimeType(ContentService.MimeType.TEXT);
+  return ContentService.createTextOutput("CSO Solar Green Tariff Service v3.3 is running!").setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doPost(e) {
@@ -41,7 +42,7 @@ function doPost(e) {
     var data = JSON.parse(e.postData.contents);
     if (data.action === 'saveProject') return sendJson(saveProject(data));
     if (data.action === 'getProjects') return sendJson(getProjects());
-    if (data.action === 'testDrive') return sendJson(testDriveConnection()); // Нова дія для тесту
+    if (data.action === 'testDrive') return sendJson(testDriveConnection());
     return sendJson({success: false, error: "Unknown action"});
   } catch (err) {
     return sendJson({success: false, error: err.toString()});
@@ -52,17 +53,54 @@ function sendJson(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
+function getParentFolder() {
+  var parentFolder;
+  var errors = [];
+  
+  // Спроба 1: По ID
+  if (CONFIG.ROOT_FOLDER_ID) {
+    try {
+      parentFolder = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID);
+      parentFolder.getName(); // перевірка доступу
+      return { folder: parentFolder, method: "ID" };
+    } catch (e) {
+      errors.push("По ID не знайдено: " + e.toString());
+    }
+  }
+  
+  // Спроба 2: По імені в корені
+  try {
+    var folders = DriveApp.getRootFolder().getFoldersByName(CONFIG.FALLBACK_FOLDER_NAME);
+    if (folders.hasNext()) {
+      parentFolder = folders.next();
+      return { folder: parentFolder, method: "Fallback Name" };
+    }
+  } catch (e) {
+    errors.push("Пошук по імені не вдався: " + e.toString());
+  }
+  
+  // Спроба 3: Створити нову в корені
+  try {
+    parentFolder = DriveApp.getRootFolder().createFolder(CONFIG.FALLBACK_FOLDER_NAME);
+    return { folder: parentFolder, method: "Created New" };
+  } catch (e) {
+    errors.push("Створення нової папки не вдалося: " + e.toString());
+  }
+  
+  throw new Error("Не вдалося отримати доступ до Drive. Помилки: " + errors.join("; "));
+}
+
 function testDriveConnection() {
   try {
-    var folder = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID);
+    var res = getParentFolder();
     return {
       success: true,
-      folderName: folder.getName(),
-      owner: folder.getOwner().getEmail(),
-      canEdit: folder.getAccess(Session.getEffectiveUser()) === DriveApp.Permission.EDIT || folder.getAccess(Session.getEffectiveUser()) === DriveApp.Permission.OWNER
+      folderName: res.folder.getName(),
+      method: res.method,
+      canEdit: true
     };
   } catch (e) {
-    return { success: false, error: e.toString(), rootId: CONFIG.ROOT_FOLDER_ID };
+    return { success: false, error: e.toString() };
   }
 }
 
@@ -115,31 +153,23 @@ function saveProject(params) {
 
   if (rowIndex === -1) id = Utilities.getUuid();
 
-  // --- DRIVE LOGIC ---
   var folderUrl = "";
   var filesUploaded = 0;
+  var warning = "";
   var errors = [];
+
   try {
-    var parentFolder;
-    try {
-      parentFolder = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID);
-      parentFolder.getName();
-    } catch (e) {
-      throw new Error("[ROOT access] Не знайдено папку ROOT (ID: " + CONFIG.ROOT_FOLDER_ID + "). Перевірте цей ID або наявність прав [Edit] до цієї папки у вашому акаунті.");
-    }
+    var res = getParentFolder();
+    var parentFolder = res.folder;
+    if (res.method !== "ID") warning = "Використано резервну папку: " + parentFolder.getName();
 
     var clientName = sanitizeName(project.field4 || "Unknown_Client");
     var address = sanitizeName(project.field21 || "");
     var folderName = clientName + (address ? " - " + address : "");
     
-    var targetFolder;
-    try {
-      var folders = parentFolder.getFoldersByName(folderName);
-      if (folders.hasNext()) targetFolder = folders.next();
-      else targetFolder = parentFolder.createFolder(folderName);
-    } catch (e) {
-      throw new Error("[Folder processing] Не вдалося створити або відкрити папку '" + folderName + "'. Помилка Google Drive: " + e.toString());
-    }
+    var targetFolder, folders = parentFolder.getFoldersByName(folderName);
+    if (folders.hasNext()) targetFolder = folders.next();
+    else targetFolder = parentFolder.createFolder(folderName);
     
     folderUrl = targetFolder.getUrl();
     
@@ -174,7 +204,12 @@ function saveProject(params) {
   if (rowIndex > 0) sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
   else sheet.appendRow(rowData);
 
-  return { success: true, id: id, filesUploaded: filesUploaded, errors: errors.length > 0 ? errors : null };
+  return { 
+    success: true, id: id, 
+    filesUploaded: filesUploaded, 
+    warning: warning,
+    errors: errors.length > 0 ? errors : null 
+  };
 }
 
 function getProjects() {

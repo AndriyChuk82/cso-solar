@@ -259,11 +259,15 @@ async function handleFormSubmit(e) {
         });
         if (res.success) { 
             let msg = `Проєкт збережено! Файлів: ${res.filesUploaded || 0}`;
+            if (res.warning) {
+                console.warn('GAS Warning:', res.warning);
+                msg += ` (${res.warning})`;
+            }
             if (res.errors) {
                 console.error('Drive Errors:', res.errors);
                 msg += " (Помилки завантаження файлів)";
             }
-            showToast(msg, res.errors ? 'warning' : 'success'); 
+            showToast(msg, (res.errors || res.warning) ? 'warning' : 'success'); 
             gtState.files = []; 
             renderFileList();
             fetchProjects(); 
