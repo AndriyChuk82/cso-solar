@@ -452,9 +452,9 @@ const GT_TEMPLATES = {
                 overflow: hidden;
             }
             .p2-photo-body img {
-                width: 100%;
                 height: 100%;
-                object-fit: fill; /* Примусове розтягування по висоті та ширині рамки */
+                width: auto;
+                object-fit: contain; /* Зберігає пропорції, але пріоритет висоті 100% */
             }
             .p2-toc-table {
                 width: 100%;
