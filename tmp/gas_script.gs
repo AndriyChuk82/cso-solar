@@ -1,5 +1,5 @@
 /**
- * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 2.8 (Фікс формату дат)
+ * Google Apps Script для модуля "Зелений тариф" (CSO Solar) — ВЕРСІЯ 3.0 (Фікс оновлення існуючих рядків)
  */
 
 var CONFIG = {
@@ -29,7 +29,7 @@ function normalizeHeader(s) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput("CSO Solar Green Tariff Service v2.8 is running!").setMimeType(ContentService.MimeType.TEXT);
+  return ContentService.createTextOutput("CSO Solar Green Tariff Service v3.0 is running!").setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doPost(e) {
@@ -61,6 +61,7 @@ function saveProject(params) {
   var currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   var normalizedSheetHeaders = currentHeaders.map(normalizeHeader);
 
+  // Переконуємось що всі поля з FIELD_MAP є в таблиці
   Object.values(FIELD_MAP).forEach(function(h) {
     var normH = normalizeHeader(h);
     if (normalizedSheetHeaders.indexOf(normH) === -1) {
@@ -72,13 +73,39 @@ function saveProject(params) {
 
   var project = params.project;
   var files = params.files || [];
-  var id = params.id || Utilities.getUuid();
+  var id = params.id;
   var now = new Date();
   
+  // Визначаємо індекс колонки ID
+  var idColumnIdx = normalizedSheetHeaders.indexOf('id');
+  if (idColumnIdx === -1) idColumnIdx = 0; // По дефолту перша
+
+  var rowIndex = -1;
+  var dataRows = sheet.getDataRange().getValues();
+
+  if (id) {
+    // 1. Пошук по реальному ID в колонці
+    for (var j = 1; j < dataRows.length; j++) { 
+      if (dataRows[j][idColumnIdx] && dataRows[j][idColumnIdx].toString().toLowerCase() === id.toString().toLowerCase()) { 
+        rowIndex = j + 1; 
+        break; 
+      } 
+    }
+    // 2. Fallback для "row-N" (для існуючих проектів без прописаного ID)
+    if (rowIndex === -1 && id.toString().indexOf('row-') === 0) {
+      var potentialIdx = parseInt(id.toString().split('-')[1]);
+      if (!isNaN(potentialIdx) && potentialIdx <= dataRows.length) {
+        rowIndex = potentialIdx;
+      }
+    }
+  }
+
+  // Якщо це новий проект або ID не знайдено - генеруємо новий ID
+  if (rowIndex === -1) id = Utilities.getUuid();
+
   var folderUrl = "";
   var filesUploaded = 0;
   var errors = [];
-
   try {
     var clientName = project.field4 || "Unknown_Client";
     var address = project.field21 || "";
@@ -88,7 +115,6 @@ function saveProject(params) {
     if (folders.hasNext()) targetFolder = folders.next();
     else targetFolder = parentFolder.createFolder(folderName);
     folderUrl = targetFolder.getUrl();
-    
     files.forEach(function(f) {
       try {
         if (!f.base64) return;
@@ -96,18 +122,21 @@ function saveProject(params) {
         var blob = Utilities.newBlob(bytes, f.type || "application/octet-stream", f.name);
         targetFolder.createFile(blob);
         filesUploaded++;
-      } catch (fileErr) {
-        errors.push("Помилка файлу " + f.name + ": " + fileErr.toString());
-      }
+      } catch (fileErr) { errors.push("Файл " + f.name + ": " + fileErr.toString()); }
     });
-  } catch (err) {
-    errors.push("Помилка папки: " + err.toString());
-  }
+  } catch (err) { errors.push("Помилка Drive: " + err.toString()); }
 
   var rowData = currentHeaders.map(function(h) {
     var normH = normalizeHeader(h);
     if (normH === 'id') return id;
-    if (normH === 'дата створення') return now;
+    if (normH === 'дата створення') {
+      // Якщо оновлюємо існуючий рядок - зберігаємо стару дату
+      if (rowIndex > 0) {
+        var oldDate = dataRows[rowIndex-1][normalizedSheetHeaders.indexOf('дата створення')];
+        return oldDate || now;
+      }
+      return now;
+    }
     if (normH === 'folder_url') return folderUrl;
     for (var fieldId in FIELD_MAP) {
       if (normalizeHeader(FIELD_MAP[fieldId]) === normH) return project[fieldId] || "";
@@ -115,15 +144,6 @@ function saveProject(params) {
     return "";
   });
 
-  var dataRows = sheet.getDataRange().getValues();
-  var rowIndex = -1;
-  for (var j = 1; j < dataRows.length; j++) { 
-    if (dataRows[j][0].toString().toLowerCase() === id.toString().toLowerCase()) { 
-      rowIndex = j + 1; 
-      break; 
-    } 
-  }
-  
   if (rowIndex > 0) sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
   else sheet.appendRow(rowData);
 
@@ -136,24 +156,28 @@ function getProjects() {
     var sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
     if (!sheet) return {success: true, projects: []};
     var data = sheet.getDataRange().getValues(), headers = data[0], projects = [];
+    var normHeaders = headers.map(normalizeHeader);
+    var idIdx = normHeaders.indexOf('id');
+    
     for (var i = 1; i < data.length; i++) {
       var p = {}, hasVal = false;
       for (var j = 0; j < headers.length; j++) {
         var val = data[i][j];
         if (val instanceof Date) {
-          var h = normalizeHeader(headers[j]);
-          // Якщо це Дата створення - залишаємо з часом, решта - тільки дата
-          if (h === 'дата створення' || h.indexOf('created') !== -1) {
-            val = Utilities.formatDate(val, "GMT+2", "dd.MM.yyyy HH:mm");
-          } else {
-            val = Utilities.formatDate(val, "GMT+2", "dd.MM.yyyy"); // ТІЛЬКИ ДАТА
-          }
+          var h = normHeaders[j];
+          if (h === 'дата створення' || h.indexOf('created') !== -1) val = Utilities.formatDate(val, "GMT+2", "dd.MM.yyyy HH:mm");
+          else val = Utilities.formatDate(val, "GMT+2", "dd.MM.yyyy");
         }
         if (val !== "") hasVal = true;
         p[headers[j]] = val;
       }
       if (hasVal) {
-        if (!p['ID'] && !p['id']) p['ID'] = "row-" + (i + 1);
+        // Якщо в колонці ID порожньо - даємо тимчасовий ID за номером рядка
+        if (idIdx !== -1 && !data[i][idIdx]) {
+          p[headers[idIdx]] = "row-" + (i + 1);
+        } else if (idIdx === -1) {
+          p['ID'] = "row-" + (i + 1);
+        }
         projects.push(p);
       }
     }
