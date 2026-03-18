@@ -10,6 +10,7 @@ const GT_CONFIG = {
 let gtState = {
     projects: [],
     currentProject: null,
+    activeStatusFilter: 'В процесі',
     files: [],
     equipment: {
         inverters: [],
@@ -95,8 +96,17 @@ function initEventListeners() {
     document.getElementById('btnRefreshGT').addEventListener('click', fetchProjects);
     document.getElementById('btnGenerateDocs').addEventListener('click', generateSelectedDocuments);
     
-    // Пошук проектів
+    // Пошук та фільтрація проектів
     document.getElementById('projectSearch').addEventListener('input', renderProjectList);
+    
+    document.querySelectorAll('.status-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            gtState.activeStatusFilter = tab.dataset.status;
+            renderProjectList();
+        });
+    });
 }
 
 // ===== DATA FETCHING =====
@@ -178,9 +188,15 @@ function renderProjectList() {
         const id   = getProp(p, ['id', 'ID']);
         const name = getProp(p, gtState.mapping.field4) || "";
         const num  = getProp(p, gtState.mapping.field3) || "";
+        const stat = getProp(p, gtState.mapping.field1) || "";
         
         // Якщо немає ні ID, ні імені, ні номера - це порожній рядок
         if (!id && !name && !num) return false;
+
+        // Фільтр по статусу
+        if (gtState.activeStatusFilter !== 'all') {
+            if (stat !== gtState.activeStatusFilter) return false;
+        }
 
         const searchStr = (name + " " + num).toLowerCase();
         return searchStr.includes(search);

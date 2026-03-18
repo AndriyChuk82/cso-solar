@@ -148,6 +148,43 @@
     gap: 4px;
 }
 
+/* Status Filters */
+.status-filters {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: #fff;
+}
+.status-filters::-webkit-scrollbar { display: none; }
+
+.status-tab {
+    padding: 5px 12px;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    color: #6b7280;
+    transition: all 0.2s;
+}
+
+.status-tab.active {
+    background: var(--gt-primary);
+    border-color: var(--gt-primary);
+    color: #fff;
+}
+
+.status-tab:hover:not(.active) {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+
 .gt-file-tag .remove {
     cursor: pointer;
     color: #ef4444;

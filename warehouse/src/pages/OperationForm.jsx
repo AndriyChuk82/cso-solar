@@ -161,34 +161,57 @@ export default function OperationForm({ type = 'income' }) {
       <form onSubmit={handleSubmit}>
         <div className="card" style={{ marginBottom: '16px' }}>
           <div className="card-body">
-            <div className="form-row">
-              <div className="form-group">
-                <label>Склад *</label>
-                <select
-                  className="form-select"
-                  value={formData.warehouseId}
-                  onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
-                  required
-                >
-                  <option value="">Оберіть склад</option>
-                  {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>{w.name}</option>
-                  ))}
-                </select>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', alignItems: 'start' }}>
+              {/* Ліва частина: Склад та Дата */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Склад *</label>
+                  <select
+                    className="form-select"
+                    value={formData.warehouseId}
+                    onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
+                    required
+                  >
+                    <option value="">Оберіть склад</option>
+                    {warehouses.map((w) => (
+                      <option key={w.id} value={w.id}>{w.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Дата операції</label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  />
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>Дата операції</label>
-                <input
-                  type="date"
-                  className="form-input"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                />
+              {/* Права частина: Додати товар */}
+              <div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    🔍 Додати товар
+                    <span style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)' }}>
+                      (пошук за назвою або артикулом)
+                    </span>
+                  </label>
+                  <ProductSearch
+                    products={products}
+                    onSelect={handleProductSelect}
+                    placeholder="Введіть назву або артикул..."
+                  />
+                  <div style={{ marginTop: '8px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    💡 Ви можете додати декілька різних товарів в одну операцію.
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="form-group">
+            <div className="form-group" style={{ marginTop: '20px', marginBottom: 0 }}>
               <label>Загальний коментар</label>
               <input
                 type="text"
@@ -203,20 +226,15 @@ export default function OperationForm({ type = 'income' }) {
 
         {/* Позиції */}
         <div className="card" style={{ marginBottom: '16px' }}>
-          <div className="card-header">
-            <h3>Позиції ({formData.items.length})</h3>
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3>Обрані позиції ({formData.items.length})</h3>
+            {formData.items.length > 0 && (
+               <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                 Всього: {formData.items.length} найменувань
+               </div>
+            )}
           </div>
-          <div className="card-body">
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ fontSize: '0.82rem', fontWeight: 600, marginBottom: '5px', display: 'block' }}>
-                Додати товар
-              </label>
-              <ProductSearch
-                products={products}
-                onSelect={handleProductSelect}
-                placeholder="Пошук за назвою або артикулом..."
-              />
-            </div>
+          <div className="card-body" style={{ padding: formData.items.length === 0 ? '0' : '20px' }}>
 
             {formData.items.length === 0 ? (
               <div className="empty-state" style={{ padding: '24px' }}>
