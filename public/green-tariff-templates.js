@@ -158,7 +158,6 @@ const GT_TEMPLATES = {
                 margin: 15px auto;
                 min-height: 400px;
                 background: #fff;
-                border: 1px solid #ccc;
                 overflow: hidden;
             }
             .gt-overlay-img {
@@ -800,10 +799,8 @@ const GT_TEMPLATES = {
                     {{field17}}
                 </div>
                 
-                <!-- Навантаження -->
-                <div class="gt-overlay-label" style="top: 75.5%; left: 2%;">
-                    Навантаження<br>
-                    житлового будинку<br>
+                <!-- Навантаження (лише кВт) -->
+                <div class="gt-overlay-label" style="top: 75.5%; left: 1%;">
                     {{field13}} кВт
                 </div>
                 
