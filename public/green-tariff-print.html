@@ -172,8 +172,8 @@
                 if (docId === '3') {
                     const hasBattery = formData.stationType && formData.stationType.toLowerCase().includes('гібрид');
                     template = template
-                        .split("{{stationType === 'Гібридна' ? 'block' : 'none'}}")
-                        .join(hasBattery ? 'block' : 'none');
+                        .split("{{stationType === 'Гібридна' ? 'block' : 'none'}}").join(hasBattery ? 'block' : 'none')
+                        .split("{{stationType === 'Гібридна' ? 'none' : 'block'}}").join(hasBattery ? 'none' : 'block');
                 }
 
                 // Специфічна логіка для Акту (doc4)

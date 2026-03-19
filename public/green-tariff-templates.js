@@ -29,7 +29,7 @@ const GT_TEMPLATES = {
     styles: `
         <style>
             .gt-doc-page {
-                font-family: "Times New Roman", Times, serif;
+                font-family: Calibri, "Segoe UI", Candara, Optima, Arial, sans-serif;
                 font-size: 12pt;
                 line-height: 1.5;
                 color: #000;
@@ -125,7 +125,7 @@ const GT_TEMPLATES = {
                 margin-top: 12px;
                 position: relative;
                 background: #fff;
-                overflow: hidden;
+                overflow: visible !important;
             }
             .gt-node {
                 border: 1.5px solid #000;
@@ -133,7 +133,7 @@ const GT_TEMPLATES = {
                 background: #fff;
                 position: absolute;
                 text-align: center;
-                font-weight: bold;
+                font-weight: normal;
                 width: 140px;
                 font-size: 8.5pt;
             }
@@ -158,7 +158,7 @@ const GT_TEMPLATES = {
                 margin: 15px auto;
                 min-height: 400px;
                 background: #fff;
-                overflow: hidden;
+                overflow: visible !important;
             }
             .gt-overlay-img {
                 display: block;
@@ -167,12 +167,16 @@ const GT_TEMPLATES = {
             }
             .gt-overlay-label {
                 position: absolute;
+                font-family: Calibri, "Segoe UI", Candara, Optima, Arial, sans-serif;
                 font-size: 10pt;
                 line-height: 1.2;
                 color: #1a1a1a;
-                font-weight: bold;
+                font-weight: normal;
                 pointer-events: none;
                 text-shadow: 0 0 2px #fff; /* Покращує читабельність на фоні ліній */
+                white-space: nowrap;
+                z-index: 10;
+                overflow: visible !important;
             }
             p { margin: 5px 0; }
         </style>
@@ -185,25 +189,19 @@ const GT_TEMPLATES = {
 
             <p class="gt-title">Заява про встановлення генеруючої установки споживачем</p>
 
-            <!-- Шапка: вхідний номер / дата реєстрації -->
-            <table class="gt-table" style="margin-bottom:10px;">
+            <table class="gt-table">
+                <!-- Об'єднана шапка -->
                 <tr>
-                    <td style="width:50%; text-align:center;">
+                    <td style="text-align:center;">
                         Вхідний номер<br>
                         <span class="gt-small gt-italic">(заповнюється ОСР під час подання заяви споживачем)</span>
                     </td>
-                    <td style="width:50%; text-align:center;">
+                    <td style="text-align:center;">
                         Дата реєстрації<br>
                         <span class="gt-small gt-italic">(заповнюється ОСР під час подання заяви споживачем)</span>
                     </td>
                 </tr>
-                <tr>
-                    <td style="height:22px;">&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
-            </table>
-
-            <table class="gt-table">
+                <!-- Дані заяви -->
                 <tr>
                     <td class="gt-td-label">
                         <span class="gt-bold">Кому:</span><br>
@@ -294,7 +292,7 @@ const GT_TEMPLATES = {
                 </tr>
             </table>
 
-            <p class="gt-section-label">
+            <p class="gt-section-label" style="margin-top: 25mm; page-break-before: always;">
                 Інформація щодо виконання технічних вимог для приєднання генеруючої установки
                 <span class="gt-italic">із можливістю відпуску</span> електричної енергії в електричну мережу ОСП, ОСР:
             </p>
@@ -365,17 +363,18 @@ const GT_TEMPLATES = {
         {{styles}}
         <style>
             .p2-page {
-                font-family: "Times New Roman", Times, serif;
+                font-family: Calibri, "Segoe UI", Candara, Optima, Arial, sans-serif;
                 font-size: 13pt;
                 line-height: 1.9;
                 color: #000;
+                padding-top: 6mm;
             }
             .p2-title-page {
-                min-height: 265mm; /* 297mm - 30mm margins ~ 265mm */
+                min-height: 255mm; /* 297mm - 30mm margins - 6mm padding ~ 261mm available */
                 display: flex;
                 flex-direction: column;
                 page-break-after: always;
-                font-family: "Times New Roman", Times, serif;
+                font-family: Calibri, "Segoe UI", Candara, Optima, Arial, sans-serif;
                 box-sizing: border-box;
             }
             .p2-toc-page {
@@ -387,18 +386,24 @@ const GT_TEMPLATES = {
             .p2-appendix-page {
                 page-break-before: always;
             }
-            .p2-photo-full {
+            .p2-photo-page {
                 page-break-before: always;
-                min-height: 265mm; /* Повна висота контентної області А4 */
+                padding-top: 14mm;
+                box-sizing: border-box;
+            }
+            .p2-photo-full {
+                /* page-break-before: always; — Тепер це у .p2-photo-page */
+                min-height: 240mm;
                 display: flex;
                 flex-direction: column;
                 border: 1.5px solid #000;
                 overflow: hidden;
                 box-sizing: border-box;
+                font-family: Calibri, "Segoe UI", Candara, Optima, Arial, sans-serif;
             }
             .p2-photo-label {
                 font-size: 11pt;
-                font-weight: bold;
+                font-weight: normal;
                 padding: 4px 10px;
                 background: #f5f5f5;
                 border-bottom: 1px solid #000;
@@ -672,11 +677,6 @@ const GT_TEMPLATES = {
 
         <!-- ══════════ ДОДАТОК 2: Налаштування інвертора — з НОВОГО ЛИСТА ══════════ -->
         <div class="p2-page p2-appendix-page">
-            <div style="text-align:right; font-size:11pt; margin-bottom:10px;">
-                <p style="font-weight:bold; margin:0;">«ЗАТВЕРДЖУЮ»</p>
-                <p style="margin:16px 0 0;">_________________ Петро ПАСТУШОК</p>
-            </div>
-
             <p style="font-size:14pt; font-weight:bold; text-align:center; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 6px;">
                 ДОДАТОК №2
             </p>
@@ -737,90 +737,158 @@ const GT_TEMPLATES = {
         </div>
 
         <!-- ══════════ ФОТОФІКСАЦІЯ — ЛИСТ 1 (ФОТО 1) ══════════ -->
-        <div class="p2-photo-full">
-            <div class="p2-photo-label" style="font-size:14pt; padding:10px 15px;">
-                ФОТОФІКСАЦІЯ: Фото 1 — Встановлений інвертор
+        <div class="p2-photo-page">
+            <div class="p2-photo-full">
+                <div class="p2-photo-label" style="font-size:14pt; padding:10px 15px;">
+                    ФОТОФІКСАЦІЯ: Фото 1 — Встановлений інвертор
+                </div>
+                <div style="font-size:11pt; padding:5px 15px; border-bottom:1px solid #000; background:#fff;">
+                    Об'єкт: <b>{{field21}}</b> &nbsp;|&nbsp; Замовник: <b>{{field4}}</b> &nbsp;|&nbsp; № {{field3}}
+                </div>
+                <div class="p2-photo-body" style="background:#fff; flex:1;">{{photo1}}</div>
             </div>
-            <div style="font-size:11pt; padding:5px 15px; border-bottom:1px solid #000; background:#fff;">
-                Об'єкт: <b>{{field21}}</b> &nbsp;|&nbsp; Замовник: <b>{{field4}}</b> &nbsp;|&nbsp; № {{field3}}
-            </div>
-            <div class="p2-photo-body" style="background:#fff; flex:1;">{{photo1}}</div>
         </div>
 
         <!-- ══════════ ФОТОФІКСАЦІЯ — ЛИСТ 2 (ФОТО 2) ══════════ -->
-        <div class="p2-photo-full">
-            <div class="p2-photo-label" style="font-size:14pt; padding:10px 15px;">
-                ФОТОФІКСАЦІЯ: Фото 2 — Серійний номер встановленого інвертора
+        <div class="p2-photo-page">
+            <div class="p2-photo-full">
+                <div class="p2-photo-label" style="font-size:14pt; padding:10px 15px;">
+                    ФОТОФІКСАЦІЯ: Фото 2 — Серійний номер встановленого інвертора
+                </div>
+                <div style="font-size:11pt; padding:5px 15px; border-bottom:1px solid #000; background:#fff;">
+                    Об'єкт: <b>{{field21}}</b> &nbsp;|&nbsp; Замовник: <b>{{field4}}</b> &nbsp;|&nbsp; № {{field3}}
+                </div>
+                <div class="p2-photo-body" style="background:#fff; flex:1;">{{photo2}}</div>
             </div>
-            <div style="font-size:11pt; padding:5px 15px; border-bottom:1px solid #000; background:#fff;">
-                Об'єкт: <b>{{field21}}</b> &nbsp;|&nbsp; Замовник: <b>{{field4}}</b> &nbsp;|&nbsp; № {{field3}}
-            </div>
-            <div class="p2-photo-body" style="background:#fff; flex:1;">{{photo2}}</div>
         </div>
     `,
 
     // ─── 3. Схема електрична однолінійна ─────────────────────────────────────
     doc3: `
         {{styles}}
-        <div class="p2-page p2-appendix-page" style="padding: 15mm;">
-
-            <p style="font-size:14pt; font-weight:bold; text-align:center; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 10px;">
+        <div class="p2-page p2-appendix-page" style="padding: 5mm 15mm; min-height: 250mm; display: flex; flex-direction: column;">
+            <p style="text-align:center; font-weight:bold; font-size:12pt; margin-bottom:10px;">
+                Улаштування вузла обліку генеруючої установки приватного домогосподарства за адресою: {{field21}}
+            </p>
+            <p style="font-size:14pt; font-weight:bold; text-align:center; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 5px;">
                 Схема електрична однолінійна
             </p>
 
-            <div class="gt-overlay-container">
-                <img src="doc/shema_merezeva.jpg" class="gt-overlay-img">
+            <div style="flex: 1; display: flex; align-items: center; justify-content: flex-start; overflow: visible;">
                 
-                <!-- Підстанція -->
-                <div class="gt-overlay-label" style="top: 0.5%; left: 0.5%;">
-                    {{field14}}
-                </div>
+                <!-- ════ ВЕРСІЯ: МЕРЕЖЕВА СТАНЦІЯ ════ -->
+                <div class="gt-overlay-container" style="display: {{stationType === 'Гібридна' ? 'none' : 'block'}}; margin: 0; position: relative; left: -3%; overflow: visible !important;">
+                    <img src="doc/shema_merezeva.jpg?v=1.1" class="gt-overlay-img">
                 
-                <!-- Опора -->
-                <div class="gt-overlay-label" style="top: 0.5%; left: 24%;">
-                    Опора №{{field16}}
+                    <!-- Підстанція -->
+                    <div class="gt-overlay-label" style="top: -2%; left: 2%;">
+                        {{field14}}
+                    </div>
+                    
+                    <!-- Опора -->
+                    <div class="gt-overlay-label" style="top: -2%; left: 42%;">
+                        Опора №{{field16}}
+                    </div>
+                    
+                    <!-- Лінія -->
+                    <div class="gt-overlay-label" style="top: 3%; left: 22%;">
+                        Л-{{field15}}
+                    </div>
+                    
+                    <!-- Вхідний автомат -->
+                    <div class="gt-overlay-label" style="top: 8%; left: 60%;">
+                        Вхідний автомат<br>
+                        Напруга: 0.4 кВ<br>
+                        Струм: {{field19}}
+                    </div>
+                    
+                    <!-- Лічильник -->
+                    <div class="gt-overlay-label" style="top: 26%; left: 60%;">
+                        Двонаправлений лічильник<br>
+                        {{field17}}
+                    </div>
+                    
+                    <!-- Навантаження (лише кВт) -->
+                    <div class="gt-overlay-label" style="top: 78%; left: 5%;">
+                        {{field13}} кВт
+                    </div>
+                    
+                    <!-- Інвертор -->
+                    <div class="gt-overlay-label" style="top: 68%; left: 101%;">
+                        Мережевий інвертор:<br>
+                        Модель: {{field27}}<br>
+                        Верхній рівень напруги: 253 В<br>
+                        Нижній рівень напруги: 207 В<br>
+                        Номінальна потужність:<br>
+                        {{field28}} кВт
+                    </div>
+                    
+                    <!-- Панелі -->
+                    <div class="gt-overlay-label" style="top: 88%; left: 101%;">
+                        Номінальна потужність:<br>
+                        {{field22}} кВт<br>
+                        Модель:<br>
+                        {{field34}}
+                    </div>
                 </div>
+
+                <!-- ════ ВЕРСІЯ: ГІБРИДНА СТАНЦІЯ ════ -->
+                <div class="gt-overlay-container" style="display: {{stationType === 'Гібридна' ? 'block' : 'none'}}; margin: 0; position: relative; left: -3%; overflow: visible !important;">
+                    <img src="doc/shema_hibrud.jpg?v=1.1" class="gt-overlay-img">
                 
-                <!-- Лінія -->
-                <div class="gt-overlay-label" style="top: 8%; left: 11%;">
-                    {{field15}}
+                    <!-- Підстанція -->
+                    <div class="gt-overlay-label" style="top: -2.5%; left: 1%;">
+                        {{field14}}
+                    </div>
+                    
+                    <!-- Опора -->
+                    <div class="gt-overlay-label" style="top: -2.5%; left: 40%;">
+                        Опора №{{field16}}
+                    </div>
+                    
+                    <!-- Лінія -->
+                    <div class="gt-overlay-label" style="top: 3%; left: 25%;">
+                        Л-{{field15}}
+                    </div>
+                    
+                    <!-- Вхідний автомат -->
+                    <div class="gt-overlay-label" style="top: 9%; left: 60%;">
+                        Вхідний автомат<br>
+                        Напруга: 0.4 кВ<br>
+                        Струм: {{field19}}
+                    </div>
+                    
+                    <!-- Лічильник -->
+                    <div class="gt-overlay-label" style="top: 26%; left: 60%;">
+                        Двонаправлений лічильник<br>
+                        {{field17}}
+                    </div>
+
+                    <!-- Гібридний інвертор -->
+                    <div class="gt-overlay-label" style="top: 68%; left: 101%;">
+                        Гібридний інвертор:<br>
+                        Модель: {{field27}}<br>
+                        Номінальна потужність: {{field28}} кВт
+                    </div>
+
+                    <!-- АКБ (тільки значення, напис є на схемі) -->
+                    <div class="gt-overlay-label" style="top: 89%; left: 39%;">
+                        {{field37}} кВт·год 
+                        <br>({{field36}})
+                    </div>
+                    
+                    <!-- Навантаження (тільки значення) -->
+                    <div class="gt-overlay-label" style="top: 78%; left: 6%;">
+                        {{field13}} кВт
+                    </div>
+                    
+                    <!-- Панелі -->
+                    <div class="gt-overlay-label" style="top: 88%; left: 101%;">
+                        Номінальна потужність: {{field22}} кВт<br>
+                        {{field34}}
+                    </div>
                 </div>
-                
-                <!-- Вхідний автомат -->
-                <div class="gt-overlay-label" style="top: 13.5%; left: 52%;">
-                    Вхідний автомат<br>
-                    Напруга: 0.4 кВ<br>
-                    Струм: {{field19}}
-                </div>
-                
-                <!-- Лічильник -->
-                <div class="gt-overlay-label" style="top: 32%; left: 63%;">
-                    Двонаправлений лічильник<br>
-                    {{field17}}
-                </div>
-                
-                <!-- Навантаження (лише кВт) -->
-                <div class="gt-overlay-label" style="top: 75.5%; left: 1%;">
-                    {{field13}} кВт
-                </div>
-                
-                <!-- Інвертор -->
-                <div class="gt-overlay-label" style="top: 70%; left: 78%;">
-                    Гібридний інвертор:<br>
-                    Модель: {{field27}}<br>
-                    Верхній рівень напруги: 253 В<br>
-                    Нижній рівень напруги: 207 В<br>
-                    Номінальна потужність:<br>
-                    {{field28}} кВт
-                </div>
-                
-                <!-- Панелі -->
-                <div class="gt-overlay-label" style="top: 86%; left: 78%;">
-                    Номінальна потужність:<br>
-                    {{field22}} кВт<br>
-                    Модель:<br>
-                    {{field34}}
-                </div>
+
             </div>
         </div>
     `
