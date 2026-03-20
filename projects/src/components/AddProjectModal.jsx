@@ -75,12 +75,21 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!formData.name) return alert('Будь ласка, введіть назву проекту');
+    
+    let finalName = formData.name.trim();
+    if (!finalName) {
+      if (formData.client_name.trim()) {
+        const today = new Date().toLocaleDateString('uk-UA');
+        finalName = `${formData.client_name.trim()} (${today})`;
+      } else {
+        return alert('Будь ласка, введіть назву проекту або ім\'я клієнта');
+      }
+    }
     
     setIsSaving(true);
     try {
       console.log('Saving project with items:', formData.items_from_cp?.length);
-      const res = await projectService.saveProject(formData);
+      const res = await projectService.saveProject({ ...formData, name: finalName });
       if (res.success) {
         onProjectCreated(res.id);
         onClose();
@@ -127,16 +136,13 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
           {/* Sidebar: Proposals List */}
           <div className="lg:col-span-2 border-r border-slate-100 bg-slate-50/30 flex flex-col overflow-hidden max-h-[30vh] lg:max-h-none">
             <div className="p-3 border-b border-slate-100">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
-                <input 
-                  type="text" 
-                  placeholder="Пошук клієнта / ID..."
-                  className="form-input pl-8 text-[11px]"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                />
-              </div>
+              <input 
+                type="text" 
+                placeholder="Пошук клієнта / ID..."
+                className="form-input text-[11px]"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
             </div>
             
             <div className="flex-1 overflow-y-auto p-2 space-y-2">
@@ -183,7 +189,6 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
                 <div className="form-group">
                    <label>Назва проекту</label>
                    <input 
-                      required
                       type="text" 
                       className="form-input"
                       placeholder="Напр: СЕС 30кВт (Петренко)"
