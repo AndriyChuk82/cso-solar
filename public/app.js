@@ -1757,6 +1757,78 @@ function exportInvoicePDF() {
     });
 }
 
+function exportDeliveryNotePDF() {
+    readProposalForm();
+    if (state.proposal.items.length === 0) {
+        showToast('Пропозиція порожня', 'warning');
+        return;
+    }
+
+    showToast('Генерація накладної (PDF)...', 'info');
+
+    const propNum = state.proposal.number || 'КП-001';
+    const dnNum = propNum.replace('КП-', '');
+    const dnDate = formatDateUA(state.proposal.date || todayStr());
+
+    // Fill the template
+    document.getElementById('dnNumber').textContent = dnNum;
+    document.getElementById('dnDate').textContent = dnDate;
+    document.getElementById('dnClientName').textContent = state.proposal.clientName || '_______________';
+    document.getElementById('dnClientContact').textContent = state.proposal.clientPhone || '';
+
+    // Build table rows
+    let tbodyHtml = '';
+    state.proposal.items.forEach((it, idx) => {
+        const bg = idx % 2 === 0 ? '#ffffff' : '#f7f9fc';
+        tbodyHtml += `<tr style="background:${bg};">
+            <td style="padding:10px; border:1px solid #c0c8d8; text-align:center;">${idx + 1}</td>
+            <td style="padding:10px; border:1px solid #c0c8d8;">
+                <strong>${escHtml(it.name)}</strong>
+            </td>
+            <td style="padding:10px; border:1px solid #c0c8d8; text-align:center;">${it.quantity}</td>
+            <td style="padding:10px; border:1px solid #c0c8d8; text-align:center;">${it.unit || 'шт.'}</td>
+        </tr>`;
+    });
+
+    // Pad empty rows to minimum 8 for better look
+    for (let i = state.proposal.items.length; i < 8; i++) {
+        const bg = i % 2 === 0 ? '#ffffff' : '#f7f9fc';
+        tbodyHtml += `<tr style="background:${bg}; height:35px;">
+            <td style="border:1px solid #c0c8d8; text-align:center; color:#ccc;">${i + 1}</td>
+            <td style="border:1px solid #c0c8d8;"></td>
+            <td style="border:1px solid #c0c8d8;"></td>
+            <td style="border:1px solid #c0c8d8;"></td>
+        </tr>`;
+    }
+
+    document.getElementById('dnTableBody').innerHTML = tbodyHtml;
+
+    // Show template, render, hide
+    const template = document.getElementById('deliveryNoteTemplate');
+    const content = document.getElementById('deliveryNoteContent');
+    template.style.display = 'block';
+    template.style.position = 'absolute';
+    template.style.left = '-9999px';
+    template.style.top = '0';
+
+    const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `Накладна_${dnNum}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(content).save().then(() => {
+        template.style.display = 'none';
+        showToast('Накладну завантажено як PDF', 'success');
+    }).catch(err => {
+        template.style.display = 'none';
+        console.error('Delivery Note PDF error:', err);
+        showToast('Помилка генерації накладної', 'error');
+    });
+}
+
 
 
 // Format date as DD.MM.YYYY
@@ -2000,6 +2072,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnSave').addEventListener('click', saveCurrentProposal);
     document.getElementById('btnNewProposal').addEventListener('click', newProposal);
     document.getElementById('btnInvoice').addEventListener('click', exportInvoicePDF);
+    document.getElementById('btnDeliveryNote').addEventListener('click', exportDeliveryNotePDF);
     
     // TTN Button
     document.getElementById('btnTtn').addEventListener('click', () => {

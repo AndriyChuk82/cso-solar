@@ -205,6 +205,7 @@
                 <button id="btnNewProposal" class="btn btn-outline">📄 Нова</button>
                 <button id="btnInvoice" class="btn btn-outline">🧾 Рахунок</button>
                 <button id="btnTtn" class="btn btn-outline">🚚 ТТН</button>
+                <button id="btnDeliveryNote" class="btn btn-outline">📦 Накладна</button>
                 <button id="btnWarranty" class="btn btn-outline">🛡️ Гарантія</button>
                 <button id="btnPrint" class="btn btn-outline">🖨️ Друк</button>
                 <button id="btnTelegram" class="btn btn-accent">📨 Telegram</button>
@@ -546,6 +547,77 @@
 
     <!-- ===== CDN LIBS ===== -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- ===== DELIVERY NOTE TEMPLATE (hidden, for PDF generation) ===== -->
+    <div id="deliveryNoteTemplate" style="display:none;">
+        <div id="deliveryNoteContent" style="font-family:'Inter',sans-serif; max-width:210mm; margin:0 auto; padding:20px 25px 40px; background:#fff; color:#1a1a2e;">
+            <!-- Header -->
+            <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; padding-bottom:16px; border-bottom:3px solid #1a3a6b;">
+                <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" style="height:60px; width:auto;">
+                <div>
+                    <div style="font-size:11px; color:#5a6a8a;">Офіс та склад: Львівська обл., м. Золочів, вул. І. Труша 1Б</div>
+                    <div style="font-size:11px; color:#5a6a8a;">+38 067 374 08 02</div>
+                </div>
+            </div>
+
+            <!-- Title -->
+            <div style="text-align:center; margin-bottom:30px;">
+                <h1 style="font-size:24px; font-weight:800; color:#1a3a6b; margin:0; letter-spacing:1px;">ВИДАТКОВА НАКЛАДНА</h1>
+                <div style="display:flex; justify-content:center; gap:30px; margin-top:8px; font-size:14px; color:#333;">
+                    <span>№ <strong id="dnNumber"></strong></span>
+                    <span>від <strong id="dnDate"></strong></span>
+                </div>
+            </div>
+
+            <!-- Supplier + Buyer -->
+            <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:12px;">
+                <tr>
+                    <td style="width:50%; vertical-align:top; padding:12px; border:1px solid #1a3a6b; background:#f7f9fc;">
+                        <div style="font-weight:700; color:#1a3a6b; margin-bottom:8px; text-transform:uppercase;">Відвантажив</div>
+                        <div style="font-weight:700; font-size:13px;">CSO Solar (ФОП Пастушок М. В.)</div>
+                        <div>Тел: (067) 374-08-02</div>
+                    </td>
+                    <td style="width:50%; vertical-align:top; padding:12px; border:1px solid #1a3a6b; background:#fff;">
+                        <div style="font-weight:700; color:#1a3a6b; margin-bottom:8px; text-transform:uppercase;">Отримав</div>
+                        <div style="font-weight:700; font-size:13px;" id="dnClientName"></div>
+                        <div id="dnClientContact"></div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- Items Table -->
+            <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:40px;">
+                <thead>
+                    <tr style="background:#1a3a6b; color:#ffffff;">
+                        <th style="padding:10px; border:1px solid #1a3a6b; width:40px;">№</th>
+                        <th style="padding:10px; border:1px solid #1a3a6b; text-align:left;">Товар</th>
+                        <th style="padding:10px; border:1px solid #1a3a6b; width:80px;">К-сть</th>
+                        <th style="padding:10px; border:1px solid #1a3a6b; width:60px;">Од.</th>
+                    </tr>
+                </thead>
+                <tbody id="dnTableBody"></tbody>
+            </table>
+
+            <!-- Footer Signatures -->
+            <div style="display:flex; gap:60px; margin-top:60px; font-size:13px; border-top:1px solid #eee; padding-top:30px;">
+                <div style="flex:1;">
+                    <div style="margin-bottom:30px;">Відвантажив:</div>
+                    <div style="border-bottom:1px solid #333; height:20px; width:200px;"></div>
+                    <div style="font-size:10px; color:#666; margin-top:4px;">(підпис, ПІБ)</div>
+                </div>
+                <div style="flex:1;">
+                    <div style="margin-bottom:30px;">Отримав:</div>
+                    <div style="border-bottom:1px solid #333; height:20px; width:150px;"> / </div>
+                    <div style="font-size:10px; color:#666; margin-top:4px;">(підпис / ПІБ)</div>
+                </div>
+            </div>
+
+            <!-- Footer Note -->
+            <div style="margin-top:60px; font-size:10px; color:#999; text-align:center;">
+                Товар отримано в повному обсязі, претензій до якості та кількості не маю.
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
