@@ -240,87 +240,75 @@ function dateStr(date) {
   return date;
 }
 
+const HEADER_MAP = {
+  'назва': 'name',
+  'артикул': 'article',
+  'од. виміру': 'unit',
+  'од.': 'unit',
+  'категорія': 'category',
+  'статус': 'active',
+  'активний': 'active',
+  'склад': 'warehouse_id',
+  'дата': 'date',
+  'кількість': 'quantity',
+  'товару': 'product_id', 
+  'товар': 'product_id',   
+  'зі складу': 'warehouse_from',
+  'звідки': 'warehouse_from',
+  'на склад': 'warehouse_to',
+  'куди': 'warehouse_to',
+  'тип': 'type',
+  'коментар': 'comment',
+  'користувач': 'user',
+  'автор': 'user',
+  'створено': 'created_at',
+  'редаговано': 'edited_at',
+  'ким': 'edited_by',
+  'категорії': 'category',
+  'одиниця': 'unit',
+  'од.виміру': 'unit',
+  'од виміру': 'unit',
+  'роль': 'role',
+  'емейл': 'email',
+  'пошта': 'email',
+  'email': 'email',
+  'login': 'email',
+  'пароль': 'password',
+  'склад id': 'warehouse_id',
+  'id складу': 'warehouse_id',
+  'клієнт': 'client_name',
+  'телефон': 'client_phone',
+  'адреса': 'address',
+  'примітки': 'notes',
+  'id кп': 'proposal_id',
+  'id проекту': 'project_id',
+  'ціна': 'price',
+  'сума': 'sum',
+  'примітка': 'note',
+  'оновлено': 'updated_at',
+  'погоджена сума': 'agreed_sum',
+  'тип платежу': 'payment_type',
+  'дата закриття': 'closed_date',
+  'номер': 'project_number',
+  'проєкти': 'project_access',
+  'проекти': 'project_access',
+  'доступні проєкти': 'project_access',
+  'доступ до проєктів': 'project_access',
+  'модулі': 'module_access',
+  'розділи': 'module_access',
+  'доступ до розділів': 'module_access',
+  'стан': 'active'
+};
+
 function sheetToObjects(sheet) {
   const data = sheet.getDataRange().getValues();
   if (data.length < 2) return [];
   const rawHeaders = data[0];
-  
-  // Мапінг заголовків для сумісності з фронтендом
-  const headerMap = {
-    'назва': 'name',
-    'артикул': 'article',
-    'од. виміру': 'unit',
-    'од.': 'unit',
-    'категорія': 'category',
-    'статус': 'active',
-    'активний': 'active',
-    'склад': 'warehouse_id',
-    'дата': 'date',
-    'кількість': 'quantity',
-    'товару': 'product_id', 
-    'товар': 'product_id',   
-    'зі складу': 'warehouse_from',
-    'звідки': 'warehouse_from',
-    'на склад': 'warehouse_to',
-    'куди': 'warehouse_to',
-    'тип': 'type',
-    'коментар': 'comment',
-    'користувач': 'user',
-    'автор': 'user',
-    'створено': 'created_at',
-    'редаговано': 'edited_at',
-    'ким': 'edited_by',
-    'артикул': 'article',
-    'категорія': 'category',
-    'категорії': 'category',
-    'одиниця': 'unit',
-    'од. виміру': 'unit',
-    'од.виміру': 'unit',
-    'од виміру': 'unit',
-    'од.': 'unit',
-    'назва': 'name',
-    'роль': 'role',
-    'емейл': 'email',
-    'пошта': 'email',
-    'email': 'email',
-    'login': 'email',
-    'пароль': 'password',
-    'склад id': 'warehouse_id',
-    'id складу': 'warehouse_id',
-    'склад': 'warehouse_id',
-    'назва': 'name',
-    'клієнт': 'client_name',
-    'телефон': 'client_phone',
-    'адреса': 'address',
-    'примітки': 'notes',
-    'статус': 'status',
-    'id кп': 'proposal_id',
-    'id проекту': 'project_id',
-    'ціна': 'price',
-    'сума': 'sum',
-    'примітка': 'note',
-    'створено': 'created_at',
-    'оновлено': 'updated_at',
-    'погоджена сума': 'agreed_sum',
-    'тип платежу': 'payment_type',
-    'дата закриття': 'closed_date',
-    'номер': 'project_number',
-    'проєкти': 'project_access',
-    'проекти': 'project_access',
-    'доступні проєкти': 'project_access',
-    'доступ до проєктів': 'project_access',
-    'модулі': 'module_access',
-    'розділи': 'module_access',
-    'доступ до розділів': 'module_access',
-    'статус': 'active',
-    'активний': 'active',
-    'стан': 'active'
-  };
 
   const sheetName = sheet.getName();
   const headers = rawHeaders.map(h => {
     const s = String(h).trim().toLowerCase();
-    let mapped = headerMap[s] || s;
+    let mapped = HEADER_MAP[s] || s;
     
     // Спеціальний випадок для каталогу, де "Товар" — це назва
     if (sheetName === 'catalog' && (s === 'товар' || s === 'товару' || s === 'назва')) {
@@ -360,7 +348,11 @@ function sheetToObjects(sheet) {
 
 function findRowByValue(sheet, column, value) {
   const data = sheet.getDataRange().getValues();
-  const headers = data[0];
+  const rawHeaders = data[0];
+  const headers = rawHeaders.map(h => {
+    const s = String(h).trim().toLowerCase();
+    return HEADER_MAP[s] || s;
+  });
   const colIndex = headers.indexOf(column);
   if (colIndex === -1) return -1;
   const searchVal = String(value || '').trim().toLowerCase();
@@ -440,7 +432,7 @@ function handleUpdateUser(userData) {
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   headers.forEach((header, idx) => {
     const s = String(header).trim().toLowerCase();
-    const mapped = headerMap[s] || s;
+    const mapped = HEADER_MAP[s] || s;
     if (userData[mapped] !== undefined) {
       sheet.getRange(row, idx + 1).setValue(userData[mapped]);
     }
