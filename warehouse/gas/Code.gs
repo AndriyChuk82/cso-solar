@@ -309,6 +309,9 @@ function sheetToObjects(sheet) {
     'проекти': 'project_access',
     'доступні проєкти': 'project_access',
     'доступ до проєктів': 'project_access',
+    'модулі': 'module_access',
+    'розділи': 'module_access',
+    'доступ до розділів': 'module_access',
     'статус': 'active',
     'активний': 'active',
     'стан': 'active'
@@ -387,17 +390,23 @@ function handleGetUser(email) {
 function handleGetUsers() {
   const sheet = getSheet('users');
   let headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const hLower = headers.map(h => String(h).trim().toLowerCase());
   
-  // Додаємо колонку паролю, якщо немає
-  if (headers.indexOf('пароль') === -1) {
+  // Додаємо колонку паролю
+  if (hLower.indexOf('пароль') === -1) {
     sheet.getRange(1, sheet.getLastColumn() + 1).setValue('пароль');
     headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   }
   
-  // Додаємо колонку проєктів, якщо немає
-  const hLower = headers.map(h => String(h).toLowerCase());
+  // Додаємо колонку проєктів
   if (hLower.indexOf('проєкти') === -1 && hLower.indexOf('проекти') === -1) {
     sheet.getRange(1, sheet.getLastColumn() + 1).setValue('проєкти');
+    headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  }
+
+  // Додаємо колонку модулів
+  if (hLower.indexOf('модулі') === -1 && hLower.indexOf('розділи') === -1) {
+    sheet.getRange(1, sheet.getLastColumn() + 1).setValue('модулі');
   }
   
   return { success: true, users: sheetToObjects(sheet) };
@@ -411,14 +420,16 @@ function handleGetUsersForLogin() {
 function handleAddUser(userData) {
   const sheet = getSheet('users');
   sheet.appendRow([
-    userData.email,
-    userData.name,
-    userData.role,
+    userData.email || '',
+    userData.name || '',
+    userData.role || 'user',
     userData.warehouse_id || '',
     userData.active !== false,
     userData.password || '',
-    userData.project_access || ''
+    userData.project_access || '',
+    userData.module_access || ''
   ]);
+  SpreadsheetApp.flush();
   return { success: true };
 }
 

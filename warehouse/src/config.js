@@ -24,20 +24,28 @@ const CONFIG = {
     transfer: '#3b82f6',
     balance: '#eab308'
   },
+  // Ролі
   ROLES: {
     ADMIN: 'admin',
-    STOREKEEPER: 'storekeeper',
-    MANAGER: 'manager'
+    USER: 'user'
   },
+
   ROLE_LABELS: {
-    admin: 'Адміністратор',
-    storekeeper: 'Комірник',
-    manager: 'Менеджер'
+    'admin': 'Адміністратор',
+    'user': 'Користувач'
   },
+
+  // Доступні модулі
+  APP_MODULES: [
+    { id: 'warehouse', label: 'Склад' },
+    { id: 'gt',        label: 'Зелений тариф' },
+    { id: 'projects',  label: 'Проєкти' },
+    { id: 'proposals', label: 'Комерційні пропозиції' },
+  ],
   // Конфігурація Комерційних пропозицій
   CP_SPREADSHEETS: {
     MAIN: '1dXuNar4t3aemQSk5LnPOXxcB7DAqqEzraWEFASa2r4g',
-    MATERIALS: '1FeQGoFst-DWfLemlXI_0T5xQzMsYdSMC2Xj9Cjs5C1U'
+    MATERIALS: '1FeQGoFst-DWfLemnXI_0T5xQzMsYdSMC2Xj9Cjs5C1U'
   },
   CP_SHEETS: [
     { name: 'Сонячні батареї', mainCat: 'Сонячні батареї', gid: 1271219295, sId: 'MAIN' },

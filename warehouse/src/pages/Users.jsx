@@ -18,11 +18,12 @@ export default function Users() {
   const [formData, setFormData] = useState({ 
     email: '', 
     name: '', 
-    role: 'manager', 
+    role: 'user', 
     warehouse_id: '', 
     active: true,
     password: '',
-    project_access: '' // Comma-separated IDs
+    project_access: '',
+    module_access: '' // Comma-separated module IDs
   });
 
   useEffect(() => { loadData(); }, []);
@@ -51,11 +52,12 @@ export default function Users() {
     setFormData({ 
       email: '', 
       name: '', 
-      role: 'manager', 
+      role: 'user', 
       warehouse_id: '', 
       active: true, 
       password: '',
-      project_access: ''
+      project_access: '',
+      module_access: ''
     });
     setShowModal(true);
   }
@@ -69,7 +71,8 @@ export default function Users() {
       warehouse_id: u.warehouse_id || '', 
       active: u.active,
       password: '',
-      project_access: u.project_access || ''
+      project_access: u.project_access || '',
+      module_access: u.module_access || ''
     });
     setShowModal(true);
   }
@@ -117,7 +120,8 @@ export default function Users() {
                   <th>Ім'я</th>
                   <th>Роль</th>
                   <th>Склад</th>
-                  <th>Проєкти</th>
+                  <th>Доступні розділи</th>
+                  <th>Доступні проєкти</th>
                   <th>Статус</th>
                   <th></th>
                 </tr>
@@ -133,9 +137,18 @@ export default function Users() {
                     <td>{warehouses.find((w) => w.id === u.warehouse_id)?.name || '—'}</td>
                     <td>
                       {u.role === 'admin' ? (
-                        <span className="badge badge-income">Всі проєкти</span>
+                        <span className="badge badge-income" style={{fontSize: '0.65rem'}}>Всі</span>
                       ) : (
-                        <div style={{ fontSize: '0.75rem', maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ fontSize: '0.75rem', maxWidth: '120px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {(u.module_access || '').split(',').map(mid => CONFIG.APP_MODULES.find(m => m.id === mid)?.label).filter(Boolean).join(', ') || 'Нічого'}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      {u.role === 'admin' ? (
+                        <span className="badge badge-income" style={{fontSize: '0.65rem'}}>Всі</span>
+                      ) : (
+                        <div style={{ fontSize: '0.75rem', maxWidth: '120px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {(u.project_access || '').split(',').map(pid => projects.find(p => String(p.id) === String(pid))?.name).filter(Boolean).join(', ') || 'Нічого'}
                         </div>
                       )}
@@ -206,12 +219,40 @@ export default function Users() {
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Доступ до проєктів</label>
+                  <label>Доступ до розділів (модулів)</label>
                   {(formData.role === 'admin' || formData.role === 'адмін' || formData.role === 'адміністратор') ? (
                     <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '4px', border: '1px dashed var(--accent)', color: 'var(--accent)', fontSize: '0.85rem' }}>
-                      ℹ️ Адміністратор має доступ до всіх проєктів автоматично.
+                      ℹ️ Адміністратор має доступ до всіх розділів автоматично.
                     </div>
                   ) : (
+                    <div style={{ border: '1px solid #ddd', padding: '8px', borderRadius: '4px', background: '#f9f9f9', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      {CONFIG.APP_MODULES.map(m => {
+                        const ids = (formData.module_access || '').split(',').filter(Boolean);
+                        const isChecked = ids.includes(String(m.id));
+                        return (
+                          <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={isChecked}
+                              onChange={(e) => {
+                                const currentIds = (formData.module_access || '').split(',').filter(Boolean);
+                                const newIds = e.target.checked 
+                                  ? [...currentIds, String(m.id)] 
+                                  : currentIds.filter(id => id !== String(m.id));
+                                setFormData({ ...formData, module_access: newIds.join(',') });
+                              }}
+                            />
+                            {m.label}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {(!['admin', 'адмін', 'адміністратор'].includes(formData.role)) && (formData.module_access || '').split(',').includes('projects') && (
+                  <div className="form-group" style={{ marginTop: '16px' }}>
+                    <label>Доступ до конкретних проєктів</label>
                     <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #ddd', padding: '8px', borderRadius: '4px', background: '#f9f9f9' }}>
                       {projects.map(p => {
                         const ids = (formData.project_access || '').split(',').filter(Boolean);
@@ -233,10 +274,10 @@ export default function Users() {
                           </label>
                         );
                       })}
-                      {projects.length === 0 && <div className="text-muted">Немає доступних проєктів для вибору</div>}
+                      {projects.length === 0 && <div className="text-muted" style={{fontSize: '0.85rem'}}>Немає доступних проєктів для вибору</div>}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 <div className="form-group">
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>

@@ -58,16 +58,18 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'Сервер не налаштований' });
         }
 
-        // 1. Пошук у базових адмінах (env vars)
-        const userIndex = usernames.findIndex(u => u.toLowerCase() === username.toLowerCase());
         let passwordMatch = false;
-        let displayName = username; 
-        let userRole = 'admin'; // Роль за замовчуванням для env-користувачів
+        let displayName = username;
+        let userRole = 'user'; // Default role
+        let moduleAccess = '';
 
-        if (userIndex !== -1 && hashes[userIndex]) {
-            passwordMatch = await bcrypt.compare(password, hashes[userIndex]);
+        // 1. Спочатку перевіряємо чи це захардкоджений адмін (з ENV)
+        if (adminUser && adminPassHash && username.toLowerCase() === adminUser.toLowerCase()) {
+            passwordMatch = await bcrypt.compare(password, adminPassHash);
             if (passwordMatch) {
+                userRole = 'admin';
                 displayName = "Адміністратор";
+                moduleAccess = 'warehouse,gt,projects,proposals'; // Hardcoded modules for admin
             }
         }
 
@@ -85,7 +87,8 @@ export default async function handler(req, res) {
                         passwordMatch = await bcrypt.compare(password, sheetUser.password);
                         if (passwordMatch) {
                             displayName = sheetUser.name || username;
-                            userRole = (sheetUser.role || 'storekeeper').toLowerCase();
+                            userRole = (sheetUser.role || 'user').toLowerCase();
+                            moduleAccess = sheetUser.module_access || '';
                         }
                     }
                 }
@@ -113,16 +116,18 @@ export default async function handler(req, res) {
         // Success — clear failed attempts
         failedAttempts.delete(ip);
 
-        // Create JWT token (expires in 7 days)
-        const secret = new TextEncoder().encode(jwtSecret);
-        const token = await new SignJWT({ 
+        // Створення токена
+        userRole = userRole.trim().toLowerCase();
+        const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+        const token = await new SignJWT({
             sub: username,
             name: displayName,
             role: userRole,
-            iat: Math.floor(Date.now() / 1000)
+            module_access: moduleAccess // Додаємо доступ до модулів у токен
         })
             .setProtectedHeader({ alg: 'HS256' })
-            .setExpirationTime('7d')
+            .setIssuedAt()
+            .setExpirationTime('12h')
             .sign(secret);
 
         // Set HTTP-only secure cookie

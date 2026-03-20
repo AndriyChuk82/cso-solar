@@ -91,21 +91,20 @@ async function checkAuth() {
 
             // Role-based navigation visibility
             const role = (data.role || '').toLowerCase();
-            const isAdmin = role === 'admin';
-            const isManager = role === 'manager';
-            const isStorekeeper = role === 'storekeeper';
+            const isAdmin = (role === 'admin' || role === 'адмін' || role === 'адміністратор');
+            const moduleAccess = (data.module_access || '').split(',');
 
             if (document.getElementById('navWarehouse')) {
-                document.getElementById('navWarehouse').style.display = (isAdmin || isStorekeeper) ? 'inline-flex' : 'none';
+                document.getElementById('navWarehouse').style.display = (isAdmin || moduleAccess.includes('warehouse')) ? 'inline-flex' : 'none';
             }
             if (document.getElementById('navKP')) {
-                document.getElementById('navKP').style.display = 'inline-flex';
+                document.getElementById('navKP').style.display = (isAdmin || moduleAccess.includes('proposals')) ? 'inline-flex' : 'none';
             }
             if (document.getElementById('navProjects')) {
-                document.getElementById('navProjects').style.display = (isAdmin || isManager) ? 'inline-flex' : 'none';
+                document.getElementById('navProjects').style.display = (isAdmin || moduleAccess.includes('projects')) ? 'inline-flex' : 'none';
             }
             if (document.getElementById('navGT')) {
-                document.getElementById('navGT').style.display = (isAdmin || isManager) ? 'inline-flex' : 'none';
+                document.getElementById('navGT').style.display = (isAdmin || moduleAccess.includes('gt')) ? 'inline-flex' : 'none';
             }
         }
     } catch (e) {

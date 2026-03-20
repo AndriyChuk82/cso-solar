@@ -33,15 +33,21 @@ export default function Layout() {
           </div>
         </div>
         <div className="header-right">
-          {(user?.role === 'admin' || user?.role === 'storekeeper') && (
-            <a href="/warehouse/" className="nav-btn active"><i>📦</i> <span>Склад</span></a>
-          )}
-          <a href="/" className="nav-btn"><i>📄</i> <span>КП</span></a>
-          {(user?.role === 'admin' || user?.role === 'manager') && (
-            <a href="/projects/" className="nav-btn"><i>📊</i> <span>Проєкти</span></a>
-          )}
-          {(user?.role === 'admin' || user?.role === 'manager') && (
-            <a href="/green-tariff.html" className="nav-btn"><i>🌱</i> <span>Зелений тариф</span></a>
+          {user && (
+            <>
+              {(user.role === 'admin' || user.role === 'адмін' || user.role === 'адміністратор' || (user.module_access || '').includes('warehouse')) && (
+                <a href="/warehouse/" className="nav-btn active"><i>📦</i> <span>Склад</span></a>
+              )}
+              {(user.role === 'admin' || user.role === 'адмін' || user.role === 'адміністратор' || (user.module_access || '').includes('proposals')) && (
+                <a href="/" className="nav-btn"><i>📄</i> <span>КП</span></a>
+              )}
+              {(user.role === 'admin' || user.role === 'адмін' || user.role === 'адміністратор' || (user.module_access || '').includes('projects')) && (
+                <a href="/projects/" className="nav-btn"><i>📊</i> <span>Проєкти</span></a>
+              )}
+              {(user.role === 'admin' || user.role === 'адмін' || user.role === 'адміністратор' || (user.module_access || '').includes('gt')) && (
+                <a href="/green-tariff.html" className="nav-btn"><i>🌱</i> <span>Зелений тариф</span></a>
+              )}
+            </>
           )}
 
           {user && (
