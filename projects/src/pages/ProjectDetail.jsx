@@ -129,6 +129,13 @@ export function ProjectDetail({
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (project && project.name) {
+      document.title = project.name;
+    }
+    return () => { document.title = 'Проєкти'; };
+  }, [project?.name]);
+
   /* save project fields */
   const handleSave = async () => {
     if (!project) return;
@@ -143,7 +150,12 @@ export function ProjectDetail({
       if (!res.success) {
         alert('Помилка збереження: ' + (res.error || ''));
       } else {
-        setProject(res.updatedProject || pToSave);
+        const savedProject = res.updatedProject || pToSave;
+        setProject(savedProject);
+        // Оновити заголовок вкладки, якщо змінилася назва
+        if (savedProject.name) {
+          document.title = savedProject.name;
+        }
         setIsSaved(true);
         setTimeout(() => setIsSaved(false), 2500);
       }
