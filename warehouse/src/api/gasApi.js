@@ -164,6 +164,10 @@ export async function getUsers() {
   return gasRequest('getUsers');
 }
 
+export async function getProjects() {
+  return gasRequest('getProjects');
+}
+
 export async function addUser(user) {
   return vercelAdminRequest('addUser', user);
 }

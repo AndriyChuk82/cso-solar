@@ -3,6 +3,7 @@ import { ProjectList } from '../pages/ProjectList';
 import { ProjectDetail } from '../pages/ProjectDetail';
 import { AddProjectModal } from './AddProjectModal';
 import { useProjectStore } from '../store/useProjectStore';
+import { useAuth } from '../hooks/useAuth';
 
 export function SplitLayout() {
   const { fetchProjects } = useProjectStore();
@@ -14,8 +15,15 @@ export function SplitLayout() {
   const [currency, setCurrency] = useState('USD'); // 'USD' | 'UAH'
   const [rate, setRate] = useState(41);            // UAH per 1 USD
 
+  const { user } = useAuth();
+
   useEffect(() => {
-    fetchProjects();
+    if (user?.email) {
+      fetchProjects(user.email);
+    }
+  }, [user]);
+
+  useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
@@ -25,12 +33,12 @@ export function SplitLayout() {
   const handleBack = () => setSelectedProjectId(null);
 
   const handleProjectCreated = (newId) => {
-    fetchProjects();
+    fetchProjects(user?.email);
     setSelectedProjectId(newId);
   };
 
   const handleProjectClosed = () => {
-    fetchProjects();          // refresh list
+    fetchProjects(user?.email);          // refresh list
     setSelectedProjectId(null);
   };
 

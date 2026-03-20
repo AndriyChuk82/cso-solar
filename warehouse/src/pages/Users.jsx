@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getUsers, addUser, updateUser, getWarehouses } from '../api/gasApi';
+import { getUsers, addUser, updateUser, getWarehouses, getProjects } from '../api/gasApi';
 import { useToast } from '../context/ToastContext';
 import CONFIG from '../config';
 
@@ -14,13 +14,15 @@ export default function Users() {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [projects, setProjects] = useState([]);
   const [formData, setFormData] = useState({ 
     email: '', 
     name: '', 
-    role: 'storekeeper', 
+    role: 'manager', 
     warehouse_id: '', 
     active: true,
-    password: '' 
+    password: '',
+    project_access: '' // Comma-separated IDs
   });
 
   useEffect(() => { loadData(); }, []);
@@ -28,9 +30,14 @@ export default function Users() {
   async function loadData() {
     setLoading(true);
     try {
-      const [usResult, whResult] = await Promise.all([getUsers(), getWarehouses()]);
+      const [usResult, whResult, prResult] = await Promise.all([
+        getUsers(), 
+        getWarehouses(),
+        getProjects()
+      ]);
       if (usResult?.success) setUsers(usResult.users || []);
       if (whResult?.success) setWarehouses(whResult.warehouses || []);
+      if (prResult?.success) setProjects(prResult.projects || []);
     } catch (err) {
       console.error('Помилка:', err);
     } finally {
@@ -40,7 +47,15 @@ export default function Users() {
 
   function openAdd() {
     setEditItem(null);
-    setFormData({ email: '', name: '', role: 'storekeeper', warehouse_id: '', active: true, password: '' });
+    setFormData({ 
+      email: '', 
+      name: '', 
+      role: 'manager', 
+      warehouse_id: '', 
+      active: true, 
+      password: '',
+      project_access: ''
+    });
     setShowModal(true);
   }
 
@@ -52,7 +67,8 @@ export default function Users() {
       role: u.role, 
       warehouse_id: u.warehouse_id || '', 
       active: u.active,
-      password: '' // Don't show existing hash
+      password: '',
+      project_access: u.project_access || ''
     });
     setShowModal(true);
   }
@@ -100,6 +116,7 @@ export default function Users() {
                   <th>Ім'я</th>
                   <th>Роль</th>
                   <th>Склад</th>
+                  <th>Проєкти</th>
                   <th>Статус</th>
                   <th></th>
                 </tr>
@@ -113,6 +130,15 @@ export default function Users() {
                       <span className="badge badge-transfer">{CONFIG.ROLE_LABELS[u.role] || u.role}</span>
                     </td>
                     <td>{warehouses.find((w) => w.id === u.warehouse_id)?.name || '—'}</td>
+                    <td>
+                      {u.role === 'admin' ? (
+                        <span className="badge badge-income">Всі проєкти</span>
+                      ) : (
+                        <div style={{ fontSize: '0.75rem', maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {(u.project_access || '').split(',').map(pid => projects.find(p => String(p.id) === String(pid))?.name).filter(Boolean).join(', ') || 'Нічого'}
+                        </div>
+                      )}
+                    </td>
                     <td>
                       <span className={`badge ${u.active ? 'badge-income' : 'badge-expense'}`}>
                         {u.active ? 'Активний' : 'Неактивний'}
@@ -178,6 +204,32 @@ export default function Users() {
                     <span className="form-hint">Для комірника — обов'язково</span>
                   </div>
                 </div>
+                <div className="form-group">
+                  <label>Доступ до проєктів (якщо не адмін)</label>
+                  <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #ddd', padding: '8px', borderRadius: '4px', background: '#f9f9f9' }}>
+                    {projects.map(p => {
+                      const isChecked = formData.project_access.split(',').includes(String(p.id));
+                      return (
+                        <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', cursor: 'pointer', fontSize: '0.85rem' }}>
+                          <input 
+                            type="checkbox" 
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const ids = formData.project_access ? formData.project_access.split(',') : [];
+                              const newIds = e.target.checked 
+                                ? [...ids, String(p.id)] 
+                                : ids.filter(id => id !== String(p.id));
+                              setFormData({ ...formData, project_access: newIds.join(',') });
+                            }}
+                          />
+                          {p.name || p.number || p.id}
+                        </label>
+                      );
+                    })}
+                    {projects.length === 0 && <div className="text-muted">Немає доступних проєктів</div>}
+                  </div>
+                </div>
+
                 <div className="form-group">
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                     <input type="checkbox" checked={formData.active} onChange={(e) => setFormData({ ...formData, active: e.target.checked })} />

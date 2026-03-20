@@ -102,7 +102,7 @@ function doGet(e) {
         result = handleGetCategories();
         break;
       case 'getProjects':
-        result = handleGetProjects();
+        result = handleGetProjects(e.parameter.email || e.parameter.userEmail);
         break;
       case 'getProjectDetails':
         result = handleGetProjectDetails(e.parameter.projectId);
@@ -304,7 +304,10 @@ function sheetToObjects(sheet) {
     'погоджена сума': 'agreed_sum',
     'тип платежу': 'payment_type',
     'дата закриття': 'closed_date',
-    'номер': 'project_number'
+    'номер': 'project_number',
+    'проєкти': 'project_access',
+    'проекти': 'project_access',
+    'доступні проєкти': 'project_access'
   };
 
   const sheetName = sheet.getName();
@@ -372,10 +375,20 @@ function handleGetUser(email) {
 
 function handleGetUsers() {
   const sheet = getSheet('users');
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  let headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  
+  // Додаємо колонку паролю, якщо немає
   if (headers.indexOf('пароль') === -1) {
-    sheet.getRange(1, headers.length + 1).setValue('пароль');
+    sheet.getRange(1, sheet.getLastColumn() + 1).setValue('пароль');
+    headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   }
+  
+  // Додаємо колонку проєктів, якщо немає
+  const hLower = headers.map(h => String(h).toLowerCase());
+  if (hLower.indexOf('проєкти') === -1 && hLower.indexOf('проекти') === -1) {
+    sheet.getRange(1, sheet.getLastColumn() + 1).setValue('проєкти');
+  }
+  
   return { success: true, users: sheetToObjects(sheet) };
 }
 
@@ -392,7 +405,8 @@ function handleAddUser(userData) {
     userData.role,
     userData.warehouse_id || '',
     userData.active !== false,
-    userData.password || ''
+    userData.password || '',
+    userData.project_access || ''
   ]);
   return { success: true };
 }
@@ -1495,13 +1509,38 @@ function matchesSearch(content, query) {
 }
 // ===== УПРАВЛІННЯ ПРОЕКТАМИ (СОНЯЧНІ СТАНЦІЇ) =====
 
-function handleGetProjects() {
+function handleGetProjects(userEmail) {
   const ss = getSpreadsheet();
   const projectsSheet = getSheetWithInit('projects', [
     'ID', 'Назва', 'Клієнт', 'Телефон', 'Адреса', 'Статус', 'Примітки', 'ID КП',
     'Погоджена сума', 'Номер', 'Дата закриття', 'Створено', 'Оновлено'
   ], [], ss);
   
+  // Отримуємо проєкти
+  const projects = sheetToObjects(projectsSheet);
+
+  // Фільтрація за доступом користувача
+  let allowedProjectIds = null;
+  let isAdmin = true;
+
+  if (userEmail) {
+    const userRes = handleGetUser(userEmail);
+    if (userRes.success && userRes.user) {
+      const role = (userRes.user.role || '').toLowerCase();
+      isAdmin = (role === 'admin');
+      
+      if (!isAdmin) {
+        // Якщо не адмін — дивимось доступні проєкти
+        const access = String(userRes.user.project_access || '').trim();
+        if (access) {
+          allowedProjectIds = access.split(',').map(s => s.trim()).filter(s => s);
+        } else {
+          allowedProjectIds = []; // Немає доступу до жодного проєкту
+        }
+      }
+    }
+  }
+
   const paymentsSheet = getSheetWithInit('project_payments', [
     'ID', 'ID Проекту', 'Дата', 'Сума', 'Статус', 'Примітка', 'Тип платежу', 'Автор', 'Створено'
   ], [], ss);
@@ -1510,12 +1549,11 @@ function handleGetProjects() {
     'ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Примітка'
   ], [], ss);
 
-  const projects = sheetToObjects(projectsSheet);
   const payments = sheetToObjects(paymentsSheet);
   const items = sheetToObjects(itemsSheet);
 
-  // Додаємо агреговані дані (сума товарів та оплачено)
-  const enrichedProjects = projects.map(p => {
+  // Додаємо агреговані дані
+  let enrichedProjects = projects.map(p => {
     const projectItems = items.filter(i => String(i.project_id) === String(p.id));
     const totalCost = projectItems.reduce((acc, i) => acc + (parseFloat(i.sum) || 0), 0);
     
@@ -1533,6 +1571,11 @@ function handleGetProjects() {
       balance: agreedSum - totalPaid
     };
   });
+
+  // Власне фільтрація за списком ID
+  if (!isAdmin && allowedProjectIds !== null) {
+    enrichedProjects = enrichedProjects.filter(p => allowedProjectIds.includes(String(p.id)));
+  }
 
   return { success: true, projects: enrichedProjects };
 }

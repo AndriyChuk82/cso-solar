@@ -6,10 +6,10 @@ export const useProjectStore = create((set, get) => ({
   isLoading: false,
   error: null,
 
-  fetchProjects: async () => {
+  fetchProjects: async (email) => {
     set({ isLoading: true, error: null });
     try {
-      const data = await projectService.getProjects();
+      const data = await projectService.getProjects(email);
       if (data.success) {
         set({ projects: data.projects || [], isLoading: false });
       } else {

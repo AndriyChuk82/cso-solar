@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Plus, RefreshCw } from 'lucide-react';
 import { useProjectStore } from '../store/useProjectStore';
 import { formatAmount } from '../lib/utils';
+import { useAuth } from '../hooks/useAuth';
 
 const FILTERS = [
   { key: 'active', label: 'Активні' },
@@ -11,6 +12,7 @@ const FILTERS = [
 
 export function ProjectList({ selectedId, onSelect, onAddNew, currency = 'USD', rate = 41 }) {
   const { projects, isLoading, fetchProjects } = useProjectStore();
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('active');
 
@@ -46,7 +48,7 @@ export function ProjectList({ selectedId, onSelect, onAddNew, currency = 'USD', 
       <div className="panel-list-header">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 10 }}>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => fetchProjects()} className="btn btn-ghost btn-sm" title="Оновити">
+            <button onClick={() => fetchProjects(user?.email)} className="btn btn-ghost btn-sm" title="Оновити">
               <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} />
             </button>
             <button

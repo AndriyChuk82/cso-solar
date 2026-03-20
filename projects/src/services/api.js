@@ -29,7 +29,7 @@ async function gasRequest(action, params = {}, method = 'GET') {
 
 export const projectService = {
   // Projects
-  getProjects: () => gasRequest('getProjects'),
+  getProjects: (userEmail) => gasRequest('getProjects', { userEmail }),
   getProjectDetails: (projectId) => gasRequest('getProjectDetails', { projectId }),
 
   // Save project (supports agreed_sum field)
