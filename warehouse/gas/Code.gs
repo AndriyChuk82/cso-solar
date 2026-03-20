@@ -294,7 +294,9 @@ function sheetToObjects(sheet) {
     'створено': 'created_at',
     'оновлено': 'updated_at',
     'погоджена сума': 'agreed_sum',
-    'тип платежу': 'payment_type'
+    'тип платежу': 'payment_type',
+    'дата закриття': 'closed_date',
+    'номер': 'project_number'
   };
 
   const sheetName = sheet.getName();

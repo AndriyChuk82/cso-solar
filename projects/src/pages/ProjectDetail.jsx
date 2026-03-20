@@ -244,6 +244,9 @@ export function ProjectDetail({
       {showPaymentSheet && (
         <AddPaymentSheet
           projectId={projectId}
+          balance={balance}
+          currency={currency}
+          rate={rate}
           onClose={() => setShowPaymentSheet(false)}
           onSaved={load}
         />

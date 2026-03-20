@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { projectService } from '../services/api';
 
-export function AddPaymentSheet({ projectId, onClose, onSaved }) {
+export function AddPaymentSheet({ projectId, balance = 0, currency = 'USD', rate = 41, onClose, onSaved }) {
   const today = new Date().toISOString().split('T')[0];
 
   const [type, setType] = useState('Аванс');
@@ -12,6 +12,16 @@ export function AddPaymentSheet({ projectId, onClose, onSaved }) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const handleTypeSelect = (newType) => {
+    setType(newType);
+    if (newType === 'Повна оплата') {
+      const remaining = balance * (currency === 'UAH' ? rate : 1);
+      setSum(remaining > 0 ? Number(remaining.toFixed(2)) : '');
+    } else {
+      setSum('');
+    }
+  };
+
   const handleSave = async () => {
     if (!sum || parseFloat(sum) <= 0) {
       setError('Вкажіть суму платежу');
@@ -20,9 +30,13 @@ export function AddPaymentSheet({ projectId, onClose, onSaved }) {
     setError('');
     setIsSaving(true);
     try {
+      // Calculate base sum (all saved logic expects USD base)
+      const inputSum = parseFloat(sum);
+      const baseSum = currency === 'UAH' ? (inputSum / rate) : inputSum;
+
       const res = await projectService.savePayment({
         projectId,
-        sum: parseFloat(sum),
+        sum: Number(baseSum.toFixed(2)),
         payment_type: type,
         date,
         note,
@@ -59,13 +73,13 @@ export function AddPaymentSheet({ projectId, onClose, onSaved }) {
           <div className="type-toggle">
             <button
               className={`type-btn ${type === 'Аванс' ? 'selected-advance' : ''}`}
-              onClick={() => setType('Аванс')}
+              onClick={() => handleTypeSelect('Аванс')}
             >
               🔵 Аванс
             </button>
             <button
               className={`type-btn ${type === 'Повна оплата' ? 'selected-full' : ''}`}
-              onClick={() => setType('Повна оплата')}
+              onClick={() => handleTypeSelect('Повна оплата')}
             >
               ✅ Повна оплата
             </button>
@@ -74,7 +88,7 @@ export function AddPaymentSheet({ projectId, onClose, onSaved }) {
 
         {/* Сума */}
         <div className="form-group">
-          <label>Сума (грн)</label>
+          <label>Сума ({currency === 'UAH' ? '₴' : '$'})</label>
           <input
             type="number"
             inputMode="numeric"
