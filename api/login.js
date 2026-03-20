@@ -64,8 +64,9 @@ export default async function handler(req, res) {
         let moduleAccess = '';
 
         // 1. Спочатку перевіряємо чи це захардкоджений адмін (з ENV)
-        if (adminUser && adminPassHash && username.toLowerCase() === adminUser.toLowerCase()) {
-            passwordMatch = await bcrypt.compare(password, adminPassHash);
+        const userIndex = usernames.findIndex(u => u.toLowerCase() === username.toLowerCase());
+        if (userIndex !== -1 && hashes[userIndex]) {
+            passwordMatch = await bcrypt.compare(password, hashes[userIndex]);
             if (passwordMatch) {
                 userRole = 'admin';
                 displayName = "Адміністратор";
