@@ -25,6 +25,35 @@ const CONFIG = {
 // Detect if running on Vercel (HTTPS) vs local file://
 const IS_DEPLOYED = window.location.protocol === 'https:';
 
+const SELLERS = {
+    'fop_pastushok': {
+        id: 'fop_pastushok',
+        shortName: 'ФОП Пастушок М. В.',
+        fullName: 'ФОП Пастушок Марія Володимирівна',
+        taxId: '3090406261',
+        taxIdType: 'РНОКПП',
+        address: 'Україна, 80700, Львівська обл., Золочівський р-н, с. Вороняки, вул. Шкільна, б. 38',
+        office: 'Львівська обл., м. Золочів, вул. І. Труша 1Б',
+        iban: 'UA563003350000000260092475237',
+        bank: 'АТ "РАЙФФАЙЗЕН БАНК"',
+        phone: '(067) 374-08-12',
+        logo: 'https://i.ibb.co/32JD4dc/logo.png'
+    },
+    'tov_cso': {
+        id: 'tov_cso',
+        shortName: 'ТОВ "ЦСО"',
+        fullName: 'ТОВ "Центр сервісного обслуговування"',
+        taxId: '31758743',
+        taxIdType: 'ЄДРПОУ',
+        address: 'Україна, 80700, Львівська обл., м. Золочів, вул. І. Труша 1Б',
+        office: 'Львівська обл., м. Золочів, вул. І. Труша 1Б',
+        iban: '___________________________',
+        bank: '___________________________',
+        phone: '(067) 374-08-02',
+        logo: 'https://i.ibb.co/32JD4dc/logo.png'
+    }
+};
+
 let state = {
     products: [],
     categories: [],
@@ -34,7 +63,8 @@ let state = {
     activeCurrency: 'USD',
     favorites: loadFavorites(),
     customMaterials: loadCustomMaterials(),
-    materialOverrides: loadMaterialOverrides()
+    materialOverrides: loadMaterialOverrides(),
+    selectedSeller: 'fop_pastushok'
 };
 
 function loadMaterialOverrides() {
@@ -1065,6 +1095,7 @@ function readProposalForm() {
     state.proposal.clientName = document.getElementById('clientName').value;
     state.proposal.clientContact = document.getElementById('clientContact').value;
     state.proposal.notes = document.getElementById('proposalNotes').value;
+    state.selectedSeller = document.getElementById('sellerSelect').value;
 }
 
 function fillProposalForm() {
@@ -1074,10 +1105,33 @@ function fillProposalForm() {
     document.getElementById('clientName').value = state.proposal.clientName || '';
     document.getElementById('clientContact').value = state.proposal.clientContact || '';
     document.getElementById('proposalNotes').value = state.proposal.notes || '';
+    document.getElementById('sellerSelect').value = state.proposal.sellerId || state.selectedSeller || 'fop_pastushok';
     
-    // Sync quick inputs
-    document.getElementById('quickUsdUah').value = state.settings.usdToUah;
-    document.getElementById('quickMarkup').value = state.settings.markup;
+    syncSellerUI();
+}
+
+function syncSellerUI() {
+    const seller = SELLERS[document.getElementById('sellerSelect').value] || SELLERS.fop_pastushok;
+    
+    // Header
+    document.getElementById('printHeaderAddress').textContent = 'Офіс та склад: ' + seller.office;
+    document.getElementById('printHeaderPhone').textContent = seller.phone;
+    
+    // Invoice
+    document.getElementById('invSellerName').textContent = seller.fullName;
+    document.getElementById('invSellerIdType').textContent = seller.taxIdType + ':';
+    document.getElementById('invSellerId').textContent = seller.taxId;
+    document.getElementById('invSellerAddress').textContent = seller.address;
+    document.getElementById('invSellerIban').textContent = seller.iban;
+    document.getElementById('invSellerBank').textContent = seller.bank;
+    document.getElementById('invSellerPhone').textContent = seller.phone;
+    
+    // Delivery Note
+    document.getElementById('dnSellerName').textContent = seller.shortName;
+    document.getElementById('dnSellerPhone').textContent = seller.phone;
+    
+    state.selectedSeller = seller.id;
+    state.proposal.sellerId = seller.id;
 }
 
 // ===== GOOGLE SHEETS SYNC =====
@@ -2058,6 +2112,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnInvoice').addEventListener('click', exportInvoicePDF);
     document.getElementById('btnDeliveryNote').addEventListener('click', printDeliveryNote);
     
+    document.getElementById('sellerSelect').addEventListener('change', syncSellerUI);
+    
     // TTN Button
     document.getElementById('btnTtn').addEventListener('click', () => {
         readProposalForm();
@@ -2066,6 +2122,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
+        // Pre-fill sender from selected seller
+        const seller = SELLERS[state.selectedSeller] || SELLERS.fop_pastushok;
+        document.getElementById('ttnSender').value = `${seller.fullName} ${seller.taxIdType} ${seller.taxId}`;
+
         // Pre-fill date with today
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('ttnDate').value = today;
@@ -2147,6 +2207,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
+        // Pre-fill seller from selected seller
+        const seller = SELLERS[state.selectedSeller] || SELLERS.fop_pastushok;
+        document.getElementById('warrantySeller').value = seller.fullName;
+
         // Pre-fill date with today
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('warrantyDate').value = today;

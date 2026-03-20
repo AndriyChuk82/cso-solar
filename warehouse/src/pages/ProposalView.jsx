@@ -2,6 +2,23 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProposals } from '../api/gasApi';
 
+const SELLERS = {
+  fop_pastushok: {
+    id: "fop_pastushok",
+    shortName: "ФОП Пастушок М. В.",
+    fullName: "ФОП Пастушок Марія Володимирівна",
+    office: "Львівська обл., м. Золочів, вул. І. Труша 1Б",
+    phone: "(067) 374-08-12",
+  },
+  tov_cso: {
+    id: "tov_cso",
+    shortName: 'ТОВ "ЦСО"',
+    fullName: 'ТОВ "Центр сервісного обслуговування"',
+    office: "Львівська обл., м. Золочів, вул. І. Труша 1Б",
+    phone: "(067) 374-08-02",
+  },
+};
+
 /**
  * Сторінка для перегляду та друку комерційної пропозиції.
  * Дизайн адаптований для друку на А4.
@@ -37,6 +54,8 @@ export default function ProposalView() {
   const discount = proposal.discountType === 'percentage' 
     ? subtotal * (parseFloat(proposal.discountValue) / 100)
     : parseFloat(proposal.discountValue);
+
+  const currentSeller = SELLERS[proposal.sellerId] || SELLERS.fop_pastushok;
 
   return (
     <div className="proposal-print-container">
@@ -80,8 +99,8 @@ export default function ProposalView() {
       <div className="print-header">
         <div className="logo-box">
           <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" />
-          <div style={{ fontWeight: 700, fontSize: '18px', marginTop: '5px' }}>CSO Solar</div>
-          <div style={{ fontSize: '12px' }}>Енергія твого майбутнього</div>
+          <div style={{ fontWeight: 700, fontSize: '18px', marginTop: '5px' }}>{currentSeller.fullName}</div>
+          <div style={{ fontSize: '12px' }}>{currentSeller.office} | {currentSeller.phone}</div>
         </div>
         <div className="pro-info">
           <div className="pro-number">

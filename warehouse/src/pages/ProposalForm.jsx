@@ -36,7 +36,8 @@ export default function ProposalForm() {
     markup: 15,
     totalAmount: 0,
     userEmail: user?.email || '',
-    comment: ''
+    comment: '',
+    sellerId: 'fop_pastushok'
   });
 
   useEffect(() => {
@@ -251,6 +252,18 @@ export default function ProposalForm() {
               </div>
               
               <div className="form-group" style={{ marginTop: '12px' }}>
+                  <label>Від імені (Продавець)</label>
+                  <select
+                    className="form-select"
+                    value={formData.sellerId || 'fop_pastushok'}
+                    onChange={(e) => setFormData({ ...formData, sellerId: e.target.value })}
+                  >
+                    <option value="fop_pastushok">ФОП Пастушок М. В.</option>
+                    <option value="tov_cso">ТОВ "Центр сервісного обслуговування"</option>
+                  </select>
+                </div>
+                
+                <div className="form-group" style={{ marginTop: '12px' }}>
                   <label>Статус</label>
                   <select
                     className="form-select"

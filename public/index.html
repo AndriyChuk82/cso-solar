@@ -86,8 +86,8 @@
                     <div class="print-company">
                         <p>Комерційна пропозиція</p>
                         <div class="print-contact-info">
-                            <div>Офіс та склад: Львівська обл., м. Золочів, вул. І. Труша 1Б</div>
-                            <div>+38 067 374 08 02</div>
+                            <div id="printHeaderAddress">Офіс та склад: Львівська обл., м. Золочів, вул. І. Труша 1Б</div>
+                            <div id="printHeaderPhone">+38 067 374 08 02</div>
                         </div>
                     </div>
                 </div>
@@ -95,6 +95,15 @@
 
             <!-- Proposal Info -->
             <div class="proposal-header" id="proposalHeader">
+                <div class="proposal-row no-print">
+                    <div class="form-group flex-2">
+                        <label for="sellerSelect">Від імені (Продавець/Постачальник)</label>
+                        <select id="sellerSelect" class="form-input">
+                            <option value="fop_pastushok">ФОП Пастушок Марія Володимирівна</option>
+                            <option value="tov_cso">ТОВ "Центр сервісного обслуговування"</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="proposal-row">
                     <div class="form-group">
                         <label for="proposalNumber">Номер</label>
@@ -478,12 +487,12 @@
                 <tr>
                     <td style="width:50%; vertical-align:top; padding:10px 12px; border:1.5px solid #1a3a6b; background:#e8edf5;">
                         <div style="font-weight:700; font-size:12px; color:#1a3a6b; margin-bottom:8px; text-transform:uppercase;">Постачальник</div>
-                        <div style="margin-bottom:3px;"><span style="color:#666; min-width:60px; display:inline-block;">Назва:</span> <strong>ФОП Пастушок Марія Володимирівна</strong></div>
-                        <div style="margin-bottom:3px;"><span style="color:#666;">РНОКПП:</span> 3090406261</div>
-                        <div style="margin-bottom:3px;"><span style="color:#666;">Адреса:</span> Україна, 80700, Львівська обл., Золочівський р-н, с. Вороняки, вул. Шкільна, б. 38</div>
-                        <div style="margin-bottom:3px;"><span style="color:#666;">IBAN:</span> UA563003350000000260092475237</div>
-                        <div style="margin-bottom:3px;"><span style="color:#666;">Банк:</span> АТ "РАЙФФАЙЗЕН БАНК"</div>
-                        <div><span style="color:#666;">Тел:</span> (067)374-08-12</div>
+                        <div style="margin-bottom:3px;"><span style="color:#666; min-width:60px; display:inline-block;">Назва:</span> <strong id="invSellerName">ФОП Пастушок Марія Володимирівна</strong></div>
+                        <div style="margin-bottom:3px;"><span style="color:#666;" id="invSellerIdType">РНОКПП:</span> <span id="invSellerId">3090406261</span></div>
+                        <div style="margin-bottom:3px;"><span style="color:#666;">Адреса:</span> <span id="invSellerAddress">Україна, 80700, Львівська обл., Золочівський р-н, с. Вороняки, вул. Шкільна, б. 38</span></div>
+                        <div style="margin-bottom:3px;"><span style="color:#666;">IBAN:</span> <strong id="invSellerIban">UA563003350000000260092475237</strong></div>
+                        <div style="margin-bottom:3px;"><span style="color:#666;">Банк:</span> <span id="invSellerBank">АТ "РАЙФФАЙЗЕН БАНК"</span></div>
+                        <div><span style="color:#666;">Тел:</span> <span id="invSellerPhone">(067)374-08-12</span></div>
                     </td>
                     <td style="width:50%; vertical-align:top; padding:10px 12px; border:1.5px solid #1a3a6b; background:#f7f9fc;">
                         <div style="font-weight:700; font-size:12px; color:#1a3a6b; margin-bottom:8px; text-transform:uppercase;">Покупець</div>
@@ -573,8 +582,8 @@
                 <tr>
                     <td style="width:50%; vertical-align:top; padding:12px; border:1px solid #1a3a6b; background:#f7f9fc;">
                         <div style="font-weight:700; color:#1a3a6b; margin-bottom:8px; text-transform:uppercase;">Відвантажив</div>
-                        <div style="font-weight:700; font-size:13px;">CSO Solar (ФОП Пастушок М. В.)</div>
-                        <div>Тел: (067) 374-08-02</div>
+                        <div style="font-weight:700; font-size:13px;" id="dnSellerName">CSO Solar (ФОП Пастушок М. В.)</div>
+                        <div>Тел: <span id="dnSellerPhone">(067) 374-08-02</span></div>
                     </td>
                     <td style="width:50%; vertical-align:top; padding:12px; border:1px solid #1a3a6b; background:#fff;">
                         <div style="font-weight:700; color:#1a3a6b; margin-bottom:8px; text-transform:uppercase;">Отримав</div>
