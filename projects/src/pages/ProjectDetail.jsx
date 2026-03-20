@@ -110,6 +110,7 @@ export function ProjectDetail({
   const [editingItems, setEditingItems] = useState(false);
   const [pendingItems, setPendingItems] = useState([]);
   const [showRateInput, setShowRateInput] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   /* fetch */
   const load = useCallback(async () => {
@@ -132,14 +133,20 @@ export function ProjectDetail({
   const handleSave = async () => {
     if (!project) return;
     setIsSaving(true);
+    setIsSaved(false);
     try {
       const pToSave = { ...project };
       if ((!pToSave.agreed_sum || pToSave.agreed_sum === '') && kpSum > 0) {
         pToSave.agreed_sum = kpSum;
       }
       const res = await projectService.saveProject(pToSave);
-      if (!res.success) alert('Помилка збереження: ' + (res.error || ''));
-      else setProject(pToSave);
+      if (!res.success) {
+        alert('Помилка збереження: ' + (res.error || ''));
+      } else {
+        setProject(res.updatedProject || pToSave);
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2500);
+      }
     } finally { setIsSaving(false); }
   };
 
@@ -299,9 +306,20 @@ export function ProjectDetail({
           )}
         </div>
 
-        <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={isSaving} style={{ flexShrink:0 }}>
-          <Save size={14} />
-          {isSaving ? '...' : 'Зберегти'}
+        <button 
+          className="btn btn-sm" 
+          onClick={handleSave} 
+          disabled={isSaving} 
+          style={{ 
+            flexShrink:0,
+            background: isSaved ? 'var(--success)' : 'var(--primary)',
+            color: 'white',
+            borderColor: isSaved ? 'var(--success)' : 'var(--primary)',
+            transition: 'background 0.3s ease'
+          }}
+        >
+          {isSaved ? <Check size={14} /> : <Save size={14} />}
+          {isSaving ? '...' : (isSaved ? 'Збережено' : 'Зберегти')}
         </button>
       </div>
 

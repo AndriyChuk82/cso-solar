@@ -16,7 +16,6 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
     address: '',
     proposal_id: '',
     notes: '',
-    agreed_sum: '',
   });
   
   const [isSaving, setIsSaving] = useState(false);
@@ -30,7 +29,6 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
         address: '',
         proposal_id: '',
         notes: '',
-        agreed_sum: '',
       });
       setSelectedProposal(null);
       setSearchTerm('');
@@ -93,7 +91,6 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
       console.log('Saving project with items:', formData.items_from_cp?.length);
       const res = await projectService.saveProject({ ...formData, name: finalName });
       if (res.success) {
-        alert('Проект успішно створено та збережено!');
         onProjectCreated(res.id);
         onClose();
       } else {
@@ -189,30 +186,16 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
           {/* Main Form */}
           <form onSubmit={handleSave} className="lg:col-span-3 p-5 space-y-4 flex flex-col h-full">
              <div className="flex-1 space-y-4">
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="form-group">
-                       <label>Назва проекту</label>
-                       <input 
-                          type="text" 
-                          className="form-input"
-                          placeholder="Напр: СЕС 30кВт (Петренко)"
-                          value={formData.name}
-                          onChange={e => setFormData({...formData, name: e.target.value})}
-                       />
-                    </div>
-                    <div className="form-group">
-                       <label>Погоджена сума</label>
-                       <input 
-                          type="number"
-                          min="0"
-                          className="form-input font-bold"
-                          style={{ color: 'var(--primary)' }}
-                          placeholder="Сума (необов'язково)"
-                          value={formData.agreed_sum}
-                          onChange={e => setFormData({...formData, agreed_sum: e.target.value})}
-                       />
-                    </div>
-                 </div>
+                <div className="form-group">
+                   <label>Назва проекту</label>
+                   <input 
+                      type="text" 
+                      className="form-input"
+                      placeholder="Напр: СЕС 30кВт (Петренко)"
+                      value={formData.name}
+                      onChange={e => setFormData({...formData, name: e.target.value})}
+                   />
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                    <div className="form-group">
