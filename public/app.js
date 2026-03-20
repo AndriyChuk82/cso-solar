@@ -1069,7 +1069,8 @@ function readProposalForm() {
 
 function fillProposalForm() {
     document.getElementById('proposalNumber').value = state.proposal.number || '';
-    document.getElementById('proposalDate').value = state.proposal.date || todayStr();
+    const rawDate = state.proposal.date || todayStr();
+    document.getElementById('proposalDate').value = rawDate.split('T')[0];
     document.getElementById('clientName').value = state.proposal.clientName || '';
     document.getElementById('clientContact').value = state.proposal.clientContact || '';
     document.getElementById('proposalNotes').value = state.proposal.notes || '';
@@ -1757,16 +1758,16 @@ function exportInvoicePDF() {
     });
 }
 
-function exportDeliveryNotePDF() {
+function printDeliveryNote() {
     readProposalForm();
     if (state.proposal.items.length === 0) {
         showToast('Пропозиція порожня', 'warning');
         return;
     }
 
-    showToast('Генерація накладної (PDF)...', 'info');
+    showToast('Підготовка накладної до друку...', 'info');
 
-    const propNum = state.proposal.number || 'КП-001';
+    const propNum = state.proposal.number || '001';
     const dnNum = propNum.replace('КП-', '');
     const dnDate = formatDateUA(state.proposal.date || todayStr());
 
@@ -1790,10 +1791,9 @@ function exportDeliveryNotePDF() {
         </tr>`;
     });
 
-    // Pad empty rows to minimum 8 for better look
+    // Pad empty rows
     for (let i = state.proposal.items.length; i < 8; i++) {
-        const bg = i % 2 === 0 ? '#ffffff' : '#f7f9fc';
-        tbodyHtml += `<tr style="background:${bg}; height:35px;">
+        tbodyHtml += `<tr style="height:35px;">
             <td style="border:1px solid #c0c8d8; text-align:center; color:#ccc;">${i + 1}</td>
             <td style="border:1px solid #c0c8d8;"></td>
             <td style="border:1px solid #c0c8d8;"></td>
@@ -1803,30 +1803,14 @@ function exportDeliveryNotePDF() {
 
     document.getElementById('dnTableBody').innerHTML = tbodyHtml;
 
-    // Show template, render, hide
-    const template = document.getElementById('deliveryNoteTemplate');
-    const content = document.getElementById('deliveryNoteContent');
-    template.style.display = 'block';
-    template.style.position = 'absolute';
-    template.style.left = '-9999px';
-    template.style.top = '0';
-
-    const opt = {
-        margin: [10, 10, 10, 10],
-        filename: `Накладна_${dnNum}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(content).save().then(() => {
-        template.style.display = 'none';
-        showToast('Накладну завантажено як PDF', 'success');
-    }).catch(err => {
-        template.style.display = 'none';
-        console.error('Delivery Note PDF error:', err);
-        showToast('Помилка генерації накладної', 'error');
-    });
+    // Trigger Print
+    document.body.classList.add('print-dn');
+    setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+            document.body.classList.remove('print-dn');
+        }, 500);
+    }, 100);
 }
 
 
@@ -2072,7 +2056,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnSave').addEventListener('click', saveCurrentProposal);
     document.getElementById('btnNewProposal').addEventListener('click', newProposal);
     document.getElementById('btnInvoice').addEventListener('click', exportInvoicePDF);
-    document.getElementById('btnDeliveryNote').addEventListener('click', exportDeliveryNotePDF);
+    document.getElementById('btnDeliveryNote').addEventListener('click', printDeliveryNote);
     
     // TTN Button
     document.getElementById('btnTtn').addEventListener('click', () => {
