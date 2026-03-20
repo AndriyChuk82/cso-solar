@@ -44,7 +44,7 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
       console.log('Proposals received:', data);
       
       if (data && data.success) {
-        setProposals(data.proposals || []);
+        setProposals([...(data.proposals || [])].reverse());
       } else {
         console.error('Failed to load proposals:', data?.error || 'Unknown error');
       }

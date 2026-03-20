@@ -49,7 +49,7 @@ function thStyle(align, px, width) {
 function ItemRow({ item, onUpdate, onDelete, currency, rate }) {
   return (
     <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-      <td style={{ padding: '7px 10px' }}>
+      <td style={{ padding: '7px 10px', minWidth: '200px' }}>
         <input type="text" value={item.name || ''}
           onChange={e => onUpdate({ ...item, name: e.target.value })}
           className="form-input"
@@ -566,7 +566,7 @@ export function ProjectDetail({
               <table style={{ width:'100%', borderCollapse:'collapse' }}>
                 <thead>
                   <tr style={{ background:'var(--border-light)' }}>
-                    <th style={thStyle('left','14px')}>Назва</th>
+                    <th style={{ ...thStyle('left','14px'), minWidth: '200px' }}>Назва</th>
                     <th style={thStyle('center','6px',70)}>К-сть</th>
                     <th style={thStyle('right','6px',100)}>Ціна ({currency})</th>
                     <th style={thStyle('right','14px',100)}>Сума</th>
