@@ -1630,20 +1630,20 @@ function handleSaveProject(projectData, userEmail) {
     const updates = { ...projectData, "Оновлено": ts };
     
     headerRow.forEach((h, idx) => {
-      const key = String(h).trim();
-      // Мапінг для полів, які приходять з фронтенду (camelCase або snake_case)
+      const key = String(h).trim().toLowerCase();
+      // Мапінг для полів (реєстронезалежний)
       const valueMap = {
-        'Назва':           projectData.name,
-        'Клієнт':           projectData.client_name,
-        'Телефон':          projectData.client_phone,
-        'Адреса':           projectData.address,
-        'Статус':           projectData.status,
-        'Примітки':         projectData.notes,
-        'ID КП':           projectData.proposal_id,
-        'Погоджена сума':  projectData.agreed_sum !== undefined ? projectData.agreed_sum : undefined,
-        'Номер':           projectData.project_number,
-        'Дата закриття':    projectData.closed_date !== undefined ? projectData.closed_date : undefined,
-        'Оновлено':         ts
+        'назва':           projectData.name,
+        'клієнт':           projectData.client_name,
+        'телефон':          projectData.client_phone,
+        'адреса':           projectData.address,
+        'статус':           projectData.status,
+        'примітки':         projectData.notes,
+        'id кп':           projectData.proposal_id,
+        'погоджена сума':  projectData.agreed_sum !== undefined ? projectData.agreed_sum : undefined,
+        'номер':           projectData.project_number,
+        'дата закриття':    projectData.closed_date !== undefined ? projectData.closed_date : undefined,
+        'оновлено':         ts
       };
       
       if (valueMap[key] !== undefined) {
