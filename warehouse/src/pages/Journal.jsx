@@ -29,6 +29,10 @@ export default function Journal() {
   const [sortAsc, setSortAsc] = useState(false);
   const [editModal, setEditModal] = useState(null); // { op, formData }
   const [savingEdit, setSavingEdit] = useState(false);
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 20;
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -105,7 +109,12 @@ export default function Journal() {
 
   function updateFilter(key, value) {
     setFilters((prev) => ({ ...prev, [key]: value }));
+    setCurrentPage(1); // Reset page on filter change
   }
+
+  useEffect(() => {
+    setCurrentPage(1); // Reset page on search change
+  }, [search]);
 
   function getWarehouseName(id) {
     return warehouses.find((w) => w.id === id)?.name || id || '—';
@@ -123,6 +132,12 @@ export default function Journal() {
     }
     return list;
   }, [operations, search, sortAsc]);
+
+  const totalPages = Math.ceil(filteredOperations.length / PAGE_SIZE);
+  const paginatedOperations = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredOperations.slice(start, start + PAGE_SIZE);
+  }, [filteredOperations, currentPage]);
 
   function handleExport() {
     if (filteredOperations.length === 0) return showToast('Немає операцій для експорту', 'info');
@@ -264,13 +279,11 @@ export default function Journal() {
                   <th>Од.</th>
                   <th>Кількість</th>
                   <th>Залишок</th>
-                  <th>Коментар</th>
-                  <th>Автор</th>
                   {user?.isAdmin && <th></th>}
                 </tr>
               </thead>
               <tbody>
-                {filteredOperations.map((op) => (
+                {paginatedOperations.map((op) => (
                   <tr key={op.id} className={`row-${op.type}`}>
                     <td>{formatDate(op.date)}</td>
                     <td>{getWarehouseName(op.warehouse_from || op.warehouse_to)}</td>
@@ -287,8 +300,6 @@ export default function Journal() {
                     <td style={{ fontSize: '0.85rem' }}>
                       {op.balance_after != null ? formatQuantity(op.balance_after, op.product_category, op.product_name) : '—'}
                     </td>
-                    <td style={{ fontSize: '0.8rem' }}>{op.comment || '—'}</td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{op.user || '—'}</td>
                     {user?.isAdmin && (
                       <td>
                         <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
@@ -317,6 +328,31 @@ export default function Journal() {
           )}
         </div>
       </div>
+
+      {/* Пагінація */}
+      {totalPages > 1 && (
+        <div className="pagination-wrap">
+          <button 
+            className="btn btn-outline btn-sm"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+          >
+            ← Попередня
+          </button>
+          
+          <div className="pagination-info">
+            Сторінка <strong>{currentPage}</strong> з {totalPages} (Всього: {filteredOperations.length} зап.)
+          </div>
+
+          <button 
+            className="btn btn-outline btn-sm"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Наступна →
+          </button>
+        </div>
+      )}
       
       {/* Модалка редагування */}
       {editModal && (
