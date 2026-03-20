@@ -50,6 +50,9 @@ const GT_TEMPLATES = {
                 padding: 5px 8px;
                 vertical-align: top;
             }
+            .gt-table tr {
+                page-break-inside: avoid;
+            }
             .gt-table th {
                 font-weight: bold;
                 background: #f5f5f5;
@@ -236,7 +239,7 @@ const GT_TEMPLATES = {
                     <td class="gt-td-label">
                         Унікальний номер запису в Єдиному державному демографічному реєстрі (за наявності)
                     </td>
-                    <td class="gt-td-value">&nbsp;</td>
+                    <td class="gt-td-value">{{field8}}</td>
                 </tr>
                 <tr>
                     <td class="gt-td-label">Реєстраційний номер облікової картки платника податків (РНОКПП / ІПН)</td>
@@ -291,7 +294,7 @@ const GT_TEMPLATES = {
                 </tr>
             </table>
 
-            <p class="gt-section-label" style="margin-top: 25mm; page-break-before: always;">
+            <p class="gt-section-label" style="margin-top: 15px;">
                 Інформація щодо виконання технічних вимог для приєднання генеруючої установки
                 <span class="gt-italic">із можливістю відпуску</span> електричної енергії в електричну мережу ОСП, ОСР:
             </p>
