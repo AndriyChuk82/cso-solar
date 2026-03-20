@@ -115,13 +115,15 @@ input, textarea, select, button { font-family: var(--font); }
     font-style: normal;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
     .nav-btn span { display: none; }
-    .nav-btn { padding: 8px; }
+    .nav-btn { padding: 10px; }
 }
 
 @media (max-width: 768px) {
-    .nav-btn { display: none !important; }
+    .header-user { display: none; }
+    .nav-btn { padding: 8px 12px; font-size: 1.25rem; }
+    .header-actions { gap: 4px; }
 }
 
 .header-user {

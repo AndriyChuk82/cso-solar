@@ -999,17 +999,15 @@ body {
   .nav-btn span {
     display: none;
   }
-  .nav-btn {
-    padding: 8px 12px;
-  }
-  .header-nav {
-    margin: 0 10px;
-  }
 }
 
 @media (max-width: 768px) {
-  .header-nav {
+  .header-user {
     display: none;
+  }
+  .nav-btn {
+    padding: 8px 10px;
+    font-size: 1.2rem;
   }
 }
 

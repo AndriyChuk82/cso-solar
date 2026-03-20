@@ -31,7 +31,7 @@ export function Layout({ children }) {
           </div>
         </div>
 
-        <div className="header-right hidden md:flex">
+        <div className="header-right flex">
           {user && (
             <>
               {(user.role === 'admin' || user.role === 'адмін' || user.role === 'адміністратор' || (user.module_access || '').includes('warehouse')) && (
