@@ -464,7 +464,7 @@ export function ProjectDetail({
             <span className="section-label">📋 Платежі ({validPay.length})</span>
             <button
               className="btn btn-sm"
-              style={{ background:'var(--success)', color:'white', border:'none' }}
+              style={{ background:'var(--primary)', color:'white', border:'none' }}
               onClick={() => setShowPaymentSheet(true)}
             >
               <Plus size={14} /> Додати

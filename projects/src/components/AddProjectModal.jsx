@@ -99,6 +99,7 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
     <div className="modal-overlay">
       {/* Modal */}
       <div className="modal modal-wide">
+        <div className="sheet-handle" />
         {/* Header */}
         <div className="modal-header">
           <div>

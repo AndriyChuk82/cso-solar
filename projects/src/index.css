@@ -928,7 +928,7 @@ body {
 }
 
 /* === MODAL / BOTTOM SHEET === */
-.sheet-overlay {
+.sheet-overlay, .modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(15, 36, 69, 0.4);
@@ -940,7 +940,7 @@ body {
   padding: 20px;
 }
 
-.sheet-panel {
+.sheet-panel, .modal {
   background: white;
   width: 100%;
   max-width: 440px;
@@ -949,6 +949,20 @@ body {
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  position: relative;
+}
+
+.modal-wide {
+  max-width: 900px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .sheet-title {
@@ -958,14 +972,17 @@ body {
 }
 
 @media (max-width: 768px) {
-  .sheet-overlay {
+  .sheet-overlay, .modal-overlay {
     align-items: flex-end; /* Bottom sheet info on mobile */
     padding: 0;
   }
-  .sheet-panel {
+  .sheet-panel, .modal {
     max-width: 100%;
     border-radius: 20px 20px 0 0;
     padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+  .modal-wide {
+    max-width: 100%;
   }
   .sheet-handle {
     width: 40px;
