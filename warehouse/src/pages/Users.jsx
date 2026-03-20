@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getUsers, addUser, updateUser, getWarehouses, getProjects } from '../api/gasApi';
+import { getUsers, addUser, updateUser, getWarehouses, getProjects, verifySession } from '../api/gasApi';
 import { useToast } from '../context/ToastContext';
 import CONFIG from '../config';
 
@@ -30,10 +30,11 @@ export default function Users() {
   async function loadData() {
     setLoading(true);
     try {
+      const userEmail = await verifySession();
       const [usResult, whResult, prResult] = await Promise.all([
         getUsers(), 
         getWarehouses(),
-        getProjects()
+        getProjects(userEmail)
       ]);
       if (usResult?.success) setUsers(usResult.users || []);
       if (whResult?.success) setWarehouses(whResult.warehouses || []);
@@ -205,29 +206,36 @@ export default function Users() {
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Доступ до проєктів (якщо не адмін)</label>
-                  <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #ddd', padding: '8px', borderRadius: '4px', background: '#f9f9f9' }}>
-                    {projects.map(p => {
-                      const isChecked = formData.project_access.split(',').includes(String(p.id));
-                      return (
-                        <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', cursor: 'pointer', fontSize: '0.85rem' }}>
-                          <input 
-                            type="checkbox" 
-                            checked={isChecked}
-                            onChange={(e) => {
-                              const ids = formData.project_access ? formData.project_access.split(',') : [];
-                              const newIds = e.target.checked 
-                                ? [...ids, String(p.id)] 
-                                : ids.filter(id => id !== String(p.id));
-                              setFormData({ ...formData, project_access: newIds.join(',') });
-                            }}
-                          />
-                          {p.name || p.number || p.id}
-                        </label>
-                      );
-                    })}
-                    {projects.length === 0 && <div className="text-muted">Немає доступних проєктів</div>}
-                  </div>
+                  <label>Доступ до проєктів</label>
+                  {formData.role === 'admin' ? (
+                    <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '4px', border: '1px dashed var(--accent)', color: 'var(--accent)', fontSize: '0.85rem' }}>
+                      ℹ️ Адміністратор має доступ до всіх проєктів автоматично.
+                    </div>
+                  ) : (
+                    <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #ddd', padding: '8px', borderRadius: '4px', background: '#f9f9f9' }}>
+                      {projects.map(p => {
+                        const ids = (formData.project_access || '').split(',').filter(Boolean);
+                        const isChecked = ids.includes(String(p.id));
+                        return (
+                          <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', cursor: 'pointer', fontSize: '0.85rem' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={isChecked}
+                              onChange={(e) => {
+                                const currentIds = (formData.project_access || '').split(',').filter(Boolean);
+                                const newIds = e.target.checked 
+                                  ? [...currentIds, String(p.id)] 
+                                  : currentIds.filter(id => id !== String(p.id));
+                                setFormData({ ...formData, project_access: newIds.join(',') });
+                              }}
+                            />
+                            {p.name || p.number || p.id}
+                          </label>
+                        );
+                      })}
+                      {projects.length === 0 && <div className="text-muted">Немає доступних проєктів для вибору</div>}
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">

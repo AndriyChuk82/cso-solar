@@ -164,8 +164,8 @@ export async function getUsers() {
   return gasRequest('getUsers');
 }
 
-export async function getProjects() {
-  return gasRequest('getProjects');
+export async function getProjects(email) {
+  return gasRequest('getProjects', { email });
 }
 
 export async function addUser(user) {
