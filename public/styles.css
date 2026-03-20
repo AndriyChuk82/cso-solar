@@ -829,3 +829,34 @@ body.hide-cost .cost-column { display: none; }
         display: block !important;
     }
 }
+
+/* === INVOICE PRINTING === */
+@media print {
+    body.print-inv .app-header, 
+    body.print-inv .sidebar, 
+    body.print-inv .app-container,
+    body.print-inv .main-content, 
+    body.print-inv .proposal-actions,
+    body.print-inv .modal-overlay,
+    body.print-inv #deliveryNoteTemplate {
+        display: none !important;
+    }
+
+    body.print-inv #invoiceTemplate {
+        display: block !important;
+        position: static !important;
+        visibility: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    body.print-inv #invoiceContent {
+        display: block !important;
+    }
+
+    body.print-inv {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+}

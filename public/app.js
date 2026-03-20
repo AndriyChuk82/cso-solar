@@ -36,6 +36,7 @@ const SELLERS = {
         office: 'Львівська обл., м. Золочів, вул. І. Труша 1Б',
         iban: 'UA563003350000000260092475237',
         bank: 'АТ "РАЙФФАЙЗЕН БАНК"',
+        mfo: '300335',
         phone: '(067) 374-08-12',
         logo: 'https://i.ibb.co/32JD4dc/logo.png'
     },
@@ -47,9 +48,10 @@ const SELLERS = {
         taxIdType: 'ЄДРПОУ',
         address: 'Україна, 80700, Львівська обл., м. Золочів, вул. І. Труша 1Б',
         office: 'Львівська обл., м. Золочів, вул. І. Труша 1Б',
-        iban: '___________________________',
-        bank: '___________________________',
-        phone: '(067) 374-08-02',
+        iban: 'UA333003350000000002600846582',
+        bank: 'АТ «РАЙФФАЙЗЕН БАНК»',
+        mfo: '300335',
+        phone: '067-370-32-36, 073-370-32-36',
         logo: 'https://i.ibb.co/32JD4dc/logo.png'
     }
 };
@@ -1124,6 +1126,7 @@ function syncSellerUI() {
     document.getElementById('invSellerAddress').textContent = seller.address;
     document.getElementById('invSellerIban').textContent = seller.iban;
     document.getElementById('invSellerBank').textContent = seller.bank;
+    document.getElementById('invSellerMfo').textContent = seller.mfo || '';
     document.getElementById('invSellerPhone').textContent = seller.phone;
     
     // Delivery Note
@@ -1719,29 +1722,31 @@ function printProposal() {
 
 
 
-function exportInvoicePDF() {
+function printInvoice() {
     readProposalForm();
     if (state.proposal.items.length === 0) {
         showToast('Пропозиція порожня', 'warning');
         return;
     }
 
-    showToast('Генерація рахунку (PDF)...', 'info');
+    showToast('Підготовка рахунку до друку...', 'info');
 
     const uahRate = state.settings.usdToUah;
     const propNum = state.proposal.number || 'КП-001';
     const invoiceNum = propNum.replace('КП-', '');
     const invoiceDate = formatDateUA(state.proposal.date || todayStr());
 
-    // Fill the template
+    // Fill common document dynamic fields
     document.getElementById('invNumber').textContent = invoiceNum;
     document.getElementById('invDate').textContent = invoiceDate;
     document.getElementById('invClientName').textContent = state.proposal.clientName || '_______________';
-    document.getElementById('invClientContact').textContent = state.proposal.clientContact || '';
+    const clientContact = document.getElementById('invClientContact');
+    if (clientContact) clientContact.textContent = state.proposal.clientContact || '';
 
-    // Build table rows
+    // Build the table
+    const tableBody = document.getElementById('invTableBody');
+    tableBody.innerHTML = '';
     let totalUAH = 0;
-    let tbodyHtml = '';
 
     state.proposal.items.forEach((it, idx) => {
         const priceUAH = Math.round(it.price * uahRate * 100) / 100;
@@ -1749,67 +1754,55 @@ function exportInvoicePDF() {
         totalUAH += sumUAH;
 
         const bg = idx % 2 === 0 ? '#ffffff' : '#f7f9fc';
-        tbodyHtml += `<tr style="background:${bg};">
+        const row = document.createElement('tr');
+        row.style.background = bg;
+        row.innerHTML = `
             <td style="padding:6px; border:1px solid #c0c8d8; text-align:center;">${idx + 1}</td>
             <td style="padding:6px; border:1px solid #c0c8d8;">
                 <strong>${escHtml(it.name)}</strong>
                 ${it.description ? '<br><span style="font-size:10px; color:#666;">' + escHtml(it.description) + '</span>' : ''}
             </td>
             <td style="padding:6px; border:1px solid #c0c8d8; text-align:center;">${it.quantity}</td>
-            <td style="padding:6px; border:1px solid #c0c8d8; text-align:center;">${it.unit}</td>
+            <td style="padding:6px; border:1px solid #c0c8d8; text-align:center;">${it.unit || 'шт.'}</td>
             <td style="padding:6px; border:1px solid #c0c8d8; text-align:right;">${priceUAH.toLocaleString('uk-UA', {minimumFractionDigits: 2})}</td>
             <td style="padding:6px; border:1px solid #c0c8d8; text-align:right; font-weight:600;">${sumUAH.toLocaleString('uk-UA', {minimumFractionDigits: 2})}</td>
-        </tr>`;
+        `;
+        tableBody.appendChild(row);
     });
 
-    // Pad empty rows to minimum 10
+    // Pad empty rows
     for (let i = state.proposal.items.length; i < 10; i++) {
         const bg = i % 2 === 0 ? '#ffffff' : '#f7f9fc';
-        tbodyHtml += `<tr style="background:${bg};">
-            <td style="padding:6px; border:1px solid #c0c8d8; text-align:center; color:#ccc;">${i + 1}</td>
-            <td style="padding:6px; border:1px solid #c0c8d8;"></td>
-            <td style="padding:6px; border:1px solid #c0c8d8;"></td>
-            <td style="padding:6px; border:1px solid #c0c8d8; text-align:center; color:#ccc;">шт.</td>
-            <td style="padding:6px; border:1px solid #c0c8d8;"></td>
-            <td style="padding:6px; border:1px solid #c0c8d8;"></td>
-        </tr>`;
+        const row = document.createElement('tr');
+        row.style.background = bg;
+        row.style.height = '30px';
+        row.innerHTML = `<td style="border:1px solid #c0c8d8;"></td><td style="border:1px solid #c0c8d8;"></td><td style="border:1px solid #c0c8d8;"></td><td style="border:1px solid #c0c8d8;"></td><td style="border:1px solid #c0c8d8;"></td><td style="border:1px solid #c0c8d8;"></td>`;
+        tableBody.appendChild(row);
     }
 
-    document.getElementById('invTableBody').innerHTML = tbodyHtml;
-    document.getElementById('invTotal').textContent = totalUAH.toLocaleString('uk-UA', {minimumFractionDigits: 2}) + ' грн';
+    // Totals
+    const totalEl = document.getElementById('invTotal');
+    if (totalEl) totalEl.textContent = totalUAH.toLocaleString('uk-UA', {minimumFractionDigits: 2}) + ' грн';
+    
+    // Also update sub-totals if they exist (from a previous ID version)
+    const subVat = document.getElementById('invTotalWithoutVat');
+    if (subVat) subVat.textContent = totalUAH.toLocaleString('uk-UA', {minimumFractionDigits: 2});
+    const subTotal = document.getElementById('invTotalWithVat');
+    if (subTotal) subTotal.textContent = totalUAH.toLocaleString('uk-UA', {minimumFractionDigits: 2});
+
     document.getElementById('invSumWords').textContent = numberToWordsUA(totalUAH);
 
-    // Show the template, render PDF, hide it
-    const template = document.getElementById('invoiceTemplate');
-    const content = document.getElementById('invoiceContent');
-    template.style.display = 'block';
-    template.style.position = 'absolute';
-    template.style.left = '-9999px';
-    template.style.top = '0';
+    // Sync seller rekvizity (ensure they are current)
+    syncSellerUI();
 
-    const opt = {
-        margin: [5, 5, 5, 5],
-        filename: `Рахунок_${invoiceNum}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-            scale: 2, 
-            backgroundColor: '#ffffff',
-            useCORS: true,
-            allowTaint: true,
-            scrollY: 0
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    };
-
-    html2pdf().set(opt).from(content).save().then(() => {
-        template.style.display = 'none';
-        showToast('Рахунок завантажено як PDF', 'success');
-    }).catch(err => {
-        template.style.display = 'none';
-        console.error('Invoice PDF error:', err);
-        showToast('Помилка генерації рахунку', 'error');
-    });
+    // Trigger Print
+    document.body.classList.add('print-inv');
+    setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+            document.body.classList.remove('print-inv');
+        }, 500);
+    }, 100);
 }
 
 function printDeliveryNote() {
@@ -2109,7 +2102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnHistory').addEventListener('click', () => { renderHistory(); openModal('historyModal'); });
     document.getElementById('btnSave').addEventListener('click', saveCurrentProposal);
     document.getElementById('btnNewProposal').addEventListener('click', newProposal);
-    document.getElementById('btnInvoice').addEventListener('click', exportInvoicePDF);
+    document.getElementById('btnInvoice').addEventListener('click', printInvoice);
     document.getElementById('btnDeliveryNote').addEventListener('click', printDeliveryNote);
     
     document.getElementById('sellerSelect').addEventListener('change', syncSellerUI);
