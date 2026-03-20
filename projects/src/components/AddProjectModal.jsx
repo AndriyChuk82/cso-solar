@@ -22,6 +22,16 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
 
   useEffect(() => {
     if (isOpen) {
+      setFormData({
+        name: '',
+        client_name: '',
+        client_phone: '',
+        address: '',
+        proposal_id: '',
+        notes: '',
+      });
+      setSelectedProposal(null);
+      setSearchTerm('');
       loadProposals();
     }
   }, [isOpen]);
@@ -175,7 +185,7 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
                    <input 
                       required
                       type="text" 
-                      className="form-input font-bold"
+                      className="form-input"
                       placeholder="Напр: СЕС 30кВт (Петренко)"
                       value={formData.name}
                       onChange={e => setFormData({...formData, name: e.target.value})}
@@ -185,29 +195,23 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
                 <div className="grid grid-cols-2 gap-4">
                    <div className="form-group">
                       <label>Клієнт</label>
-                      <div className="relative">
-                         <User className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                         <input 
-                            type="text" 
-                            className="form-input pl-9 font-bold"
-                            placeholder="ПІБ"
-                            value={formData.client_name}
-                            onChange={e => setFormData({...formData, client_name: e.target.value})}
-                         />
-                      </div>
+                      <input 
+                         type="text" 
+                         className="form-input"
+                         placeholder="ПІБ"
+                         value={formData.client_name}
+                         onChange={e => setFormData({...formData, client_name: e.target.value})}
+                      />
                    </div>
                    <div className="form-group">
                       <label>Телефон</label>
-                      <div className="relative">
-                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                         <input 
-                            type="text" 
-                            className="form-input pl-9 font-bold"
-                            placeholder="+380..."
-                            value={formData.client_phone}
-                            onChange={e => setFormData({...formData, client_phone: e.target.value})}
-                         />
-                      </div>
+                      <input 
+                         type="text" 
+                         className="form-input"
+                         placeholder="+380..."
+                         value={formData.client_phone}
+                         onChange={e => setFormData({...formData, client_phone: e.target.value})}
+                      />
                    </div>
                 </div>
 
@@ -215,7 +219,7 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
                    <label>Адреса об'єкта</label>
                    <input 
                       type="text" 
-                      className="form-input font-bold"
+                      className="form-input"
                       placeholder="Вулиця, будинок..."
                       value={formData.address}
                       onChange={e => setFormData({...formData, address: e.target.value})}
