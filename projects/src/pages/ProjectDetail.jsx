@@ -217,14 +217,14 @@ export function ProjectDetail({
   );
 
   /* ---- derived ---- */
-  const kpSum         = parseFloat(project.total_cost) || 0;
+  const displayItems  = editingItems ? pendingItems : items;
+  const itemsTotal    = displayItems.reduce((a, i) => a + (parseFloat(i.sum) || 0), 0);
+  const kpSum         = parseFloat(project.total_cost) || itemsTotal || 0;
   const agreedSum     = parseFloat(project.agreed_sum) || kpSum;
   const validPay      = payments.filter(p => !p.status?.toLowerCase().includes('скасовано'));
   const totalPaid     = validPay.reduce((a, p) => a + (parseFloat(p.sum) || 0), 0);
   const balance       = agreedSum - totalPaid;
   const paidPct       = agreedSum > 0 ? Math.min(100, (totalPaid / agreedSum) * 100) : 0;
-  const displayItems  = editingItems ? pendingItems : items;
-  const itemsTotal    = displayItems.reduce((a, i) => a + (parseFloat(i.sum) || 0), 0);
   const isModified    = !editingItems && project.proposal_id && items.length > 0 && itemsModified(items, origItems);
   const isClosed      = project.status === 'Виконано';
 
