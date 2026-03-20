@@ -1548,7 +1548,7 @@ function handleGetProjectDetails(projectId) {
       if (propSheet) {
         const proposals = sheetToObjects(propSheet);
         const prop = proposals.find(p => String(p.id) === String(project.proposal_id));
-        if (prop) proposalNumber = prop['номер'] || prop.number || null;
+        if (prop) proposalNumber = prop.project_number || prop['номер'] || prop.number || null;
       }
     } catch(e) {
       console.warn('Could not fetch proposal number: ' + e.message);

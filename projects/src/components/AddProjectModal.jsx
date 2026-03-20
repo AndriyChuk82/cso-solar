@@ -53,11 +53,13 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
     
     setFormData(prev => ({
       ...prev,
-      name: prev.name || `Проект: ${clientName || 'Новий'}`,
+      name: prev.name || (prop.number ? `КП №${prop.number}` : `Проект: ${clientName || 'Новий'}`),
       client_name: clientName,
       client_phone: clientPhone,
       proposal_id: prop.id,
-      items_from_cp: prop.items || [], 
+      items_from_cp: prop.items || [],
+      agreed_sum: prop.totalAmount || 0,
+      project_number: prop.number || ''
     }));
   };
 
