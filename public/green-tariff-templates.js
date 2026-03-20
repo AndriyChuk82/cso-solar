@@ -286,8 +286,7 @@ const GT_TEMPLATES = {
                 <tr>
                     <td class="gt-td-label">Додаткова інформація, що може бути надана споживачем за його згодою</td>
                     <td class="gt-td-value">
-                        {{field23}} сонячних панелей {{field34}},
-                        встановлених {{field24}}
+                        {{field23}} сонячних панелей,встановлених {{field24}}
                     </td>
                 </tr>
             </table>

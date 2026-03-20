@@ -11,5 +11,10 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "jose": "^5.2.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2"
   }
 }
