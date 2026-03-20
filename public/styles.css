@@ -805,11 +805,18 @@ body.hide-cost .cost-column { display: none; }
 @media print {
     body.print-dn .app-header, 
     body.print-dn .sidebar, 
+    body.print-dn .app-container,
     body.print-dn .main-content, 
     body.print-dn .proposal-actions,
     body.print-dn .modal-overlay,
     body.print-dn #invoiceTemplate {
         display: none !important;
+    }
+
+    body.print-dn {
+        margin: 0 !important;
+        padding: 0 !important;
+        position: static !important;
     }
 
     body.print-dn #deliveryNoteTemplate {
