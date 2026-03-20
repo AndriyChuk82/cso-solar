@@ -82,21 +82,11 @@ input, textarea, select, button { font-family: var(--font); }
 }
 .brand-name { font-size: 1.4rem; font-weight: 700; color: var(--accent); letter-spacing: 0.5px; }
 .brand-sub { font-size: 0.75rem; color: var(--text-muted); display: block; }
-.header-nav {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-    background: rgba(0,0,0,0.04);
-    padding: 4px;
-    border-radius: var(--radius-sm);
-    margin: 0 20px;
-}
-
 .nav-btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 16px;
+    padding: 8px 12px;
     border-radius: 6px;
     font-size: 0.85rem;
     font-weight: 600;
@@ -109,30 +99,29 @@ input, textarea, select, button { font-family: var(--font); }
 }
 
 .nav-btn:hover {
-    background: rgba(0,0,0,0.04);
+    background: rgba(0,0,0,0.06);
     color: var(--text-primary);
 }
 
 .nav-btn.active {
     background: var(--bg-card);
     color: var(--accent);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    border-color: rgba(245, 158, 11, 0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-color: rgba(245, 158, 11, 0.15);
 }
 
 .nav-btn i {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-style: normal;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
     .nav-btn span { display: none; }
-    .nav-btn { padding: 8px 12px; }
-    .header-nav { margin: 0 10px; }
+    .nav-btn { padding: 8px; }
 }
 
 @media (max-width: 768px) {
-    .header-nav { display: none; }
+    .nav-btn { display: none !important; }
 }
 
 .header-user {

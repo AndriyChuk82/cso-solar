@@ -12,7 +12,7 @@ export function useAuth() {
         if (data.authenticated) {
           setUser({
             name: data.name || data.user,
-            role: data.role || 'manager'
+            role: (data.role || 'manager').toLowerCase()
           });
         }
       } catch (e) {

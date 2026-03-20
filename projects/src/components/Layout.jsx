@@ -31,7 +31,7 @@ export function Layout({ children }) {
           </div>
         </div>
 
-        <nav className="header-nav">
+        <div className="header-right hidden md:flex">
           {(user?.role === 'admin' || user?.role === 'storekeeper') && (
             <a href="/warehouse/" className="nav-btn"><i>📦</i> <span>Склад</span></a>
           )}
@@ -42,9 +42,7 @@ export function Layout({ children }) {
           {(user?.role === 'admin' || user?.role === 'manager') && (
             <a href="/green-tariff.html" className="nav-btn"><i>🌱</i> <span>Зелений тариф</span></a>
           )}
-        </nav>
 
-        <div className="header-right hidden md:flex">
           {user && (
             <div className="header-user">
               <span className="user-name">{user.name}</span>

@@ -32,7 +32,7 @@ export default function Layout() {
             <span className="brand-sub">Складський облік</span>
           </div>
         </div>
-        <nav className="header-nav">
+        <div className="header-right">
           {(user?.role === 'admin' || user?.role === 'storekeeper') && (
             <a href="/warehouse/" className="nav-btn active"><i>📦</i> <span>Склад</span></a>
           )}
@@ -43,8 +43,7 @@ export default function Layout() {
           {(user?.role === 'admin' || user?.role === 'manager') && (
             <a href="/green-tariff.html" className="nav-btn"><i>🌱</i> <span>Зелений тариф</span></a>
           )}
-        </nav>
-        <div className="header-right">
+
           {user && (
             <div className="header-user">
               <span className="user-name">{user.name}</span>
@@ -53,6 +52,7 @@ export default function Layout() {
               </span>
             </div>
           )}
+          <a href="/api/logout" className="btn btn-ghost btn-sm" title="Вийти">🚪</a>
         </div>
       </header>
 

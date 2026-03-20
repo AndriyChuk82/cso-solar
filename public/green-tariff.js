@@ -90,13 +90,16 @@ async function checkAuth() {
             if (elLogout) elLogout.style.display = 'flex';
 
             // Role-based navigation visibility
-            const role = data.role;
+            const role = (data.role || '').toLowerCase();
             const isAdmin = role === 'admin';
             const isManager = role === 'manager';
             const isStorekeeper = role === 'storekeeper';
 
             if (document.getElementById('navWarehouse')) {
                 document.getElementById('navWarehouse').style.display = (isAdmin || isStorekeeper) ? 'inline-flex' : 'none';
+            }
+            if (document.getElementById('navKP')) {
+                document.getElementById('navKP').style.display = 'inline-flex';
             }
             if (document.getElementById('navProjects')) {
                 document.getElementById('navProjects').style.display = (isAdmin || isManager) ? 'inline-flex' : 'none';

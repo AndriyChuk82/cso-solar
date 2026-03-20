@@ -30,14 +30,15 @@ export function AuthProvider({ children }) {
             setError('Менеджерам доступний лише розділ Комерційних пропозицій.');
             setUser(null);
           } else {
+            const roleLower = (u.role || '').toLowerCase();
             setUser({
               email: u.email,
               name: u.name,
-              role: u.role,
+              role: roleLower,
               warehouseId: u.warehouse_id,
-              isAdmin: u.role === CONFIG.ROLES.ADMIN,
-              isStorekeeper: u.role === CONFIG.ROLES.STOREKEEPER,
-              isManager: u.role === CONFIG.ROLES.MANAGER
+              isAdmin: roleLower === CONFIG.ROLES.ADMIN,
+              isStorekeeper: roleLower === CONFIG.ROLES.STOREKEEPER,
+              isManager: roleLower === CONFIG.ROLES.MANAGER
             });
           }
         } else {
