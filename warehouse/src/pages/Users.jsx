@@ -207,7 +207,7 @@ export default function Users() {
                 </div>
                 <div className="form-group">
                   <label>Доступ до проєктів</label>
-                  {formData.role === 'admin' ? (
+                  {(formData.role === 'admin' || formData.role === 'адмін' || formData.role === 'адміністратор') ? (
                     <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '4px', border: '1px dashed var(--accent)', color: 'var(--accent)', fontSize: '0.85rem' }}>
                       ℹ️ Адміністратор має доступ до всіх проєктів автоматично.
                     </div>

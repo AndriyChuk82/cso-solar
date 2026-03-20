@@ -307,7 +307,11 @@ function sheetToObjects(sheet) {
     'номер': 'project_number',
     'проєкти': 'project_access',
     'проекти': 'project_access',
-    'доступні проєкти': 'project_access'
+    'доступні проєкти': 'project_access',
+    'доступ до проєктів': 'project_access',
+    'статус': 'active',
+    'активний': 'active',
+    'стан': 'active'
   };
 
   const sheetName = sheet.getName();
@@ -356,10 +360,17 @@ function findRowByValue(sheet, column, value) {
   const headers = data[0];
   const colIndex = headers.indexOf(column);
   if (colIndex === -1) return -1;
+  const searchVal = String(value || '').trim().toLowerCase();
   for (let i = 1; i < data.length; i++) {
-    if (String(data[i][colIndex]) === String(value)) return i + 1;
+    const cellVal = String(data[i][colIndex] || '').trim().toLowerCase();
+    if (cellVal === searchVal) return i + 1;
   }
   return -1;
+}
+
+function isRoleAdmin(role) {
+  const r = String(role || '').toLowerCase().trim();
+  return r === 'admin' || r === 'адмін' || r === 'адміністратор';
 }
 
 // ===== КОРИСТУВАЧІ =====
@@ -423,6 +434,7 @@ function handleUpdateUser(userData) {
       sheet.getRange(row, idx + 1).setValue(userData[mapped]);
     }
   });
+  SpreadsheetApp.flush();
   return { success: true };
 }
 
@@ -1526,8 +1538,7 @@ function handleGetProjects(userEmail) {
   if (userEmail) {
     const userRes = handleGetUser(userEmail);
     if (userRes.success && userRes.user) {
-      const role = (userRes.user.role || '').toLowerCase();
-      isAdmin = (role === 'admin');
+      isAdmin = isRoleAdmin(userRes.user.role);
       
       if (!isAdmin) {
         // Якщо не адмін — дивимось доступні проєкти

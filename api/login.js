@@ -85,7 +85,7 @@ export default async function handler(req, res) {
                         passwordMatch = await bcrypt.compare(password, sheetUser.password);
                         if (passwordMatch) {
                             displayName = sheetUser.name || username;
-                            userRole = sheetUser.role || 'storekeeper';
+                            userRole = (sheetUser.role || 'storekeeper').toLowerCase();
                         }
                     }
                 }
