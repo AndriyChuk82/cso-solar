@@ -287,7 +287,7 @@ export default function Reports() {
           </div>
           <div className="data-table-wrap">
             {sortedItems && sortedItems.length > 0 ? (
-              <table className="data-table">
+              <table className="data-table compact-table">
                 <thead>
                   <tr>
                     {reportData.columns?.map((col, i) => (

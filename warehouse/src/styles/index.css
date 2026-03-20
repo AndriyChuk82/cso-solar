@@ -556,6 +556,21 @@ body {
   border-bottom: none;
 }
 
+/* === COMPACT TABLE (for reports) === */
+.compact-table {
+  font-size: 0.78rem;
+}
+
+.compact-table th {
+  padding: 6px 8px;
+  font-size: 0.72rem;
+}
+
+.compact-table td {
+  padding: 3px 6px;
+  font-size: 0.78rem;
+}
+
 /* Кольорове маркування рядків операцій */
 .data-table tr.row-income {
   border-left: 3px solid var(--income);
