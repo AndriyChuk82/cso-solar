@@ -1710,28 +1710,54 @@ function handleDeleteProjectItem(itemId) {
 function handleSavePayment(paymentData, userEmail) {
   const ss = getSpreadsheet();
   const sheet = getSheet('project_payments', ss.getId());
+  
+  const headers = ['ID', 'ID Проекту', 'Дата', 'Сума', 'Статус', 'Примітка', 'Тип платежу', 'Автор', 'Створено'];
+  let currentLastCol = sheet.getLastColumn();
+  // Safe fallback if sheet is completely empty
+  if (currentLastCol === 0) currentLastCol = 1; 
+  let headerRow = sheet.getRange(1, 1, 1, currentLastCol).getValues()[0] || [];
+  
+  // Auto-append missing headers if schema changed
+  let addedCols = 0;
+  headers.forEach(eh => {
+    const lowerEH = eh.toLowerCase();
+    if (!headerRow.some(h => String(h).trim().toLowerCase() === lowerEH)) {
+      headerRow.push(eh);
+      sheet.getRange(1, currentLastCol + addedCols + 1).setValue(eh);
+      addedCols++;
+    }
+  });
+
   let row = findRowByValue(sheet, 'ID', paymentData.id);
+  
+  const valueMap = {
+    'id': paymentData.id || generateUUID(),
+    'id проекту': paymentData.projectId || paymentData.project_id,
+    'дата': paymentData.date || dateStr(),
+    'сума': paymentData.sum,
+    'статус': paymentData.status || 'Оплачено',
+    'примітка': paymentData.note || '',
+    'тип платежу': paymentData.payment_type || 'Повна оплата',
+    'автор': userEmail || 'Система',
+    'створено': now()
+  };
 
   if (row === -1) {
-    sheet.appendRow([
-      paymentData.id || generateUUID(),
-      paymentData.projectId || paymentData.project_id,
-      paymentData.date || dateStr(),
-      paymentData.sum,
-      paymentData.status || 'Оплачено',
-      paymentData.note || '',
-      paymentData.payment_type || '',
-      userEmail || 'Система',
-      now()
-    ]);
+    const appendData = headerRow.map(h => {
+      const key = String(h).trim().toLowerCase();
+      return valueMap[key] !== undefined ? valueMap[key] : '';
+    });
+    sheet.appendRow(appendData);
   } else {
-    // ID, ID Проекту, Дата, Сума, Статус, Примітка, Автор, Створено
-    sheet.getRange(row, 3).setValue(paymentData.date);
-    sheet.getRange(row, 4).setValue(paymentData.sum);
-    sheet.getRange(row, 5).setValue(paymentData.status);
-    sheet.getRange(row, 6).setValue(paymentData.note || '');
-    // Автора та дату створення не змінюємо при редагуванні? 
-    // Можна додати стовпець "Оновлено", але користувач просив спростити.
+    // update
+    headerRow.forEach((h, idx) => {
+      const key = String(h).trim().toLowerCase();
+      if (key === 'дата') sheet.getRange(row, idx + 1).setValue(paymentData.date);
+      if (key === 'сума') sheet.getRange(row, idx + 1).setValue(paymentData.sum);
+      if (key === 'статус') sheet.getRange(row, idx + 1).setValue(paymentData.status);
+      if (key === 'примітка') sheet.getRange(row, idx + 1).setValue(paymentData.note || '');
+      if (key === 'тип платежу') sheet.getRange(row, idx + 1).setValue(paymentData.payment_type || '');
+    });
   }
   return { success: true };
 }
