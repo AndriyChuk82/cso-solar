@@ -1626,7 +1626,20 @@ function handleSaveProject(projectData, userEmail) {
     return { success: true, id: newId };
   } else {
     // Оновлення
-    const headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    let currentLastCol = sheet.getLastColumn();
+    let headerRow = sheet.getRange(1, 1, 1, currentLastCol).getValues()[0];
+    
+    // Auto-append missing headers if schema changed
+    let addedCols = 0;
+    headers.forEach(eh => {
+      const lowerEH = eh.toLowerCase();
+      if (!headerRow.some(h => String(h).trim().toLowerCase() === lowerEH)) {
+        headerRow.push(eh);
+        sheet.getRange(1, currentLastCol + addedCols + 1).setValue(eh);
+        addedCols++;
+      }
+    });
+
     const updates = { ...projectData, "Оновлено": ts };
     
     headerRow.forEach((h, idx) => {
