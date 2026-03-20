@@ -569,6 +569,7 @@ body {
 .compact-table td {
   padding: 3px 6px;
   font-size: 0.78rem;
+  white-space: pre-line;
 }
 
 /* Кольорове маркування рядків операцій */

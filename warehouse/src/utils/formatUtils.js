@@ -26,7 +26,7 @@ export function formatQuantity(qty, category, name = '') {
   }
 
   const sign = isNegative ? '-' : '';
-  let result = `${sign}${absNum} шт (${pallets} пал`;
+  let result = `${sign}${absNum} шт\n(${pallets} пал`;
   if (remainder > 0) {
     result += ` + ${remainder} шт`;
   }
