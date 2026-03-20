@@ -58,8 +58,8 @@ export function ProjectList({ selectedId, onSelect, onAddNew, currency = 'USD', 
             </button>
             <button
               onClick={onAddNew}
-              className="btn btn-sm"
-              style={{ background: 'var(--primary)', color: 'white', border: 'none' }}
+              className="btn btn-sm btn-primary"
+              style={{ border: 'none' }}
             >
               <Plus size={15} /> Новий
             </button>

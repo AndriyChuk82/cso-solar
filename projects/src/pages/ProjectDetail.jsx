@@ -133,8 +133,13 @@ export function ProjectDetail({
     if (!project) return;
     setIsSaving(true);
     try {
-      const res = await projectService.saveProject(project);
+      const pToSave = { ...project };
+      if ((!pToSave.agreed_sum || pToSave.agreed_sum === '') && kpSum > 0) {
+        pToSave.agreed_sum = kpSum;
+      }
+      const res = await projectService.saveProject(pToSave);
       if (!res.success) alert('Помилка збереження: ' + (res.error || ''));
+      else setProject(pToSave);
     } finally { setIsSaving(false); }
   };
 
@@ -360,6 +365,37 @@ export function ProjectDetail({
                   placeholder="Додаткова інформація..."
                   rows={2} style={{ resize:'none', fontSize:'0.85rem' }} />
               </div>
+
+              {/* CLOSE PROJECT BUTTON */}
+              {!isClosed ? (
+                <button
+                  onClick={handleCloseProject}
+                  disabled={isClosing}
+                  style={{
+                    width:'100%', padding:'10px 14px', marginTop: 10,
+                    background: 'var(--success)',
+                    color:'white', border:'none', borderRadius:'var(--radius)',
+                    fontWeight:700, fontSize:'0.85rem', cursor:'pointer',
+                    display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+                    opacity: isClosing ? 0.6 : 1,
+                    transition:'opacity 0.2s, transform 0.1s',
+                  }}
+                  onMouseDown={e => e.currentTarget.style.transform='scale(0.98)'}
+                  onMouseUp={e => e.currentTarget.style.transform='scale(1)'}
+                >
+                  <Lock size={15} />
+                  {isClosing ? 'Закриваємо...' : 'Проект закрито'}
+                </button>
+              ) : (
+                <div style={{
+                  padding:'10px 14px', background:'var(--success-bg)', marginTop: 10,
+                  border:'1px solid var(--success)', borderRadius:'var(--radius)',
+                  color:'var(--success)', fontWeight:700, fontSize:'0.85rem',
+                  textAlign:'center'
+                }}>
+                  ✓ Проект виконано {project.closed_date ? `· ${formatDate(project.closed_date)}` : ''}
+                </div>
+              )}
             </div>
           </div>
 
@@ -385,9 +421,9 @@ export function ProjectDetail({
               <div>
                 <FL>Погоджена сума з клієнтом ({currency})</FL>
                 <input type="number" inputMode="numeric" className="form-input"
-                  value={project.agreed_sum || ''}
+                  value={project.agreed_sum !== undefined && project.agreed_sum !== '' ? project.agreed_sum : (kpSum > 0 ? kpSum : '')}
                   onChange={e => setProject({ ...project, agreed_sum: e.target.value })}
-                  placeholder={kpSum ? String(kpSum) : '0'}
+                  placeholder="0"
                   style={{ fontSize:'1.1rem', fontWeight:700 }} />
               </div>
               <div>
@@ -415,37 +451,6 @@ export function ProjectDetail({
                   </div>
                 </div>
               </div>
-
-              {/* CLOSE PROJECT BUTTON */}
-              {!isClosed ? (
-                <button
-                  onClick={handleCloseProject}
-                  disabled={isClosing}
-                  style={{
-                    width:'100%', padding:'10px 14px',
-                    background: 'linear-gradient(135deg, #1a3a6b, #2a5298)',
-                    color:'white', border:'none', borderRadius:'var(--radius)',
-                    fontWeight:700, fontSize:'0.85rem', cursor:'pointer',
-                    display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-                    opacity: isClosing ? 0.6 : 1,
-                    transition:'opacity 0.2s, transform 0.1s',
-                  }}
-                  onMouseDown={e => e.currentTarget.style.transform='scale(0.98)'}
-                  onMouseUp={e => e.currentTarget.style.transform='scale(1)'}
-                >
-                  <Lock size={15} />
-                  {isClosing ? 'Закриваємо...' : 'Проект закрито'}
-                </button>
-              ) : (
-                <div style={{
-                  padding:'10px 14px', background:'var(--success-bg)',
-                  border:'1px solid var(--success)', borderRadius:'var(--radius)',
-                  color:'var(--success)', fontWeight:700, fontSize:'0.85rem',
-                  textAlign:'center'
-                }}>
-                  ✓ Проект виконано {project.closed_date ? `· ${formatDate(project.closed_date)}` : ''}
-                </div>
-              )}
             </div>
           </div>
         </div>
