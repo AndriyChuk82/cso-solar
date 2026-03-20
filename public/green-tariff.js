@@ -74,7 +74,41 @@ document.addEventListener('DOMContentLoaded', () => {
     loadEquipmentData();
     fetchProjects();
     generateProjectNumber();
+    checkAuth();
 });
+
+async function checkAuth() {
+    try {
+        const res = await fetch('/api/verify');
+        const data = await res.json();
+        if (data.authenticated) {
+            const elUser = document.getElementById('headerUser');
+            const elName = document.getElementById('userNameDisplay');
+            const elLogout = document.getElementById('btnLogout');
+            if (elUser) elUser.style.display = 'flex';
+            if (elName) elName.textContent = data.name || data.user;
+            if (elLogout) elLogout.style.display = 'flex';
+
+            // Role-based navigation visibility
+            const role = data.role;
+            const isAdmin = role === 'admin';
+            const isManager = role === 'manager';
+            const isStorekeeper = role === 'storekeeper';
+
+            if (document.getElementById('navWarehouse')) {
+                document.getElementById('navWarehouse').style.display = (isAdmin || isStorekeeper) ? 'inline-flex' : 'none';
+            }
+            if (document.getElementById('navProjects')) {
+                document.getElementById('navProjects').style.display = (isAdmin || isManager) ? 'inline-flex' : 'none';
+            }
+            if (document.getElementById('navGT')) {
+                document.getElementById('navGT').style.display = (isAdmin || isManager) ? 'inline-flex' : 'none';
+            }
+        }
+    } catch (e) {
+        console.error('Auth check failed', e);
+    }
+}
 
 function initEventListeners() {
     document.getElementById('greenTariffForm').addEventListener('submit', handleFormSubmit);

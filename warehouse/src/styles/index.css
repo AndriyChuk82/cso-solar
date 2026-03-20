@@ -950,6 +950,69 @@ body {
   max-width: 400px;
 }
 
+/* === MAIN NAVIGATION === */
+.header-nav {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  margin: 0 20px;
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: var(--transition);
+  border: 1px solid transparent;
+  cursor: pointer;
+  background: transparent;
+  line-height: 1;
+}
+
+.nav-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text);
+}
+
+.nav-btn.active {
+  background: var(--bg-card);
+  color: var(--accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-color: rgba(245, 158, 11, 0.1);
+}
+
+.nav-btn i {
+  font-size: 1.1rem;
+  font-style: normal;
+}
+
+@media (max-width: 1100px) {
+  .nav-btn span {
+    display: none;
+  }
+  .nav-btn {
+    padding: 8px 12px;
+  }
+  .header-nav {
+    margin: 0 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-nav {
+    display: none;
+  }
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 1024px) {
   .app-sidebar {

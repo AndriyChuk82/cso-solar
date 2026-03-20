@@ -1,11 +1,14 @@
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
+import { Layout } from './components/Layout';
 import { SplitLayout } from './components/SplitLayout';
 
 function App() {
   return (
     <Router>
-      <SplitLayout />
+      <Layout>
+        <SplitLayout />
+      </Layout>
     </Router>
   );
 }

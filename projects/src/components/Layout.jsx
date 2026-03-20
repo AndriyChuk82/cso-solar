@@ -1,15 +1,19 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ClipboardList, LogOut, User } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, LogOut, User, Globe } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useAuth } from '../hooks/useAuth';
 
 export function Layout({ children }) {
   const location = useLocation();
+  const { user, loading } = useAuth();
 
   const navigation = [
     { name: 'Проекти', href: '/', icon: LayoutDashboard },
     { name: 'Комерційні пропозиції', href: '/proposals', icon: ClipboardList },
   ];
+
+  if (loading) return null;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -27,49 +31,36 @@ export function Layout({ children }) {
           </div>
         </div>
 
+        <nav className="header-nav">
+          {(user?.role === 'admin' || user?.role === 'storekeeper') && (
+            <a href="/warehouse/" className="nav-btn"><i>📦</i> <span>Склад</span></a>
+          )}
+          <a href="/" className="nav-btn"><i>📄</i> <span>КП</span></a>
+          {(user?.role === 'admin' || user?.role === 'manager') && (
+            <a href="/projects/" className="nav-btn active"><i>📊</i> <span>Проєкти</span></a>
+          )}
+          {(user?.role === 'admin' || user?.role === 'manager') && (
+            <a href="/green-tariff.html" className="nav-btn"><i>🌱</i> <span>Зелений тариф</span></a>
+          )}
+        </nav>
+
         <div className="header-right hidden md:flex">
-          <div className="header-user">
-            <span className="user-name">Адміністратор</span>
-            <span className="user-role">Admin</span>
-          </div>
-          <button className="btn btn-ghost p-2" title="Вихід">
+          {user && (
+            <div className="header-user">
+              <span className="user-name">{user.name}</span>
+              <span className="user-role">{user.role}</span>
+            </div>
+          )}
+          <a href="/api/logout" className="btn btn-ghost p-2" title="Вихід">
             <LogOut className="h-5 w-5" />
-          </button>
+          </a>
         </div>
       </header>
 
       <div className="app-layout">
-        {/* Sidebar */}
-        <aside className="app-sidebar">
-          <nav className="flex-1 p-4 space-y-1">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={cn("nav-item", isActive && "active")}
-                >
-                  <item.icon className="nav-icon" />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
-          
-          <div className="p-4 border-t border-slate-100">
-            <div className="bg-slate-50 rounded-xl p-3 text-center">
-              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Версія модуля</p>
-              <p className="text-sm font-mono text-slate-600">v1.2.0-beta</p>
-            </div>
-          </div>
-        </aside>
-
         {/* Main Content */}
         <main className="app-main">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
+          {children}
         </main>
       </div>
     </div>

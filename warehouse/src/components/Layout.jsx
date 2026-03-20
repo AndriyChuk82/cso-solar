@@ -32,6 +32,18 @@ export default function Layout() {
             <span className="brand-sub">Складський облік</span>
           </div>
         </div>
+        <nav className="header-nav">
+          {(user?.role === 'admin' || user?.role === 'storekeeper') && (
+            <a href="/warehouse/" className="nav-btn active"><i>📦</i> <span>Склад</span></a>
+          )}
+          <a href="/" className="nav-btn"><i>📄</i> <span>КП</span></a>
+          {(user?.role === 'admin' || user?.role === 'manager') && (
+            <a href="/projects/" className="nav-btn"><i>📊</i> <span>Проєкти</span></a>
+          )}
+          {(user?.role === 'admin' || user?.role === 'manager') && (
+            <a href="/green-tariff.html" className="nav-btn"><i>🌱</i> <span>Зелений тариф</span></a>
+          )}
+        </nav>
         <div className="header-right">
           {user && (
             <div className="header-user">

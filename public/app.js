@@ -2370,6 +2370,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('headerUser').style.display = 'flex';
                 document.getElementById('userNameDisplay').textContent = data.name || data.user;
                 document.getElementById('btnLogout').style.display = 'flex';
+
+                // Role-based navigation visibility
+                const role = data.role;
+                const isAdmin = role === 'admin';
+                const isManager = role === 'manager';
+                const isStorekeeper = role === 'storekeeper';
+
+                if (document.getElementById('navWarehouse')) {
+                    document.getElementById('navWarehouse').style.display = (isAdmin || isStorekeeper) ? 'inline-flex' : 'none';
+                }
+                if (document.getElementById('navProjects')) {
+                    document.getElementById('navProjects').style.display = (isAdmin || isManager) ? 'inline-flex' : 'none';
+                }
+                if (document.getElementById('navGT')) {
+                    document.getElementById('navGT').style.display = (isAdmin || isManager) ? 'inline-flex' : 'none';
+                }
             }
         } catch (e) {
             console.error('Auth check failed', e);

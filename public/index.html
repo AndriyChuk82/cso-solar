@@ -22,23 +22,18 @@
                 </div>
             </div>
         </div>
+        <nav class="header-nav">
+            <a href="/warehouse/" class="nav-btn" id="navWarehouse" style="display:none;"><i>📦</i> <span>Склад</span></a>
+            <a href="/" class="nav-btn active" id="navKP"><i>📄</i> <span>КП</span></a>
+            <a href="/projects/" class="nav-btn" id="navProjects" style="display:none;"><i>📊</i> <span>Проєкти</span></a>
+            <a href="/green-tariff.html" class="nav-btn" id="navGT" style="display:none;"><i>🌱</i> <span>Зелений тариф</span></a>
+        </nav>
+
         <div class="header-user" id="headerUser" style="display:none;">
             <span class="header-user-icon">👤</span>
             <span id="userNameDisplay">...</span>
         </div>
         <div class="header-actions">
-            <button id="btnGreenTariff" class="btn btn-icon btn-accent" title="Зелений тариф" onclick="window.open('/green-tariff.html', '_blank')">
-                <span class="btn-icon-svg">&#x1f331;</span>
-                <span class="btn-label">Зелений тариф</span>
-            </button>
-            <button id="btnProjects" class="btn btn-icon btn-accent" title="Проєктний менеджмент" onclick="window.open('/projects/', '_blank')">
-                <span class="btn-icon-svg">&#x1f4ca;</span>
-                <span class="btn-label">Проєкти</span>
-            </button>
-            <button id="btnWarehouse" class="btn btn-icon" title="Складський облік" onclick="window.open('/warehouse/', '_blank')">
-                <span class="btn-icon-svg">&#x1f4e6;</span>
-                <span class="btn-label">Склад</span>
-            </button>
             <button id="btnRefreshData" class="btn btn-icon" title="Оновити дані з Google Sheets">
                 <span class="btn-icon-svg">&#x21bb;</span>
                 <span class="btn-label">Оновити</span>

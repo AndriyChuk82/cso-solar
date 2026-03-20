@@ -44,14 +44,7 @@ export function ProjectList({ selectedId, onSelect, onAddNew, currency = 'USD', 
     <>
       {/* Header */}
       <div className="panel-list-header">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" style={{ height: 36, width: 'auto' }} />
-            <div>
-              <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--primary)', lineHeight: 1.1 }}>CSO Solar</div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 500 }}>Проєктний менеджмент</div>
-            </div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 10 }}>
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => fetchProjects()} className="btn btn-ghost btn-sm" title="Оновити">
               <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} />
