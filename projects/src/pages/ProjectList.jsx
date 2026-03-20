@@ -46,7 +46,7 @@ export function ProjectList({ selectedId, onSelect, onAddNew, currency = 'USD', 
       <div className="panel-list-header">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="/logo.png" alt="CSO Solar" style={{ height: 36, width: 'auto' }} />
+            <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" style={{ height: 36, width: 'auto' }} />
             <div>
               <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--primary)', lineHeight: 1.1 }}>CSO Solar</div>
               <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 500 }}>Проєктний менеджмент</div>
