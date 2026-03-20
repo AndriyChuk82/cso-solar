@@ -5,14 +5,11 @@ export function formatQuantity(qty, category, name = '') {
   const catLower = (category || '').toLowerCase();
   const nameLower = (name || '').toLowerCase();
   
-  // Перевіряємо приналежність до сонячних панелей (за категорією або назвою)
+  // Перевіряємо приналежність до сонячних панелей лише за категорією
   const isSolar = 
     catLower.includes('сонячні панелі') || 
     catLower.includes('сонячні батареї') ||
-    catLower.includes('панелі') ||
-    (catLower === '' && (nameLower.includes('панель') || nameLower.includes('соняч'))) ||
-    nameLower.includes('панель') || 
-    nameLower.includes('батарея сонячна');
+    (catLower === 'панелі');
 
   if (!isSolar) {
     return num;
