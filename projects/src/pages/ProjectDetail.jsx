@@ -95,7 +95,7 @@ function ItemRow({ item, onUpdate, onDelete, currency, rate }) {
 
 /* ================================================================ */
 export function ProjectDetail({
-  projectId, onBack, isMobile, onClosed,
+  projectId, onBack, isMobile, onClosed, onUpdate,
   currency = 'USD', setCurrency, rate = 41, setRate
 }) {
   const [project,    setProject]    = useState(null);
@@ -157,6 +157,7 @@ export function ProjectDetail({
           document.title = savedProject.name;
         }
         setIsSaved(true);
+        if (onUpdate) onUpdate(); // Refresh the global list
         setTimeout(() => setIsSaved(false), 2500);
       }
     } finally { setIsSaving(false); }
@@ -266,8 +267,8 @@ export function ProjectDetail({
           balance={balance}
           currency={currency}
           rate={rate}
+          onSaved={() => { load(); if (onUpdate) onUpdate(); }}
           onClose={() => setShowPaymentSheet(false)}
-          onSaved={load}
         />
       )}
 

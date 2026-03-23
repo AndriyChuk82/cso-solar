@@ -43,6 +43,10 @@ export function SplitLayout() {
     setSelectedProjectId(null);
   };
 
+  const onRefresh = () => {
+    fetchProjects(user?.email);
+  };
+
   const showList   = !isMobile || selectedProjectId === null;
   const showDetail = !isMobile || selectedProjectId !== null;
 
@@ -99,6 +103,7 @@ export function SplitLayout() {
           <ProjectDetail
             projectId={selectedProjectId}
             onBack={handleBack}
+            onUpdate={onRefresh}
             isMobile={isMobile}
             onClosed={handleProjectClosed}
             currency={currency}
