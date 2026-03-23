@@ -1328,13 +1328,7 @@ async function printProposal() {
     await prepImagesForCapture();
     
     const note = document.getElementById('printCurrencyNote');
-    if (state.activeCurrency === 'UAH') {
-        note.textContent = `Курс: 1 USD = ${state.settings.usdToUah} UAH`;
-    } else if (state.activeCurrency === 'EUR') {
-        note.textContent = `Курс: 1 EUR = ${state.settings.eurToUah} UAH`;
-    } else {
-        note.textContent = '';
-    }
+    note.textContent = `Курс: 1 USD = ${state.settings.usdToUah} грн; 1 EUR = ${state.settings.eurToUah} грн`;
     window.print();
 }
 
@@ -1702,16 +1696,9 @@ async function sendTelegramPdf() {
         doc.setFontSize(7.5);
         doc.setTextColor(140, 140, 140);
         doc.setFont(fontName, 'normal');
-        let rateNote = '';
-        if (state.activeCurrency === 'UAH') {
-            rateNote = `Курс: 1 USD = ${state.settings.usdToUah} UAH`;
-        } else if (state.activeCurrency === 'EUR') {
-            rateNote = `Курс: 1 EUR = ${state.settings.eurToUah} UAH`;
-        }
-        if (rateNote) {
-            doc.text(rateNote, pageWidth - marginR, finalY, { align: 'right' });
-            finalY += 6;
-        }
+        const rateNote = `Курс: 1 USD = ${state.settings.usdToUah} грн; 1 EUR = ${state.settings.eurToUah} грн`;
+        doc.text(rateNote, pageWidth - marginR, finalY, { align: 'right' });
+        finalY += 6;
     }
 
     if (state.proposal.notes) {

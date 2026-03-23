@@ -159,9 +159,9 @@ export default function ProposalView() {
         </div>
       )}
 
-      {proposal.currency !== 'UAH' && !isDeliveryMode && (
+      {!isDeliveryMode && (
         <div style={{ marginTop: '10px', fontSize: '12px', color: '#666', textAlign: 'right', fontStyle: 'italic' }}>
-          Курс: 1 {proposal.currency} = {proposal.currency === 'USD' ? proposal.courseUSD : (proposal.courseEUR || 51)} грн
+          Курс: 1 USD = {proposal.courseUSD} грн; 1 EUR = {proposal.courseEUR || 51} грн
         </div>
       )}
 
