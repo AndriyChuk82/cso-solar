@@ -33,7 +33,7 @@ export default function ProposalForm() {
     discountValue: 0,
     discountType: 'percentage', // 'percentage' або 'amount'
     courseUSD: 41.5,
-    courseEUR: 43.5,
+    courseEUR: 51.0,
     currency: 'UAH',
     markup: 15,
     totalAmount: 0,

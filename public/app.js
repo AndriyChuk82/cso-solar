@@ -17,7 +17,7 @@ const CONFIG = {
     ],
     DEFAULT_MARKUP: 15,
     DEFAULT_USD_UAH: 41.50,
-    DEFAULT_EUR_USD: 1.08,
+    DEFAULT_EUR_UAH: 51.00,
     CACHE_VERSION: 'v48', // Останню версію кешу для примусового оновлення у всіх клієнтів
     GAS_URL: 'https://script.google.com/macros/s/AKfycbxqQEMJ4vKBExxmh5-ft-UGVpU9rms4vPd9z0XgZv3b33sJDvXyZoIntOj61TVg9fLK/exec'
 };
@@ -176,7 +176,7 @@ function loadSettings() {
     return {
         markup: CONFIG.DEFAULT_MARKUP,
         usdToUah: CONFIG.DEFAULT_USD_UAH,
-        eurToUsd: CONFIG.DEFAULT_EUR_USD,
+        eurToUah: CONFIG.DEFAULT_EUR_UAH,
         showCost: true,
         botToken: '',
         chatId: ''
@@ -760,14 +760,14 @@ function parsePrice(str) {
 }
 
 function convertToUSD(value, currency) {
-    if (currency === 'EUR') return Math.round(value * state.settings.eurToUsd * 100) / 100;
+    if (currency === 'EUR') return Math.round(value * (state.settings.eurToUah / state.settings.usdToUah) * 100) / 100;
     if (currency === 'UAH') return Math.round((value / state.settings.usdToUah) * 100) / 100;
     return value;
 }
 
 function convertCurrency(usdValue, toCurrency) {
     if (toCurrency === 'UAH') return Math.round(usdValue * state.settings.usdToUah * 100) / 100;
-    if (toCurrency === 'EUR') return Math.round((usdValue / state.settings.eurToUsd) * 100) / 100;
+    if (toCurrency === 'EUR') return Math.round(usdValue * (state.settings.usdToUah / state.settings.eurToUah) * 100) / 100;
     return usdValue;
 }
 
@@ -1055,7 +1055,7 @@ function updateItemCost(index, value) {
     if (state.activeCurrency === 'UAH') {
         numVal = numVal / state.settings.usdToUah;
     } else if (state.activeCurrency === 'EUR') {
-        numVal = numVal * state.settings.eurToUsd;
+        numVal = numVal * (state.settings.eurToUah / state.settings.usdToUah);
     }
     state.proposal.items[index].costUSD = Math.round(numVal * 100) / 100;
     
@@ -1071,7 +1071,7 @@ function updateItemPrice(index, value) {
     if (state.activeCurrency === 'UAH') {
         numVal = numVal / state.settings.usdToUah;
     } else if (state.activeCurrency === 'EUR') {
-        numVal = numVal * state.settings.eurToUsd;
+        numVal = numVal * (state.settings.eurToUah / state.settings.usdToUah);
     }
     state.proposal.items[index].price = Math.round(numVal * 100) / 100;
     renderProposalTable();
@@ -1331,7 +1331,7 @@ async function printProposal() {
     if (state.activeCurrency === 'UAH') {
         note.textContent = `Курс: 1 USD = ${state.settings.usdToUah} UAH`;
     } else if (state.activeCurrency === 'EUR') {
-        note.textContent = `Курс: 1 EUR = ${state.settings.eurToUsd} USD`;
+        note.textContent = `Курс: 1 EUR = ${state.settings.eurToUah} UAH`;
     } else {
         note.textContent = '';
     }
@@ -1706,7 +1706,7 @@ async function sendTelegramPdf() {
         if (state.activeCurrency === 'UAH') {
             rateNote = `Курс: 1 USD = ${state.settings.usdToUah} UAH`;
         } else if (state.activeCurrency === 'EUR') {
-            rateNote = `Курс: 1 EUR = ${state.settings.eurToUsd} USD`;
+            rateNote = `Курс: 1 EUR = ${state.settings.eurToUah} UAH`;
         }
         if (rateNote) {
             doc.text(rateNote, pageWidth - marginR, finalY, { align: 'right' });
@@ -2032,7 +2032,7 @@ function setCurrency(cur) {
 function openSettings() {
     document.getElementById('settingMarkup').value = state.settings.markup;
     document.getElementById('settingUsdUah').value = state.settings.usdToUah;
-    document.getElementById('settingEurUsd').value = state.settings.eurToUsd;
+    document.getElementById('settingEurUah').value = state.settings.eurToUah;
     document.getElementById('settingShowCost').checked = state.settings.showCost;
     document.getElementById('settingBotToken').value = state.settings.botToken || '';
     document.getElementById('settingChatId').value = state.settings.chatId || '';
@@ -2047,7 +2047,7 @@ function openSettings() {
 function applySettings() {
     state.settings.markup = parseFloat(document.getElementById('settingMarkup').value) || 15;
     state.settings.usdToUah = parseFloat(document.getElementById('settingUsdUah').value) || 41.5;
-    state.settings.eurToUsd = parseFloat(document.getElementById('settingEurUsd').value) || 1.08;
+    state.settings.eurToUah = parseFloat(document.getElementById('settingEurUah').value) || 51.0;
     state.settings.showCost = document.getElementById('settingShowCost').checked;
     state.settings.botToken = document.getElementById('settingBotToken').value.trim();
     state.settings.chatId = document.getElementById('settingChatId').value.trim();

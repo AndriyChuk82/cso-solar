@@ -159,6 +159,12 @@ export default function ProposalView() {
         </div>
       )}
 
+      {proposal.currency !== 'UAH' && !isDeliveryMode && (
+        <div style={{ marginTop: '10px', fontSize: '12px', color: '#666', textAlign: 'right', fontStyle: 'italic' }}>
+          Курс: 1 {proposal.currency} = {proposal.currency === 'USD' ? proposal.courseUSD : (proposal.courseEUR || 51)} грн
+        </div>
+      )}
+
       {proposal.statusComment && !isDeliveryMode && (
          <div style={{ marginTop: '20px', padding: '15px', background: '#fafafa', borderRadius: '4px' }}>
             <div className="section-title">Примітки</div>
