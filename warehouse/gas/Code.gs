@@ -1571,9 +1571,12 @@ function handleGetProjects(userEmail) {
     const projectItems = items.filter(i => String(i.project_id) === String(p.id));
     const totalCost = projectItems.reduce((acc, i) => acc + (parseFloat(i.sum) || 0), 0);
     
-    const projectPayments = payments.filter(pay => 
-      String(pay.project_id) === String(p.id) && pay.status === 'Оплачено'
-    );
+    const projectPayments = payments.filter(pay => {
+      const isCorrectProject = String(pay.project_id) === String(p.id);
+      const statusValue = String(pay.status || pay.active || '').toLowerCase();
+      const isPaid = statusValue.includes('оплачено') && !statusValue.includes('скасовано');
+      return isCorrectProject && isPaid;
+    });
     const totalPaid = projectPayments.reduce((acc, pay) => acc + (parseFloat(pay.sum) || 0), 0);
     
     const agreedSum = parseFloat(p['погоджена сума'] || p.agreed_sum || 0) || totalCost;
