@@ -327,7 +327,8 @@ export function ProjectDetail({
             background: isSaved ? 'var(--success)' : 'var(--primary)',
             color: 'white',
             borderColor: isSaved ? 'var(--success)' : 'var(--primary)',
-            transition: 'background 0.3s ease'
+            transition: 'background 0.3s ease',
+            display: isMobile ? 'none' : undefined,
           }}
         >
           {isSaved ? <Check size={14} /> : <Save size={14} />}
@@ -659,7 +660,49 @@ export function ProjectDetail({
       </div>
 
       {isMobile && (
-        <button className="fab" onClick={() => setShowPaymentSheet(true)} title="Додати платіж">+</button>
+        <div style={{
+          position: 'fixed',
+          bottom: 20,
+          right: 16,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          zIndex: 1000,
+        }}>
+          {/* Save FAB */}
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            title="Зберегти проект"
+            style={{
+              width: 52, height: 52, borderRadius: '50%',
+              background: isSaved ? 'var(--success, #22c55e)' : 'var(--primary, #f09433)',
+              color: '#fff', border: 'none',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', transition: 'background 0.3s ease',
+              opacity: isSaving ? 0.7 : 1,
+            }}
+          >
+            {isSaved ? <Check size={22} /> : <Save size={22} />}
+          </button>
+
+          {/* Add Payment FAB */}
+          <button
+            onClick={() => setShowPaymentSheet(true)}
+            title="Додати платіж"
+            style={{
+              width: 52, height: 52, borderRadius: '50%',
+              background: 'var(--success, #22c55e)',
+              color: '#fff', border: 'none',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', fontSize: '24px',
+            }}
+          >
+            <Plus size={24} />
+          </button>
+        </div>
       )}
     </>
   );
