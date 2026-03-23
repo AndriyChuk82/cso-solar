@@ -1625,9 +1625,16 @@ function handleGetProjectDetails(projectId) {
   const projectItems    = sheetToObjects(itemsSheet).filter(i => String(i.project_id) === String(projectId));
   const projectPayments = sheetToObjects(paymentsSheet).filter(p => String(p.project_id) === String(projectId));
 
+  // Map fields correctly, especially agreed_sum
+  const enrichedProject = {
+    ...project,
+    proposal_number: proposalNumber,
+    agreed_sum: project.agreed_sum !== undefined ? project.agreed_sum : parseFloat(project['погоджена сума']) || 0
+  };
+
   return { 
     success: true, 
-    project: { ...project, proposal_number: proposalNumber },
+    project: enrichedProject,
     items: projectItems,
     payments: projectPayments
   };
@@ -1639,7 +1646,9 @@ function handleSaveProject(projectData, userEmail) {
   const headers = ['ID', 'Назва', 'Клієнт', 'Телефон', 'Адреса', 'Статус', 'Примітки', 'ID КП',
                    'Погоджена сума', 'Номер', 'Дата закриття', 'Створено', 'Оновлено'];
   
-  let row = findRowByValue(sheet, 'ID', projectData.id);
+  let row = findRowByValue(sheet, 'id', projectData.id);
+  // fallback if 'id' uppercase is used in sheet header map
+  if (row === -1) row = findRowByValue(sheet, 'ID', projectData.id);
   const ts = now();
 
   if (row === -1) {
