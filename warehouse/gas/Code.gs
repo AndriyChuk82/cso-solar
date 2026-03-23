@@ -308,12 +308,16 @@ function sheetToObjects(sheet) {
   const sheetName = sheet.getName();
   const headers = rawHeaders.map(h => {
     const s = String(h).trim().toLowerCase();
-    let mapped = HEADER_MAP[s] || s;
-    
-    // Спеціальний випадок для каталогу, де "Товар" — це назва
+    // Спеціальний випадок: для каталогу "Товар" — це назва
     if (sheetName === 'catalog' && (s === 'товар' || s === 'товару' || s === 'назва')) {
       mapped = 'name';
     }
+    
+    // Спеціальний випадок: для проектів і платежів "Статус" — це текст, а не логічне значення "active"
+    if ((sheetName === 'projects' || sheetName === 'project_payments') && mapped === 'active') {
+      mapped = 'status';
+    }
+
     return mapped;
   });
 
@@ -349,9 +353,14 @@ function sheetToObjects(sheet) {
 function findRowByValue(sheet, column, value) {
   const data = sheet.getDataRange().getValues();
   const rawHeaders = data[0];
+  const sheetName = sheet.getName();
   const headers = rawHeaders.map(h => {
     const s = String(h).trim().toLowerCase();
-    return HEADER_MAP[s] || s;
+    let mapped = HEADER_MAP[s] || s;
+    if ((sheetName === 'projects' || sheetName === 'project_payments') && mapped === 'active') {
+      mapped = 'status';
+    }
+    return mapped;
   });
   const colIndex = headers.indexOf(column);
   if (colIndex === -1) return -1;
