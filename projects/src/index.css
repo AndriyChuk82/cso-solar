@@ -887,13 +887,19 @@ body {
   .panel-list {
     width: 100%;
     position: fixed;
-    inset: 0;
+    top: var(--header-height, 56px);
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 10;
   }
 
   .panel-detail {
     position: fixed;
-    inset: 0;
+    top: var(--header-height, 56px);
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 20;
   }
 
