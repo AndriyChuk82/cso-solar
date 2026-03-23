@@ -18,7 +18,7 @@ const CONFIG = {
     DEFAULT_MARKUP: 15,
     DEFAULT_USD_UAH: 41.50,
     DEFAULT_EUR_UAH: 51.00,
-    CACHE_VERSION: 'v48', // Останню версію кешу для примусового оновлення у всіх клієнтів
+    CACHE_VERSION: 'v49', // Останню версію кешу для примусового оновлення у всіх клієнтів
     GAS_URL: 'https://script.google.com/macros/s/AKfycbxqQEMJ4vKBExxmh5-ft-UGVpU9rms4vPd9z0XgZv3b33sJDvXyZoIntOj61TVg9fLK/exec'
 };
 
@@ -2060,6 +2060,14 @@ function applySettings() {
     document.getElementById('quickUsdUah').value = state.settings.usdToUah;
     document.getElementById('quickMarkup').value = state.settings.markup;
 
+    // IMPORTANT: Recalculate USD prices for ALL catalog items 
+    // to maintain correct original prices in EUR/UAH
+    if (state.products && state.products.length > 0) {
+        state.products.forEach(p => {
+            p.priceUSD = convertToUSD(p.price, p.priceCurrency);
+        });
+    }
+
     saveSettings();
     recalcAllPrices();
     closeModal('settingsModal');
@@ -2433,6 +2441,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const val = parseFloat(e.target.value);
         if (!isNaN(val) && val > 0) {
             state.settings.usdToUah = val;
+            
+            // Recalculate all underlying USD prices
+            if (state.products && state.products.length > 0) {
+                state.products.forEach(p => {
+                    p.priceUSD = convertToUSD(p.price, p.priceCurrency);
+                });
+            }
+            
             saveSettings();
             recalcAllPrices();
             showToast(`Курс змінено на ${val}`, 'info');
