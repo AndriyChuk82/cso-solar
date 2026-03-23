@@ -308,6 +308,8 @@ function sheetToObjects(sheet) {
   const sheetName = sheet.getName();
   const headers = rawHeaders.map(h => {
     const s = String(h).trim().toLowerCase();
+    let mapped = HEADER_MAP[s] || s;
+    
     // Спеціальний випадок: для каталогу "Товар" — це назва
     if (sheetName === 'catalog' && (s === 'товар' || s === 'товару' || s === 'назва')) {
       mapped = 'name';
