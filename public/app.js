@@ -2078,6 +2078,32 @@ function applySettings() {
     showToast('Налаштування збережено', 'success');
 }
 
+async function fetchAutoRates() {
+    const btn = document.getElementById('btnFetchAutoRates');
+    const oldText = btn.textContent;
+    btn.textContent = 'Оновлення...';
+    btn.disabled = true;
+
+    try {
+        const resp = await fetch('/api/fetch-rates');
+        const data = await resp.json();
+        
+        if (data.success) {
+            if (data.usd > 0) document.getElementById('settingUsdUah').value = data.usd;
+            if (data.eur > 0) document.getElementById('settingEurUah').value = data.eur;
+            showToast('Курси успішно отримано!', 'success');
+        } else {
+            throw new Error(data.error || 'Unknown error');
+        }
+    } catch (e) {
+        console.error('Fetch auto rates error:', e);
+        showToast('Помилка отримання курсів: ' + e.message, 'error');
+    } finally {
+        btn.textContent = oldText;
+        btn.disabled = false;
+    }
+}
+
 function clearAppCache() {
     if (!confirm('Ви дійсно хочете очистити кеш товарів? Після цього каталог буде завантажено заново з Google Таблиць.')) return;
     
