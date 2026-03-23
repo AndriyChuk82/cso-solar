@@ -571,7 +571,16 @@ textarea.form-input { resize: vertical; min-height: 48px; }
 .totals-cost { text-align: center; color: var(--text-muted); font-size: 0.85rem; }
 
 /* Print currency note */
-.print-currency-note { display: none; }
+.print-currency-note {
+    display: block;
+    padding: 10px 20px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: right;
+    border-top: 1px solid var(--border);
+    background: #fdfdfd;
+}
 
 /* ===== PROPOSAL ACTIONS ===== */
 .proposal-actions {

@@ -1099,6 +1099,12 @@ function updateTotals() {
 
     document.getElementById('totalSum').textContent = formatMoney(totalSum);
     document.getElementById('totalCost').textContent = formatMoney(totalCost);
+    
+    // Update currency note
+    const note = document.getElementById('printCurrencyNote');
+    if (note) {
+        note.textContent = `Курс: 1 USD = ${state.settings.usdToUah} грн; 1 EUR = ${state.settings.eurToUah} грн`;
+    }
 }
 
 function recalcAllPrices() {
