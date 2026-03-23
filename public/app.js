@@ -740,6 +740,7 @@ function parsePrice(str) {
     let currency = 'USD';
 
     if (s.includes('€')) currency = 'EUR';
+    if (s.includes('₴') || s.toLowerCase().includes('грн')) currency = 'UAH';
 
     // Handle "800 гот / 960 з ПДВ" or similar - extract the first number
     if (s.toLowerCase().includes('гот') || s.includes('/')) {
@@ -749,7 +750,7 @@ function parsePrice(str) {
         }
     }
 
-    s = s.replace(/[$€]/g, '').trim();
+    s = s.replace(/[$€₴]|грн/gi, '').trim();
     s = s.replace(/\s/g, '');
     s = s.replace(',', '.');
 
@@ -760,17 +761,19 @@ function parsePrice(str) {
 
 function convertToUSD(value, currency) {
     if (currency === 'EUR') return Math.round(value * state.settings.eurToUsd * 100) / 100;
+    if (currency === 'UAH') return Math.round((value / state.settings.usdToUah) * 100) / 100;
     return value;
 }
 
 function convertCurrency(usdValue, toCurrency) {
     if (toCurrency === 'UAH') return Math.round(usdValue * state.settings.usdToUah * 100) / 100;
+    if (toCurrency === 'EUR') return Math.round((usdValue / state.settings.eurToUsd) * 100) / 100;
     return usdValue;
 }
 
 function formatMoney(value, currency) {
     if (currency === undefined) currency = state.activeCurrency;
-    const sym = currency === 'UAH' ? '₴' : '$';
+    const sym = currency === 'UAH' ? '₴' : (currency === 'EUR' ? '€' : '$');
     const converted = convertCurrency(value, currency);
     return sym + ' ' + converted.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -1051,6 +1054,8 @@ function updateItemCost(index, value) {
     let numVal = parseFloat(value) || 0;
     if (state.activeCurrency === 'UAH') {
         numVal = numVal / state.settings.usdToUah;
+    } else if (state.activeCurrency === 'EUR') {
+        numVal = numVal * state.settings.eurToUsd;
     }
     state.proposal.items[index].costUSD = Math.round(numVal * 100) / 100;
     
@@ -1065,6 +1070,8 @@ function updateItemPrice(index, value) {
     let numVal = parseFloat(value) || 0;
     if (state.activeCurrency === 'UAH') {
         numVal = numVal / state.settings.usdToUah;
+    } else if (state.activeCurrency === 'EUR') {
+        numVal = numVal * state.settings.eurToUsd;
     }
     state.proposal.items[index].price = Math.round(numVal * 100) / 100;
     renderProposalTable();
@@ -1323,6 +1330,8 @@ async function printProposal() {
     const note = document.getElementById('printCurrencyNote');
     if (state.activeCurrency === 'UAH') {
         note.textContent = `Курс: 1 USD = ${state.settings.usdToUah} UAH`;
+    } else if (state.activeCurrency === 'EUR') {
+        note.textContent = `Курс: 1 EUR = ${state.settings.eurToUsd} USD`;
     } else {
         note.textContent = '';
     }
@@ -1614,7 +1623,7 @@ async function sendTelegramPdf() {
 
     // --- 4. Table via autotable ---
     const cur = state.activeCurrency;
-    const curSym = cur === 'USD' ? '$' : '₴';
+    const curSym = cur === 'USD' ? '$' : (cur === 'EUR' ? '€' : '₴');
     const showCost = state.settings.showCost;
 
     // Formatter for prices
@@ -1693,8 +1702,16 @@ async function sendTelegramPdf() {
         doc.setFontSize(7.5);
         doc.setTextColor(140, 140, 140);
         doc.setFont(fontName, 'normal');
-        doc.text(`Курс: 1 USD = ${state.settings.usdToUah} UAH`, pageWidth - marginR, finalY, { align: 'right' });
-        finalY += 6;
+        let rateNote = '';
+        if (state.activeCurrency === 'UAH') {
+            rateNote = `Курс: 1 USD = ${state.settings.usdToUah} UAH`;
+        } else if (state.activeCurrency === 'EUR') {
+            rateNote = `Курс: 1 EUR = ${state.settings.eurToUsd} USD`;
+        }
+        if (rateNote) {
+            doc.text(rateNote, pageWidth - marginR, finalY, { align: 'right' });
+            finalY += 6;
+        }
     }
 
     if (state.proposal.notes) {
