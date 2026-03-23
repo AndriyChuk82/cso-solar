@@ -12,7 +12,8 @@ const CONFIG = {
     ],
     CORS_PROXIES: [
         '',
-        'https://corsproxy.io/?',
+        '/api/proxy?url=',
+        'https://corsproxy.io/?url=',
         'https://api.allorigins.win/raw?url='
     ],
     DEFAULT_MARKUP: 15,
@@ -278,11 +279,24 @@ async function fetchSheetData(forceRefresh = false) {
 // --- Method 1: Google Visualization API ---
 async function fetchViaGviz(gid, categoryName, mainCat, spreadsheetId = null) {
     const sId = spreadsheetId || CONFIG.SPREADSHEET_ID;
-    const sheetParam = gid ? `gid=${gid}` : `sheet=${encodeURIComponent(categoryName)}`;
+    const sheetParam = (gid !== undefined && gid !== null) ? `gid=${gid}` : `sheet=${encodeURIComponent(categoryName)}`;
     const url = `https://docs.google.com/spreadsheets/d/${sId}/gviz/tq?tqx=out:csv&${sheetParam}`;
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error('gviz HTTP ' + resp.status);
-    const csv = await resp.text();
+    
+    let csv = '';
+    try {
+        const resp = await fetch(url);
+        if (resp.ok) csv = await resp.text();
+    } catch (e) { console.warn('direct gviz failed:', e.message); }
+
+    if (!csv) {
+        // Try via our internal proxy
+        try {
+            const proxyUrl = CONFIG.CORS_PROXIES[1] + encodeURIComponent(url);
+            const resp = await fetch(proxyUrl);
+            if (resp.ok) csv = await resp.text();
+        } catch (e) { console.warn('proxy gviz failed:', e.message); }
+    }
+
     if (!csv || csv.length < 50) throw new Error('empty gviz response');
     return parseSheetCSV(csv, categoryName, mainCat);
 }
@@ -292,12 +306,9 @@ async function fetchViaProxy(gid, categoryName, mainCat, spreadsheetId = null) {
     const sId = spreadsheetId || CONFIG.SPREADSHEET_ID;
     const sheetParam = gid ? `gid=${gid}` : `sheet=${encodeURIComponent(categoryName)}`;
     const exportUrl = `https://docs.google.com/spreadsheets/d/${sId}/export?format=csv&${sheetParam}`;
-    const proxies = [
-        'https://corsproxy.io/?url=',
-        'https://api.allorigins.win/raw?url=',
-        'https://api.codetabs.com/v1/proxy?quest='
-    ];
+    const proxies = CONFIG.CORS_PROXIES;
     for (const proxy of proxies) {
+        if (!proxy) continue; // Skip empty direct fetch as it will fail CORS anyway on Vercel
         try {
             const resp = await fetch(proxy + encodeURIComponent(exportUrl));
             if (resp.ok) {
