@@ -4,6 +4,7 @@ import { ProjectDetail } from '../pages/ProjectDetail';
 import { AddProjectModal } from './AddProjectModal';
 import { useProjectStore } from '../store/useProjectStore';
 import { useAuth } from '../hooks/useAuth';
+import { Plus } from 'lucide-react';
 
 export function SplitLayout() {
   const { fetchProjects } = useProjectStore();
@@ -54,7 +55,7 @@ export function SplitLayout() {
       />
 
       {/* Left Panel */}
-      <div className={`panel-list ${isMobile && !showList ? 'hidden-mobile' : ''}`}>
+      <div className={`panel-list ${isMobile && !showList ? 'hidden-mobile' : ''}`} style={{ position: 'relative' }}>
         <ProjectList
           selectedId={selectedProjectId}
           onSelect={handleSelectProject}
@@ -62,6 +63,34 @@ export function SplitLayout() {
           currency={currency}
           rate={rate}
         />
+
+        {/* Mobile FAB — floating "+" button */}
+        {isMobile && showList && (
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            title="Новий проект"
+            style={{
+              position: 'fixed',
+              bottom: 24,
+              right: 20,
+              zIndex: 1000,
+              width: 52,
+              height: 52,
+              borderRadius: '50%',
+              background: 'var(--primary, #f09433)',
+              color: '#fff',
+              border: 'none',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '24px',
+            }}
+          >
+            <Plus size={24} />
+          </button>
+        )}
       </div>
 
       {/* Right Panel */}
