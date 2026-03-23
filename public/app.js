@@ -790,7 +790,7 @@ function renderCatalog() {
             if (searchWords.length === 0) return p.mainCategory === mCat;
             if (p.mainCategory !== mCat) return false;
             
-            const content = normalizeForSearch(p.model + ' ' + (p.description || '') + ' ' + p.subCategory + ' ' + p.mainCategory);
+            const content = normalizeForSearch(p.model + ' ' + p.subCategory + ' ' + p.mainCategory);
             return searchWords.every(word => content.includes(normalizeForSearch(word)));
         });
         if (mItems.length === 0) continue;

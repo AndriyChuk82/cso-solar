@@ -139,18 +139,18 @@ export function ProjectList({ selectedId, onSelect, onAddNew, currency = 'USD', 
                     {p.address || <span style={{ fontStyle: 'italic' }}>Адреса не вказана</span>}
                   </div>
                   <div className="project-card-footer" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 3, marginTop: 4 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '0.88rem' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Разом:</span>
-                      <span style={{ fontWeight: 700, color: 'var(--text)' }}>{formatAmount(agreedSum, currency, rate)}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', width: '100%' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Разом:</span>
+                      <span style={{ fontWeight: 700, color: 'var(--text)', fontSize: '1.05rem' }}>{formatAmount(agreedSum, currency, rate)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '0.88rem' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Залишок:</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', width: '100%', marginTop: -2 }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Залишок:</span>
                       {isDone ? (
-                        <span style={{ color: 'var(--success)', fontWeight: 800 }}>✓ Виконано</span>
+                        <span style={{ color: 'var(--success)', fontWeight: 800, fontSize: '1.05rem' }}>✓ Виконано</span>
                       ) : isPaid ? (
-                        <span style={{ color: 'var(--success)', fontWeight: 800 }}>✓ Оплачено</span>
+                        <span style={{ color: 'var(--success)', fontWeight: 800, fontSize: '1.05rem' }}>✓ Оплачено</span>
                       ) : (
-                        <span style={{ color: balance > 0 ? 'var(--danger)' : 'var(--success)', fontWeight: 800 }}>
+                        <span style={{ color: balance > 0 ? 'var(--danger)' : 'var(--success)', fontWeight: 800, fontSize: '1.15rem' }}>
                           {formatAmount(balance, currency, rate)}
                         </span>
                       )}

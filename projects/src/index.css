@@ -1045,14 +1045,14 @@ body {
 @media (max-width: 768px) {
   .sheet-overlay, .modal-overlay {
     align-items: flex-start; /* Open at top instead of bottom on mobile */
-    padding: 20px 16px;
+    padding: 0;
     background: rgba(0, 0, 0, 0.4);
   }
   .sheet-panel, .modal {
     max-width: 100%;
-    border-radius: 20px;
+    border-radius: 0 0 20px 20px;
     padding-bottom: 24px;
-    margin-top: env(safe-area-inset-top, 0px);
+    margin-top: 0;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
   }
   .modal-wide {

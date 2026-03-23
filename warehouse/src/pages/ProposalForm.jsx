@@ -33,6 +33,8 @@ export default function ProposalForm() {
     discountValue: 0,
     discountType: 'percentage', // 'percentage' або 'amount'
     courseUSD: 41.5,
+    courseEUR: 43.5,
+    currency: 'UAH',
     markup: 15,
     totalAmount: 0,
     userEmail: user?.email || '',
@@ -153,6 +155,8 @@ export default function ProposalForm() {
     </div>
   );
 
+  const currencySymbol = formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : 'грн';
+
   return (
     <div>
       <div className="page-header">
@@ -229,6 +233,30 @@ export default function ProposalForm() {
                 </div>
               </div>
               
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                <div className="form-group">
+                  <label>Валюта КП</label>
+                  <select
+                    className="form-select"
+                    value={formData.currency || 'UAH'}
+                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                  >
+                    <option value="UAH">Гривня (UAH)</option>
+                    <option value="USD">Долар (USD)</option>
+                    <option value="EUR">Євро (EUR)</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Націнка %</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={formData.markup}
+                    onChange={(e) => setFormData({ ...formData, markup: e.target.value })}
+                  />
+                </div>
+              </div>
+              
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="form-group">
                   <label>Курс $</label>
@@ -241,12 +269,13 @@ export default function ProposalForm() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Націнка %</label>
+                  <label>Курс €</label>
                   <input
                     type="number"
                     className="form-input"
-                    value={formData.markup}
-                    onChange={(e) => setFormData({ ...formData, markup: e.target.value })}
+                    value={formData.courseEUR || ''}
+                    onChange={(e) => setFormData({ ...formData, courseEUR: e.target.value })}
+                    step="0.01"
                   />
                 </div>
               </div>
@@ -308,7 +337,7 @@ export default function ProposalForm() {
                     <tr>
                       <th style={{ width: '40%' }}>Товар</th>
                       <th style={{ width: '15%' }}>Кількість</th>
-                      <th style={{ width: '20%' }}>Ціна за од. (грн)</th>
+                      <th style={{ width: '20%' }}>Ціна за од. ({currencySymbol})</th>
                       <th style={{ width: '20%' }}>Разом</th>
                       <th style={{ width: '5%' }}></th>
                     </tr>
@@ -374,7 +403,7 @@ export default function ProposalForm() {
           <div className="card-body">
             <div style={{ padding: '8px 0', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
               <span>Сума без знижки:</span>
-              <span>{new Intl.NumberFormat('uk-UA').format(formData.items.reduce((a, b) => a + (b.total || 0), 0))} грн</span>
+              <span>{new Intl.NumberFormat('uk-UA').format(formData.items.reduce((a, b) => a + (b.total || 0), 0))} {currencySymbol}</span>
             </div>
             
             <div style={{ padding: '12px 0', borderBottom: '1px solid var(--border-color)' }}>
@@ -394,7 +423,7 @@ export default function ProposalForm() {
                    style={{ width: 'auto' }}
                 >
                   <option value="percentage">%</option>
-                  <option value="amount">грн</option>
+                  <option value="amount">{currencySymbol}</option>
                 </select>
               </div>
             </div>
@@ -402,7 +431,7 @@ export default function ProposalForm() {
             <div style={{ padding: '12px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>До сплати:</span>
               <span style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--accent)' }}>
-                {new Intl.NumberFormat('uk-UA', { minimumFractionDigits: 2 }).format(formData.totalAmount)} грн
+                {new Intl.NumberFormat('uk-UA', { minimumFractionDigits: 2 }).format(formData.totalAmount)} {currencySymbol}
               </span>
             </div>
           </div>

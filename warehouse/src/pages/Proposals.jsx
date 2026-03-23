@@ -130,7 +130,7 @@ export default function Proposals() {
                       <td style={{ fontWeight: 600 }}>{p.clientName}</td>
                       <td>
                         <span style={{ fontWeight: 700 }}>
-                          {new Intl.NumberFormat('uk-UA').format(p.totalAmount)} грн
+                          {new Intl.NumberFormat('uk-UA').format(p.totalAmount)} {p.currency === 'USD' ? '$' : p.currency === 'EUR' ? '€' : 'грн'}
                         </span>
                       </td>
                       <td>

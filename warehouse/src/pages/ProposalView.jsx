@@ -56,6 +56,7 @@ export default function ProposalView() {
     : parseFloat(proposal.discountValue);
 
   const currentSeller = SELLERS[proposal.sellerId] || SELLERS.fop_pastushok;
+  const currencySymbol = proposal.currency === 'USD' ? '$' : proposal.currency === 'EUR' ? '€' : 'грн';
 
   return (
     <div className="proposal-print-container">
@@ -122,8 +123,8 @@ export default function ProposalView() {
             <th style={{ width: '40px' }}>№</th>
             <th>Найменування товару</th>
             <th style={{ textAlign: 'center' }}>К-сть</th>
-            {!isDeliveryMode && <th style={{ textAlign: 'right' }}>Ціна (грн)</th>}
-            {!isDeliveryMode && <th style={{ textAlign: 'right' }}>Сума (грн)</th>}
+            {!isDeliveryMode && <th style={{ textAlign: 'right' }}>Ціна ({currencySymbol})</th>}
+            {!isDeliveryMode && <th style={{ textAlign: 'right' }}>Сума ({currencySymbol})</th>}
           </tr>
         </thead>
         <tbody>
@@ -143,17 +144,17 @@ export default function ProposalView() {
         <div className="totals-section">
           <div className="total-row">
             <span>Сума:</span>
-            <span>{new Intl.NumberFormat('uk-UA').format(subtotal)} грн</span>
+            <span>{new Intl.NumberFormat('uk-UA').format(subtotal)} {currencySymbol}</span>
           </div>
           {discount > 0 && (
             <div className="total-row" style={{ color: 'var(--danger)' }}>
               <span>Знижка:</span>
-              <span>-{new Intl.NumberFormat('uk-UA').format(discount)} грн</span>
+              <span>-{new Intl.NumberFormat('uk-UA').format(discount)} {currencySymbol}</span>
             </div>
           )}
           <div className="total-row grand">
             <span>ВСЬОГО:</span>
-            <span>{new Intl.NumberFormat('uk-UA').format(proposal.totalAmount)} грн</span>
+            <span>{new Intl.NumberFormat('uk-UA').format(proposal.totalAmount)} {currencySymbol}</span>
           </div>
         </div>
       )}

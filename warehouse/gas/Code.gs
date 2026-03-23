@@ -1180,7 +1180,14 @@ function handleSaveProposal(proposal, userParams) {
       Number(proposal.markup || 0),                     // НАЦІНКА %
       Number(proposal.totalAmount || 0),                // СУМА
       proposal.status || "Чернетка",                    // СТАТУС
-      JSON.stringify(proposal.items || []),             // ПОЗИЦІЇ
+      JSON.stringify({ 
+        items: proposal.items || [],
+        discountType: proposal.discountType || 'percentage',
+        discountValue: proposal.discountValue || 0,
+        sellerId: proposal.sellerId || 'fop_pastushok',
+        currency: proposal.currency || 'UAH',
+        courseEUR: proposal.courseEUR || 0
+      }),                                               // ПОЗИЦІЇ ТА НАЛАШТУВАННЯ
       proposal.comment || "",                           // ПРИМІТКИ
       userEmail || "невідомо",                          // АВТОР
       new Date().toLocaleString('uk-UA')                // ОНОВЛЕНО
@@ -1228,11 +1235,28 @@ function handleGetProposals() {
     for (let i = 1; i < data.length; i++) {
       try {
         const row = data[i];
-        // Розпаршуємо товари з 10-ї колонки (індекс 9)
-        let items = [];
+        let itemsData = [];
         try {
-          items = typeof row[9] === 'string' ? JSON.parse(row[9]) : (row[9] || []);
+          itemsData = typeof row[9] === 'string' ? JSON.parse(row[9]) : (row[9] || []);
         } catch (e) { console.warn("Error parsing items for row " + i); }
+
+        let items = [];
+        let discountType = 'percentage';
+        let discountValue = 0;
+        let sellerId = 'fop_pastushok';
+        let currency = 'UAH';
+        let courseEUR = 0;
+
+        if (Array.isArray(itemsData)) {
+          items = itemsData;
+        } else if (itemsData && typeof itemsData === 'object') {
+          items = itemsData.items || [];
+          discountType = itemsData.discountType || 'percentage';
+          discountValue = itemsData.discountValue || 0;
+          sellerId = itemsData.sellerId || 'fop_pastushok';
+          currency = itemsData.currency || 'UAH';
+          courseEUR = itemsData.courseEUR || 0;
+        }
 
         proposals.push({
           id: row[0],
@@ -1245,6 +1269,11 @@ function handleGetProposals() {
           totalAmount: parseFloat(row[7]) || 0,
           status: row[8] || 'Чернетка',
           items: items,
+          discountType: discountType,
+          discountValue: discountValue,
+          sellerId: sellerId,
+          currency: currency,
+          courseEUR: courseEUR,
           comment: row[10] || '',
           userEmail: row[11] || '',
           updatedAt: row[12] || ''
