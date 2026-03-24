@@ -772,8 +772,8 @@ function parsePrice(str) {
 }
 
 function convertToUSD(value, currency) {
-    if (currency === 'EUR') return Math.round(value * (state.settings.eurToUah / state.settings.usdToUah) * 100) / 100;
-    if (currency === 'UAH') return Math.round((value / state.settings.usdToUah) * 100) / 100;
+    if (currency === 'EUR') return value * (state.settings.eurToUah / state.settings.usdToUah);
+    if (currency === 'UAH') return value / state.settings.usdToUah;
     return value;
 }
 
@@ -1069,11 +1069,11 @@ function updateItemCost(index, value) {
     } else if (state.activeCurrency === 'EUR') {
         numVal = numVal * (state.settings.eurToUah / state.settings.usdToUah);
     }
-    state.proposal.items[index].costUSD = Math.round(numVal * 100) / 100;
+    state.proposal.items[index].costUSD = numVal;
     
     // Auto update price with global markup
     const markup = state.settings.markup;
-    state.proposal.items[index].price = Math.round(state.proposal.items[index].costUSD * (1 + markup / 100) * 100) / 100;
+    state.proposal.items[index].price = numVal * (1 + markup / 100);
     
     renderProposalTable();
 }
@@ -1085,7 +1085,7 @@ function updateItemPrice(index, value) {
     } else if (state.activeCurrency === 'EUR') {
         numVal = numVal * (state.settings.eurToUah / state.settings.usdToUah);
     }
-    state.proposal.items[index].price = Math.round(numVal * 100) / 100;
+    state.proposal.items[index].price = numVal;
     renderProposalTable();
 }
 
@@ -1132,7 +1132,7 @@ function updateTotals() {
 
 function recalcAllPrices() {
     state.proposal.items.forEach(item => {
-        item.price = Math.round(item.costUSD * (1 + state.settings.markup / 100) * 100) / 100;
+        item.price = item.costUSD * (1 + state.settings.markup / 100);
     });
     renderProposalTable();
 }
