@@ -172,14 +172,21 @@ function normalizeForSearch(str) {
 function loadSettings() {
     try {
         const s = JSON.parse(localStorage.getItem('cso_settings'));
-        if (s) return s;
+        if (s) {
+            // Migration: if old showVat exists, convert to vatMode
+            if (s.showVat !== undefined && s.vatMode === undefined) {
+                s.vatMode = s.showVat ? 'extra' : 'none';
+                delete s.showVat;
+            }
+            return s;
+        }
     } catch (e) {}
     return {
         markup: CONFIG.DEFAULT_MARKUP,
         usdToUah: CONFIG.DEFAULT_USD_UAH,
         eurToUah: CONFIG.DEFAULT_EUR_UAH,
         showCost: true,
-        showVat: false,
+        vatMode: 'none',
         botToken: '',
         chatId: ''
     };
@@ -1105,17 +1112,46 @@ function updateTotals() {
     const vatRow = document.getElementById('vatRow');
     const grandTotalRow = document.getElementById('grandTotalRow');
     const totalSumLabel = document.getElementById('totalSumLabel');
-    const totalLabel = document.querySelector('.totals-row .totals-label'); // First label
+    const totalLabel = document.querySelector('.totals-row .totals-label'); 
+    
+    const vatLabel = document.getElementById('vatLabel') || { textContent: '' };
+    const grandTotalLabel = document.getElementById('grandTotalLabel') || { textContent: '' };
 
-    if (state.settings.showVat) {
+    const vatMode = state.settings.vatMode || 'none';
+
+    if (vatMode === 'extra') {
         const vatAmount = totalSum * 0.20;
         const grandTotal = totalSum + vatAmount;
         document.getElementById('vatAmount').textContent = formatMoney(vatAmount);
         document.getElementById('grandTotalValue').textContent = formatMoney(grandTotal);
         vatRow.style.display = 'table-row';
         grandTotalRow.style.display = 'table-row';
+        
         if (totalLabel) totalLabel.textContent = 'Підсумок:';
         if (totalSumLabel) totalSumLabel.textContent = 'Сума без ПДВ';
+        
+        const vatCellLabel = vatRow.querySelector('.totals-label');
+        if (vatCellLabel) vatCellLabel.textContent = 'ПДВ 20%:';
+        const grandCellLabel = grandTotalRow.querySelector('.totals-label');
+        if (grandCellLabel) grandCellLabel.textContent = 'Разом з ПДВ:';
+
+    } else if (vatMode === 'inside') {
+        const vatAmount = totalSum - (totalSum / 1.2);
+        const subtotal = totalSum - vatAmount;
+        document.getElementById('vatAmount').textContent = formatMoney(vatAmount);
+        document.getElementById('grandTotalValue').textContent = formatMoney(totalSum);
+        vatRow.style.display = 'table-row';
+        grandTotalRow.style.display = 'table-row';
+        
+        if (totalLabel) totalLabel.textContent = 'Сума без ПДВ:';
+        document.getElementById('totalSum').textContent = formatMoney(subtotal);
+        if (totalSumLabel) totalSumLabel.textContent = 'Сума (чиста)';
+        
+        const vatCellLabel = vatRow.querySelector('.totals-label');
+        if (vatCellLabel) vatCellLabel.textContent = 'в т.ч. ПДВ 20%:';
+        const grandCellLabel = grandTotalRow.querySelector('.totals-label');
+        if (grandCellLabel) grandCellLabel.textContent = 'Разом:';
+
     } else {
         vatRow.style.display = 'none';
         grandTotalRow.style.display = 'none';
@@ -1835,17 +1871,34 @@ function printInvoice() {
         tableBody.appendChild(row);
     }
 
-    // Totals
+    // Totals logic
     const totalEl = document.getElementById('invTotal');
-    if (totalEl) totalEl.textContent = totalUAH.toLocaleString('uk-UA', {minimumFractionDigits: 2}) + ' грн';
+    const totalLabel = document.getElementById('invTotalLabel');
+    const vatExtraSection = document.getElementById('invVatExtraSection');
+    const vatInsideSection = document.getElementById('invVatInsideSection');
     
-    // Also update sub-totals if they exist (from a previous ID version)
-    const subVat = document.getElementById('invTotalWithoutVat');
-    if (subVat) subVat.textContent = totalUAH.toLocaleString('uk-UA', {minimumFractionDigits: 2});
-    const subTotal = document.getElementById('invTotalWithVat');
-    if (subTotal) subTotal.textContent = totalUAH.toLocaleString('uk-UA', {minimumFractionDigits: 2});
+    const vatMode = state.settings.vatMode || 'none';
+    let grandTotal = totalUAH;
 
-    document.getElementById('invSumWords').textContent = numberToWordsUA(totalUAH);
+    // Reset styles
+    vatExtraSection.style.display = 'none';
+    vatInsideSection.style.display = 'none';
+    if (totalLabel) totalLabel.textContent = 'СУМА ДО СПЛАТИ:';
+
+    if (vatMode === 'extra') {
+        const vatAmount = totalUAH * 0.20;
+        grandTotal = totalUAH + vatAmount;
+        vatExtraSection.style.display = 'block';
+        document.getElementById('invSubtotalExtra').textContent = totalUAH.toLocaleString('uk-UA', {minimumFractionDigits: 2});
+        document.getElementById('invVatExtra').textContent = vatAmount.toLocaleString('uk-UA', {minimumFractionDigits: 2});
+    } else if (vatMode === 'inside') {
+        const vatAmount = totalUAH - (totalUAH / 1.2);
+        vatInsideSection.style.display = 'block';
+        document.getElementById('invVatInside').textContent = vatAmount.toLocaleString('uk-UA', {minimumFractionDigits: 2});
+    }
+
+    if (totalEl) totalEl.textContent = grandTotal.toLocaleString('uk-UA', {minimumFractionDigits: 2}) + ' грн';
+    document.getElementById('invSumWords').textContent = numberToWordsUA(grandTotal);
 
     // Sync seller rekvizity (ensure they are current)
     syncSellerUI();
@@ -2072,13 +2125,14 @@ function openSettings() {
     document.getElementById('settingUsdUah').value = state.settings.usdToUah;
     document.getElementById('settingEurUah').value = state.settings.eurToUah;
     document.getElementById('settingShowCost').checked = state.settings.showCost;
-    document.getElementById('settingShowVat').checked = state.settings.showVat;
+    document.getElementById('settingVatMode').value = state.settings.vatMode || 'none';
     document.getElementById('settingBotToken').value = state.settings.botToken || '';
     document.getElementById('settingChatId').value = state.settings.chatId || '';
     
     // Also sync header quick inputs
     document.getElementById('quickUsdUah').value = state.settings.usdToUah;
     document.getElementById('quickMarkup').value = state.settings.markup;
+    document.getElementById('vatMode').value = state.settings.vatMode || 'none';
     
     openModal('settingsModal');
 }
@@ -2088,7 +2142,7 @@ function applySettings() {
     state.settings.usdToUah = parseFloat(document.getElementById('settingUsdUah').value) || 41.5;
     state.settings.eurToUah = parseFloat(document.getElementById('settingEurUah').value) || 51.0;
     state.settings.showCost = document.getElementById('settingShowCost').checked;
-    state.settings.showVat = document.getElementById('settingShowVat').checked;
+    state.settings.vatMode = document.getElementById('settingVatMode').value;
     state.settings.botToken = document.getElementById('settingBotToken').value.trim();
     state.settings.chatId = document.getElementById('settingChatId').value.trim();
 
@@ -2096,8 +2150,8 @@ function applySettings() {
     const toolbarToggle = document.getElementById('toolbarShowCost');
     if (toolbarToggle) toolbarToggle.checked = state.settings.showCost;
     
-    const toolbarToggleVat = document.getElementById('toolbarShowVat');
-    if (toolbarToggleVat) toolbarToggleVat.checked = state.settings.showVat;
+    const toolbarVatMode = document.getElementById('vatMode');
+    if (toolbarVatMode) toolbarVatMode.value = state.settings.vatMode;
     
     // Update quick inputs
     document.getElementById('quickUsdUah').value = state.settings.usdToUah;
@@ -2589,11 +2643,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const toolbarShowVat = document.getElementById('toolbarShowVat');
-    if (toolbarShowVat) {
-        toolbarShowVat.checked = state.settings.showVat;
-        toolbarShowVat.addEventListener('change', (e) => {
-            state.settings.showVat = e.target.checked;
+    const vatModeSelect = document.getElementById('vatMode');
+    if (vatModeSelect) {
+        vatModeSelect.value = state.settings.vatMode || 'none';
+        vatModeSelect.addEventListener('change', (e) => {
+            state.settings.vatMode = e.target.value;
             saveSettings();
             updateTotals();
         });
