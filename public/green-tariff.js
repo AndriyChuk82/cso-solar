@@ -417,6 +417,7 @@ async function generateSelectedDocuments() {
     }
     formData.currentDate = new Date().toLocaleDateString('uk-UA');
     formData.stationType  = document.getElementById('stationType').value;
+    formData.useSign      = document.getElementById('useDigitalSign').checked;
 
     // Завантажуємо та за потреби стискаємо фото для протоколу.
     // Ліміт localStorage — ~5MB на весь origin. Два фото по 3MB = квота вичерпана.

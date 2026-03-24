@@ -168,6 +168,12 @@
                     }
                 }
 
+                // Логіка підпису та печатки
+                const signatureHtml = formData.useSign 
+                    ? '<img src="doc/sign_cso.png" style="position:absolute; width:170px; left:-5px; top:-40px; z-index:10; pointer-events:none; filter: multiply(0.9);">' 
+                    : '';
+                template = template.split('{{signature}}').join(signatureHtml);
+
                 // Специфічна логіка для Однолінійної схеми (doc3)
                 if (docId === '3') {
                     const hasBattery = formData.stationType && formData.stationType.toLowerCase().includes('гібрид');
