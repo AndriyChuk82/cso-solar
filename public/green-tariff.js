@@ -116,9 +116,26 @@ function initEventListeners() {
     document.getElementById('greenTariffForm').addEventListener('submit', handleFormSubmit);
     document.getElementById('btnNewProject').addEventListener('click', resetForm);
 
-    // Google Drive link (handled by HTML onclick)
+    // Google Drive & Local Upload
     const uploadZone = document.getElementById('uploadZone');
-    // Мы убрали старые слушатели для загрузки файлов, так как теперь используем Google Drive
+    const fileInput  = document.getElementById('fileInput');
+
+    // Drag and drop listeners for the whole zone
+    if (uploadZone) {
+        uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
+        });
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFiles(e.target.files);
+        });
+    }
 
 
     document.getElementById('btnRefreshGT').addEventListener('click', fetchProjects);
