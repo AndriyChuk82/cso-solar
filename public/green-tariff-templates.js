@@ -372,12 +372,19 @@ const GT_TEMPLATES = {
                 padding-top: 6mm;
             }
             .p2-title-page {
-                min-height: 255mm; /* 297mm - 30mm margins - 6mm padding ~ 261mm available */
+                height: 267mm; /* фіксована висота: A4 297mm - поля ~15mm зверху/знизу */
+                min-height: 267mm;
                 display: flex;
                 flex-direction: column;
                 page-break-after: always;
                 font-family: Calibri, "Segoe UI", Candara, Optima, Arial, sans-serif;
                 box-sizing: border-box;
+            }
+            @media print {
+                .p2-title-page {
+                    height: 267mm;
+                    min-height: 267mm;
+                }
             }
             .p2-toc-page {
                 page-break-after: always;
@@ -462,7 +469,7 @@ const GT_TEMPLATES = {
 
         <!-- ══════════ СТОРІНКА 1: ТИТУЛЬНА ══════════ -->
         <div class="p2-page p2-title-page">
-            <div style="text-align:center; font-size:12pt; margin-bottom:50mm;">
+            <div style="text-align:center; font-size:12pt; margin-bottom:20mm;">
                 ТОВ «Центр сервісного обслуговування»
             </div>
 
@@ -473,7 +480,7 @@ const GT_TEMPLATES = {
                 </p>
             </div>
 
-            <div style="display:flex; justify-content:flex-end; margin-bottom:40mm;">
+            <div style="display:flex; justify-content:flex-end; margin-bottom:15mm;">
                 <div style="text-align:right; font-size:12pt; margin-right:5mm;">
                     <p style="font-weight:bold; margin:0;">"ЗАТВЕРДЖУЮ"</p>
                     <p style="margin:20px 0 0;">_________________ Петро ПАСТУШОК</p>
