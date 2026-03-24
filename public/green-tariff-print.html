@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,8 +9,10 @@
     <style>
         @page {
             size: A4 portrait;
-            margin: 0; /* Вимикаємо поля браузера, щоб контролювати їх лише через CSS */
+            margin: 0;
+            /* Вимикаємо поля браузера, щоб контролювати їх лише через CSS */
         }
+
         body {
             font-family: "Times New Roman", Times, serif;
             font-size: 11pt;
@@ -21,6 +24,7 @@
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
+
         .no-print {
             position: fixed;
             top: 20px;
@@ -29,6 +33,7 @@
             display: flex;
             gap: 10px;
         }
+
         .btn-print {
             background: #2563eb;
             color: white;
@@ -37,47 +42,59 @@
             border: none;
             cursor: pointer;
             font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             font-size: 16px;
         }
-        .btn-print:hover { background: #1d4ed8; }
+
+        .btn-print:hover {
+            background: #1d4ed8;
+        }
+
         .print-container {
             width: 210mm;
             margin: 0 auto;
             background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
+
         .doc-wrapper {
             background: white;
-            padding: 15mm 15mm; /* Стандартні поля документів */
+            padding: 15mm 15mm;
+            /* Стандартні поля документів */
             box-sizing: border-box;
             page-break-after: always;
             position: relative;
             width: 210mm;
             min-height: 297mm;
         }
+
         .doc-wrapper:last-child {
             page-break-after: avoid;
         }
+
         .error-state {
             padding: 40px;
             text-align: center;
             color: #ef4444;
             font-size: 16px;
         }
+
         @media print {
             body {
                 background: white;
                 padding: 0;
             }
+
             .no-print {
                 display: none !important;
             }
+
             .print-container {
                 width: 210mm;
                 box-shadow: none;
                 margin: 0;
             }
+
             .doc-wrapper {
                 padding: 15mm 15mm;
                 margin: 0;
@@ -87,6 +104,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="no-print">
@@ -168,11 +186,18 @@
                     }
                 }
 
-                // Логіка підпису та печатки
-                const signatureHtml = formData.useSign 
-                    ? '<img src="doc/sign_cso.png" style="position:absolute; width:180px; left:-10px; top:-42px; z-index:10; pointer-events:none; mix-blend-mode: multiply; opacity: 0.94;">' 
+                // Логіка підпису та печатки (Окремо для кожної сторінки)
+                const signBase = 'position:absolute; width:180px; z-index:10; pointer-events:none; mix-blend-mode: multiply; opacity: 0.94;';
+
+                const signatureTitleHtml = formData.useSign
+                    ? `<img src="doc/sign_cso.png" style="${signBase} left:-10px; top:-60px;">`
                     : '';
-                template = template.split('{{signature}}').join(signatureHtml);
+                const signatureApp1Html = formData.useSign
+                    ? `<img src="doc/sign_cso.png" style="${signBase} right:70px; top:-20px;">`
+                    : '';
+
+                template = template.split('{{signature_title}}').join(signatureTitleHtml);
+                template = template.split('{{signature_app1}}').join(signatureApp1Html);
 
                 // Специфічна логіка для Однолінійної схеми (doc3)
                 if (docId === '3') {
@@ -206,7 +231,7 @@
                             : '<span style="display:block; text-align:center; padding:20px; border:1px dashed #ccc;">(Фото 2: С/н інвертора)</span>'
                     );
                 }
-                
+
                 // Додаток №2: Скріншот налаштувань інвертора
                 if (template.includes('{{photo_inverter_settings}}')) {
                     template = template.split('{{photo_inverter_settings}}').join(
@@ -236,4 +261,5 @@
         }
     </script>
 </body>
+
 </html>
