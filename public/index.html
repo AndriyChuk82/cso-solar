@@ -144,6 +144,12 @@
                         <button class="btn btn-sm btn-outline" id="btnApplyGlobalMarkup" title="Застосувати націнку до всіх">📈 Застосувати</button>
                         
                         <div class="toolbar-item no-print" style="margin-right: 12px; margin-left: 8px;">
+                            <label class="checkbox-label" title="Показати/приховати ПДВ 20%">
+                                <input type="checkbox" id="toolbarShowVat">
+                                <span style="font-size: 0.8rem; font-weight: 600;">ПДВ 20%</span>
+                            </label>
+                        </div>
+                        <div class="toolbar-item no-print" style="margin-right: 12px; margin-left: 0;">
                             <label class="checkbox-label" title="Показати/приховати закупівельні ціни">
                                 <input type="checkbox" id="toolbarShowCost">
                                 <span style="font-size: 0.8rem; font-weight: 600;">Собівартість</span>
@@ -184,7 +190,7 @@
                         </tbody>
                         <tfoot id="proposalFoot" style="display:none;">
                             <tr class="totals-row">
-                                <td colspan="4" class="totals-label">Разом:</td>
+                                <td colspan="4" class="totals-label">Підсумок:</td>
                                 <td class="cost-column"></td>
                                 <td class="cost-column totals-cost">
                                     <div style="font-size:0.7rem;color:var(--text-muted)">Собівартість</div>
@@ -192,8 +198,28 @@
                                 </td>
                                 <td class="totals-empty"></td>
                                 <td class="totals-value">
-                                    <div style="font-size:0.7rem;color:var(--text-muted)">Сума (Продаж)</div>
+                                    <div id="totalSumLabel" style="font-size:0.7rem;color:var(--text-muted)">Сума (Продаж)</div>
                                     <div id="totalSum">0.00</div>
+                                </td>
+                                <td class="no-print"></td>
+                            </tr>
+                            <tr class="totals-row" id="vatRow" style="display: none;">
+                                <td colspan="4" class="totals-label">ПДВ 20%:</td>
+                                <td class="cost-column"></td>
+                                <td class="cost-column"></td>
+                                <td class="totals-empty"></td>
+                                <td class="totals-value">
+                                    <div id="vatAmount">0.00</div>
+                                </td>
+                                <td class="no-print"></td>
+                            </tr>
+                            <tr class="totals-row grand" id="grandTotalRow" style="display: none;">
+                                <td colspan="4" class="totals-label">Разом з ПДВ:</td>
+                                <td class="cost-column"></td>
+                                <td class="cost-column"></td>
+                                <td class="totals-empty"></td>
+                                <td class="totals-value">
+                                    <div id="grandTotalValue" style="font-size: 1.15rem; color: #f09433; font-weight: 800;">0.00</div>
                                 </td>
                                 <td class="no-print"></td>
                             </tr>
@@ -250,6 +276,12 @@
                             <input type="number" id="settingEurUah" class="form-input" value="51.00" min="0" step="0.01">
                         </div>
                     </div>
+                </div>
+                <div class="setting-check">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="settingShowVat">
+                        <span>Нараховувати ПДВ 20%</span>
+                    </label>
                 </div>
                 <div class="setting-check">
                     <label class="checkbox-label">

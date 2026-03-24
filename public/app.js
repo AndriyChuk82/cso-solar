@@ -179,6 +179,7 @@ function loadSettings() {
         usdToUah: CONFIG.DEFAULT_USD_UAH,
         eurToUah: CONFIG.DEFAULT_EUR_UAH,
         showCost: true,
+        showVat: false,
         botToken: '',
         chatId: ''
     };
@@ -1100,6 +1101,28 @@ function updateTotals() {
     document.getElementById('totalSum').textContent = formatMoney(totalSum);
     document.getElementById('totalCost').textContent = formatMoney(totalCost);
     
+    // Update VAT rows
+    const vatRow = document.getElementById('vatRow');
+    const grandTotalRow = document.getElementById('grandTotalRow');
+    const totalSumLabel = document.getElementById('totalSumLabel');
+    const totalLabel = document.querySelector('.totals-row .totals-label'); // First label
+
+    if (state.settings.showVat) {
+        const vatAmount = totalSum * 0.20;
+        const grandTotal = totalSum + vatAmount;
+        document.getElementById('vatAmount').textContent = formatMoney(vatAmount);
+        document.getElementById('grandTotalValue').textContent = formatMoney(grandTotal);
+        vatRow.style.display = 'table-row';
+        grandTotalRow.style.display = 'table-row';
+        if (totalLabel) totalLabel.textContent = 'Підсумок:';
+        if (totalSumLabel) totalSumLabel.textContent = 'Сума без ПДВ';
+    } else {
+        vatRow.style.display = 'none';
+        grandTotalRow.style.display = 'none';
+        if (totalLabel) totalLabel.textContent = 'Разом:';
+        if (totalSumLabel) totalSumLabel.textContent = 'Сума (Продаж)';
+    }
+    
     // Update currency note
     const note = document.getElementById('printCurrencyNote');
     if (note) {
@@ -1659,11 +1682,22 @@ async function sendTelegramPdf() {
     const totalSum = state.proposal.items.reduce((s, it) => s + it.price * it.quantity, 0);
     const convertedTotal = convertCurrency(totalSum, cur);
 
+    const footBody = [];
+    if (state.settings.showVat) {
+        const vatVal = convertedTotal * 0.20;
+        const grandTotal = convertedTotal + vatVal;
+        footBody.push(['', '', '', '', 'ПІДСУМОК:', `${curSym} ${formatPrice(convertedTotal)}`]);
+        footBody.push(['', '', '', '', 'ПДВ 20%:', `${curSym} ${formatPrice(vatVal)}`]);
+        footBody.push(['', '', '', '', 'РАЗОМ З ПДВ:', `${curSym} ${formatPrice(grandTotal)}`]);
+    } else {
+        footBody.push(['', '', '', '', 'РАЗОМ:', `${curSym} ${formatPrice(convertedTotal)}`]);
+    }
+
     doc.autoTable({
         startY: y,
         head: head,
         body: body,
-        foot: [['', '', '', '', 'РАЗОМ:', `${curSym} ${formatPrice(convertedTotal)}`]],
+        foot: footBody,
         theme: 'grid',
         styles: {
             font: fontName,
@@ -2038,6 +2072,7 @@ function openSettings() {
     document.getElementById('settingUsdUah').value = state.settings.usdToUah;
     document.getElementById('settingEurUah').value = state.settings.eurToUah;
     document.getElementById('settingShowCost').checked = state.settings.showCost;
+    document.getElementById('settingShowVat').checked = state.settings.showVat;
     document.getElementById('settingBotToken').value = state.settings.botToken || '';
     document.getElementById('settingChatId').value = state.settings.chatId || '';
     
@@ -2053,12 +2088,16 @@ function applySettings() {
     state.settings.usdToUah = parseFloat(document.getElementById('settingUsdUah').value) || 41.5;
     state.settings.eurToUah = parseFloat(document.getElementById('settingEurUah').value) || 51.0;
     state.settings.showCost = document.getElementById('settingShowCost').checked;
+    state.settings.showVat = document.getElementById('settingShowVat').checked;
     state.settings.botToken = document.getElementById('settingBotToken').value.trim();
     state.settings.chatId = document.getElementById('settingChatId').value.trim();
 
     document.body.classList.toggle('hide-cost', !state.settings.showCost);
     const toolbarToggle = document.getElementById('toolbarShowCost');
     if (toolbarToggle) toolbarToggle.checked = state.settings.showCost;
+    
+    const toolbarToggleVat = document.getElementById('toolbarShowVat');
+    if (toolbarToggleVat) toolbarToggleVat.checked = state.settings.showVat;
     
     // Update quick inputs
     document.getElementById('quickUsdUah').value = state.settings.usdToUah;
@@ -2538,6 +2577,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+    
+    // Toolbar Checkbox Listeners
+    const toolbarShowCost = document.getElementById('toolbarShowCost');
+    if (toolbarShowCost) {
+        toolbarShowCost.checked = state.settings.showCost;
+        toolbarShowCost.addEventListener('change', (e) => {
+            state.settings.showCost = e.target.checked;
+            document.body.classList.toggle('hide-cost', !state.settings.showCost);
+            saveSettings();
+        });
+    }
+
+    const toolbarShowVat = document.getElementById('toolbarShowVat');
+    if (toolbarShowVat) {
+        toolbarShowVat.checked = state.settings.showVat;
+        toolbarShowVat.addEventListener('change', (e) => {
+            state.settings.showVat = e.target.checked;
+            saveSettings();
+            updateTotals();
+        });
+    }
 
     async function checkAuth() {
         try {
