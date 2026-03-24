@@ -188,9 +188,61 @@ const GT_TEMPLATES = {
     // ─── 1. Заява про встановлення генеруючої установки ──────────────────────
     doc1: `
         {{styles}}
-        <div class="gt-doc-page">
+        <style>
+            /* ── Стилі специфічні для doc1 ── */
+            .doc1-page {
+                font-family: Calibri, "Segoe UI", Candara, Optima, Arial, sans-serif;
+                font-size: 12.5pt;
+                line-height: 1.35;
+                color: #000;
+                background: white;
+                padding: 0;
+                margin: 0;
+                width: 100%;
+                position: relative;
+                box-sizing: border-box;
+            }
+            .doc1-page-2 {
+                page-break-before: always;
+                padding-top: 12mm;
+                box-sizing: border-box;
+            }
+            .doc1-page .gt-table,
+            .doc1-page-2 .gt-table {
+                font-size: 12pt;
+            }
+            .doc1-page .gt-td-label,
+            .doc1-page-2 .gt-td-label {
+                font-size: 12pt;
+            }
+            .doc1-page .gt-td-value,
+            .doc1-page-2 .gt-td-value {
+                font-size: 12.5pt;
+            }
+            .doc1-page .gt-table td,
+            .doc1-page .gt-table th,
+            .doc1-page-2 .gt-table td,
+            .doc1-page-2 .gt-table th {
+                padding: 4px 8px;
+            }
+            .doc1-page .gt-section-label,
+            .doc1-page-2 .gt-section-label {
+                font-size: 12pt;
+                margin-top: 8px;
+                margin-bottom: 2px;
+            }
+            @media print {
+                .doc1-page-2 {
+                    page-break-before: always;
+                    padding-top: 12mm;
+                }
+            }
+        </style>
 
-            <p class="gt-title">Заява про встановлення генеруючої установки споживачем</p>
+        <!-- ══════════ СТОРІНКА 1 ══════════ -->
+        <div class="doc1-page">
+
+            <p class="gt-title" style="font-size:14pt; margin:8px 0 10px;">Заява про встановлення генеруючої установки споживачем</p>
 
             <table class="gt-table">
                 <!-- Об'єднана шапка -->
@@ -289,12 +341,17 @@ const GT_TEMPLATES = {
                 <tr>
                     <td class="gt-td-label">Додаткова інформація, що може бути надана споживачем за його згодою</td>
                     <td class="gt-td-value">
-                        {{field23}} сонячних панелей,встановлених {{field24}}
+                        {{field23}} сонячних панелей, встановлених {{field24}}
                     </td>
                 </tr>
             </table>
 
-            <p class="gt-section-label" style="margin-top: 15px;">
+        </div>
+
+        <!-- ══════════ СТОРІНКА 2 ══════════ -->
+        <div class="doc1-page doc1-page-2">
+
+            <p class="gt-section-label" style="margin-top: 0;">
                 Інформація щодо виконання технічних вимог для приєднання генеруючої установки
                 <span class="gt-italic">із можливістю відпуску</span> електричної енергії в електричну мережу ОСП, ОСР:
             </p>
@@ -336,23 +393,23 @@ const GT_TEMPLATES = {
                 </tr>
             </table>
 
-            <p class="gt-justify" style="margin-top:14px; font-size:11.5pt;">
+            <p class="gt-justify" style="margin-top:12px; font-size:12.5pt;">
                 Відповідальність за достовірність даних, наданих у заяві, несе заявник.
             </p>
-            <p class="gt-bold" style="font-size:11.5pt; margin-top:8px;">Достовірність наданих даних підтверджую</p>
+            <p class="gt-bold" style="font-size:12.5pt; margin-top:6px;">Достовірність наданих даних підтверджую</p>
 
-            <div style="display:flex; justify-content:space-between; margin-top:20px; font-size:11.5pt;">
+            <div style="display:flex; justify-content:space-between; margin-top:18px; font-size:12.5pt;">
                 <div>_______________________<br><span class="gt-small gt-italic">(дата)</span></div>
                 <div>_______________________<br><span class="gt-small gt-italic">(підпис)</span></div>
                 <div>_______________________<br><span class="gt-small gt-italic">{{field4}}</span></div>
             </div>
 
-            <p class="gt-justify" style="margin-top:18px; font-size:11pt;">
+            <p class="gt-justify" style="margin-top:16px; font-size:12pt;">
                 Підтверджує згоду на автоматизовану обробку його персональних даних згідно з чинним законодавством
                 та можливу їх передачу третім особам, які мають право на отримання цих даних згідно з чинним
                 законодавством, у тому числі щодо кількісних та/або вартісних обсягів наданих за Договором послуг.
             </p>
-            <div style="margin-top:12px; font-size:11.5pt;">
+            <div style="margin-top:10px; font-size:12.5pt;">
                 ________________________<br>
                 <span class="gt-small gt-italic">(підпис)</span>
             </div>
