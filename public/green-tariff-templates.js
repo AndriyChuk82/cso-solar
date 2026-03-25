@@ -1059,86 +1059,251 @@ const GT_TEMPLATES = {
         </div>
     `,
     // ─── 4. Акт приймання-передачі виконаних робіт ────────────────────────────────
+    // Змінні: {{field4}} — ПІБ Замовника; {{field22}} — потужність кВт;
+    //         {{field27}} — модель інвертора; {{field34}} — модель панелі; {{field23}} — к-сть панелей;
+    //         {{field36}} — модель АКБ (якщо є); {{field37}} — потужність АКБ;
+    //         {{field38}} — сума цифрами; {{field39}} — сума прописом;
+    //         {{batteryListItem}} — рядок АКБ у списку (якщо гібридна);
+    //         {{signature_app1}} — підпис Виконавця (зображення або порожньо)
+    // УВАГА: № договору та дата проставляються вручну у роздрукованому документі
     doc4: `
         {{styles}}
-        <div class="p2-page" style="padding: 20mm 15mm; font-family: 'Times New Roman', serif;">
-            <div style="text-align:center; margin-bottom:20px;">
-                <p style="font-weight:bold; font-size:14pt; margin:0; letter-spacing:1px; text-transform:uppercase;">АКТ</p>
-                <p style="font-weight:bold; font-size:13pt; margin:4px 0;">приймання-передачі виконаних робіт</p>
-                <p style="font-size:11.5pt; margin:0;">за Договором купівлі-продажу та встановлення<br>сонячної електростанції № {{field9}} від «{{field10}}» 20__ року</p>
+        <div class="p2-page" style="padding: 20mm 15mm; font-family: 'Times New Roman', serif; font-size: 12pt;">
+
+            <!-- ШАПКА -->
+            <div style="text-align:center; margin-bottom:6px;">
+                <p style="font-weight:bold; font-size:14pt; margin:0 0 2px 0; text-transform:uppercase; letter-spacing:1px;">АКТ</p>
+                <p style="font-weight:bold; font-size:12pt; margin:0 0 2px 0;">приймання-передачі виконаних робіт</p>
+                <p style="font-size:11.5pt; margin:0;">за Договором купівлі-продажу та встановлення<br>
+                сонячної електростанції № _____ від «_____»_________ 20___ року</p>
             </div>
 
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-size:11.5pt;">
+            <!-- МІСТО / ДАТА -->
+            <div style="display:flex; justify-content:space-between; margin:16px 0; font-size:11.5pt;">
                 <div>м. Золочів</div>
                 <div>«___» ____________ 20___ року</div>
             </div>
 
-            <div style="text-align:justify; font-size:11.5pt; line-height:1.5; margin-bottom:20px;">
-                Цей Акт складено на виконання Договору купівлі-продажу та встановлення сонячної електростанції № {{field9}} від «{{field10}}» 20___ року (надалі — Договір), укладеного між:<br>
+            <!-- ПРЕАМБУЛА -->
+            <div style="text-align:justify; font-size:11.5pt; line-height:1.5; margin-bottom:16px;">
+                Цей Акт складено на виконання Договору купівлі-продажу та встановлення сонячної електростанції
+                № _____ від «_____»_________ 20___ року (надалі — Договір), укладеного між:<br>
                 <b>Замовник:</b> {{field4}},<br>
-                та <b>Виконавець:</b> ТОВ «Центр сервісного обслуговування» надалі разом — Сторони, а кожна окремо — Сторона.
+                та <b>Виконавець:</b> ТОВ «Центр сервісного обслуговування» надалі разом — Сторони,
+                а кожна окремо — Сторона.
             </div>
 
-            <div style="text-align:center; font-weight:bold; margin-bottom:12px; font-size:12pt;">1. Предмет Акта</div>
-            <div style="text-align:justify; font-size:11pt; margin-bottom:20px;">
-                Ми, що нижче підписалися, Виконавець, з однієї сторони, та Замовник, з іншої сторони, склали цей Акт про те, що Виконавцем виконано, а Замовником прийнято роботи, передбачені Договором, у повному обсязі та у встановлені строки.
+            <!-- 1. Предмет Акта -->
+            <div style="text-align:center; font-weight:bold; font-size:12pt; margin-bottom:8px; text-decoration:underline;">1. Предмет Акта</div>
+            <div style="text-align:justify; font-size:11.5pt; line-height:1.5; margin-bottom:16px;">
+                Ми, що нижче підписалися, Виконавець, з однієї сторони, та Замовник, з іншої сторони, склали
+                цей Акт про те, що Виконавцем виконано, а Замовником прийнято роботи, передбачені Договором,
+                у повному обсязі та у встановлені строки.
             </div>
 
-            <div style="text-align:center; font-weight:bold; margin-bottom:12px; font-size:12pt;">2. Перелік виконаних робіт</div>
-            <div style="font-size:11pt; margin-bottom:20px;">
+            <!-- 2. Перелік виконаних робіт -->
+            <div style="text-align:center; font-weight:bold; font-size:12pt; margin-bottom:8px; text-decoration:underline;">2. Перелік виконаних робіт</div>
+            <div style="font-size:11.5pt; line-height:1.5; margin-bottom:16px;">
                 <ol style="margin:0; padding-left:25px;">
-                    <li style="margin-bottom:10px;">
+                    <li style="margin-bottom:8px;">
                         Встановлення та налаштування сонячної електростанції потужністю <b>{{field22}} кВт</b>.<br>
                         У складі:
-                        <ul style="margin:8px 0; padding-left:25px; list-style-type:disc;">
-                            <li>Інвертор: {{field27}}</li>
-                            <li>Сонячні панелі: {{field34}} — {{field23}} шт.</li>
+                        <ul style="margin:6px 0 0 0; padding-left:20px; list-style-type:disc;">
+                            <li>(вставити модель інвертора)</li>
+                            <li>(вставити модель сонячних панелей та їх кількість)</li>
                             {{batteryListItem}}
                         </ul>
                     </li>
-                    <li style="margin-bottom:10px;">Пусконалагоджувальні роботи.</li>
+                    <li style="margin-bottom:8px;">Пусконалагоджувальні роботи.</li>
                     <li>Перевірка працездатності системи та передача її Замовнику.</li>
                 </ol>
             </div>
 
-            <div style="text-align:center; font-weight:bold; margin-bottom:12px; font-size:12pt;">3. Вартість робіт</div>
-            <div style="text-align:justify; font-size:11pt; margin-bottom:20px;">
+            <!-- 3. Вартість робіт -->
+            <div style="text-align:center; font-weight:bold; font-size:12pt; margin-bottom:8px; text-decoration:underline;">3. Вартість робіт</div>
+            <div style="text-align:justify; font-size:11.5pt; line-height:1.5; margin-bottom:16px;">
                 Загальна вартість виконаних робіт за цим Актом становить:<br>
-                <div style="border-bottom:1px solid #000; padding:10px 0 2px; margin-top:5px;">
-                    <b>{{field38}} грн 00 коп.</b> ({{field39}})
+                <div style="border-bottom:1px solid #000; padding:8px 0 2px; margin-top:4px;">
+                    __________ грн 00 коп.&nbsp;({{field39}})
                 </div>
             </div>
 
-            <div style="text-align:center; font-weight:bold; margin-bottom:12px; font-size:12pt;">4. Якість та зауваження</div>
-            <div style="font-size:11pt; margin-bottom:20px;">
+            <!-- 4. Якість та зауваження -->
+            <div style="text-align:center; font-weight:bold; font-size:12pt; margin-bottom:8px; text-decoration:underline;">4. Якість та зауваження</div>
+            <div style="font-size:11.5pt; line-height:1.5; margin-bottom:16px;">
                 4.1. Роботи виконані належним чином, відповідно до умов Договору та технічних вимог.<br>
                 4.2. Замовник претензій щодо обсягу, якості та строків виконання робіт не має.<br>
                 4.3. Сонячна електростанція передана Замовнику у працездатному стані.
             </div>
 
-            <div style="text-align:center; font-weight:bold; margin-bottom:12px; font-size:12pt;">5. Розрахунки</div>
-            <div style="text-align:justify; font-size:11pt; margin-bottom:20px;">
+            <!-- 5. Розрахунки -->
+            <div style="text-align:center; font-weight:bold; font-size:12pt; margin-bottom:8px; text-decoration:underline;">5. Розрахунки</div>
+            <div style="text-align:justify; font-size:11.5pt; line-height:1.5; margin-bottom:16px;">
                 Цей Акт є підставою для проведення розрахунків між Сторонами в порядку та строки, визначені Договором.
             </div>
 
-            <div style="text-align:center; font-weight:bold; margin-bottom:12px; font-size:12pt;">6. Заключні положення</div>
-            <div style="font-size:11pt; margin-bottom:30px;">
+            <!-- 6. Заключні положення -->
+            <div style="text-align:center; font-weight:bold; font-size:12pt; margin-bottom:8px; text-decoration:underline;">6. Заключні положення</div>
+            <div style="font-size:11.5pt; line-height:1.5; margin-bottom:30px;">
                 6.1. Акт складено у двох примірниках, що мають однакову юридичну силу - по одному для кожної зі Сторін.<br>
                 6.2. Акт набирає чинності з моменту його підписання Сторонами.
             </div>
 
-            <div style="display:flex; justify-content:space-between; margin-top:50px; font-size:11.5pt;">
-                <div style="width:45%; text-align:left;">
-                    <p style="font-weight:bold; margin-bottom:45px;">Виконавець</p>
-                    <div style="border-bottom:1px solid #000; margin-bottom:3px; position:relative; min-height:20px;">
+            <!-- ПІДПИСИ -->
+            <div style="display:flex; justify-content:space-between; margin-top:40px; font-size:11.5pt;">
+                <div style="width:45%;">
+                    <p style="font-weight:normal; margin-bottom:40px;">Виконавець</p>
+                    <div style="border-bottom:1px solid #000; margin-bottom:3px; min-height:28px; position:relative;">
                         {{signature_app1}}
                     </div>
-                    <p style="font-size:9pt; text-align:center; color:#666; margin:0;">(підпис)</p>
                 </div>
-                <div style="width:45%; text-align:left;">
-                    <p style="font-weight:bold; margin-bottom:45px;">Замовник</p>
-                    <div style="border-bottom:1px solid #000; margin-bottom:3px; min-height:20px;"></div>
-                    <p style="font-size:9pt; text-align:center; color:#666; margin:0;">(підпис)</p>
+                <div style="width:45%;">
+                    <p style="font-weight:normal; margin-bottom:40px;">Замовник</p>
+                    <div style="border-bottom:1px solid #000; margin-bottom:3px; min-height:28px;"></div>
+                </div>
+            </div>
+
+        </div>
+    `,
+    // ─── 5. Договір на виконання робіт ────────────────────────────────────────────
+    // Змінні: {{field4}} — ПІБ Замовника; {{field40}} — паспортні дані Замовника;
+    //         {{field21}} — адреса об'єкта; {{field22}} — потужність СЕС кВт;
+    //         {{field38}} — сума договору цифрами; {{field39}} — сума прописом;
+    //         {{signature_app1}} — підпис Виконавця (зображення або порожньо)
+    // УВАГА: № договору та дата проставляються вручну у роздрукованому документі
+    doc5: `
+        {{styles}}
+        <style>
+            .gt-contract-page { font-family: 'Times New Roman', serif; font-size: 11.5pt; line-height: 1.35; padding: 15mm 20mm; }
+            .gt-contract-title { text-align: center; font-weight: bold; font-size: 13pt; margin-bottom: 2px; }
+            .gt-contract-subtitle { text-align: center; font-size: 11.5pt; margin-bottom: 12px; }
+            .gt-contract-section { text-align: center; font-weight: bold; margin: 12px 0 8px; text-transform: uppercase; font-size: 11.5pt; }
+            .gt-contract-text { text-align: justify; margin-bottom: 8px; font-size: 11.5pt; line-height: 1.4; }
+            .gt-contract-list { list-style: disc; padding-left: 24px; margin: 6px 0 8px; }
+            .gt-contract-list li { margin-bottom: 4px; font-size: 11.5pt; line-height: 1.4; }
+        </style>
+
+        <!-- СТОРІНКА 1 -->
+        <div class="gt-contract-page p2-page">
+            <div class="gt-contract-title">ДОГОВІР №&nbsp;_____</div>
+            <div class="gt-contract-subtitle">на виконання робіт з будівництва сонячної електростанції</div>
+
+            <div style="display:flex; justify-content:space-between; margin-bottom:16px; font-size:11.5pt;">
+                <div>м. Золочів</div>
+                <div>_____ ____________ 20___ року</div>
+            </div>
+
+            <div class="gt-contract-section">1. СТОРОНИ ДОГОВОРУ</div>
+
+            <p class="gt-contract-text"><b>Підрядник:</b></p>
+            <p class="gt-contract-text">ТОВ «Центр сервісного обслуговування», код ЄДРПОУ 31758743,
+            місцезнаходження: 80700, Львівська обл., м. Золочів, вул. І. Труша, 1Б, в особі директора
+            Пастушка Петра Володимировича, що діє на підставі Статуту, надалі – «Виконавець»,</p>
+
+            <p class="gt-contract-text">та</p>
+
+            <p class="gt-contract-text"><b>Замовник (Споживач):</b> {{field4}}, {{field40}}.</p>
+
+            <p class="gt-contract-text">Адреса об'єкта: {{field21}}</p>
+            <p class="gt-contract-text">уклали цей Договір про наступне.</p>
+
+            <div class="gt-contract-section">2. ПРЕДМЕТ ДОГОВОРУ</div>
+            <p class="gt-contract-text">2.1. Підрядник зобов'язується виконати комплекс робіт з постачання,
+            монтажу та введення в експлуатацію сонячної електростанції потужністю до {{field22}} кВт (далі - СЕС).</p>
+
+            <div class="gt-contract-section">3. ЦІНА ДОГОВОРУ ТА ВАЛЮТНЕ ЗАСТЕРЕЖЕННЯ</div>
+            <p class="gt-contract-text">3.1. Вартість Договору становить {{field38}} ({{field39}}) грн, 00 коп.</p>
+            <p class="gt-contract-text">3.2. Оплата здійснюється виключно у гривні.</p>
+
+            <div class="gt-contract-section">4. ПОРЯДОК ОПЛАТИ</div>
+            <p class="gt-contract-text">4.1. Замовник сплачує:</p>
+            <ul class="gt-contract-list">
+                <li>100% суми договору, а саме {{field38}} грн - протягом 5 банківських днів з моменту підписання Договору;</li>
+            </ul>
+            <p class="gt-contract-text">4.2. Роботи розпочинаються після отримання коштів.</p>
+            <p class="gt-contract-text">4.3. У разі прострочення оплати більше 5 днів Підрядник має право призупинити роботи.</p>
+            <p class="gt-contract-text">4.4. У разі відмови Замовника від договору після закупівлі обладнання - Замовник
+            компенсує фактично понесені витрати.</p>
+
+            <div class="gt-contract-section">5. СТРОКИ ВИКОНАННЯ</div>
+        </div>
+
+        <!-- СТОРІНКА 2 -->
+        <div class="gt-contract-page p2-page">
+            <p class="gt-contract-text">5.1. Роботи виконуються протягом 30 календарних днів з моменту отримання авансу.</p>
+            <p class="gt-contract-text">5.2. Строки можуть бути продовжені у разі:</p>
+            <ul class="gt-contract-list">
+                <li>погодних умов;</li>
+                <li>відсутності електропостачання;</li>
+                <li>затримки поставки обладнання;</li>
+                <li>дій ОСР.</li>
+            </ul>
+
+            <div class="gt-contract-section">6. ПРИЙМАННЯ РОБІТ</div>
+            <p class="gt-contract-text">6.1. Після завершення робіт Підрядник передає Акт.</p>
+            <p class="gt-contract-text">6.2. Замовник зобов'язаний підписати Акт або надати письмові зауваження протягом
+            5 календарних днів.</p>
+            <p class="gt-contract-text">6.3. Якщо зауваження не надані - роботи вважаються прийнятими.</p>
+            <p class="gt-contract-text">6.4. Незначні недоліки не є підставою для відмови від підписання Акта.</p>
+
+            <div class="gt-contract-section">7. ВІДПОВІДАЛЬНІСТЬ</div>
+            <p class="gt-contract-text">7.1. Право власності на обладнання переходить до Замовника після повної оплати.</p>
+            <p class="gt-contract-text">7.2. До повної оплати обладнання є власністю Підрядника.</p>
+            <p class="gt-contract-text">7.3. У разі прострочення остаточного платежу більше 30 днів Підрядник має право
+            демонтувати обладнання з компенсацією витрат.</p>
+            <p class="gt-contract-text">7.4. Відповідальність Підрядника обмежується вартістю виконаних робіт.</p>
+
+            <div class="gt-contract-section">8. ГАРАНТІЯ</div>
+            <p class="gt-contract-text">8.1. Гарантія на монтажні роботи - 12 місяців.</p>
+            <p class="gt-contract-text">8.2. Гарантія на обладнання - відповідно до гарантії виробника.</p>
+            <p class="gt-contract-text">8.3. Гарантія не поширюється на:</p>
+            <ul class="gt-contract-list">
+                <li>механічні пошкодження;</li>
+                <li>втручання третіх осіб;</li>
+                <li>відсутність заземлення;</li>
+                <li>порушення правил експлуатації.</li>
+            </ul>
+
+            <div class="gt-contract-section">9. ФОРС-МАЖОР</div>
+            <p class="gt-contract-text">Воєнний стан, блекаути, обмеження імпорту, погодні умови визнаються
+            форс-мажорними обставинами.</p>
+
+            <div class="gt-contract-section">10. ВИРІШЕННЯ СПОРІВ</div>
+            <p class="gt-contract-text">Спори вирішуються шляхом переговорів.</p>
+            <p class="gt-contract-text">У разі недосягнення згоди - у суді за місцезнаходженням Підрядника.</p>
+        </div>
+
+        <!-- СТОРІНКА 3 -->
+        <div class="gt-contract-page p2-page">
+            <div class="gt-contract-section">11. ІНШІ УМОВИ</div>
+            <p class="gt-contract-text">11.1. Договір набирає чинності з моменту підписання.</p>
+
+            <div style="text-align:center; font-weight:bold; margin-top:30px; margin-bottom:30px; text-transform:uppercase; font-size:12pt;">ПІДПИСИ СТОРІН</div>
+
+            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:11.5pt;">
+                <!-- ПІДРЯДНИК -->
+                <div style="width:46%;">
+                    <div style="text-align:center; font-weight:bold; margin-bottom:16px; text-transform:uppercase;">ПІДРЯДНИК</div>
+                    <p style="margin:2px 0; font-size:11pt;">ТОВ «Центр сервісного обслуговування»</p>
+                    <p style="margin:2px 0; font-size:11pt;">Львівська область, м. Золочів, вул. І. Труша, 1Б</p>
+                    <p style="margin:2px 0; font-size:11pt;">Код ЄДРПОУ: 31758743</p>
+                    <p style="margin:2px 0; font-size:11pt;">ІПН: 317587413190</p>
+                    <p style="margin:2px 0; font-size:11pt;">АТ «РАЙФФАЙЗЕН БАНК»</p>
+                    <p style="margin:2px 0; font-size:11pt;">UA333003350000000002600846582</p>
+                    <p style="margin:2px 0; font-size:11pt;">МФО: 300335</p>
+                    <p style="margin:2px 0; font-size:11pt;">телефон: 067-370-32-36, 073-370-32-36</p>
+                    <p style="margin:12px 0 4px; font-size:11pt;">Директор<br>Петро ПАСТУШОК</p>
+                    <div style="border-bottom:1px solid #000; min-height:30px; margin-top:4px; position:relative;">
+                        {{signature_app1}}
+                    </div>
+                </div>
+                <!-- ЗАМОВНИК -->
+                <div style="width:46%;">
+                    <div style="text-align:center; font-weight:bold; margin-bottom:16px; text-transform:uppercase;">ЗАМОВНИК</div>
+                    <p style="margin:2px 0; font-size:11pt;">{{field4}}</p>
+                    <p style="margin:2px 0; font-size:11pt;">{{field40}}</p>
+                    <p style="margin:2px 0; font-size:11pt;">{{field21}}</p>
+                    <div style="border-bottom:1px solid #000; min-height:30px; margin-top:30px;"></div>
                 </div>
             </div>
         </div>
