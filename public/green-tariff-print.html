@@ -207,6 +207,21 @@
                         .split("{{stationType === 'Гібридна' ? 'none' : 'block'}}").join(hasBattery ? 'none' : 'block');
                 }
 
+                // Перед заміною основних полів, підготуємо "під-поля" для дат та сум
+                if (formData.field10) { // Дата договору
+                    const d = formData.field10.split('-');
+                    if (d.length === 3) {
+                        formData.field10_day = d[2];
+                        formData.field10_month = d[1];
+                        formData.field10_year = d[0];
+                    }
+                }
+                if (formData.field38) { // Вартість робіт
+                    const val = parseFloat(formData.field38) || 0;
+                    formData.field38_int = Math.floor(val).toString();
+                    formData.field38_kop = '00'; 
+                }
+
                 // Специфічна логіка для Акту (doc4)
                 if (docId === '4') {
                     const batteryInfo = formData.field36

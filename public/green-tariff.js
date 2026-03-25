@@ -428,9 +428,10 @@ async function generateSelectedDocuments() {
     }
 
     const formData = {};
-    for (let i = 1; i <= 37; i++) {
+    // Отримуємо значення всіх доступних полів (з запасом до 45)
+    for (let i = 1; i <= 45; i++) {
         const el = document.getElementById(`field${i}`);
-        formData[`field${i}`] = el ? el.value : '';
+        if (el) formData[`field${i}`] = el.value || '';
     }
     formData.currentDate = new Date().toLocaleDateString('uk-UA');
     formData.stationType  = document.getElementById('stationType').value;

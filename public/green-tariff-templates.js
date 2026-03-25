@@ -1075,19 +1075,19 @@ const GT_TEMPLATES = {
                 <p style="font-weight:bold; font-size:14pt; margin:0 0 2px 0; text-transform:uppercase; letter-spacing:1px;">АКТ</p>
                 <p style="font-weight:bold; font-size:12pt; margin:0 0 2px 0;">приймання-передачі виконаних робіт</p>
                 <p style="font-size:11.5pt; margin:0;">за Договором купівлі-продажу та встановлення<br>
-                сонячної електростанції № _____ від «_____»_________ 20___ року</p>
+                сонячної електростанції № {{field9}} від «{{field10_day}}» {{field10_month}} {{field10_year}} року</p>
             </div>
 
             <!-- МІСТО / ДАТА -->
             <div style="display:flex; justify-content:space-between; margin:16px 0; font-size:11.5pt;">
                 <div>м. Золочів</div>
-                <div>«___» ____________ 20___ року</div>
+                <div>«{{field10_day}}» {{field10_month}} {{field10_year}} року</div>
             </div>
 
             <!-- ПРЕАМБУЛА -->
             <div style="text-align:justify; font-size:11.5pt; line-height:1.5; margin-bottom:16px;">
                 Цей Акт складено на виконання Договору купівлі-продажу та встановлення сонячної електростанції
-                № _____ від «_____»_________ 20___ року (надалі — Договір), укладеного між:<br>
+                № {{field9}} від «{{field10_day}}» {{field10_month}} {{field10_year}} року (надалі — Договір), укладеного між:<br>
                 <b>Замовник:</b> {{field4}},<br>
                 та <b>Виконавець:</b> ТОВ «Центр сервісного обслуговування» надалі разом — Сторони,
                 а кожна окремо — Сторона.
@@ -1109,8 +1109,8 @@ const GT_TEMPLATES = {
                         Встановлення та налаштування сонячної електростанції потужністю <b>{{field22}} кВт</b>.<br>
                         У складі:
                         <ul style="margin:6px 0 0 0; padding-left:20px; list-style-type:disc;">
-                            <li>(вставити модель інвертора)</li>
-                            <li>(вставити модель сонячних панелей та їх кількість)</li>
+                            <li>Інвертор: {{field27}}</li>
+                            <li>Сонячні панелі: {{field34}} — {{field23}} шт.</li>
                             {{batteryListItem}}
                         </ul>
                     </li>
@@ -1124,7 +1124,7 @@ const GT_TEMPLATES = {
             <div style="text-align:justify; font-size:11.5pt; line-height:1.5; margin-bottom:16px;">
                 Загальна вартість виконаних робіт за цим Актом становить:<br>
                 <div style="border-bottom:1px solid #000; padding:8px 0 2px; margin-top:4px;">
-                    __________ грн 00 коп.&nbsp;({{field39}})
+                    <b>{{field38_int}} грн {{field38_kop}} коп.</b>&nbsp;({{field39}})
                 </div>
             </div>
 
@@ -1185,12 +1185,12 @@ const GT_TEMPLATES = {
 
         <!-- СТОРІНКА 1 -->
         <div class="gt-contract-page p2-page">
-            <div class="gt-contract-title">ДОГОВІР №&nbsp;_____</div>
+            <div class="gt-contract-title">ДОГОВІР №&nbsp;{{field9}}</div>
             <div class="gt-contract-subtitle">на виконання робіт з будівництва сонячної електростанції</div>
 
             <div style="display:flex; justify-content:space-between; margin-bottom:16px; font-size:11.5pt;">
                 <div>м. Золочів</div>
-                <div>_____ ____________ 20___ року</div>
+                <div>«{{field10_day}}» {{field10_month}} {{field10_year}} року</div>
             </div>
 
             <div class="gt-contract-section">1. СТОРОНИ ДОГОВОРУ</div>
@@ -1212,13 +1212,13 @@ const GT_TEMPLATES = {
             монтажу та введення в експлуатацію сонячної електростанції потужністю до {{field22}} кВт (далі - СЕС).</p>
 
             <div class="gt-contract-section">3. ЦІНА ДОГОВОРУ ТА ВАЛЮТНЕ ЗАСТЕРЕЖЕННЯ</div>
-            <p class="gt-contract-text">3.1. Вартість Договору становить {{field38}} ({{field39}}) грн, 00 коп.</p>
+            <p class="gt-contract-text">3.1. Вартість Договору становить {{field38_int}} ({{field39}}) грн, {{field38_kop}} коп.</p>
             <p class="gt-contract-text">3.2. Оплата здійснюється виключно у гривні.</p>
 
             <div class="gt-contract-section">4. ПОРЯДОК ОПЛАТИ</div>
             <p class="gt-contract-text">4.1. Замовник сплачує:</p>
             <ul class="gt-contract-list">
-                <li>100% суми договору, а саме {{field38}} грн - протягом 5 банківських днів з моменту підписання Договору;</li>
+                <li>100% суми договору, а саме {{field38_int}} грн {{field38_kop}} коп. - протягом 5 банківських днів з моменту підписання Договору;</li>
             </ul>
             <p class="gt-contract-text">4.2. Роботи розпочинаються після отримання коштів.</p>
             <p class="gt-contract-text">4.3. У разі прострочення оплати більше 5 днів Підрядник має право призупинити роботи.</p>
