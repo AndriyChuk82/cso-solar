@@ -55,6 +55,8 @@ let gtState = {
         'field35': ['Гарантія на панелі, років'],
         'field36': ['Акумуляторна батарея', 'Модель АКБ'],
         'field37': ['Номінальна потужність батарей', 'Номінальна потужність АКБ'],
+        'field38': ['Вартість робіт'],
+        'field39': ['Сума прописом'],
         'stationType': ['Тип станції', 'Модель станції']
     }
 };
@@ -141,6 +143,18 @@ function initEventListeners() {
     document.getElementById('btnRefreshGT').addEventListener('click', fetchProjects);
     document.getElementById('btnGenerateDocs').addEventListener('click', generateSelectedDocuments);
     
+    // Auto-sum-to-words for field38 -> field39
+    const valInput = document.getElementById('field38');
+    const wordsInput = document.getElementById('field39');
+    if (valInput && wordsInput) {
+        valInput.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (!isNaN(val) && val > 0) {
+                wordsInput.value = numberToWordsUA(val);
+            }
+        });
+    }
+
     // Пошук та фільтрація проектів
     document.getElementById('projectSearch').addEventListener('input', renderProjectList);
     
@@ -536,4 +550,65 @@ function showToast(msg, type = 'info') {
     t.className = 'toast ' + type + ' show';
     clearTimeout(t._timer);
     t._timer = setTimeout(() => { t.classList.remove('show'); }, 3000);
+}
+
+/**
+ * Перетворення числа в суму прописом (українська мова)
+ */
+function numberToWordsUA(num) {
+    const ones = ['', 'одна', 'дві', 'три', 'чотири', "п'ять", 'шість', 'сім', 'вісім', "дев'ять"];
+    const teens = ['десять', 'одинадцять', 'дванадцять', 'тринадцять', 'чотирнадцять', "п'ятнадцять", 
+                   'шістнадцять', 'сімнадцять', 'вісімнадцять', "дев'ятнадцять"];
+    const tens = ['', '', 'двадцять', 'тридцять', 'сорок', "п'ятдесят", 'шістдесят', 'сімдесят', 'вісімдесят', "дев'яносто"];
+    const hundreds = ['', 'сто', 'двісті', 'триста', 'чотириста', "п'ятсот", 'шістсот', 'сімсот', 'вісімсот', "дев'ятсот"];
+
+    const intPart = Math.floor(num);
+    
+    if (intPart === 0) return 'нуль';
+
+    function convertGroup(n, gender = 0) { // 0 - male, 1 - female
+        if (n === 0) return '';
+        let res = '';
+        if (n >= 100) { res += hundreds[Math.floor(n / 100)] + ' '; n %= 100; }
+        if (n >= 10 && n <= 19) { res += teens[n - 10] + ' '; }
+        else {
+            if (n >= 20) { res += tens[Math.floor(n / 10)] + ' '; n %= 10; }
+            if (n > 0) {
+                if (gender === 1) { // female for thousands
+                    if (n === 1) res += 'одна ';
+                    else if (n === 2) res += 'дві ';
+                    else res += ones[n] + ' ';
+                } else {
+                    res += ones[n] + ' ';
+                }
+            }
+        }
+        return res;
+    }
+
+    let result = '';
+    let n = intPart;
+
+    const millions = Math.floor(n / 1000000);
+    if (millions > 0) {
+        result += convertGroup(millions, 0);
+        const m = millions % 10;
+        if (m === 1 && millions % 100 !== 11) result += 'мільйон ';
+        else if (m >= 2 && m <= 4 && (millions % 100 < 10 || millions % 100 > 20)) result += 'мільйони ';
+        else result += 'мільйонів ';
+        n %= 1000000;
+    }
+
+    const thousands = Math.floor(n / 1000);
+    if (thousands > 0) {
+        result += convertGroup(thousands, 1);
+        const t = thousands % 10;
+        if (t === 1 && thousands % 100 !== 11) result += 'тисяча ';
+        else if (t >= 2 && t <= 4 && (thousands % 100 < 10 || thousands % 100 > 20)) result += 'тисячі ';
+        else result += 'тисяч ';
+        n %= 1000;
+    }
+
+    result += convertGroup(n, 0);
+    return result.trim();
 }

@@ -1057,5 +1057,90 @@ const GT_TEMPLATES = {
 
             </div>
         </div>
+    `,
+    // ─── 4. Акт приймання-передачі виконаних робіт ────────────────────────────────
+    doc4: `
+        {{styles}}
+        <div class="p2-page" style="padding: 20mm 15mm; font-family: 'Times New Roman', serif;">
+            <div style="text-align:center; margin-bottom:20px;">
+                <p style="font-weight:bold; font-size:14pt; margin:0; letter-spacing:1px; text-transform:uppercase;">АКТ</p>
+                <p style="font-weight:bold; font-size:13pt; margin:4px 0;">приймання-передачі виконаних робіт</p>
+                <p style="font-size:11.5pt; margin:0;">за Договором купівлі-продажу та встановлення<br>сонячної електростанції № {{field9}} від «{{field10}}» 20__ року</p>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-size:11.5pt;">
+                <div>м. Золочів</div>
+                <div>«___» ____________ 20___ року</div>
+            </div>
+
+            <div style="text-align:justify; font-size:11.5pt; line-height:1.5; margin-bottom:20px;">
+                Цей Акт складено на виконання Договору купівлі-продажу та встановлення сонячної електростанції № {{field9}} від «{{field10}}» 20___ року (надалі — Договір), укладеного між:<br>
+                <b>Замовник:</b> {{field4}},<br>
+                та <b>Виконавець:</b> ТОВ «Центр сервісного обслуговування» надалі разом — Сторони, а кожна окремо — Сторона.
+            </div>
+
+            <div style="text-align:center; font-weight:bold; margin-bottom:12px; font-size:12pt;">1. Предмет Акта</div>
+            <div style="text-align:justify; font-size:11pt; margin-bottom:20px;">
+                Ми, що нижче підписалися, Виконавець, з однієї сторони, та Замовник, з іншої сторони, склали цей Акт про те, що Виконавцем виконано, а Замовником прийнято роботи, передбачені Договором, у повному обсязі та у встановлені строки.
+            </div>
+
+            <div style="text-align:center; font-weight:bold; margin-bottom:12px; font-size:12pt;">2. Перелік виконаних робіт</div>
+            <div style="font-size:11pt; margin-bottom:20px;">
+                <ol style="margin:0; padding-left:25px;">
+                    <li style="margin-bottom:10px;">
+                        Встановлення та налаштування сонячної електростанції потужністю <b>{{field22}} кВт</b>.<br>
+                        У складі:
+                        <ul style="margin:8px 0; padding-left:25px; list-style-type:disc;">
+                            <li>Інвертор: {{field27}}</li>
+                            <li>Сонячні панелі: {{field34}} — {{field23}} шт.</li>
+                            {{batteryListItem}}
+                        </ul>
+                    </li>
+                    <li style="margin-bottom:10px;">Пусконалагоджувальні роботи.</li>
+                    <li>Перевірка працездатності системи та передача її Замовнику.</li>
+                </ol>
+            </div>
+
+            <div style="text-align:center; font-weight:bold; margin-bottom:12px; font-size:12pt;">3. Вартість робіт</div>
+            <div style="text-align:justify; font-size:11pt; margin-bottom:20px;">
+                Загальна вартість виконаних робіт за цим Актом становить:<br>
+                <div style="border-bottom:1px solid #000; padding:10px 0 2px; margin-top:5px;">
+                    <b>{{field38}} грн 00 коп.</b> ({{field39}})
+                </div>
+            </div>
+
+            <div style="text-align:center; font-weight:bold; margin-bottom:12px; font-size:12pt;">4. Якість та зауваження</div>
+            <div style="font-size:11pt; margin-bottom:20px;">
+                4.1. Роботи виконані належним чином, відповідно до умов Договору та технічних вимог.<br>
+                4.2. Замовник претензій щодо обсягу, якості та строків виконання робіт не має.<br>
+                4.3. Сонячна електростанція передана Замовнику у працездатному стані.
+            </div>
+
+            <div style="text-align:center; font-weight:bold; margin-bottom:12px; font-size:12pt;">5. Розрахунки</div>
+            <div style="text-align:justify; font-size:11pt; margin-bottom:20px;">
+                Цей Акт є підставою для проведення розрахунків між Сторонами в порядку та строки, визначені Договором.
+            </div>
+
+            <div style="text-align:center; font-weight:bold; margin-bottom:12px; font-size:12pt;">6. Заключні положення</div>
+            <div style="font-size:11pt; margin-bottom:30px;">
+                6.1. Акт складено у двох примірниках, що мають однакову юридичну силу - по одному для кожної зі Сторін.<br>
+                6.2. Акт набирає чинності з моменту його підписання Сторонами.
+            </div>
+
+            <div style="display:flex; justify-content:space-between; margin-top:50px; font-size:11.5pt;">
+                <div style="width:45%; text-align:left;">
+                    <p style="font-weight:bold; margin-bottom:45px;">Виконавець</p>
+                    <div style="border-bottom:1px solid #000; margin-bottom:3px; position:relative; min-height:20px;">
+                        {{signature_app1}}
+                    </div>
+                    <p style="font-size:9pt; text-align:center; color:#666; margin:0;">(підпис)</p>
+                </div>
+                <div style="width:45%; text-align:left;">
+                    <p style="font-weight:bold; margin-bottom:45px;">Замовник</p>
+                    <div style="border-bottom:1px solid #000; margin-bottom:3px; min-height:20px;"></div>
+                    <p style="font-size:9pt; text-align:center; color:#666; margin:0;">(підпис)</p>
+                </div>
+            </div>
+        </div>
     `
 };

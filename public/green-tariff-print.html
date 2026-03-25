@@ -210,7 +210,7 @@
                 // Специфічна логіка для Акту (doc4)
                 if (docId === '4') {
                     const batteryInfo = formData.field36
-                        ? `<tr><td class="gt-center">4</td><td>Акумуляторна батарея ${formData.field36} (${formData.field37} кВт*год)</td><td class="gt-center">1 шт.</td></tr>`
+                        ? `<li>Акумуляторна батарея: ${formData.field36} (${formData.field37} кВт*год)</li>`
                         : '';
                     template = template.split('{{batteryListItem}}').join(batteryInfo);
                 }
