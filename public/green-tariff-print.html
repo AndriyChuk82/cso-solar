@@ -208,7 +208,10 @@
                 }
 
                 // Перед заміною основних полів, підготуємо "під-поля" для дат та сум
-                if (formData.field10) { // Дата договору
+                formData.field10_day = '___';
+                formData.field10_month = '____________';
+                formData.field10_year = '20___';
+                if (formData.field10) {
                     const d = formData.field10.split('-');
                     if (d.length === 3) {
                         formData.field10_day = d[2];
@@ -216,10 +219,16 @@
                         formData.field10_year = d[0];
                     }
                 }
-                if (formData.field38) { // Вартість робіт
-                    const val = parseFloat(formData.field38) || 0;
-                    formData.field38_int = Math.floor(val).toString();
-                    formData.field38_kop = '00'; 
+
+                formData.field38_int = '_________';
+                formData.field38_kop = '00';
+                if (formData.field38) {
+                    const cleanVal = formData.field38.toString().replace(/\s/g, '').replace(',', '.');
+                    const val = parseFloat(cleanVal) || 0;
+                    if (val > 0) {
+                        formData.field38_int = Math.floor(val).toLocaleString('uk-UA');
+                        formData.field38_kop = '00';
+                    }
                 }
 
                 // Специфічна логіка для Акту (doc4)

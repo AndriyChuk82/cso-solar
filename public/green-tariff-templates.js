@@ -1075,7 +1075,7 @@ const GT_TEMPLATES = {
                 <p style="font-weight:bold; font-size:14pt; margin:0 0 2px 0; text-transform:uppercase; letter-spacing:1px;">АКТ</p>
                 <p style="font-weight:bold; font-size:12pt; margin:0 0 2px 0;">приймання-передачі виконаних робіт</p>
                 <p style="font-size:11.5pt; margin:0;">за Договором купівлі-продажу та встановлення<br>
-                сонячної електростанції № {{field9}} від «{{field10_day}}» {{field10_month}} {{field10_year}} року</p>
+                сонячної електростанції № _________ від «_________» ____________ 20___ року</p>
             </div>
 
             <!-- МІСТО / ДАТА -->
@@ -1087,7 +1087,7 @@ const GT_TEMPLATES = {
             <!-- ПРЕАМБУЛА -->
             <div style="text-align:justify; font-size:11.5pt; line-height:1.5; margin-bottom:16px;">
                 Цей Акт складено на виконання Договору купівлі-продажу та встановлення сонячної електростанції
-                № {{field9}} від «{{field10_day}}» {{field10_month}} {{field10_year}} року (надалі — Договір), укладеного між:<br>
+                № _________ від «_________» ____________ 20___ року (надалі — Договір), укладеного між:<br>
                 <b>Замовник:</b> {{field4}},<br>
                 та <b>Виконавець:</b> ТОВ «Центр сервісного обслуговування» надалі разом — Сторони,
                 а кожна окремо — Сторона.
@@ -1184,13 +1184,14 @@ const GT_TEMPLATES = {
         </style>
 
         <!-- СТОРІНКА 1 -->
+        <!-- СТОРІНКА 1 -->
         <div class="gt-contract-page p2-page">
-            <div class="gt-contract-title">ДОГОВІР №&nbsp;{{field9}}</div>
+            <div class="gt-contract-title">ДОГОВІР №&nbsp;_________</div>
             <div class="gt-contract-subtitle">на виконання робіт з будівництва сонячної електростанції</div>
 
             <div style="display:flex; justify-content:space-between; margin-bottom:16px; font-size:11.5pt;">
                 <div>м. Золочів</div>
-                <div>«{{field10_day}}» {{field10_month}} {{field10_year}} року</div>
+                <div>_________ ____________ 20___ року</div>
             </div>
 
             <div class="gt-contract-section">1. СТОРОНИ ДОГОВОРУ</div>
