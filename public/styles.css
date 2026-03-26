@@ -123,7 +123,6 @@ input, textarea, select, button { font-family: var(--font); }
 @media (max-width: 768px) {
     .header-user { display: none; }
     .nav-btn { padding: 8px 12px; font-size: 1.25rem; }
-    .header-actions { gap: 4px; }
 }
 
 .header-user {
@@ -141,7 +140,9 @@ input, textarea, select, button { font-family: var(--font); }
     border: 1px solid rgba(0,0,0,0.02);
 }
 .header-user-icon { font-size: 1.1rem; }
-.header-actions { display: flex; gap: 8px; align-items: center; }
+.header-actions { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex: 1; }
+.nav-links { display: flex; gap: 8px; }
+.action-btns { display: flex; gap: 8px; margin-left: auto; }
 
 /* ===== BUTTONS ===== */
 .btn {
@@ -726,9 +727,98 @@ body.hide-cost .cost-column { display: none; }
     .sidebar-close { display: block; }
     .main-content { padding: 16px; }
     .proposal-row { flex-direction: column; gap: 10px; }
+    .form-group { width: 100%; }
     .btn-label { display: none; }
     .tg-options { flex-direction: column; }
     .header-user { display: none !important; }
+}
+
+@media (max-width: 768px) {
+    /* 1. Навігація внизу (Bottom Nav) */
+    .nav-links {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        padding: 6px 8px;
+        display: flex; justify-content: space-around; align-items: center;
+        z-index: 100;
+        border-top: 1px solid var(--border);
+    }
+    .nav-links .nav-btn { 
+        flex: 1; text-align: center; display: flex !important; flex-direction: column; 
+        gap: 4px; padding: 6px; font-size: 0.70rem; border: none; background: transparent;
+        color: var(--text-secondary); line-height: 1;
+    }
+    .nav-links .nav-btn.active { color: var(--accent); box-shadow: none; border: none; background: transparent;}
+    .nav-links .nav-btn i { font-size: 1.4rem; margin-bottom: 2px; }
+    .nav-links .nav-btn span { display: block !important; }
+    
+    .app-header { padding: 0 16px; }
+    .header-actions { justify-content: flex-end; }
+    
+    /* 2. Збільшення елементів вводу */
+    .form-input, .tbl-input { padding: 12px 14px; font-size: 0.95rem; }
+    .search-input { padding: 12px 16px; font-size: 1rem; height: 44px; }
+    
+    /* 3. Panel toolbar */
+    .table-toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
+    .toolbar-right { flex-wrap: wrap; justify-content: space-between; margin-top: 8px;}
+    .currency-switch { width: 100%; justify-content: space-between; margin-top: 10px; }
+    .cur-btn { flex: 1; text-align: center; padding: 10px; font-size: 0.9rem;}
+    
+    /* 4. Таблиця як Картки */
+    .proposal-table thead { display: none; }
+    .proposal-table, .proposal-table tbody, .proposal-table tr, .proposal-table td { display: block; width: 100%; box-sizing: border-box; }
+    .proposal-table tr {
+        margin-bottom: 12px; padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg-card);
+        position: relative;
+    }
+    .col-name { font-size: 1rem; font-weight: 600; padding: 0 0 12px 0 !important; border: none !important; }
+    .col-qty, .col-price, .col-sum {
+        display: flex !important; justify-content: space-between; align-items: center;
+        padding: 8px 0 !important; border: none !important; border-top: 1px solid var(--border-light) !important;
+    }
+    .col-qty::before { content: "К-сть:"; color: var(--text-muted); font-size: 0.9rem; font-weight: normal; }
+    .col-price::before { content: "Ціна:"; color: var(--text-muted); font-size: 0.9rem; font-weight: normal; }
+    .col-sum::before { content: "Сума:"; color: var(--text-muted); font-size: 0.9rem; font-weight: normal; }
+    
+    .col-act { position: absolute; right: 10px; top: 12px; padding: 0 !important; border: none !important; width: 36px; text-align: right;}
+    .col-num, .col-unit, .col-cost, .col-cost-sum { display: none !important; }
+    
+    .tbl-input.input-qty { width: 90px; text-align: center; }
+    .tbl-input.input-price { width: 120px; text-align: right; }
+    .product-desc { padding-right: 32px; }
+    
+    /* Totals rows */
+    .totals-row td { display: flex; justify-content: space-between; padding: 12px !important; border-top: 1px solid var(--border) !important; border-bottom: none !important; background: transparent !important;}
+    .totals-row.grand { background: rgba(245, 158, 11, 0.05) !important; border-radius: 0 0 8px 8px; }
+    .totals-label { text-align: left !important; color: var(--text-secondary); width: 40%; font-size: 1rem !important;}
+    .totals-value { text-align: right; font-size: 1.1rem; width: 60%; font-weight: bold; }
+    .totals-empty { display: none !important; }
+    
+    /* 5. Sticky Actions */
+    .proposal-actions {
+        position: fixed; bottom: 55px; left: 0; right: 0;
+        background: rgba(255,255,255,0.98); padding: 12px 16px;
+        box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
+        z-index: 90;
+        overflow-x: auto; flex-wrap: nowrap;
+        border-radius: 16px 16px 0 0;
+        gap: 12px;
+    }
+    .proposal-actions::-webkit-scrollbar { display: none; }
+    .proposal-actions .btn { flex-shrink: 0; padding: 12px 20px; font-size: 0.95rem; }
+    
+    /* Main Content Padding to avoid overlap */
+    .main-content { padding-bottom: 140px; }
+    .sidebar-toggle { bottom: 130px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+    
+    /* Modals */
+    .modal-body div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
 }
 
 /* ===== PRINT STYLES ===== */

@@ -976,6 +976,12 @@ function addProductToProposal(productId) {
 
     renderProposalTable();
     showToast(`Додано: ${product.model}`, 'success');
+    
+    // Auto-close sidebar on mobile devices
+    if (window.innerWidth <= 900) {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) sidebar.classList.remove('open');
+    }
 }
 
 function removeItem(index) {
