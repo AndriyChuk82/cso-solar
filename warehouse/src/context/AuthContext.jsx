@@ -11,45 +11,17 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     async function checkAuth() {
-      try {
-        setLoading(true);
-        const email = await verifySession();
-        
-        if (!email) {
-          setUser(null);
-          setLoading(false);
-          return;
-        }
-
-        const res = await getUser(email);
-        if (res.success && res.user) {
-          const u = res.user;
-
-          // Block Manager from Warehouse
-          if (u.role === 'manager') {
-            setError('Менеджерам доступний лише розділ Комерційних пропозицій.');
-            setUser(null);
-          } else {
-            const roleLower = (u.role || '').toLowerCase();
-            setUser({
-              email: u.email,
-              name: u.name,
-              role: roleLower,
-              warehouseId: u.warehouse_id,
-              isAdmin: roleLower === CONFIG.ROLES.ADMIN,
-              isStorekeeper: roleLower === CONFIG.ROLES.STOREKEEPER,
-              isManager: roleLower === CONFIG.ROLES.MANAGER
-            });
-          }
-        } else {
-          setError('Користувача не знайдено в системі.');
-        }
-      } catch (err) {
-        console.error('Auth error:', err);
-        setError('Помилка авторизації.');
-      } finally {
-        setLoading(false);
-      }
+      // Авторизація вимкнена - створюємо фіктивного адміна
+      setUser({
+        email: 'admin@cso-solar.com',
+        name: 'Адміністратор (Без авторизації)',
+        role: 'admin',
+        warehouseId: null, // Можна буде вибрати будь-який склад
+        isAdmin: true,
+        isStorekeeper: false,
+        isManager: false
+      });
+      setLoading(false);
     }
 
     checkAuth();
