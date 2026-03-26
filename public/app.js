@@ -1390,7 +1390,7 @@ function renderHistory() {
         html += `<div class="history-item">
             <div class="history-meta">
                 <div class="history-num">${escHtml(p.number || 'Без номера')}</div>
-                <div class="history-info">${escHtml(p.date || '')} | ${escHtml(p.clientName || 'Без клієнта')} | ${p.items ? p.items.length : 0} поз.</div>
+                <div class="history-info">${escHtml((p.date || '').split('T')[0])} | ${escHtml(p.clientName || 'Без клієнта')} | ${p.items ? p.items.length : 0} поз.</div>
             </div>
             <div class="history-sum">${formatMoney(sum, 'USD')}</div>
             <div class="history-actions">
