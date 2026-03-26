@@ -31,33 +31,33 @@ export function Layout({ children }) {
           </div>
         </div>
 
-        <div className="header-right flex">
-          {user && (
-            <>
-              {(user.role === 'admin' || user.role === 'адмін' || user.role === 'адміністратор' || (user.module_access || '').includes('warehouse')) && (
-                <a href="/warehouse/" className="nav-btn"><i>📦</i> <span>Склад</span></a>
-              )}
-              {(user.role === 'admin' || user.role === 'адмін' || user.role === 'адміністратор' || (user.module_access || '').includes('proposals')) && (
-                <a href="/" className="nav-btn"><i>📄</i> <span>КП</span></a>
-              )}
-              {(user.role === 'admin' || user.role === 'адмін' || user.role === 'адміністратор' || (user.module_access || '').includes('projects')) && (
-                <a href="/projects/" className="nav-btn active"><i>📊</i> <span>Проєкти</span></a>
-              )}
-              {(user.role === 'admin' || user.role === 'адмін' || user.role === 'адміністратор' || (user.module_access || '').includes('gt')) && (
-                <a href="/green-tariff.html" className="nav-btn"><i>🌱</i> <span>Зелений тариф</span></a>
-              )}
-            </>
-          )}
+        <div className="header-actions">
+          <div className="nav-links">
+            {(user.role === 'admin' || user.role === 'адмін' || user.role === 'адміністратор' || (user.module_access || '').includes('warehouse')) && (
+              <a href="/warehouse/" className="nav-btn"><i>📦</i> <span>Склад</span></a>
+            )}
+            {(user.role === 'admin' || user.role === 'адмін' || user.role === 'адміністратор' || (user.module_access || '').includes('proposals')) && (
+              <a href="/" className="nav-btn"><i>📄</i> <span>КП</span></a>
+            )}
+            {(user.role === 'admin' || user.role === 'адмін' || user.role === 'адміністратор' || (user.module_access || '').includes('projects')) && (
+              <a href="/projects/" className="nav-btn active"><i>📊</i> <span>Проєкти</span></a>
+            )}
+            {(user.role === 'admin' || user.role === 'адмін' || user.role === 'адміністратор' || (user.module_access || '').includes('gt')) && (
+              <a href="/green-tariff.html" className="nav-btn"><i>🌱</i> <span>Зелений тариф</span></a>
+            )}
+          </div>
 
-          {user && (
-            <div className="header-user">
-              <span className="user-name">{user.name}</span>
-              <span className="user-role">{user.role}</span>
-            </div>
-          )}
-          <a href="/api/logout" className="btn btn-ghost p-2" title="Вихід">
-            <LogOut className="h-5 w-5" />
-          </a>
+          <div className="action-btns">
+            {user && (
+              <div className="header-user">
+                <span className="user-name">{user.name}</span>
+                <span className="user-role">{user.role}</span>
+              </div>
+            )}
+            <a href="/api/logout" className="btn btn-icon" title="Вихід">
+              <span className="btn-icon-svg">🚪</span>
+            </a>
+          </div>
         </div>
       </header>
 
