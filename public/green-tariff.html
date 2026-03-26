@@ -94,6 +94,10 @@
                                 <label>№ проекту</label>
                                 <input type="text" id="field3" class="gt-input" placeholder="Автоматично">
                             </div>
+                            <div class="gt-form-group">
+                                <label>Час тестування</label>
+                                <input type="text" id="field11" class="gt-input" placeholder="напр. 10:00 - 12:00">
+                            </div>
                         </div>
 
                         <!-- Секція 2: Особисті дані -->
@@ -104,7 +108,11 @@
                                 <input type="text" id="field4" class="gt-input" placeholder="Прізвище Ім'я По батькові">
                             </div>
                             <div class="gt-form-group">
-                                <label>ІПН / РНОКПП</label>
+                                <label>Паспортні дані (серія, номер, ким і коли виданий)</label>
+                                <input type="text" id="field40" class="gt-input">
+                            </div>
+                            <div class="gt-form-group">
+                                <label>Код РНОКПП (ІПН)</label>
                                 <input type="text" id="field5" class="gt-input">
                             </div>
                             <div class="gt-form-group">
@@ -253,7 +261,7 @@
                             </div>
                             <div class="gt-form-group">
                                 <label>Сумарна потужність, кВт</label>
-                                <input type="number" id="field22" class="gt-input" step="0.01">
+                                <input type="number" id="field22" class="gt-input" step="any">
                             </div>
                             <div class="gt-form-group">
                                 <label>К-сть панелей</label>
@@ -275,21 +283,13 @@
                             </div>
                             <div class="gt-form-group">
                                 <label>Номінальна потужність, кВт*год</label>
-                                <input type="number" id="field37" class="gt-input" step="0.1">
-                            </div>
-                            <div class="gt-form-group">
-                                <label>Час тестування</label>
-                                <input type="text" id="field11" class="gt-input" placeholder="напр. 10:00 - 12:00">
+                                <input type="number" id="field37" class="gt-input" step="any">
                             </div>
                         </div>
 
-                        <!-- Секція 9: Вартість та Дані для Договору -->
+                        <!-- Секція 9: Фінансова сторона договору -->
                         <div class="gt-section">
-                            <h3 class="gt-section-title"><span>💰</span> Дані для Акту та Договору</h3>
-                            <div class="gt-form-group" style="grid-column: span 2;">
-                                <label>Паспортні дані Замовника</label>
-                                <input type="text" id="field40" class="gt-input" placeholder="серія, номер, виданий...">
-                            </div>
+                            <h3 class="gt-section-title"><span>💰</span> Фінансова сторона договору</h3>
                             <div class="gt-form-group">
                                 <label>Вартість робіт, грн</label>
                                 <input type="number" id="field38" class="gt-input" placeholder="напр. 750000">
@@ -297,14 +297,6 @@
                             <div class="gt-form-group">
                                 <label>Сума прописом (грн)</label>
                                 <input type="text" id="field39" class="gt-input">
-                            </div>
-                            <div class="gt-form-group">
-                                <label>Аванс, USD</label>
-                                <input type="number" id="field41" class="gt-input" placeholder="напр. 15000">
-                            </div>
-                            <div class="gt-form-group">
-                                <label>Залишок, USD</label>
-                                <input type="number" id="field42" class="gt-input" placeholder="напр. 8724">
                             </div>
                         </div>
 

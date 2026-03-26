@@ -1,7 +1,7 @@
 /* ===== CSO Solar — Green Tariff Module Logic ===== */
 
 const GT_CONFIG = {
-    GAS_URL: 'https://script.google.com/macros/s/AKfycbxbAmZSiC8c66XblVwJlXSa5YRbGJCZoN0RcObTKmPvOMSgZvSwHrqBDtbdvNT17a_6uA/exec',
+    GAS_URL: 'https://script.google.com/macros/s/AKfycbxc21z2v5vbzF4n4lLRoS-SEkKI6b4QD2ddR9XeWN3QOCpm4HwCUh3MGxxy_05Z8ZCwhw/exec',
     PARENT_SPREADSHEET_ID: '1FbzOPKEroa6QyghgqMFGJMRCdYx_yS0RDXoHzuI_GmY',
     GT_SHEET_NAME: 'Зелений тариф',
     DRIVE_FOLDER_ID: '1Bhkaot09fCC4rx5udWjHxExqre7LcCrF',
@@ -20,7 +20,7 @@ let gtState = {
     mapping: {
         'field1': ['Стан проєкту', 'Статус', 'Стан'],
         'field2': ['Розрахунок', 'Оплата'],
-        'field3': ['№ проекту', 'Номер', '№'],
+        'field3': ['№ проекту'], // Прибрали "Номер", щоб не плутати з реєстраційним номером
         'field4': ['ПІБ фізичної особи', 'ПІБ', 'Прізвище'],
         'field5': ['ІПН', 'ІПН/ЄДРПОУ'],
         'field6': ['реєстраційний номер об’єкта нерухомого майна', 'Реєстраційний номер об’єкта', 'Реєстр. номер'],
@@ -39,7 +39,7 @@ let gtState = {
         'field19': ['Вхідний автомат'],
         'field20': ['Відсікач'],
         'field21': ['Місце розташування генеруючої установки', 'Адреса об\'єкта'],
-        'field22': ['Потужність генеруючих установок споживача, кВт', 'Сумарна потужність', 'Сумарна потужність, кВт'],
+        'field22': ['Потужність генеруючих установок споживача, кВт', 'Сумарна потужність, кВт', 'Сумарна потужність'],
         'field23': ['К-сть панелей', 'Кількість панелей'],
         'field24': ['Місце встановлення панелей'],
         'field25': ['електронною поштою', 'Email', 'Електронна пошта'],
@@ -53,8 +53,8 @@ let gtState = {
         'field33': ['Виробник сонячних панелей'],
         'field34': ['Сонячна панель', 'Модель панелі'],
         'field35': ['Гарантія на панелі, років'],
-        'field36': ['Акумуляторна батарея', 'Модель АКБ'],
-        'field37': ['Номінальна потужність батарей', 'Номінальна потужність АКБ'],
+        'field36': ['Акумуляторна батарея', 'Модель АКБ', 'АКБ'],
+        'field37': ['Номінальна потужність, кВт*год', 'Номінальна потужність АКБ', 'Номінальна потужність батарей'],
         'field38': ['Вартість робіт'],
         'field39': ['Сума прописом'],
         'field40': ['Паспортні дані'],
@@ -144,6 +144,7 @@ function initEventListeners() {
 
 
     document.getElementById('btnRefreshGT').addEventListener('click', fetchProjects);
+    document.getElementById('btnResetGT').addEventListener('click', resetForm);
     document.getElementById('btnGenerateDocs').addEventListener('click', generateSelectedDocuments);
     
     // Auto-sum-to-words for field38 -> field39
@@ -209,31 +210,32 @@ async function fetchProjects() {
     } catch (e) { console.error('Fetch projects error:', e); }
 }
 
-// Допоміжна функція для пошуку властивості в об'єкті (незалежно від регістру, мови та символів переносу)
 function getProp(obj, keys) {
     if (!obj) return "";
     
-    // Нормалізація рядка для порівняння
+    // Нова нормалізація: видаляємо ВСІ пробіли для максимальної точності порівняння ключів
     const normalize = (s) => (s || "").toString().toLowerCase()
-        .replace(/[\n\r"]/g, ' ') 
-        .replace(/\s+/g, ' ')     
-        .trim();
+        .replace(/[\n\r"]/g, '').replace(/\s+/g, '').trim();
 
+    const objKeys = Object.keys(obj);
+
+    // 1. Прямий або точний нормалізований пошук (Пріоритет)
     for (let k of keys) {
-        // 1. Прямий пошук (найшвидший)
-        if (obj[k] !== undefined) return obj[k];
-        
-        // 2. Нормалізований точний пошук
+        if (obj[k] !== undefined) return obj[k]; 
         const normalizedK = normalize(k);
-        let foundKey = Object.keys(obj).find(actualKey => normalize(actualKey) === normalizedK);
-        if (foundKey) return obj[foundKey];
+        const exactKey = objKeys.find(ak => normalize(ak) === normalizedK);
+        if (exactKey) return obj[exactKey];
+    }
 
-        // 3. "М'який" пошук (містить частину тексту)
-        foundKey = Object.keys(obj).find(actualKey => {
-            if (!actualKey) return false;
-            const normActual = normalize(actualKey);
-            // Перевіряємо чи одна назва містить іншу (це покриває випадки з "..., кВт" тощо)
-            return normActual.includes(normalizedK) || (normalizedK.length > 5 && normalizedK.includes(normActual));
+    // 2. "М'який" пошук тільки для довгих специфічних назв
+    for (let k of keys) {
+        const normalizedK = normalize(k);
+        if (normalizedK.length < 10) continue; // "Номер" (5 симв) сюди не попаде
+        
+        const foundKey = objKeys.find(ak => {
+            if (!ak) return false;
+            const normActual = normalize(ak);
+            return normActual.includes(normalizedK) || normalizedK.includes(normActual);
         });
         if (foundKey) return obj[foundKey];
     }
@@ -322,7 +324,8 @@ function removeFile(index) { gtState.files.splice(index, 1); renderFileList(); }
 async function handleFormSubmit(e) {
     e.preventDefault();
     const formData = {};
-    for (let i = 1; i <= 37; i++) {
+    // Збільшено ліміт полів до 45
+    for (let i = 1; i <= 45; i++) {
         const el = document.getElementById(`field${i}`);
         if (el) formData[`field${i}`] = el.value;
     }
@@ -350,8 +353,22 @@ async function handleFormSubmit(e) {
             renderFileList();
             fetchProjects(); 
         }
-        else showToast('Помилка: ' + res.error, 'error');
-    } catch (e) { showToast('Помилка мережі', 'error'); }
+        else {
+            let errMsg = res.error || "Невідома помилка";
+            if (res.stack) console.error("GAS Stack:", res.stack);
+            
+            // Якщо є інфо про конкретний крок - виводимо чіткіше
+            if (errMsg.includes("Step")) {
+                showToast(`Помилка сервера: ${errMsg}`, 'error');
+                alert(`Критична помилка при збереженні (GAS):\n${errMsg}\n\nПереконайтеся, що ви оновили скрипт у Google Apps Script та надали всі дозволи.`);
+            } else {
+                showToast(`Помилка: ${errMsg}`, 'error');
+            }
+        }
+    } catch (e) { 
+        console.error("Network Error:", e);
+        showToast('Помилка мережі або скрипта', 'error'); 
+    }
 }
 
 function resetForm() {
@@ -376,21 +393,32 @@ function loadProject(id) {
     for (let fieldId in gtState.mapping) {
         const el = document.getElementById(fieldId);
         if (el) {
-            const spreadsheetKeys = gtState.mapping[fieldId];
-            let value = getProp(p, spreadsheetKeys);
+            // Спочатку спробуємо знайти за технічним ID прямо в об'єкті
+            let value = p[fieldId];
+            
+            // Якщо немає - використовуємо getProp по назвам колонок
+            if (value === undefined || value === "") {
+                const spreadsheetKeys = gtState.mapping[fieldId];
+                value = getProp(p, spreadsheetKeys);
+            }
             
             // ФІКСИ ФОРМАТІВ ДЛЯ КОНСОЛІ:
             if (value) {
-                // 1. Для полів типу "date" (конвертуємо ДД.ММ.РРРР у РРРР-ММ-ДД)
-                if (el.type === 'date') {
-                    const dateMatch = value.toString().match(/(\d{2})\.(\d{2})\.(\d{4})/);
-                    if (dateMatch) {
-                        value = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+                const valStr = value.toString();
+                // 1. Для полів типу "date" або якщо це дата в ISO форматі (2026-03-17T...)
+                if (el.type === 'date' || valStr.match(/^\d{4}-\d{2}-\d{2}T/)) {
+                    // Якщо формат ДД.ММ.РРРР
+                    const dmyMatch = valStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+                    if (dmyMatch) {
+                        value = `${dmyMatch[3]}-${dmyMatch[2]}-${dmyMatch[1]}`;
+                    } else if (valStr.includes('T')) {
+                        // Якщо формат ISO 2026-03-17T...
+                        value = valStr.split('T')[0];
                     }
                 }
                 // 2. Для числових полів (замінюємо кому на крапку)
                 if (el.type === 'number') {
-                    value = value.toString().replace(',', '.').replace(/[^\d.]/g, '');
+                    value = valStr.replace(',', '.').replace(/[^\d.]/g, '');
                 }
             }
 
