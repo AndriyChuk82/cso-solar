@@ -55,13 +55,26 @@ export default function ResizableHeader({ children, columnId, pageId }) {
     document.addEventListener('touchend', handleEnd);
   };
 
+  const handleRef = useRef(null);
+
+  useEffect(() => {
+    const el = handleRef.current;
+    if (!el) return;
+
+    // Використовуємо нативний слухач, щоб мати можливість передати { passive: false }
+    const onTouchStart = (e) => handleStart(e);
+    
+    el.addEventListener('touchstart', onTouchStart, { passive: false });
+    return () => el.removeEventListener('touchstart', onTouchStart);
+  }, []);
+
   return (
     <div ref={ref} className="resizable-header">
       <span className="resizer-label">{children}</span>
       <div 
+        ref={handleRef}
         className="resizer-handle"
         onMouseDown={handleStart}
-        onTouchStart={handleStart}
       />
     </div>
   );

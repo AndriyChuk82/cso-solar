@@ -247,7 +247,7 @@ export default function Reports() {
             </>
           )}
 
-          <div style={{ marginLeft: 'auto' }}>
+          <div>
             <button className="btn btn-primary" onClick={generateReport} disabled={loading} style={{ height: '36px', padding: '0 20px' }}>
               {loading ? '⏳' : '📊 Сформувати'}
             </button>
