@@ -559,23 +559,42 @@ body {
 /* === COMPACT TABLE (for reports) === */
 .compact-table {
   font-size: 0.78rem;
-  width: auto;
-  min-width: auto;
+  width: auto !important;
+  min-width: auto !important;
+  table-layout: auto;
 }
 
 .compact-table th {
-  padding: 4px 6px;
+  padding: 0;
   font-size: 0.72rem;
-  white-space: nowrap;
+  border-right: 1px solid var(--border-light);
+  background: var(--bg);
 }
+
+.compact-table th .resizable-header {
+  padding: 6px 10px 6px 6px;
+  resize: horizontal;
+  overflow: hidden;
+  min-width: 40px;
+  max-width: 400px;
+  display: block;
+}
+
+.compact-table th:last-child {
+  border-right: none;
+}
+
 
 .compact-table td {
   padding: 2px 6px;
   font-size: 0.78rem;
   white-space: normal;
-  max-width: 300px;
+  max-width: 400px;
   line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
 
 /* Кольорове маркування рядків операцій */
 .data-table tr.row-income {

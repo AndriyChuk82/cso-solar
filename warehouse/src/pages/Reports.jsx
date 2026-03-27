@@ -291,7 +291,7 @@ export default function Reports() {
                 <thead>
                   <tr>
                     {reportData.columns?.map((col, i) => (
-                      <th key={i}>{col}</th>
+                      <th key={i}><div className="resizable-header">{col}</div></th>
                     ))}
                   </tr>
                 </thead>

@@ -165,11 +165,11 @@ export default function DailyBalance() {
               <table className="data-table compact-table">
                 <thead>
                   <tr>
-                    <th>Товар</th>
-                    <th>Од.</th>
-                    <th>Облікова к-сть</th>
-                    <th>Фактична к-сть</th>
-                    <th>Різниця</th>
+                    <th><div className="resizable-header">Товар</div></th>
+                    <th><div className="resizable-header">Од.</div></th>
+                    <th><div className="resizable-header">Облікова к-сть</div></th>
+                    <th><div className="resizable-header">Фактична к-сть</div></th>
+                    <th><div className="resizable-header">Різниця</div></th>
                   </tr>
                 </thead>
                 <tbody>

@@ -272,13 +272,13 @@ export default function Journal() {
             <table className="data-table compact-table">
               <thead>
                  <tr>
-                  <th>Дата</th>
-                  <th>Склад</th>
-                  <th>Товар</th>
-                  <th>Тип</th>
-                  <th>Од.</th>
-                  <th>Кількість</th>
-                  <th>Залишок</th>
+                  <th><div className="resizable-header">Дата</div></th>
+                  <th><div className="resizable-header">Склад</div></th>
+                  <th><div className="resizable-header">Товар</div></th>
+                  <th><div className="resizable-header">Тип</div></th>
+                  <th><div className="resizable-header">Од.</div></th>
+                  <th><div className="resizable-header">Кількість</div></th>
+                  <th><div className="resizable-header">Залишок</div></th>
                   {user?.isAdmin && <th></th>}
                 </tr>
               </thead>
