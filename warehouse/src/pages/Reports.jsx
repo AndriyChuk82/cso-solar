@@ -4,6 +4,7 @@ import { exportToExcel, exportToPdf } from '../utils/exportUtils';
 import { formatDate } from '../utils/dateUtils';
 import { formatQuantity } from '../utils/formatUtils';
 import CONFIG from '../config';
+import ResizableHeader from '../components/ResizableHeader';
 
 /**
  * Звіти та аналітика — 3 типи звітів з експортом Excel/PDF.
@@ -291,7 +292,11 @@ export default function Reports() {
                 <thead>
                   <tr>
                     {reportData.columns?.map((col, i) => (
-                      <th key={i}><div className="resizable-header">{col}</div></th>
+                      <th key={i}>
+                        <ResizableHeader pageId={`reports-${activeTab}`} columnId={col}>
+                          {col}
+                        </ResizableHeader>
+                      </th>
                     ))}
                   </tr>
                 </thead>

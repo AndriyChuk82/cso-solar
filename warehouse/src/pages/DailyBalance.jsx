@@ -4,6 +4,7 @@ import { getWarehouses, getDailyBalanceData, submitDailyBalance } from '../api/g
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { formatQuantity } from '../utils/formatUtils';
+import ResizableHeader from '../components/ResizableHeader';
 
 /**
  * Підсумок дня — «Ввести залишки на кінець дня».
@@ -165,11 +166,11 @@ export default function DailyBalance() {
               <table className="data-table compact-table">
                 <thead>
                   <tr>
-                    <th><div className="resizable-header">Товар</div></th>
-                    <th><div className="resizable-header">Од.</div></th>
-                    <th><div className="resizable-header">Облікова к-сть</div></th>
-                    <th><div className="resizable-header">Фактична к-сть</div></th>
-                    <th><div className="resizable-header">Різниця</div></th>
+                    <th><ResizableHeader pageId="daily-balance" columnId="product">Товар</ResizableHeader></th>
+                    <th><ResizableHeader pageId="daily-balance" columnId="unit">Од.</ResizableHeader></th>
+                    <th><ResizableHeader pageId="daily-balance" columnId="qty">Облікова к-сть</ResizableHeader></th>
+                    <th><ResizableHeader pageId="daily-balance" columnId="fact">Фактична к-сть</ResizableHeader></th>
+                    <th><ResizableHeader pageId="daily-balance" columnId="diff">Різниця</ResizableHeader></th>
                   </tr>
                 </thead>
                 <tbody>

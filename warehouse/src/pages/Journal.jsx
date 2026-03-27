@@ -8,6 +8,7 @@ import { formatDate } from '../utils/dateUtils';
 import { matchesSearch } from '../utils/searchUtils';
 import { formatQuantity } from '../utils/formatUtils';
 import CONFIG from '../config';
+import ResizableHeader from '../components/ResizableHeader';
 
 /**
  * Журнал операцій — основний документ системи.
@@ -272,13 +273,13 @@ export default function Journal() {
             <table className="data-table compact-table">
               <thead>
                  <tr>
-                  <th><div className="resizable-header">Дата</div></th>
-                  <th><div className="resizable-header">Склад</div></th>
-                  <th><div className="resizable-header">Товар</div></th>
-                  <th><div className="resizable-header">Тип</div></th>
-                  <th><div className="resizable-header">Од.</div></th>
-                  <th><div className="resizable-header">Кількість</div></th>
-                  <th><div className="resizable-header">Залишок</div></th>
+                  <th><ResizableHeader pageId="journal" columnId="date">Дата</ResizableHeader></th>
+                  <th><ResizableHeader pageId="journal" columnId="warehouse">Склад</ResizableHeader></th>
+                  <th><ResizableHeader pageId="journal" columnId="product">Товар</ResizableHeader></th>
+                  <th><ResizableHeader pageId="journal" columnId="type">Тип</ResizableHeader></th>
+                  <th><ResizableHeader pageId="journal" columnId="unit">Од.</ResizableHeader></th>
+                  <th><ResizableHeader pageId="journal" columnId="qty">Кількість</ResizableHeader></th>
+                  <th><ResizableHeader pageId="journal" columnId="balance">Залишок</ResizableHeader></th>
                   {user?.isAdmin && <th></th>}
                 </tr>
               </thead>
