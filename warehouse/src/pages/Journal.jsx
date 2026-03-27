@@ -269,7 +269,7 @@ export default function Journal() {
               </p>
             </div>
           ) : (
-            <table className="data-table">
+            <table className="data-table compact-table">
               <thead>
                  <tr>
                   <th>Дата</th>

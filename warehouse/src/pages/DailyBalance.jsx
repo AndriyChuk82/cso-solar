@@ -162,7 +162,7 @@ export default function DailyBalance() {
               )}
             </div>
             <div className="data-table-wrap">
-              <table className="data-table">
+              <table className="data-table compact-table">
                 <thead>
                   <tr>
                     <th>Товар</th>
