@@ -387,8 +387,8 @@ export default function Journal() {
                     type="number"
                     className="form-input"
                     value={editModal.formData.quantity}
-                    onChange={e => setEditModal({ ...editModal, formData: { ...editModal.formData, quantity: parseFloat(e.target.value) || 0 } })}
-                    step="0.01"
+                    onChange={e => setEditModal({ ...editModal, formData: { ...editModal.formData, quantity: Math.round(parseFloat(e.target.value) || 0) } })}
+                    step="1"
                     min="0"
                     required
                   />

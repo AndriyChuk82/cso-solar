@@ -62,7 +62,7 @@ export default function DailyBalance() {
     setItems((prev) =>
       prev.map((item, i) => {
         if (i !== index) return item;
-        const fact = parseFloat(value) || 0;
+        const fact = Math.round(parseFloat(value) || 0);
         return { ...item, factQuantity: value, diff: fact - item.quantity };
       })
     );
@@ -199,7 +199,7 @@ export default function DailyBalance() {
                           value={item.factQuantity}
                           onChange={(e) => updateFact(originalIndex, e.target.value)}
                           min="0"
-                          step="0.01"
+                          step="1"
                           style={{
                             width: '100px',
                             textAlign: 'center',

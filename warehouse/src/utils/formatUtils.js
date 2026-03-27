@@ -1,5 +1,5 @@
 export function formatQuantity(qty, category, name = '') {
-  const num = parseFloat(qty) || 0;
+  const num = Math.round(parseFloat(qty) || 0);
   if (num === 0) return 0;
 
   const catLower = (category || '').toLowerCase();
@@ -18,7 +18,7 @@ export function formatQuantity(qty, category, name = '') {
   const PALLET_SIZE = 36;
   const absNum = Math.abs(num);
   const pallets = Math.floor(absNum / PALLET_SIZE);
-  const remainder = Math.round((absNum % PALLET_SIZE) * 100) / 100;
+  const remainder = absNum % PALLET_SIZE;
   const isNegative = num < 0;
 
   if (pallets === 0) {

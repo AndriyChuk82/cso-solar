@@ -127,7 +127,7 @@ export default function OperationForm({ type = 'income' }) {
         comment: formData.comment,
         items: formData.items.map((item) => ({
           productId: item.productId,
-          quantity: parseFloat(item.quantity) || 0,
+          quantity: Math.round(parseFloat(item.quantity) || 0),
           comment: item.comment
         })),
         user: user?.email
@@ -263,8 +263,8 @@ export default function OperationForm({ type = 'income' }) {
                       className="form-input"
                       value={item.quantity}
                       onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-                      min="0.01"
-                      step="0.01"
+                      min="1"
+                      step="1"
                       required
                       style={{ textAlign: 'center' }}
                     />
