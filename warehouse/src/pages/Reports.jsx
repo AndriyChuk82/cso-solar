@@ -191,7 +191,7 @@ export default function Reports() {
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '10px' }}>
           {activeTab === 'stock' && (
             <>
-              <div className="form-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
+              <div className="form-group" style={{ marginBottom: 0, flex: '0 0 160px' }}>
                 <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Склад</label>
                 <select className="form-select" value={stockFilter.warehouseId} onChange={(e) => setStockFilter({ ...stockFilter, warehouseId: e.target.value })} style={{ padding: '6px 10px', height: '36px' }}>
                   <option value="">Всі склади</option>
@@ -222,7 +222,7 @@ export default function Reports() {
 
           {activeTab === 'move' && (
             <>
-              <div className="form-group" style={{ marginBottom: 0, flex: '1 1 150px' }}>
+              <div className="form-group" style={{ marginBottom: 0, flex: '0 0 160px' }}>
                 <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Склад</label>
                 <select className="form-select" value={moveFilter.warehouseId} onChange={(e) => setMoveFilter({ ...moveFilter, warehouseId: e.target.value })} style={{ padding: '6px 10px', height: '36px' }}>
                   <option value="">Всі</option>
