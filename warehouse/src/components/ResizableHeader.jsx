@@ -6,40 +6,63 @@ import { useState, useEffect, useRef } from 'react';
  */
 export default function ResizableHeader({ children, columnId, pageId }) {
   const ref = useRef(null);
+  const startX = useRef(0);
+  const startWidth = useRef(0);
 
   useEffect(() => {
     if (!ref.current) return;
     
-    // Початкове завантаження збереженої ширини
+    // Завантажуємо збережену ширину
     const savedWidth = localStorage.getItem(`res-col-${pageId}-${columnId}`);
     if (savedWidth && savedWidth !== 'null') {
       ref.current.style.width = `${savedWidth}px`;
     } else {
-      ref.current.style.width = 'auto'; // Скидаємо до авто, якщо немає збереженого значення
+      ref.current.style.width = 'auto';
     }
-
-    const observer = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        // Ми відстежуємо зміну ширини самого елемента
-        // Браузер при resize: horizontal сам змінює style.width
-        const element = entry.target;
-        const currentWidth = Math.round(element.getBoundingClientRect().width);
-        
-        // Перевіряємо, чи ширина була встановлена вручну (через інлайн-стиль)
-        // CSS resize змінює інлайн-стиль style.width
-        if (element.style.width && element.style.width !== 'auto') {
-           localStorage.setItem(`res-col-${pageId}-${columnId}`, currentWidth);
-        }
-      }
-    });
-
-    observer.observe(ref.current);
-    return () => observer.disconnect();
   }, [columnId, pageId]);
+
+  const handleStart = (e) => {
+    // Не даємо браузеру скролити при розтягуванні на мобільному
+    if (e.cancelable) e.preventDefault();
+    
+    startX.current = e.touches ? e.touches[0].clientX : e.clientX;
+    startWidth.current = ref.current.getBoundingClientRect().width;
+
+    const handleMove = (moveEvent) => {
+      const clientX = moveEvent.touches ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const diff = clientX - startX.current;
+      const newWidth = Math.max(50, startWidth.current + diff);
+      
+      if (ref.current) {
+        ref.current.style.width = `${newWidth}px`;
+      }
+    };
+
+    const handleEnd = () => {
+      if (ref.current) {
+        const finalWidth = Math.round(ref.current.getBoundingClientRect().width);
+        localStorage.setItem(`res-col-${pageId}-${columnId}`, finalWidth);
+      }
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('touchend', handleEnd);
+    };
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleMove, { passive: false });
+    document.addEventListener('touchend', handleEnd);
+  };
 
   return (
     <div ref={ref} className="resizable-header">
-      {children}
+      <span className="resizer-label">{children}</span>
+      <div 
+        className="resizer-handle"
+        onMouseDown={handleStart}
+        onTouchStart={handleStart}
+      />
     </div>
   );
 }

@@ -558,11 +558,12 @@ body {
 
 /* === COMPACT TABLE (for reports) === */
 .compact-table {
-  font-size: 0.78rem;
-  width: auto !important;
-  min-width: auto !important;
+  font-size: 0.85rem;
+  width: 100% !important;
+  min-width: 100% !important;
   table-layout: auto;
 }
+
 
 .compact-table th {
   padding: 0;
@@ -572,20 +573,40 @@ body {
 }
 
 .compact-table th .resizable-header {
-  padding: 6px 12px 6px 6px;
-  resize: horizontal;
+  padding: 6px 12px 6px 8px;
+  position: relative;
   overflow: hidden;
-  min-width: 40px;
-  max-width: 500px;
-  min-height: 32px;
+  min-width: 50px;
+  max-width: 600px;
+  min-height: 36px;
   display: flex;
   align-items: center;
-  border-right: 2px solid transparent;
-  transition: border-color 0.2s;
 }
 
-.compact-table th .resizable-header:hover {
-  border-right-color: var(--border);
+.resizer-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  pointer-events: none;
+}
+
+.resizer-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 5;
+  touch-action: none; /* Забороняємо браузеру втручатися в touch-події */
+}
+
+.resizer-handle:hover,
+.resizer-handle:active {
+  border-right: 3px solid var(--primary);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 

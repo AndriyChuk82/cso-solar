@@ -187,33 +187,33 @@ export default function Reports() {
       </div>
 
       {/* Фільтри */}
-      <div className="card" style={{ marginBottom: '20px' }}>
-        <div className="card-body">
+      <div className="card" style={{ marginBottom: '12px', padding: '10px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '10px' }}>
           {activeTab === 'stock' && (
-            <div className="form-row" style={{ alignItems: 'flex-end' }}>
-              <div className="form-group">
-                <label>Склад</label>
-                <select className="form-select" value={stockFilter.warehouseId} onChange={(e) => setStockFilter({ ...stockFilter, warehouseId: e.target.value })}>
+            <>
+              <div className="form-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
+                <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Склад</label>
+                <select className="form-select" value={stockFilter.warehouseId} onChange={(e) => setStockFilter({ ...stockFilter, warehouseId: e.target.value })} style={{ padding: '6px 10px', height: '36px' }}>
                   <option value="">Всі склади</option>
                   {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
                 </select>
               </div>
-              <div className="form-group">
-                <label>На дату</label>
-                <input type="date" className="form-input" value={stockFilter.date} onChange={(e) => setStockFilter({ ...stockFilter, date: e.target.value })} />
+              <div className="form-group" style={{ marginBottom: 0, flex: '0 0 140px' }}>
+                <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>На дату</label>
+                <input type="date" className="form-input" value={stockFilter.date} onChange={(e) => setStockFilter({ ...stockFilter, date: e.target.value })} style={{ padding: '6px 10px', height: '36px' }} />
               </div>
-              <div className="form-group">
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+              <div className="form-group" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', height: '36px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500 }}>
                   <input type="checkbox" checked={stockFilter.nonZeroOnly} onChange={(e) => setStockFilter({ ...stockFilter, nonZeroOnly: e.target.checked })} />
                   Лише ненульові
                 </label>
               </div>
-            </div>
+            </>
           )}
 
           {activeTab === 'compare' && (
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+            <div className="form-group" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', height: '36px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500 }}>
                 <input type="checkbox" checked={compareFilter.nonZeroOnly} onChange={(e) => setCompareFilter({ ...compareFilter, nonZeroOnly: e.target.checked })} />
                 Лише ненульові залишки
               </label>
@@ -221,44 +221,35 @@ export default function Reports() {
           )}
 
           {activeTab === 'move' && (
-            <div className="form-row" style={{ alignItems: 'flex-end' }}>
-              <div className="form-group">
-                <label>Склад</label>
-                <select className="form-select" value={moveFilter.warehouseId} onChange={(e) => setMoveFilter({ ...moveFilter, warehouseId: e.target.value })}>
+            <>
+              <div className="form-group" style={{ marginBottom: 0, flex: '1 1 150px' }}>
+                <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Склад</label>
+                <select className="form-select" value={moveFilter.warehouseId} onChange={(e) => setMoveFilter({ ...moveFilter, warehouseId: e.target.value })} style={{ padding: '6px 10px', height: '36px' }}>
                   <option value="">Всі</option>
                   {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
                 </select>
               </div>
-              <div className="form-group">
-                <label>Товар</label>
-                <select className="form-select" value={moveFilter.productId} onChange={(e) => setMoveFilter({ ...moveFilter, productId: e.target.value })}>
+              <div className="form-group" style={{ marginBottom: 0, flex: '1 1 150px' }}>
+                <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Товар</label>
+                <select className="form-select" value={moveFilter.productId} onChange={(e) => setMoveFilter({ ...moveFilter, productId: e.target.value })} style={{ padding: '6px 10px', height: '36px' }}>
                   <option value="">Всі</option>
                   {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
-              <div className="form-group">
-                <label>Тип</label>
-                <select className="form-select" value={moveFilter.type} onChange={(e) => setMoveFilter({ ...moveFilter, type: e.target.value })}>
-                  <option value="">Всі</option>
-                  {Object.entries(CONFIG.OPERATION_LABELS).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
-                </select>
+              <div className="form-group" style={{ marginBottom: 0, flex: '0 0 120px' }}>
+                <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Від</label>
+                <input type="date" className="form-input" value={moveFilter.dateFrom} onChange={(e) => setMoveFilter({ ...moveFilter, dateFrom: e.target.value })} style={{ padding: '6px 10px', height: '36px' }} />
               </div>
-              <div className="form-group">
-                <label>Від</label>
-                <input type="date" className="form-input" value={moveFilter.dateFrom} onChange={(e) => setMoveFilter({ ...moveFilter, dateFrom: e.target.value })} />
+              <div className="form-group" style={{ marginBottom: 0, flex: '0 0 120px' }}>
+                <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>До</label>
+                <input type="date" className="form-input" value={moveFilter.dateTo} onChange={(e) => setMoveFilter({ ...moveFilter, dateTo: e.target.value })} style={{ padding: '6px 10px', height: '36px' }} />
               </div>
-              <div className="form-group">
-                <label>До</label>
-                <input type="date" className="form-input" value={moveFilter.dateTo} onChange={(e) => setMoveFilter({ ...moveFilter, dateTo: e.target.value })} />
-              </div>
-            </div>
+            </>
           )}
 
-          <div style={{ marginTop: '16px', display: 'flex', gap: '10px' }}>
-            <button className="btn btn-primary" onClick={generateReport} disabled={loading}>
-              {loading ? '⏳ Формування...' : '📊 Сформувати звіт'}
+          <div style={{ marginLeft: 'auto' }}>
+            <button className="btn btn-primary" onClick={generateReport} disabled={loading} style={{ height: '36px', padding: '0 20px' }}>
+              {loading ? '⏳' : '📊 Сформувати'}
             </button>
           </div>
         </div>
