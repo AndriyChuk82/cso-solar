@@ -11,17 +11,62 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     async function checkAuth() {
-      // Авторизація вимкнена - створюємо фіктивного адміна
-      setUser({
-        email: 'admin@cso-solar.com',
-        name: 'Адміністратор (Без авторизації)',
-        role: 'admin',
-        warehouseId: null, // Можна буде вибрати будь-який склад
-        isAdmin: true,
-        isStorekeeper: false,
-        isManager: false
-      });
-      setLoading(false);
+      try {
+        setLoading(true);
+
+        // 1. Перевіряємо JWT токен через /api/verify — отримуємо email, role та module_access
+        const response = await fetch(CONFIG.VERIFY_URL, { credentials: 'include' });
+        if (!response.ok) {
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        const verifyData = await response.json();
+        if (!verifyData.authenticated) {
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        const { user: email, name, role, module_access } = verifyData;
+
+        // 2. Отримуємо розширені дані (warehouse_id тощо) з Google Sheets
+        const gasResult = await getUser(email);
+
+        let warehouseId = null;
+        let finalRole = (role || 'user').toLowerCase();
+        let finalModuleAccess = module_access || '';
+
+        if (gasResult?.success && gasResult.user) {
+          const u = gasResult.user;
+          warehouseId = u.warehouse_id || null;
+          // GAS може мати свіжішу роль — але довіряємо тій що в токені (JWT)
+          // Якщо роль "manager" — блокуємо доступ до складу
+          if (u.role) finalRole = u.role.toLowerCase();
+          // module_access з токена актуальніший (встановлюється під час логіну)
+          if (!finalModuleAccess && u.module_access) {
+            finalModuleAccess = u.module_access;
+          }
+        }
+
+        const isAdmin = finalRole === 'admin' || finalRole === 'адмін' || finalRole === 'адміністратор';
+
+        setUser({
+          email,
+          name: name || email,
+          role: finalRole,
+          warehouseId,
+          module_access: finalModuleAccess,
+          isAdmin,
+          isStorekeeper: finalRole === 'storekeeper',
+          isManager: finalRole === 'manager',
+        });
+      } catch (err) {
+        console.error('Auth error:', err);
+        setError('Помилка авторизації.');
+      } finally {
+        setLoading(false);
+      }
     }
 
     checkAuth();

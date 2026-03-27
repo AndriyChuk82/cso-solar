@@ -39,6 +39,21 @@ function AppContent() {
     );
   }
 
+  const hasWarehouseAccess = user.isAdmin || (user.module_access || '').includes('warehouse');
+
+  if (!hasWarehouseAccess) {
+    return (
+      <div className="access-denied">
+        <span className="denied-icon">🔒</span>
+        <h2>Доступ заборонено</h2>
+        <p>У вас немає доступу до модуля Склад.</p>
+        <a href="/" className="btn btn-primary" style={{ marginTop: '20px' }}>
+          🏠 Перейти на головну сторінку
+        </a>
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter basename="/warehouse">
       <Routes>
@@ -59,8 +74,6 @@ function AppContent() {
               <Route path="/categories" element={<Categories />} />
             </>
           )}
-
-
         </Route>
       </Routes>
     </BrowserRouter>

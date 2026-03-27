@@ -16,19 +16,52 @@ export function SplitLayout() {
   const [currency, setCurrency] = useState('USD'); // 'USD' | 'UAH'
   const [rate, setRate] = useState(41);            // UAH per 1 USD
 
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const isAdmin = user?.role === 'admin' || user?.role === 'адмін' || user?.role === 'адміністратор';
+  const hasAccess = isAdmin || (user?.module_access || '').includes('projects');
 
   useEffect(() => {
-    if (user?.email) {
+    if (user?.email && hasAccess) {
       fetchProjects(user.email);
     }
-  }, [user]);
+  }, [user, hasAccess]);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  if (loading) return null;
+
+  if (!hasAccess) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        height: 'calc(100vh - 80px)', 
+        color: 'var(--text-muted)', 
+        gap: 16,
+        padding: '20px',
+        textAlign: 'center'
+      }}>
+        <div style={{ fontSize: '4rem' }}>🔒</div>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#333' }}>Доступ заборонено</h2>
+        <p style={{ maxWidth: '400px' }}>У вас немає прав для перегляду модуля Проєкти. Зверніться до адміністратора для отримання доступу.</p>
+        <a href="/" style={{
+          marginTop: '12px',
+          padding: '10px 24px',
+          background: 'var(--primary, #f09433)',
+          color: '#fff',
+          borderRadius: '8px',
+          textDecoration: 'none',
+          fontWeight: 600
+        }}>🏠 На головну</a>
+      </div>
+    );
+  }
 
   const handleSelectProject = (id) => setSelectedProjectId(id);
   const handleBack = () => setSelectedProjectId(null);

@@ -1,7 +1,7 @@
 import { jwtVerify } from 'jose';
 
 // Список шляхів, які доступні без авторизації
-const PUBLIC_PATHS = ['/login.html', '/login.css', '/api/login', '/favicon.ico', '/assets/', '/warehouse', '/api/verify'];
+const PUBLIC_PATHS = ['/login.html', '/login.css', '/api/login', '/favicon.ico', '/assets/', '/api/verify'];
 
 export const config = {
     // Запускаємо middleware для всіх шляхів, крім внутрішніх верифікацій Vercel
@@ -50,9 +50,30 @@ export default async function middleware(request) {
                 algorithms: ['HS256']
             });
 
-            // 4. Перевірка прав доступу (приклад для менеджерів)
-            if (payload.role === 'manager' && pathname.startsWith('/warehouse')) {
-                return Response.redirect(new URL('/', request.url), 302);
+            // 4. Перевірка прав доступу до модулів
+            const role = (payload.role || 'user').toLowerCase();
+            const isAdmin = role === 'admin' || role === 'адмін' || role === 'адміністратор';
+            const moduleAccess = payload.module_access || '';
+
+            // Перевірка доступу до /warehouse
+            if (pathname.startsWith('/warehouse')) {
+                if (!isAdmin && !moduleAccess.includes('warehouse')) {
+                    return Response.redirect(new URL('/', request.url), 302);
+                }
+            }
+
+            // Перевірка доступу до /green-tariff
+            if (pathname.startsWith('/green-tariff')) {
+                if (!isAdmin && !moduleAccess.includes('gt')) {
+                    return Response.redirect(new URL('/', request.url), 302);
+                }
+            }
+
+            // Перевірка доступу до /projects
+            if (pathname.startsWith('/projects')) {
+                if (!isAdmin && !moduleAccess.includes('projects')) {
+                    return Response.redirect(new URL('/', request.url), 302);
+                }
             }
 
             return undefined; // Все добре, пропускаємо

@@ -12,7 +12,8 @@ export function useAuth() {
         if (data.authenticated) {
           setUser({
             name: data.name || data.user,
-            role: (data.role || 'manager').toLowerCase()
+            role: (data.role || 'manager').toLowerCase(),
+            module_access: data.module_access || ''
           });
         }
       } catch (e) {
