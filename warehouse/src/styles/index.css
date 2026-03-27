@@ -572,13 +572,22 @@ body {
 }
 
 .compact-table th .resizable-header {
-  padding: 6px 10px 6px 6px;
+  padding: 6px 12px 6px 6px;
   resize: horizontal;
   overflow: hidden;
   min-width: 40px;
-  max-width: 400px;
-  display: block;
+  max-width: 500px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  border-right: 2px solid transparent;
+  transition: border-color 0.2s;
 }
+
+.compact-table th .resizable-header:hover {
+  border-right-color: var(--border);
+}
+
 
 .compact-table th:last-child {
   border-right: none;

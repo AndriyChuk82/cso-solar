@@ -5,34 +5,37 @@ import { useState, useEffect, useRef } from 'react';
  * Використовує ResizeObserver для відстеження змін ширини через CSS resize.
  */
 export default function ResizableHeader({ children, columnId, pageId }) {
-  const [initialWidth] = useState(() => {
-    return localStorage.getItem(`res-col-${pageId}-${columnId}`) || 'auto';
-  });
-  
   const ref = useRef(null);
 
   useEffect(() => {
     if (!ref.current) return;
     
-    // Встановлюємо початкову ширину, якщо вона збережена
-    if (initialWidth !== 'auto') {
-      ref.current.style.width = `${initialWidth}px`;
+    // Початкове завантаження збереженої ширини
+    const savedWidth = localStorage.getItem(`res-col-${pageId}-${columnId}`);
+    if (savedWidth && savedWidth !== 'null') {
+      ref.current.style.width = `${savedWidth}px`;
+    } else {
+      ref.current.style.width = 'auto'; // Скидаємо до авто, якщо немає збереженого значення
     }
 
     const observer = new ResizeObserver((entries) => {
       for (let entry of entries) {
-        // Отримуємо ширину в пікселях
-        const currentWidth = entry.contentRect.width;
-        // Зберігаємо, якщо вона значущо змінилася (щоб уникнути спаму при ініціалізації)
-        if (currentWidth > 10) {
-           localStorage.setItem(`res-col-${pageId}-${columnId}`, Math.round(currentWidth));
+        // Ми відстежуємо зміну ширини самого елемента
+        // Браузер при resize: horizontal сам змінює style.width
+        const element = entry.target;
+        const currentWidth = Math.round(element.getBoundingClientRect().width);
+        
+        // Перевіряємо, чи ширина була встановлена вручну (через інлайн-стиль)
+        // CSS resize змінює інлайн-стиль style.width
+        if (element.style.width && element.style.width !== 'auto') {
+           localStorage.setItem(`res-col-${pageId}-${columnId}`, currentWidth);
         }
       }
     });
 
     observer.observe(ref.current);
     return () => observer.disconnect();
-  }, [columnId, pageId, initialWidth]);
+  }, [columnId, pageId]);
 
   return (
     <div ref={ref} className="resizable-header">
@@ -40,3 +43,4 @@ export default function ResizableHeader({ children, columnId, pageId }) {
     </div>
   );
 }
+
