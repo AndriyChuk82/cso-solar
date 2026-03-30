@@ -1076,29 +1076,41 @@ function updateItemField(index, field, value) {
 }
 
 function updateItemCost(index, value) {
-    let numVal = parseFloat(value) || 0;
-    if (state.activeCurrency === 'UAH') {
-        numVal = numVal / state.settings.usdToUah;
-    } else if (state.activeCurrency === 'EUR') {
-        numVal = numVal * (state.settings.eurToUah / state.settings.usdToUah);
-    }
-    state.proposal.items[index].costUSD = numVal;
+    let inputVal = parseFloat(value) || 0;
+    let costUSD = 0;
     
-    // Auto update price with global markup
+    if (state.activeCurrency === 'UAH') {
+        costUSD = inputVal / (state.settings.usdToUah || 1);
+    } else if (state.activeCurrency === 'EUR') {
+        costUSD = inputVal * (state.settings.eurToUah / state.settings.usdToUah);
+    } else {
+        costUSD = inputVal;
+    }
+    
+    state.proposal.items[index].costUSD = costUSD;
+    
+    // Auto update price based on current markup
     const markup = state.settings.markup;
-    state.proposal.items[index].price = numVal * (1 + markup / 100);
+    state.proposal.items[index].price = costUSD * (1 + markup / 100);
     
     renderProposalTable();
 }
 
 function updateItemPrice(index, value) {
-    let numVal = parseFloat(value) || 0;
+    let inputVal = parseFloat(value) || 0;
+    let priceUSD = 0;
+    
+    // Convert input to USD for storage
     if (state.activeCurrency === 'UAH') {
-        numVal = numVal / state.settings.usdToUah;
+        priceUSD = inputVal / (state.settings.usdToUah || 1);
     } else if (state.activeCurrency === 'EUR') {
-        numVal = numVal * (state.settings.eurToUah / state.settings.usdToUah);
+        priceUSD = inputVal * (state.settings.eurToUah / state.settings.usdToUah);
+    } else {
+        priceUSD = inputVal;
     }
-    state.proposal.items[index].price = numVal;
+    
+    state.proposal.items[index].price = priceUSD;
+    // We DO NOT update cost here, effectively changing the markup
     renderProposalTable();
 }
 
