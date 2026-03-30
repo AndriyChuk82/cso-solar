@@ -1811,9 +1811,225 @@ async function sendTelegramPdf() {
     await telegramRequest('sendDocument', { pdfBase64, caption, filename: 'proposal.pdf' });
 }
 
-function printProposal() {
+async function printProposal() {
     readProposalForm();
-    window.print();
+
+    if (state.proposal.items.length === 0) {
+        showToast('Пропозиція порожня', 'warning');
+        return;
+    }
+
+    showToast('Підготовка PDF для друку...', 'info');
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+
+        // --- 1. Load Cyrillic font ---
+        let fontLoaded = false;
+        try {
+            const resp = await fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf');
+            if (resp.ok) {
+                const buf = await resp.arrayBuffer();
+                const bytes = new Uint8Array(buf);
+                let binary = '';
+                for (let i = 0; i < bytes.length; i += 10000) {
+                    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 10000));
+                }
+                const b64 = btoa(binary);
+                doc.addFileToVFS('DejaVuSans.ttf', b64);
+                doc.addFont('DejaVuSans.ttf', 'DejaVuSans', 'normal');
+                doc.setFont('DejaVuSans');
+                fontLoaded = true;
+            }
+        } catch (e) { console.warn('Font load failed:', e); }
+
+        const fontName = fontLoaded ? 'DejaVuSans' : 'helvetica';
+        const pageWidth = 210;
+        const marginL = 15;
+        const marginR = 15;
+        const usable = pageWidth - marginL - marginR;
+        let y = 15;
+
+        // --- 2. Logo ---
+        try {
+            const logoUrl = 'https://i.ibb.co/32JD4dc/logo.png';
+            const logoObj = await new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const targetWidth = 300;
+                    const scale = Math.min(1, targetWidth / img.naturalWidth);
+                    const w = img.naturalWidth * scale;
+                    const h = img.naturalHeight * scale;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, w, h);
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve({ data: canvas.toDataURL('image/jpeg', 0.85), aspectRatio: img.naturalHeight / img.naturalWidth });
+                };
+                img.onerror = () => reject('Logo load failed');
+                img.src = logoUrl;
+            });
+            const renderWidth = 24;
+            const renderHeight = renderWidth * logoObj.aspectRatio;
+            doc.addImage(logoObj.data, 'JPEG', marginL, 5, renderWidth, renderHeight);
+        } catch (e) { console.warn('Logo skip:', e); }
+
+        // --- 3. Header text ---
+        const seller = SELLERS[state.selectedSeller] || SELLERS['fop_pastushok'];
+        doc.setFont(fontName, 'normal');
+        doc.setFontSize(11);
+        doc.setTextColor(245, 158, 11);
+        doc.text('КОМЕРЦІЙНА ПРОПОЗИЦІЯ', pageWidth - marginR, y + 5, { align: 'right' });
+        doc.setFontSize(7.5);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Офіс та склад: ${seller.office}`, pageWidth - marginR, y + 10, { align: 'right' });
+        doc.text(seller.phone, pageWidth - marginR, y + 14, { align: 'right' });
+
+        // Orange line
+        y += 18;
+        doc.setDrawColor(245, 158, 11);
+        doc.setLineWidth(0.8);
+        doc.line(marginL, y, pageWidth - marginR, y);
+        y += 6;
+
+        // --- 4. Proposal info ---
+        doc.setFontSize(8);
+        doc.setTextColor(120, 120, 120);
+        doc.setFont(fontName, 'normal');
+        doc.text('НОМЕР', marginL, y);
+        doc.text('ДАТА', marginL + 50, y);
+        y += 4;
+        doc.setFontSize(10);
+        doc.setTextColor(30, 30, 30);
+        doc.text(state.proposal.number || '', marginL, y);
+        doc.text(state.proposal.date || '', marginL + 50, y);
+        y += 6;
+
+        doc.setFontSize(8);
+        doc.setTextColor(120, 120, 120);
+        doc.text('КЛІЄНТ', marginL, y);
+        doc.text('КОНТАКТ', marginL + 90, y);
+        y += 4;
+        doc.setFontSize(10);
+        doc.setTextColor(30, 30, 30);
+        doc.text(state.proposal.clientName || '', marginL, y);
+        doc.text(state.proposal.clientContact || '', marginL + 90, y);
+        y += 8;
+
+        // --- 5. Table ---
+        const cur = state.activeCurrency;
+        const curSym = cur === 'USD' ? '$' : (cur === 'EUR' ? '€' : '₴');
+        const formatPrice = (num) => num.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const head = [['№', 'Назва товару', 'Од.', 'К-сть', `Ціна (${curSym})`, `Сума (${curSym})`]];
+        const body = state.proposal.items.map((it, idx) => {
+            const priceVal = convertCurrency(it.price, cur);
+            const sumVal = priceVal * it.quantity;
+            const name = it.description ? `${it.name}\n${it.description}` : it.name;
+            return [idx + 1, name, it.unit || 'шт.', it.quantity, formatPrice(priceVal), formatPrice(sumVal)];
+        });
+
+        const totalSum = state.proposal.items.reduce((s, it) => s + it.price * it.quantity, 0);
+        const convertedTotal = convertCurrency(totalSum, cur);
+        const footBody = [];
+
+        const vatMode = state.settings.vatMode || 'none';
+        if (vatMode === 'extra') {
+            const vatVal = convertedTotal * 0.20;
+            const grandTotal = convertedTotal + vatVal;
+            footBody.push(['', '', '', '', 'ПІДСУМОК:', `${curSym} ${formatPrice(convertedTotal)}`]);
+            footBody.push(['', '', '', '', 'ПДВ 20%:', `${curSym} ${formatPrice(vatVal)}`]);
+            footBody.push(['', '', '', '', 'РАЗОМ З ПДВ:', `${curSym} ${formatPrice(grandTotal)}`]);
+        } else if (vatMode === 'inside') {
+            const vatInsideVal = convertedTotal * 0.20 / 1.20;
+            footBody.push(['', '', '', '', 'РАЗОМ:', `${curSym} ${formatPrice(convertedTotal)}`]);
+            footBody.push(['', '', '', '', 'в т.ч. ПДВ 20%:', `${curSym} ${formatPrice(vatInsideVal)}`]);
+        } else {
+            footBody.push(['', '', '', '', 'РАЗОМ:', `${curSym} ${formatPrice(convertedTotal)}`]);
+        }
+
+        doc.autoTable({
+            startY: y,
+            head: head,
+            body: body,
+            foot: footBody,
+            theme: 'grid',
+            styles: {
+                font: fontName, fontSize: 8.5, cellPadding: 3,
+                textColor: [30, 30, 30], lineColor: [220, 220, 220], lineWidth: 0.3, valign: 'middle'
+            },
+            headStyles: {
+                fillColor: [245, 245, 245], textColor: [60, 60, 60],
+                fontStyle: 'normal', fontSize: 7.5, halign: 'center'
+            },
+            footStyles: {
+                fillColor: [255, 251, 235], textColor: [180, 83, 9],
+                fontStyle: 'normal', fontSize: 9.5, halign: 'center'
+            },
+            columnStyles: {
+                0: { halign: 'center', cellWidth: 10 },
+                1: { cellWidth: 'auto', halign: 'left' },
+                2: { halign: 'center', cellWidth: 24 },
+                3: { halign: 'center', cellWidth: 15 },
+                4: { halign: 'center', cellWidth: 25 },
+                5: { halign: 'center', cellWidth: 28 }
+            },
+            margin: { left: marginL, right: marginR },
+            didDrawPage: function(data) {
+                doc.setFontSize(7);
+                doc.setTextColor(180, 180, 180);
+                doc.text('CSO Solar — комерційна пропозиція', marginL, 290);
+                doc.text(`Стор. ${doc.internal.getNumberOfPages()}`, pageWidth - marginR, 290, { align: 'right' });
+            }
+        });
+
+        // --- 6. Notes & currency info ---
+        let finalY = doc.lastAutoTable.finalY + 8;
+
+        if (cur === 'UAH') {
+            doc.setFontSize(7.5);
+            doc.setTextColor(140, 140, 140);
+            doc.setFont(fontName, 'normal');
+            const rateNote = `Курс: 1 USD = ${state.settings.usdToUah} грн; 1 EUR = ${state.settings.eurToUah} грн`;
+            doc.text(rateNote, pageWidth - marginR, finalY, { align: 'right' });
+            finalY += 6;
+        }
+
+        if (state.proposal.notes) {
+            doc.setFontSize(8);
+            doc.setTextColor(80, 80, 80);
+            doc.text('Примітки:', marginL, finalY);
+            finalY += 4;
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            const noteLines = doc.splitTextToSize(state.proposal.notes, usable);
+            doc.text(noteLines, marginL, finalY);
+        }
+
+        // --- 7. Open in browser for print ---
+        const pdfBlob = doc.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        const newWindow = window.open(blobUrl);
+        if (newWindow) {
+            newWindow.addEventListener('load', () => {
+                setTimeout(() => newWindow.print(), 500);
+            });
+        } else {
+            // Fallback — download if popup blocked
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = `${state.proposal.number || 'КП'}_${state.proposal.clientName || 'пропозиція'}.pdf`;
+            a.click();
+        }
+        showToast('PDF готовий!', 'success');
+    } catch (e) {
+        console.error('Помилка генерації PDF:', e);
+        showToast('Помилка генерації PDF: ' + e.message, 'error');
+    }
 }
 
 
