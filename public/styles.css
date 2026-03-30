@@ -178,6 +178,8 @@ input, textarea, select, button { font-family: var(--font); }
 .btn-sm { padding: 4px 10px; font-size: 0.78rem; }
 .btn-danger { background: var(--danger); color: #fff; }
 .btn-danger:hover { opacity: 0.85; }
+.btn-viber { background: #7360f2; color: #fff; border-color: #7360f2; }
+.btn-viber:hover { background: #5b4bd5; border-color: #5b4bd5; }
 
 /* ===== LAYOUT ===== */
 .app-container {

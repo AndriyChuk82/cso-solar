@@ -1414,6 +1414,82 @@ async function printProposal() {
     window.print();
 }
 
+// ===== VIBER =====
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('input[name="vbFormat"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const val = e.target.value;
+            const note = document.getElementById('viberPdfNote');
+            if (val === 'pdf') {
+                note.style.display = 'block';
+                note.innerHTML = "📥 PDF буде автоматично завантажено на пристрій. Надішліть його клієнту.";
+            } else if (val === 'photo') {
+                note.style.display = 'block';
+                note.innerHTML = "📸 Скріншот КП буде завантажено як картинку. Надішліть її у Viber.";
+            } else {
+                note.style.display = 'none';
+            }
+            document.querySelectorAll('input[name="vbFormat"]').forEach(r => {
+                if (r.parentElement) r.parentElement.classList.remove('selected');
+            });
+            e.target.parentElement.classList.add('selected');
+        });
+    });
+});
+
+function openViberModal() {
+    openModal('viberModal');
+}
+
+async function sendToViber() {
+    const format = document.querySelector('input[name="vbFormat"]:checked')?.value || 'pdf';
+
+    readProposalForm();
+    closeModal('viberModal');
+
+    const p = state.proposal;
+    const phone = p.clientContact ? p.clientContact.replace(/\D/g, '') : '';
+
+    try {
+        if (format === 'link') {
+            let text = `📋 Пропозиція ${p.number} від ${p.date}\n`;
+            const totalSum = p.items.reduce((s, it) => s + it.price * it.quantity, 0);
+            text += `💰 Сума: ${formatMoney(totalSum)}`;
+            
+            // If phone exists, open chat directly, otherwise just forward text
+            const url = phone 
+                ? `viber://chat?number=%2B${phone}&draft=${encodeURIComponent(text)}`
+                : `viber://forward?text=${encodeURIComponent(text)}`;
+            
+            window.open(url);
+            showToast('Viber відкрито', 'success');
+        } else if (format === 'photo') {
+            showToast('Готуємо скріншот для Viber...', 'info');
+            await prepImagesForCapture();
+            const mainEl = document.getElementById('mainContent');
+            const canvas = await html2canvas(mainEl, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff'
+            });
+            const imgData = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = imgData;
+            link.download = `KP_${p.number || 'proposal'}.png`;
+            link.click();
+            showToast('Скріншот готовий. Надішліть його у Viber', 'success');
+        } else {
+            showToast('Генеруємо PDF для Viber...', 'info');
+            await printProposal();
+            showToast('PDF готовий. Надішліть його вручну у Viber', 'success');
+        }
+    } catch (e) {
+        console.error(e);
+        showToast('Помилка: ' + e.message, 'error');
+    }
+}
+
 // ===== TELEGRAM =====
 async function sendToTelegram() {
     const format = document.querySelector('input[name="tgFormat"]:checked')?.value || 'pdf';
@@ -2464,6 +2540,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const chatIdField = document.getElementById('settingChatId');
         if (tokenField) tokenField.closest('.form-group').style.display = 'none';
         if (chatIdField) chatIdField.closest('.form-group').style.display = 'none';
+        // Hide Viber token/receiverId fields too (server handles via env vars)
+        const viberTokenField = document.getElementById('settingViberToken');
+        const viberReceiverField = document.getElementById('settingViberReceiverId');
+        if (viberTokenField) viberTokenField.closest('.form-group').style.display = 'none';
+        if (viberReceiverField) viberReceiverField.closest('.form-group').style.display = 'none';
     }
 
     // Buttons
@@ -2666,6 +2747,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnPrint').addEventListener('click', printProposal);
     document.getElementById('btnTelegram').addEventListener('click', () => openModal('telegramModal'));
     document.getElementById('btnSendTelegram').addEventListener('click', sendToTelegram);
+    document.getElementById('btnViber').addEventListener('click', () => openViberModal());
+    document.getElementById('btnSendViber').addEventListener('click', sendToViber);
     document.getElementById('btnSaveSettings').addEventListener('click', applySettings);
     document.getElementById('btnAddCustom').addEventListener('click', addCustomItem);
     document.getElementById('btnClearCache').addEventListener('click', clearAppCache);

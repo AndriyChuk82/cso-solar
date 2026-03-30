@@ -248,6 +248,7 @@
                 <button id="btnWarranty" class="btn btn-outline">🛡️ Гарантія</button>
                 <button id="btnPrint" class="btn btn-outline">🖨️ Друк</button>
                 <button id="btnTelegram" class="btn btn-accent">📨 Telegram</button>
+                <button id="btnViber" class="btn btn-viber">💜 Viber</button>
             </div>
         </section>
     </main>
@@ -505,6 +506,48 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-accent" id="btnSendTelegram">Відправити</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== VIBER MODAL ===== -->
+    <div class="modal-overlay" id="viberModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>💜 Відправити у Viber</h3>
+                <button class="modal-close" data-close="viberModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="tg-desc">Оберіть спосіб відправки:</p>
+                <div class="tg-options">
+                    <label class="tg-option selected">
+                        <input type="radio" name="vbFormat" value="pdf" checked>
+                        <span class="tg-option-card">
+                            <span class="tg-option-icon">📄</span>
+                            <span class="tg-option-label">PDF файл</span>
+                        </span>
+                    </label>
+                    <label class="tg-option">
+                        <input type="radio" name="vbFormat" value="photo">
+                        <span class="tg-option-card">
+                            <span class="tg-option-icon">📸</span>
+                            <span class="tg-option-label">Скріншот</span>
+                        </span>
+                    </label>
+                    <label class="tg-option">
+                        <input type="radio" name="vbFormat" value="link">
+                        <span class="tg-option-card">
+                            <span class="tg-option-icon">📱</span>
+                            <span class="tg-option-label">Відкрити Viber</span>
+                        </span>
+                    </label>
+                </div>
+                <div id="viberPdfNote" style="margin-top:12px; padding:10px 12px; background:#f0fdf4; border-radius:8px; font-size:0.78rem; color:#166534;">
+                    📥 PDF буде автоматично завантажено на ваш пристрій. Надішліть його клієнту вручну.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-viber" id="btnSendViber">💜 Відправити</button>
             </div>
         </div>
     </div>
