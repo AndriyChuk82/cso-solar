@@ -1468,10 +1468,22 @@ async function sendToViber() {
         } else if (format === 'photo') {
             showToast('Готуємо скріншот у буфер...', 'info');
             
-            // Privacy: hide cost column before snapshot
+            // Privacy: hide cost column
             const originalShowCost = state.settings.showCost;
             document.body.classList.add('hide-cost');
             
+            // Hide UI elements (buttons, etc)
+            const noprint = document.querySelectorAll('.no-print');
+            noprint.forEach(el => el.style.display = 'none');
+
+            // Show Print Header (Logo, Seller details)
+            const printH = document.getElementById('printHeader');
+            const originalDisplay = printH.style.display;
+            printH.style.display = 'flex';
+            
+            document.body.classList.add('is-exporting');
+            document.body.classList.add('is-photo');
+
             await prepImagesForCapture();
             const mainEl = document.getElementById('mainContent');
             
@@ -1480,23 +1492,34 @@ async function sendToViber() {
                     scale: 2,
                     useCORS: true,
                     logging: false,
-                    backgroundColor: '#ffffff'
+                    backgroundColor: '#ffffff',
+                    scrollY: -window.scrollY,
+                    windowHeight: mainEl.scrollHeight
                 });
                 
-                // Restore privacy setting
+                // RESTORE UI
+                document.body.classList.remove('is-exporting');
+                document.body.classList.remove('is-photo');
+                printH.style.display = originalDisplay;
+                noprint.forEach(el => el.style.display = '');
                 if (originalShowCost) document.body.classList.remove('hide-cost');
                 
                 canvas.toBlob(async (blob) => {
                     try {
                         const data = [new ClipboardItem({ [blob.type]: blob })];
                         await navigator.clipboard.write(data);
-                        showToast('✅ Скріншот у буфері! Натисніть Ctrl+V у Viber', 'success');
+                        showToast('✅ Повна копія скріншота у буфері!', 'success');
                     } catch (err) {
                         console.error('Clipboard error:', err);
                         showToast('Помилка копіювання.', 'error');
                     }
                 });
             } catch (err) {
+                // RESTORE UI on error
+                document.body.classList.remove('is-exporting');
+                document.body.classList.remove('is-photo');
+                printH.style.display = originalDisplay;
+                noprint.forEach(el => el.style.display = '');
                 if (originalShowCost) document.body.classList.remove('hide-cost');
                 throw err;
             }
