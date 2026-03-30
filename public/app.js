@@ -1422,10 +1422,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const note = document.getElementById('viberPdfNote');
             if (val === 'pdf') {
                 note.style.display = 'block';
-                note.innerHTML = "📥 PDF буде автоматично завантажено на пристрій. Надішліть його клієнту.";
+                note.innerHTML = "📥 PDF буде автоматично завантажено. Надішліть його клієнту.";
             } else if (val === 'photo') {
                 note.style.display = 'block';
-                note.innerHTML = "📸 Скріншот КП буде завантажено як картинку. Надішліть її у Viber.";
+                note.innerHTML = "📋 Скріншот КП буде скопійовано в буфер. <br>Вставте його (<b>Ctrl+V</b>) у Viber.";
+            } else if (val === 'link') {
+                note.style.display = 'block';
+                note.innerHTML = "📱 Відкриється прямий чат з клієнтом та готовим текстом.";
             } else {
                 note.style.display = 'none';
             }
@@ -1456,7 +1459,6 @@ async function sendToViber() {
             const totalSum = p.items.reduce((s, it) => s + it.price * it.quantity, 0);
             text += `💰 Сума: ${formatMoney(totalSum)}`;
             
-            // If phone exists, open chat directly, otherwise just forward text
             const url = phone 
                 ? `viber://chat?number=%2B${phone}&draft=${encodeURIComponent(text)}`
                 : `viber://forward?text=${encodeURIComponent(text)}`;
@@ -1464,21 +1466,40 @@ async function sendToViber() {
             window.open(url);
             showToast('Viber відкрито', 'success');
         } else if (format === 'photo') {
-            showToast('Готуємо скріншот для Viber...', 'info');
+            showToast('Готуємо скріншот у буфер...', 'info');
+            
+            // Privacy: hide cost column before snapshot
+            const originalShowCost = state.settings.showCost;
+            document.body.classList.add('hide-cost');
+            
             await prepImagesForCapture();
             const mainEl = document.getElementById('mainContent');
-            const canvas = await html2canvas(mainEl, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff'
-            });
-            const imgData = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = imgData;
-            link.download = `KP_${p.number || 'proposal'}.png`;
-            link.click();
-            showToast('Скріншот готовий. Надішліть його у Viber', 'success');
+            
+            try {
+                const canvas = await html2canvas(mainEl, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
+                
+                // Restore privacy setting
+                if (originalShowCost) document.body.classList.remove('hide-cost');
+                
+                canvas.toBlob(async (blob) => {
+                    try {
+                        const data = [new ClipboardItem({ [blob.type]: blob })];
+                        await navigator.clipboard.write(data);
+                        showToast('✅ Скріншот у буфері! Натисніть Ctrl+V у Viber', 'success');
+                    } catch (err) {
+                        console.error('Clipboard error:', err);
+                        showToast('Помилка копіювання.', 'error');
+                    }
+                });
+            } catch (err) {
+                if (originalShowCost) document.body.classList.remove('hide-cost');
+                throw err;
+            }
         } else {
             showToast('Генеруємо PDF для Viber...', 'info');
             await printProposal();
