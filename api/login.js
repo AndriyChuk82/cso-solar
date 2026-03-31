@@ -142,8 +142,21 @@ export default async function handler(req, res) {
             isProduction ? 'Secure' : ''
         ].filter(Boolean).join('; ');
 
+        // Determine correct redirect URL
+        let redirectUrl = '/';
+        const isAdmin = userRole === 'admin' || userRole === 'адмін' || userRole === 'адміністратор';
+        
+        if (!isAdmin && moduleAccess) {
+            const hasProposals = moduleAccess.includes('proposals');
+            if (!hasProposals) {
+                if (moduleAccess.includes('warehouse')) redirectUrl = '/warehouse/';
+                else if (moduleAccess.includes('projects')) redirectUrl = '/projects/';
+                else if (moduleAccess.includes('gt')) redirectUrl = '/green-tariff.html';
+            }
+        }
+
         res.setHeader('Set-Cookie', cookieOptions);
-        return res.status(200).json({ success: true });
+        return res.status(200).json({ success: true, redirect: redirectUrl });
     } catch (err) {
         console.error('Login error:', err);
         return res.status(500).json({ error: 'Внутрішня помилка сервера' });

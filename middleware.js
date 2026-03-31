@@ -55,6 +55,15 @@ export default async function middleware(request) {
             const isAdmin = role === 'admin' || role === 'адмін' || role === 'адміністратор';
             const moduleAccess = payload.module_access || '';
 
+            // Перевірка доступу до КП (/)
+            if (pathname === '/' || pathname === '/index.html') {
+                if (!isAdmin && !moduleAccess.includes('proposals')) {
+                    if (moduleAccess.includes('warehouse')) return Response.redirect(new URL('/warehouse/', request.url), 302);
+                    if (moduleAccess.includes('projects')) return Response.redirect(new URL('/projects/', request.url), 302);
+                    if (moduleAccess.includes('gt')) return Response.redirect(new URL('/green-tariff.html', request.url), 302);
+                }
+            }
+
             // Перевірка доступу до /warehouse
             if (pathname.startsWith('/warehouse')) {
                 if (!isAdmin && !moduleAccess.includes('warehouse')) {

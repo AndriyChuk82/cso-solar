@@ -99,7 +99,7 @@
                 if (resp.ok && data.success) {
                     btnText.textContent = '✅ Успіх!';
                     setTimeout(() => {
-                        window.location.href = '/';
+                        window.location.href = data.redirect || '/';
                     }, 500);
                 } else {
                     errorDiv.textContent = data.error || 'Невірний логін або пароль';
