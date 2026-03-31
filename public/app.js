@@ -2793,6 +2793,7 @@ document.addEventListener('DOMContentLoaded', () => {
             seller: document.getElementById('warrantySeller').value,
             sellerAddress: document.getElementById('warrantySellerAddress').value,
             buyer: document.getElementById('warrantyBuyer').value,
+            applySeal: document.getElementById('warrantyApplySeal').checked,
             items: itemsData
         };
         

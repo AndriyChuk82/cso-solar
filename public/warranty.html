@@ -169,6 +169,18 @@
             color: #aaa;
             font-size: 12px;
             margin: -30px auto 0 auto;
+            position: relative;
+        }
+        .cso-seal-overlay {
+            position: absolute;
+            width: 145px;
+            bottom: 0px;
+            left: -20px;
+            pointer-events: none;
+            mix-blend-mode: multiply; /* Make it transparent so lines are visible */
+            opacity: 0.94;
+            z-index: 10;
+            display: none; /* Hidden by default */
         }
     </style>
 </head>
@@ -248,7 +260,10 @@
                 <div><strong>Продавець:</strong></div>
                 <div class="sig-line"></div>
                 <div class="sig-subtext">(підпис продавця)</div>
-                <div class="stamp-box">М.П.</div>
+                <div class="stamp-box">
+                    М.П.
+                    <img src="doc/sign_cso.png" id="sealImage" class="cso-seal-overlay">
+                </div>
             </div>
             <div class="sig-block">
                 <div><strong>Покупець:</strong></div>
@@ -269,6 +284,12 @@
                 document.getElementById('outSeller').textContent = data.seller || '';
                 document.getElementById('outSellerAddress').textContent = data.sellerAddress || '';
                 document.getElementById('outBuyer').textContent = data.buyer || '';
+
+                // Show seal if applied
+                if (data.applySeal) {
+                    const seal = document.getElementById('sealImage');
+                    if (seal) seal.style.display = 'block';
+                }
 
                 // Date parsing (YYYY-MM-DD -> DD.MM.YYYY)
                 if (data.date) {
