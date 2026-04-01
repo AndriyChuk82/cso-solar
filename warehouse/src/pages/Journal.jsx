@@ -282,7 +282,7 @@ export default function Journal() {
                  <tr>
                   <th><ResizableHeader pageId="journal" columnId="date">Дата</ResizableHeader></th>
                   <th><ResizableHeader pageId="journal" columnId="warehouse">Склад</ResizableHeader></th>
-                  <th><ResizableHeader pageId="journal" columnId="product">Товар</ResizableHeader></th>
+                  <th style={{ width: '100%' }}><ResizableHeader pageId="journal" columnId="product">Товар</ResizableHeader></th>
                   <th><ResizableHeader pageId="journal" columnId="type">Тип</ResizableHeader></th>
                   <th><ResizableHeader pageId="journal" columnId="unit">Од.</ResizableHeader></th>
                   <th style={{ textAlign: 'center' }}><ResizableHeader pageId="journal" columnId="qty">К-сть</ResizableHeader></th>

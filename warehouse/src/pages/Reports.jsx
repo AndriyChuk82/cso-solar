@@ -284,7 +284,7 @@ export default function Reports() {
                 <thead>
                   <tr>
                     {reportData.columns?.map((col, i) => (
-                      <th key={i}>
+                      <th key={i} style={{ width: (col === 'Товар' || col === 'Назва') ? '100%' : 'auto' }}>
                         <ResizableHeader pageId={`reports-${activeTab}`} columnId={col}>
                           {col}
                         </ResizableHeader>
