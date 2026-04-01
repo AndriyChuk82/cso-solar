@@ -181,75 +181,82 @@ export default function Journal() {
       </div>
 
       {/* Фільтри */}
-      <div className="filters-bar">
-        <div className="form-group" style={{ flex: 1, minWidth: '180px' }}>
-          <label>Склад</label>
-          <select
-            className="form-select"
-            value={filters.warehouseId}
-            onChange={(e) => updateFilter('warehouseId', e.target.value)}
-          >
-            <option value="">Всі склади</option>
-            {warehouses.map((w) => (
-              <option key={w.id} value={w.id}>{w.name}</option>
-            ))}
-          </select>
-        </div>
+      <div className="card" style={{ marginBottom: '12px', padding: '10px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '10px' }}>
+          <div className="form-group" style={{ marginBottom: 0, flex: '1 1 180px' }}>
+            <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Склад</label>
+            <select
+              className="form-select"
+              value={filters.warehouseId}
+              onChange={(e) => updateFilter('warehouseId', e.target.value)}
+              style={{ padding: '6px 10px', height: '36px' }}
+            >
+              <option value="">Всі склади</option>
+              {warehouses.map((w) => (
+                <option key={w.id} value={w.id}>{w.name}</option>
+              ))}
+            </select>
+          </div>
 
-        <div className="form-group" style={{ minWidth: '140px' }}>
-          <label>Тип операції</label>
-          <select
-            className="form-select"
-            value={filters.type}
-            onChange={(e) => updateFilter('type', e.target.value)}
-          >
-            <option value="">Всі типи</option>
-            {Object.entries(CONFIG.OPERATION_LABELS).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
-            ))}
-          </select>
-        </div>
+          <div className="form-group" style={{ marginBottom: 0, flex: '0 0 140px' }}>
+            <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Тип операції</label>
+            <select
+              className="form-select"
+              value={filters.type}
+              onChange={(e) => updateFilter('type', e.target.value)}
+              style={{ padding: '6px 10px', height: '36px' }}
+            >
+              <option value="">Всі типи</option>
+              {Object.entries(CONFIG.OPERATION_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+          </div>
 
-        <div className="form-group">
-          <label>Від</label>
-          <input
-            type="date"
-            className="form-input"
-            value={filters.dateFrom}
-            onChange={(e) => updateFilter('dateFrom', e.target.value)}
-          />
-        </div>
+          <div className="form-group" style={{ marginBottom: 0, flex: '0 0 130px' }}>
+            <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Від</label>
+            <input
+              type="date"
+              className="form-input"
+              value={filters.dateFrom}
+              onChange={(e) => updateFilter('dateFrom', e.target.value)}
+              style={{ padding: '6px 10px', height: '36px' }}
+            />
+          </div>
 
-        <div className="form-group">
-          <label>До</label>
-          <input
-            type="date"
-            className="form-input"
-            value={filters.dateTo}
-            onChange={(e) => updateFilter('dateTo', e.target.value)}
-          />
-        </div>
+          <div className="form-group" style={{ marginBottom: 0, flex: '0 0 130px' }}>
+            <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>До</label>
+            <input
+              type="date"
+              className="form-input"
+              value={filters.dateTo}
+              onChange={(e) => updateFilter('dateTo', e.target.value)}
+              style={{ padding: '6px 10px', height: '36px' }}
+            />
+          </div>
 
-        <div className="form-group" style={{ flex: 1, minWidth: '180px' }}>
-          <label>Пошук товару</label>
-          <input
-            type="text"
-            className="form-input"
-            placeholder="Назва або артикул..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        
-        <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}>
-          <button 
-            className={`btn btn-sm ${sortAsc ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setSortAsc(!sortAsc)}
-            title="Сортувати від А до Я за назвою"
-            style={{ height: '38px' }}
-          >
-            {sortAsc ? 'Сортування: А-Я' : 'Сортувати А-Я'}
-          </button>
+          <div className="form-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
+            <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Пошук товару</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Назва або артикул..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ padding: '6px 10px', height: '36px' }}
+            />
+          </div>
+          
+          <div>
+            <button 
+              className={`btn btn-sm ${sortAsc ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setSortAsc(!sortAsc)}
+              title="Сортувати від А до Я за назвою"
+              style={{ height: '36px', padding: '0 12px', fontSize: '0.78rem', color: sortAsc ? 'white' : undefined }}
+            >
+              {sortAsc ? 'А-Я' : 'Сортувати А-Я'}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -278,28 +285,32 @@ export default function Journal() {
                   <th><ResizableHeader pageId="journal" columnId="product">Товар</ResizableHeader></th>
                   <th><ResizableHeader pageId="journal" columnId="type">Тип</ResizableHeader></th>
                   <th><ResizableHeader pageId="journal" columnId="unit">Од.</ResizableHeader></th>
-                  <th><ResizableHeader pageId="journal" columnId="qty">Кількість</ResizableHeader></th>
-                  <th><ResizableHeader pageId="journal" columnId="balance">Залишок</ResizableHeader></th>
-                  {user?.isAdmin && <th></th>}
+                  <th style={{ textAlign: 'center' }}><ResizableHeader pageId="journal" columnId="qty">К-сть</ResizableHeader></th>
+                  <th style={{ textAlign: 'center' }}><ResizableHeader pageId="journal" columnId="balance">Залишок</ResizableHeader></th>
+                  <th><ResizableHeader pageId="journal" columnId="comment">Коментар</ResizableHeader></th>
+                  {user?.isAdmin && <th>Дії</th>}
                 </tr>
               </thead>
               <tbody>
                 {paginatedOperations.map((op) => (
                   <tr key={op.id} className={`row-${op.type}`}>
-                    <td>{formatDate(op.date)}</td>
-                    <td>{getWarehouseName(op.warehouse_from || op.warehouse_to)}</td>
-                    <td style={{ fontWeight: 600, fontSize: '0.95rem' }}>{op.product_name || '—'}</td>
+                    <td style={{ fontSize: '0.8rem' }}>{formatDate(op.date)}</td>
+                    <td style={{ fontSize: '0.8rem' }}>{getWarehouseName(op.warehouse_from || op.warehouse_to)}</td>
+                    <td style={{ fontSize: '0.85rem' }}>{op.product_name || '—'}</td>
                     <td>
-                      <span className={`badge badge-${op.type}`}>
+                      <span className={`badge badge-${op.type}`} style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
                         {CONFIG.OPERATION_LABELS[op.type] || op.type}
                       </span>
                     </td>
-                     <td style={{ color: 'var(--text-muted)' }}>{op.unit || '—'}</td>
-                    <td style={{ fontWeight: 700, fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{op.unit || '—'}</td>
+                    <td style={{ fontSize: '0.85rem', whiteSpace: 'pre-line', textAlign: 'center' }}>
                       {formatQuantity(op.quantity, op.product_category, op.product_name)}
                     </td>
-                    <td style={{ fontSize: '0.85rem' }}>
+                    <td style={{ fontSize: '0.82rem', whiteSpace: 'pre-line', textAlign: 'center' }}>
                       {op.balance_after != null ? formatQuantity(op.balance_after, op.product_category, op.product_name) : '—'}
+                    </td>
+                    <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', maxWidth: '200px', whiteSpace: 'normal', lineHeight: '1.2' }}>
+                      {typeof (op.comment || op.note || op.primitka) === 'object' ? JSON.stringify(op.comment || op.note || op.primitka) : String(op.comment || op.note || op.primitka || '—')}
                     </td>
                     {user?.isAdmin && (
                       <td>
@@ -308,6 +319,7 @@ export default function Journal() {
                             className="btn btn-ghost btn-sm"
                             onClick={() => handleOpenEdit(op)}
                             title="Редагувати"
+                            style={{ padding: '2px 6px' }}
                           >
                             ✏️
                           </button>
@@ -315,7 +327,7 @@ export default function Journal() {
                             className="btn btn-ghost btn-sm"
                             onClick={() => handleDelete(op.id)}
                             title="Видалити"
-                            style={{ color: 'var(--danger)' }}
+                            style={{ color: 'var(--danger)', padding: '2px 6px' }}
                           >
                             🗑️
                           </button>
@@ -358,7 +370,7 @@ export default function Journal() {
       {/* Модалка редагування */}
       {editModal && (
         <div className="modal-overlay">
-          <div className="modal-container" style={{ maxWidth: '400px' }}>
+          <div className="modal-container" style={{ maxWidth: '450px', background: 'white', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)', padding: '20px' }}>
             <div className="modal-header">
               <h3>✏️ Редагування операції</h3>
               <button className="btn-close" onClick={() => setEditModal(null)}>×</button>

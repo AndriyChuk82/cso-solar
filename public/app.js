@@ -785,16 +785,16 @@ function convertToUSD(value, currency) {
 }
 
 function convertCurrency(usdValue, toCurrency) {
-    if (toCurrency === 'UAH') return Math.round(usdValue * state.settings.usdToUah * 100) / 100;
-    if (toCurrency === 'EUR') return Math.round(usdValue * (state.settings.usdToUah / state.settings.eurToUah) * 100) / 100;
-    return usdValue;
+    if (toCurrency === 'UAH') return Math.round(usdValue * state.settings.usdToUah * 10) / 10;
+    if (toCurrency === 'EUR') return Math.round(usdValue * (state.settings.usdToUah / state.settings.eurToUah) * 10) / 10;
+    return Math.round(usdValue * 10) / 10;
 }
 
 function formatMoney(value, currency) {
     if (currency === undefined) currency = state.activeCurrency;
     const sym = currency === 'UAH' ? '₴' : (currency === 'EUR' ? '€' : '$');
     const converted = convertCurrency(value, currency);
-    return sym + ' ' + converted.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return sym + ' ' + converted.toLocaleString('uk-UA', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
 // ===== CATALOG RENDERING =====
@@ -1025,8 +1025,8 @@ function renderProposalTable() {
     let html = '';
 
     items.forEach((item, i) => {
-        const sum = Math.round(item.price * item.quantity * 100) / 100;
-        const sumCost = Math.round(item.costUSD * item.quantity * 100) / 100;
+        const sum = Math.round(item.price * item.quantity * 10) / 10;
+        const sumCost = Math.round(item.costUSD * item.quantity * 10) / 10;
         
         let nameInput = `<div class="row-name-text editable-text" contenteditable="plaintext-only" spellcheck="false" 
             data-placeholder="Назва товару"
@@ -1037,8 +1037,8 @@ function renderProposalTable() {
             onblur="updateItemField(${i},'description',this.innerText.trim())">${escHtml(item.description)}</div>`;
         
         // Editable cost field
-        const costVal = convertCurrency(item.costUSD, state.activeCurrency).toFixed(2);
-        const costInput = `<input type="number" class="tbl-input input-price" style="width:100%" value="${costVal}" step="0.01" min="0" onchange="updateItemCost(${i},this.value)">`;
+        const costVal = convertCurrency(item.costUSD, state.activeCurrency).toFixed(1);
+        const costInput = `<input type="number" class="tbl-input input-price" style="width:100%" value="${costVal}" step="0.1" min="0" onchange="updateItemCost(${i},this.value)">`;
 
         html += `<tr>
             <td class="row-num" style="white-space:nowrap; text-align:center; padding: 2px;">
@@ -1056,7 +1056,7 @@ function renderProposalTable() {
             <td><input type="number" class="tbl-input input-qty" value="${item.quantity}" min="1" onchange="updateItemField(${i},'quantity',this.value)"></td>
             <td class="row-cost cost-column">${costInput}</td>
             <td class="row-cost cost-column">${formatMoney(sumCost)}</td>
-            <td><input type="number" class="tbl-input input-price" value="${convertCurrency(item.price, state.activeCurrency).toFixed(2)}" step="0.01" min="0" onchange="updateItemPrice(${i},this.value)"></td>
+            <td><input type="number" class="tbl-input input-price" value="${convertCurrency(item.price, state.activeCurrency).toFixed(1)}" step="0.1" min="0" onchange="updateItemPrice(${i},this.value)"></td>
             <td class="row-sum">${formatMoney(sum)}</td>
             <td class="no-print"><button class="delete-btn" onclick="removeItem(${i})" title="Видалити">✕</button></td>
         </tr>`;
@@ -2921,6 +2921,452 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Матеріал збережено', 'success');
     });
 
+    // ===== WIZARD LOGIC =====
+    const btnWizard = document.getElementById('btnWizard');
+    const wizardModal = document.getElementById('wizardModal');
+    const wizardType = document.getElementById('wizardType');
+    const wizardBackupGroup = document.getElementById('wizardBackupGroup');
+    const btnGenWizard = document.getElementById('btnGenWizard');
+
+    if (btnWizard) {
+        btnWizard.addEventListener('click', () => {
+            openModal('wizardModal');
+            updateWizardRecommendations();
+        });
+    }
+
+    const wizardPowerInput = document.getElementById('wizardPower');
+    const wizardBackupInput = document.getElementById('wizardBackup');
+    const wizardSelectInverter = document.getElementById('wizardSelectInverter');
+
+    if (wizardType) wizardType.addEventListener('change', updateWizardRecommendations);
+    if (wizardPowerInput) wizardPowerInput.addEventListener('input', updateWizardRecommendations);
+    if (wizardBackupInput) wizardBackupInput.addEventListener('input', updateWizardRecommendations);
+    if (wizardSelectInverter) wizardSelectInverter.addEventListener('change', refreshBatteryByInverter);
+
+    function refreshBatteryByInverter() {
+        const invId = wizardSelectInverter.value;
+        const type = wizardType.value;
+        const backup = parseFloat(wizardBackupInput.value) || 0;
+        const batGroup = document.getElementById('wizardSelectBatteryGroup');
+        const selBattery = document.getElementById('wizardSelectBattery');
+
+        if (type !== 'hybrid' || backup <= 0) {
+            batGroup.style.display = 'none';
+            return;
+        }
+        
+        const inverter = state.products.find(p => p.id === invId);
+        let isInverterHV = false;
+        if (inverter) {
+            const titleLower = (inverter.model || inverter.description || '').toLowerCase();
+            if (titleLower.includes('hv')) isInverterHV = true;
+            else if (titleLower.includes('lv')) isInverterHV = false;
+            else {
+                const invPower = parsePowerFromTitle(inverter.model || inverter.description) || 0;
+                isInverterHV = invPower >= 30;
+            }
+        }
+
+        const allBats = state.products.filter(p => p.mainCategory === 'АКБ та BMS' && !(p.model || p.description || '').toLowerCase().includes('bms'));
+        let matchedBats = allBats.filter(b => {
+             const t = (b.model || b.description || '').toLowerCase();
+             if (t.includes('cluster')) return false; 
+             if (isInverterHV) return t.includes('hv') || t.includes('bos');
+             return t.includes('lv') || t.includes('m6.1') || t.includes('g5.1');
+        });
+        
+        let batOptions = '';
+        let first = true;
+        matchedBats.forEach(b => {
+            const isHV = (b.model || b.description || '').toLowerCase().includes('hv');
+            const label = `${first ? '✅ [Реком.] ' : ''}${b.model || b.name || b.description} ${isHV ? '(HV)' : '(LV)'} (${b.priceCurrency} ${b.price})`;
+            batOptions += `<option value="${b.id}">${label}</option>`;
+            first = false;
+        });
+
+        if (matchedBats.length === 0) batOptions = '<option value="">Не знайдено підходящих АКБ</option>';
+        selBattery.innerHTML = batOptions;
+        selBattery.dataset.needsBms = isInverterHV ? 'true' : 'false';
+    }
+
+    function updateWizardRecommendations() {
+        const power = parseFloat(document.getElementById('wizardPower').value) || 0;
+        const type = wizardType.value;
+        const backup = parseFloat(wizardBackupInput.value) || 0;
+
+        const selInverter = wizardSelectInverter;
+        const selPanel = document.getElementById('wizardSelectPanel');
+        const batGroup = document.getElementById('wizardSelectBatteryGroup');
+        const selBattery = document.getElementById('wizardSelectBattery');
+
+        if (type === 'hybrid') {
+            wizardBackupGroup.style.display = 'block';
+        } else {
+            wizardBackupGroup.style.display = 'none';
+        }
+
+        if (!power || power <= 0) {
+            selInverter.innerHTML = '<option value="">Вкажіть потужність...</option>';
+            selPanel.innerHTML = '<option value="">Вкажіть потужність...</option>';
+            selBattery.innerHTML = '<option value="">Без АКБ</option>';
+            batGroup.style.display = 'none';
+            return;
+        }
+
+        // 1. Інвертори
+        const allInverters = state.products.filter(p => p.mainCategory === 'Інвертори');
+        let recommendedInverter = null;
+        if (type === 'ongrid') {
+            recommendedInverter = findClosestProduct('Інвертори', ['huawei'], power) || findClosestProduct('Інвертори', [], power);
+        } else {
+            recommendedInverter = findClosestProduct('Інвертори', ['deye'], power) || findClosestProduct('Інвертори', [], power);
+        }
+
+        const subCatPref = type === 'ongrid' ? 'Мережевий' : 'Гібридний';
+        let invOptions = '';
+        
+        const sortedInvs = [...allInverters].sort((a,b) => {
+            if (recommendedInverter && a.id === recommendedInverter.id) return -1;
+            if (recommendedInverter && b.id === recommendedInverter.id) return 1;
+            const aPref = (a.subCategory && a.subCategory.includes(subCatPref)) ? 1 : 0;
+            const bPref = (b.subCategory && b.subCategory.includes(subCatPref)) ? 1 : 0;
+            return bPref - aPref;
+        });
+
+        if (!recommendedInverter) invOptions += '<option value="">--- Не знайдено ідеального ---</option>';
+
+        sortedInvs.forEach(inv => {
+            const isRec = (recommendedInverter && inv.id === recommendedInverter.id);
+            const label = `${isRec ? '✅ [Реком.] ' : ''}${inv.model || inv.name || inv.description} (${inv.priceCurrency} ${inv.price})`;
+            invOptions += `<option value="${inv.id}" ${isRec ? 'selected' : ''}>${label}</option>`;
+        });
+        selInverter.innerHTML = invOptions;
+
+        // 2. Панелі
+        const allPanels = state.products.filter(p => p.mainCategory === 'Сонячні батареї');
+        let recommendedPanel = allPanels.find(p => (p.model || p.description || '').toLowerCase().includes('longi') && ((p.model || p.description || '').includes('615') || (p.model || p.description || '').includes('620'))) || allPanels[0];
+
+        let panelOptions = '';
+        allPanels.forEach(p => {
+            const isRec = (recommendedPanel && p.id === recommendedPanel.id);
+            const label = `${isRec ? '✅ [Реком.] ' : ''}${p.model || p.name || p.description} (${p.priceCurrency} ${p.price})`;
+            panelOptions += `<option value="${p.id}" ${isRec ? 'selected' : ''}>${label}</option>`;
+        });
+        selPanel.innerHTML = panelOptions;
+
+        // 3. Батареї
+        if (type === 'hybrid' && backup > 0) {
+            batGroup.style.display = 'block';
+            refreshBatteryByInverter(); // triggers the smart HV/LV filter
+        } else {
+            batGroup.style.display = 'none';
+            selBattery.innerHTML = '<option value="">Без АКБ</option>';
+            selBattery.dataset.needsBms = 'false';
+        }
+    }
+
+    if (btnGenWizard) {
+        btnGenWizard.addEventListener('click', () => {
+            const power = parseFloat(document.getElementById('wizardPower').value);
+            const type = wizardType.value; 
+            const backup = parseFloat(document.getElementById('wizardBackup').value) || 0;
+
+            if (!power || power <= 0) {
+                showToast('Будь ласка, вкажіть потужність станції', 'error');
+                return;
+            }
+
+            generateWizardKP(power, type, backup);
+            closeModal('wizardModal');
+        });
+    }
+
+    function generateWizardKP(power, type, backup) {
+        const items = [];
+        const markupTarget = state.settings.markup || 15;
+
+        // Fetch selected parts from UI dropdowns
+        const invId = document.getElementById('wizardSelectInverter').value;
+        const panelId = document.getElementById('wizardSelectPanel').value;
+        const batId = document.getElementById('wizardSelectBattery')?.value;
+        const needsBms = document.getElementById('wizardSelectBattery')?.dataset.needsBms === 'true';
+        const panelReserve = parseFloat(document.getElementById('wizardPanelReserve')?.value) || 0;
+
+        // 1. Інвертор
+        if (invId) {
+            const inv = state.products.find(p => p.id === invId);
+            if (inv) items.push(createProposalItem(inv, 1, markupTarget));
+        } else {
+            showToast('Інвертор не обрано!', 'error');
+        }
+
+        // 2. Панелі
+        let panelCount = 0;
+        let actualPanelPower = 0;
+        if (panelId) {
+            const panel = state.products.find(p => p.id === panelId);
+            if (panel) {
+                let panelPwr = parsePowerFromTitle(panel.model || panel.description) || 615; 
+                if (panelPwr > 100) panelPwr = panelPwr / 1000; // convert Watts to kW
+                const targetPanelPower = power * (1 + panelReserve / 100);
+                panelCount = Math.ceil(targetPanelPower / panelPwr);
+                actualPanelPower = panelCount * panelPwr;
+                items.push(createProposalItem(panel, panelCount, markupTarget));
+            }
+        }
+
+        // 3. Акумулятори
+        if (type === 'hybrid' && backup > 0 && batId) {
+            const bat = state.products.find(p => p.id === batId);
+            let batCount = 0;
+            if (bat) {
+                const batCap = 5.12; 
+                batCount = Math.ceil(backup / batCap);
+                items.push(createProposalItem(bat, batCount, markupTarget));
+            }
+
+            if (needsBms) {
+                const batNameLcd = (bat.model || bat.description || '').toLowerCase();
+                const isBos = batNameLcd.includes('bos');
+                const isGb = batNameLcd.includes('gb');
+
+                const allBms = state.products.filter(p => p.mainCategory === 'АКБ та BMS' && (p.model || p.description || '').toLowerCase().includes('bms'));
+                
+                let targetBms = null;
+                if (isBos) {
+                    targetBms = allBms.find(p => (p.model || p.description || '').toLowerCase().includes('bos'));
+                } else if (isGb) {
+                    targetBms = allBms.find(p => (p.model || p.description || '').toLowerCase().includes('gb'));
+                }
+                
+                // Якщо точного збігу не знайдено, або це якась інша високовольтна серія, беремо перший BMS
+                if (!targetBms && allBms.length > 0) {
+                    targetBms = allBms[0];
+                }
+
+                if (targetBms) {
+                    items.push(createProposalItem(targetBms, 1, markupTarget));
+                }
+            }
+            
+            // Стійка / Шафа для акумуляторів, якщо їх 2 і більше
+            if (batCount >= 2) {
+                // Виключаємо комплекти, шукаємо суто стійку
+                let racks = state.products.filter(p => {
+                    const t = (p.model || p.description || '').toLowerCase();
+                    if (t.includes('комплект') || t.includes('cluster')) return false;
+                    return t.includes('стійк') || t.includes('3u-hrack');
+                });
+
+                let rackName = '';
+                let searchKw = '';
+
+                let neededRacks = 1;
+
+                if (batCount <= 8) {
+                    searchKw = '8';
+                    rackName = 'Стійка під АКБ Deye для 8 акумуляторів (3U-HRACK)';
+                } else if (batCount <= 12) {
+                    searchKw = '12';
+                    rackName = 'Стійка під АКБ Deye для 12 акумуляторів (3U-HRACK)';
+                } else {
+                    // Якщо батарей більше 12, то можливо потрібно кілька стійок (наприклад, по 12 шт)
+                    neededRacks = Math.ceil(batCount / 12);
+                    searchKw = '12';
+                    rackName = 'Стійка під АКБ Deye для 12 акумуляторів (3U-HRACK)';
+                }
+
+                // Шукаємо стійку з відповідним числом 8 або 12
+                let exactRack = racks.find(r => (r.model || r.description || '').includes(searchKw));
+                if (!exactRack && racks.length > 0) exactRack = racks[0]; // fallback на будь-яку
+
+                if (exactRack) {
+                    items.push(createProposalItem(exactRack, neededRacks, markupTarget));
+                } else {
+                    items.push({
+                        id: generateId(),
+                        productId: 'custom_' + Date.now() + 4,
+                        name: rackName,
+                        description: 'Оригінальна стійка Deye для зручного монтажу',
+                        unit: 'шт.',
+                        costUSD: 100,
+                        price: 150,
+                        quantity: neededRacks,
+                        markup: markupTarget
+                    });
+                }
+            }
+        }
+
+        // 4. Кріплення
+        const mountingType = document.getElementById('wizardMounting').value;
+        if (mountingType === 'ground' && panelCount > 0) {
+            let costVal = 45.2;
+            items.push({
+                id: generateId(),
+                productId: 'custom_' + Date.now(),
+                name: 'Наземна металоконструкція для встановлення сонячних панелей',
+                description: 'Оцинкований профіль',
+                unit: 'компл-тів', // за панель
+                costUSD: costVal,
+                price: costVal * (1 + markupTarget / 100),
+                quantity: panelCount,
+                markup: markupTarget
+            });
+        } else {
+            const mount = state.products.find(p => {
+                const title = (p.model || p.description || '').toLowerCase();
+                return title.includes('скатний дах') || title.includes('монтажу фем');
+            }) || state.products.find(p => p.mainCategory === 'Власний матеріал' && (p.model || p.description || '').toLowerCase().includes('кріплен'));
+
+            if (mount && panelCount > 0) {
+                items.push(createProposalItem(mount, panelCount, markupTarget));
+            } else if (panelCount > 0) {
+                items.push({
+                    id: generateId(),
+                    productId: 'custom_' + Date.now(),
+                    name: 'Дахове кріплення для сонячної панелі',
+                    description: 'Профіль, прижими, кронштейни',
+                    unit: 'компл',
+                    costUSD: 15,
+                    price: 20,
+                    quantity: panelCount,
+                    markup: markupTarget
+                });
+            }
+        }
+
+        // 5. Кабель
+        const cable = state.products.find(p => p.mainCategory === 'Власний матеріал' && (p.model || p.description || '').toLowerCase().includes('солярн'));
+        if (cable && panelCount > 0) {
+            items.push(createProposalItem(cable, panelCount * 3, markupTarget));
+        } else if (panelCount > 0) {
+            items.push({
+                id: generateId(),
+                productId: 'custom_' + Date.now() + 1,
+                name: 'Солярний кабель DC (4-6 мм2)',
+                description: 'Чорний та червоний',
+                unit: 'м',
+                costUSD: 0.8,
+                price: 1.2,
+                quantity: panelCount * 3,
+                markup: markupTarget
+            });
+        }
+
+        // 6. AC/DC Захист
+        const protectionValue = Math.ceil(power / 5) * 150;
+        items.push({
+            id: generateId(),
+            productId: 'custom_' + Date.now() + 2,
+            name: 'Комплект захисної автоматики та складових',
+            description: 'AC/DC щиток, автомати, запобіжники, конектори, гофра, заземлення',
+            unit: 'компл',
+            costUSD: protectionValue * 0.8,
+            price: protectionValue,
+            quantity: 1,
+            markup: markupTarget
+        });
+
+        // 7. Монтажні роботи та пусконалагодження
+        const installPrice = power * 100; // Орієнтовна ринкова вартість: 100$ / 1 кВт
+        items.push({
+            id: generateId(),
+            productId: 'custom_' + Date.now() + 3,
+            name: 'Монтажні та пусконалагоджувальні роботи',
+            description: 'Встановлення обладнання, підключення, налаштування та запуск',
+            unit: 'послуга',
+            costUSD: 0,
+            price: installPrice,
+            quantity: 1,
+            markup: 0
+        });
+
+        // Додаємо в поточну пропозицію
+        state.proposal.items.push(...items);
+        renderProposalTable();
+        showToast('КП успішно згенеровано!', 'success');
+        
+        // Перевірка
+        if (actualPanelPower > 0 && actualPanelPower < power * 0.5) {
+            showToast('⚠️ Увага: Замало сонячних панелей для вказаної потужності інвертора!', 'error');
+        }
+    }
+
+    function findClosestProduct(category, keywords, targetPower) {
+        const prods = state.products.filter(p => {
+            if (p.mainCategory !== category) return false;
+            const title = (p.model || p.description || '').toLowerCase();
+            return keywords.every(kw => title.includes(kw));
+        });
+        if (prods.length === 0) return null;
+
+        let closest = prods[0];
+        let minDiff = Infinity;
+        for (const p of prods) {
+            const pwr = parsePowerFromTitle(p.model || p.description);
+            if (pwr) {
+                let diff = Math.abs(pwr - targetPower);
+                
+                // Штраф за меншу потужність: краще взяти інвертор з запасом, ніж слабший
+                if (pwr < targetPower) {
+                    diff += 500;
+                }
+                
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closest = p;
+                }
+            }
+        }
+        return closest;
+    }
+
+    function parsePowerFromTitle(title) {
+        if (!title) return null;
+        
+        // Шукаємо формати на кшталт SUN2000-30KTL, -30K, 30kW, 30 кВт
+        let match = title.match(/(?:-|\s|^)(\d+(?:\.\d+)?)\s*(?:кВт|ktl|kw|k)/i);
+        if (match) {
+            const pwr = parseFloat(match[1]);
+            // Відкидаємо абсурдні цифри типу 2000 (як від SUN2000)
+            if (pwr < 500) return pwr;
+        }
+
+        match = title.match(/(\d+(?:\.\d+)?)\s*(?:кВт|k|K|kw)/i);
+        if (match) {
+            const pwr = parseFloat(match[1]);
+            if (pwr < 500) return pwr;
+        }
+
+        return null;
+    }
+
+    function createProposalItem(product, qty, markup) {
+        let finalCostUSD = product.priceUSD || product.costUSD || 0;
+        if (!finalCostUSD && parseFloat(product.priceRaw || 0) > 0) {
+            let baseP = parseFloat(product.priceRaw);
+            if (product.priceCurrency === 'UAH') baseP = baseP / state.settings.usdToUah;
+            if (product.priceCurrency === 'EUR') baseP = baseP * (state.settings.eurToUah / state.settings.usdToUah);
+            finalCostUSD = baseP * 0.9;
+        }
+
+        let priceUSD = Math.round(finalCostUSD * (1 + markup / 100) * 100) / 100;
+
+        return {
+            id: generateId(),
+            productId: product.id,
+            name: product.model || product.name || '',
+            description: product.description || '',
+            unit: product.unit || 'шт.',
+            quantity: qty,
+            costUSD: finalCostUSD,
+            price: priceUSD,
+            markup: markup
+        };
+    }
+
     // Quick Settings Listeners
     document.getElementById('quickUsdUah').addEventListener('change', (e) => {
         const val = parseFloat(e.target.value);
@@ -2957,10 +3403,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Close modal on overlay click
+    // Close modal on overlay click (safely)
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeModal(overlay.id);
+        let isMouseDownOnOverlay = false;
+        overlay.addEventListener('mousedown', (e) => {
+            isMouseDownOnOverlay = (e.target === overlay);
+        });
+        overlay.addEventListener('mouseup', (e) => {
+            if (isMouseDownOnOverlay && e.target === overlay) {
+                closeModal(overlay.id);
+            }
+            isMouseDownOnOverlay = false;
         });
     });
 

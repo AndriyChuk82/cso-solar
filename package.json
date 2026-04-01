@@ -4,7 +4,6 @@
   "description": "CSO Solar — Commercial Proposals System",
   "private": true,
   "scripts": {
-    "dev": "vercel dev",
     "build": "cd warehouse && npm install && npm run build && cd ../projects && npm install && npm run build",
     "hash-password": "node scripts/hash-password.js"
   },

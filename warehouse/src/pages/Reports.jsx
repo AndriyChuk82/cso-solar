@@ -262,7 +262,7 @@ export default function Reports() {
             <h3>{getReportTitle()}</h3>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button 
-                className={`btn btn-outline btn-sm ${sortAsc ? 'btn-primary' : ''}`}
+                className={`btn btn-sm ${sortAsc ? 'btn-primary' : 'btn-outline'}`}
                 style={sortAsc ? { color: 'white' } : {}}
                 onClick={() => setSortAsc(!sortAsc)}
                 title="Сортувати від А до Я за назвою"

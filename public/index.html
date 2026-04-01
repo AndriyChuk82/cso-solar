@@ -231,8 +231,9 @@
                         </tfoot>
                     </table>
                 </div>
-                <div class="custom-item-actions no-print" style="padding:12px 20px;border-top:1px solid var(--border)">
+                <div class="custom-item-actions no-print" style="padding:12px 20px;border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
                     <button id="btnAddCustom" class="btn btn-sm btn-outline">+ Додати довільну позицію</button>
+                    <button id="btnWizard" class="btn btn-sm btn-accent" style="background-color: #8b5cf6; border-color: #7c3aed; color: #fff;">✨ Автопідбір СЕС</button>
                 </div>
                 <!-- Print currency note -->
                 <div class="print-currency-note" id="printCurrencyNote"></div>
@@ -316,6 +317,83 @@
             <div class="modal-footer">
                 <button class="btn btn-primary" id="btnSaveSettings">Зберегти</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ===== WIZARD MODAL ===== -->
+    <div class="modal-overlay" id="wizardModal">
+        <div class="modal modal-wide">
+            <div class="modal-header">
+                <h3>✨ Автопідбір СЕС</h3>
+                <button class="modal-close" data-close="wizardModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: grid; grid-template-columns: 35% 65%; gap: 20px;">
+                    
+                    <!-- Колоннка 1: Параметри -->
+                    <div style="border-right: 1px solid var(--border); padding-right: 20px;">
+                        <h4 style="margin-bottom:10px; font-size: 0.95rem; color: var(--text-dark);">1. Параметри</h4>
+                        <div class="form-group">
+                            <label for="wizardPower" style="font-size: 0.8rem;">Потужність (кВт)</label>
+                            <input type="number" id="wizardPower" class="form-input" placeholder="10" step="1" min="1" style="padding: 6px;">
+                        </div>
+                        <div class="form-group">
+                            <label for="wizardPanelReserve" style="font-size: 0.8rem;">Запас потужності панелей (%)</label>
+                            <input type="number" id="wizardPanelReserve" class="form-input" placeholder="0" step="1" min="0" value="0" style="padding: 6px;">
+                        </div>
+                        <div class="form-group">
+                            <label for="wizardType" style="font-size: 0.8rem;">Тип станції</label>
+                            <select id="wizardType" class="form-input" style="padding: 6px; font-size: 0.85rem;">
+                                <option value="hybrid">Гібридна (з АКБ)</option>
+                                <option value="ongrid">Мережева (без АКБ)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="wizardBackupGroup">
+                            <label for="wizardBackup" style="font-size: 0.8rem;">Бекап (кВт*год)</label>
+                            <input type="number" id="wizardBackup" class="form-input" placeholder="10" step="1" min="1" value="10" style="padding: 6px;">
+                        </div>
+                        <div class="form-group">
+                            <label for="wizardMounting" style="font-size: 0.8rem;">Розміщення панелей</label>
+                            <select id="wizardMounting" class="form-input" style="padding: 6px; font-size: 0.85rem;">
+                                <option value="roof">Дахове</option>
+                                <option value="ground">Наземне</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Колоннка 2: Обладнання -->
+                    <div>
+                        <h4 style="margin-bottom:10px; font-size: 0.95rem; color: var(--primary);">2. Обладнання</h4>
+                        <div class="form-group">
+                            <label for="wizardSelectInverter" style="font-size:0.8rem;">Інвертор</label>
+                            <select id="wizardSelectInverter" class="form-input" style="font-size:0.85rem; padding: 5px; height: auto; max-width: 320px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                <option value="">Вкажіть потужність...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="wizardSelectPanel" style="font-size:0.8rem;">Сонячні панелі</label>
+                            <select id="wizardSelectPanel" class="form-input" style="font-size:0.85rem; padding: 5px; height: auto; max-width: 320px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                <option value="">Завантаження...</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="wizardSelectBatteryGroup">
+                            <label for="wizardSelectBattery" style="font-size:0.8rem;">Базовий модуль АКБ</label>
+                            <select id="wizardSelectBattery" class="form-input" style="font-size:0.85rem; padding: 5px; height: auto; max-width: 320px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                <option value="">Без АКБ</option>
+                            </select>
+                        </div>
+                        
+                        <div class="info-note" style="margin-top:10px; background: #f0fdf4; border: 1px solid #bbf7d0; padding:10px; border-radius:6px; font-size: 0.75rem; color: #166534;">
+                            * Кабель, кріплення, захист та монтаж додаються автоматично.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: center; padding-top: 5px;">
+                <button class="btn btn-primary" id="btnGenWizard" style="padding: 10px 40px; min-width: 220px;">🚀 Згенерувати КП</button>
+            </div>
+        </div>
+    </div>
         </div>
     </div>
 
