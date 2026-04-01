@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { getWarehouses, getStockReport, getCompareReport, getMovementReport, getCatalog } from '../api/gasApi';
 import { exportToExcel, exportToPdf } from '../utils/exportUtils';
 import { formatDate } from '../utils/dateUtils';
@@ -15,7 +15,7 @@ export default function Reports() {
   const [products, setProducts] = useState([]);
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [sortAsc, setSortAsc] = useState(false);
+  const [sortAsc, setSortAsc] = useState(true);
 
   const [stockFilter, setStockFilter] = useState({
     warehouseId: '',
@@ -76,12 +76,13 @@ export default function Reports() {
       items = items.filter(item => (parseFloat(item['Всього']) || 0) !== 0);
     }
 
-    if (!sortAsc) return items;
-
     return items.sort((a, b) => {
+      const catA = String(a.category || 'Без категорії');
+      const catB = String(b.category || 'Без категорії');
+      if (catA !== catB) return catA.localeCompare(catB);
       const nameA = String(a['Товар'] || a['Назва'] || a['Назва категорії'] || '');
       const nameB = String(b['Товар'] || b['Назва'] || b['Назва категорії'] || '');
-      return nameA.localeCompare(nameB);
+      return sortAsc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
     });
   }, [reportData, sortAsc, activeTab, stockFilter.nonZeroOnly, compareFilter.nonZeroOnly]);
 
@@ -292,21 +293,34 @@ export default function Reports() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedItems.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {reportData.columns?.map((col, colIndex) => (
-                        <td key={colIndex} style={{
-                          fontWeight: col === 'Всього' || col === 'Кількість' ? 700 : 400
-                        }}>
-                          {col === 'Дата' ? formatDate(row[col]) : (
-                            (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) 
-                              ? formatQuantity(row[col], row.category, row['Товар'] || row['Назва']) 
-                              : (row[col] ?? '—')
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
+                  {sortedItems.map((row, rowIndex) => {
+                    const showCategory = rowIndex === 0 || sortedItems[rowIndex - 1].category !== row.category;
+                    return (
+                      <React.Fragment key={rowIndex}>
+                        {showCategory && (
+                          <tr className="category-group-header">
+                            <td colSpan={reportData.columns?.length || 1} style={{ background: 'var(--bg-light)', fontWeight: 800, padding: '8px 12px', fontSize: '0.8rem', color: 'var(--primary)', borderLeft: '3px solid var(--primary)' }}>
+                              📁 {row.category || 'Без категорії'}
+                            </td>
+                          </tr>
+                        )}
+                        <tr key={rowIndex}>
+                          {reportData.columns?.map((col, colIndex) => (
+                            <td key={colIndex} style={{
+                              fontWeight: col === 'Всього' || col === 'Кількість' ? 700 : 400,
+                              textAlign: (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) ? 'center' : 'left'
+                            }}>
+                              {col === 'Дата' ? formatDate(row[col]) : (
+                                (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) 
+                                  ? formatQuantity(row[col], row.category, row['Товар'] || row['Назва']) 
+                                  : (row[col] ?? '—')
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                      </React.Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             ) : (

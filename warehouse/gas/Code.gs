@@ -1051,9 +1051,8 @@ function handleCompareReport() {
     productMap[b.product_id][b.warehouse_id] = parseFloat(b.quantity) || 0;
   });
 
-  const columns = ['Товар', 'Од.'];
+  const columns = ['Товар', 'Од.', 'Всього'];
   warehouses.forEach(w => { columns.push(w.name); });
-  columns.push('Всього');
 
   const items = Object.entries(productMap).map(([productId, whBalances]) => {
     const product = catalogMap[productId] || {};
@@ -1116,7 +1115,8 @@ function handleMovementReport(params) {
       'Склад': whMap[op.warehouse_from || op.warehouse_to] || '',
       'К-сть': op.quantity,
       'Коментар': op.comment || '',
-      'Автор': op.user || ''
+      'Автор': op.user || '',
+      'category': catalogMap[op.product_id]?.category || ''
     };
   });
 
