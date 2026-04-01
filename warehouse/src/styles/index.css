@@ -503,7 +503,6 @@ body {
 
 .data-table {
   width: 100%;
-  min-width: max-content;
   border-collapse: collapse;
   font-size: 0.85rem;
   table-layout: auto;
@@ -559,8 +558,7 @@ body {
 /* === COMPACT TABLE (for reports) === */
 .compact-table {
   font-size: 0.85rem;
-  width: fit-content;
-  max-width: 100%;
+  width: 100%;
 }
 
 
