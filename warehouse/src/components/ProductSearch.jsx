@@ -73,6 +73,31 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   }
 
+  function mapInternalCategory(name = '', sourceCategory = '') {
+    const combined = (name + ' ' + sourceCategory).toLowerCase();
+    
+    // Інвертори
+    if (combined.includes('інвертор') || combined.includes('inverter')) return 'Інвертори';
+    
+    // АКБ / Батареї (LFP, LiFePO4, АКБ)
+    if (combined.includes('акб') || combined.includes('lfp') || combined.includes('lifepo4') || combined.includes('батарея') || combined.includes('battery')) {
+      // Але якщо це "сонячна батарея", то це панель
+      if (combined.includes('сонячна батарея') || combined.includes('сонячні батареї') || combined.includes('panel')) return 'Сонячні панелі';
+      return 'АКБ';
+    }
+
+    // Сонячні панелі
+    if (combined.includes('сонячна батарея') || combined.includes('сонячні батареї') || combined.includes('панель') || combined.includes('panel')) return 'Сонячні панелі';
+
+    // Кріплення
+    if (combined.includes('кріплення') || combined.includes('крепление') || combined.includes('рейка') || combined.includes('профіль') || combined.includes('кронштейн')) return 'Кріплення';
+
+    // Розхідники та кабель
+    if (combined.includes('кабель') || combined.includes('розхідник') || combined.includes('прв') || combined.includes('пв-3') || combined.includes('солар') || combined.includes('mc4')) return 'Розхідники';
+
+    return 'Розхідники'; // Default fallback
+  }
+
   async function handleSelect(product) {
     if (product.isExternal) {
       setSaving(true);
@@ -81,7 +106,7 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
           name: product.name,
           article: '',
           unit: product.unit || 'шт',
-          category: product.category || 'Із КП',
+          category: mapInternalCategory(product.name, product.category),
           active: true
         });
         if (result.success && result.product) onSelect(result.product);
@@ -204,7 +229,19 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
 
           {showAddForm && (
             <form onSubmit={handleAddNew} style={{ padding: '14px', borderTop: '1px solid var(--border)', background: 'var(--bg)' }}>
-              <input type="text" className="form-input" placeholder="Назва товару *" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} required style={{ marginBottom: '8px' }} />
+               <input 
+                type="text" 
+                className="form-input" 
+                placeholder="Назва товару *" 
+                value={newProduct.name} 
+                onChange={(e) => {
+                  const name = e.target.value;
+                  const guessedCategory = mapInternalCategory(name, '');
+                  setNewProduct({ ...newProduct, name, category: guessedCategory });
+                }} 
+                required 
+                style={{ marginBottom: '8px' }} 
+              />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: '8px', marginBottom: '8px' }}>
                 <input type="text" className="form-input" placeholder="Артикул" value={newProduct.article} onChange={(e) => setNewProduct({ ...newProduct, article: e.target.value })} />
                 <select className="form-select" value={newProduct.unit} onChange={(e) => setNewProduct({ ...newProduct, unit: e.target.value })}>
