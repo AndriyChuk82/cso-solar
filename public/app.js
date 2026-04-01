@@ -1917,14 +1917,12 @@ async function sendTelegramPdf() {
     // --- 5. Notes & currency info ---
     let finalY = doc.lastAutoTable.finalY + 8;
 
-    if (cur === 'UAH') {
-        doc.setFontSize(7.5);
-        doc.setTextColor(140, 140, 140);
-        doc.setFont(fontName, 'normal');
-        const rateNote = `Курс: 1 USD = ${state.settings.usdToUah} грн; 1 EUR = ${state.settings.eurToUah} грн`;
-        doc.text(rateNote, pageWidth - marginR, finalY, { align: 'right' });
-        finalY += 6;
-    }
+    doc.setFontSize(7.5);
+    doc.setTextColor(140, 140, 140);
+    doc.setFont(fontName, 'normal');
+    const rateNote = `Курс: 1 USD = ${state.settings.usdToUah} грн; 1 EUR = ${state.settings.eurToUah} грн`;
+    doc.text(rateNote, pageWidth - marginR, finalY, { align: 'right' });
+    finalY += 6;
 
     if (state.proposal.notes) {
         doc.setFontSize(8);
@@ -2122,14 +2120,12 @@ async function printProposal() {
         // --- 6. Notes & currency info ---
         let finalY = doc.lastAutoTable.finalY + 8;
 
-        if (cur === 'UAH') {
-            doc.setFontSize(7.5);
-            doc.setTextColor(140, 140, 140);
-            doc.setFont(fontName, 'normal');
-            const rateNote = `Курс: 1 USD = ${state.settings.usdToUah} грн; 1 EUR = ${state.settings.eurToUah} грн`;
-            doc.text(rateNote, pageWidth - marginR, finalY, { align: 'right' });
-            finalY += 6;
-        }
+        doc.setFontSize(7.5);
+        doc.setTextColor(140, 140, 140);
+        doc.setFont(fontName, 'normal');
+        const rateNote = `Курс: 1 USD = ${state.settings.usdToUah} грн; 1 EUR = ${state.settings.eurToUah} грн`;
+        doc.text(rateNote, pageWidth - marginR, finalY, { align: 'right' });
+        finalY += 6;
 
         if (state.proposal.notes) {
             doc.setFontSize(8);
