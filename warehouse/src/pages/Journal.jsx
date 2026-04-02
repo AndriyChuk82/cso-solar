@@ -129,7 +129,7 @@ export default function Journal() {
       return matchesSearch(content, search);
     });
     if (sortAsc) {
-      list.sort((a, b) => (a.product_name || '').localeCompare(b.product_name || ''));
+      list.sort((a, b) => (a.product_name || '').localeCompare(b.product_name || '', undefined, { numeric: true, sensitivity: 'base' }));
     }
     return list;
   }, [operations, search, sortAsc]);

@@ -82,7 +82,11 @@ export default function Reports() {
       if (catA !== catB) return catA.localeCompare(catB);
       const nameA = String(a['Товар'] || a['Назва'] || a['Назва категорії'] || '');
       const nameB = String(b['Товар'] || b['Назва'] || b['Назва категорії'] || '');
-      return sortAsc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+      
+      const localeOptions = { numeric: true, sensitivity: 'base' };
+      return sortAsc 
+        ? nameA.localeCompare(nameB, undefined, localeOptions) 
+        : nameB.localeCompare(nameA, undefined, localeOptions);
     });
   }, [reportData, sortAsc, activeTab, stockFilter.nonZeroOnly, compareFilter.nonZeroOnly]);
 
