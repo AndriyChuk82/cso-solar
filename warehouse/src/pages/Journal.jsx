@@ -153,7 +153,7 @@ export default function Journal() {
       'К-сть': formatQuantity(op.quantity, op.product_category, op.product_name),
       'Залишок після': formatQuantity(op.balance_after, op.product_category, op.product_name),
       'Коментар': op.comment || '',
-      'Автор': op.user || ''
+      'Автор': op.user_name || op.user || ''
     }));
     
     exportToExcel(columns, items, 'журнал_операцій');
@@ -288,6 +288,7 @@ export default function Journal() {
                   <th style={{ textAlign: 'center' }}><ResizableHeader pageId="journal" columnId="qty">К-сть</ResizableHeader></th>
                   <th style={{ textAlign: 'center' }}><ResizableHeader pageId="journal" columnId="balance">Залишок</ResizableHeader></th>
                   <th><ResizableHeader pageId="journal" columnId="comment">Коментар</ResizableHeader></th>
+                  <th><ResizableHeader pageId="journal" columnId="user">Автор</ResizableHeader></th>
                   {user?.isAdmin && <th>Дії</th>}
                 </tr>
               </thead>
@@ -312,6 +313,7 @@ export default function Journal() {
                     <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', maxWidth: '200px', whiteSpace: 'normal', lineHeight: '1.2' }}>
                       {typeof (op.comment || op.note || op.primitka) === 'object' ? JSON.stringify(op.comment || op.note || op.primitka) : String(op.comment || op.note || op.primitka || '—')}
                     </td>
+                    <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{op.user_name || op.user || '—'}</td>
                     {user?.isAdmin && (
                       <td>
                         <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>

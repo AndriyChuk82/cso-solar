@@ -678,6 +678,13 @@ function handleGetOperations(params) {
   const catalogMap = {};
   catalog.forEach(p => { catalogMap[p.id] = p; });
 
+  // Додаємо імена авторів замість логінів
+  const users = sheetToObjects(getSheet('users'));
+  const userMap = {};
+  users.forEach(u => {
+    if (u.email) userMap[String(u.email).toLowerCase().trim()] = u.name || u.email;
+  });
+
   // Розрахуємо залишки ПІСЛЯ кожної операції по кожному складу і товару
   // Спочатку треба переконатися, що операції відсортовано хронологічно (від найстарішої до найновішої)
   operations.sort((a, b) => {
@@ -715,6 +722,7 @@ function handleGetOperations(params) {
       product_article: catalogMap[op.product_id]?.article || '',
       product_category: catalogMap[op.product_id]?.category || '',
       unit: catalogMap[op.product_id]?.unit || '',
+      user_name: userMap[String(op.user || '').toLowerCase().trim()] || op.user || '—',
       balance_after: balance_after
     };
   });
@@ -1084,6 +1092,12 @@ function handleMovementReport(params) {
   const whMap = {};
   warehouses.forEach(w => { whMap[w.id] = w.name; });
 
+  const users = sheetToObjects(getSheet('users'));
+  const userMap = {};
+  users.forEach(u => {
+    if (u.email) userMap[String(u.email).toLowerCase().trim()] = u.name || u.email;
+  });
+
   let filtered = operations;
   if (params.warehouseId) {
     filtered = filtered.filter(op =>
@@ -1115,7 +1129,7 @@ function handleMovementReport(params) {
       'Склад': whMap[op.warehouse_from || op.warehouse_to] || '',
       'К-сть': op.quantity,
       'Коментар': op.comment || '',
-      'Автор': op.user || '',
+      'Автор': userMap[String(op.user || '').toLowerCase().trim()] || op.user || '—',
       'category': catalogMap[op.product_id]?.category || ''
     };
   });
@@ -1430,6 +1444,12 @@ function handleMovementReport(params) {
   const whMap = {};
   warehouses.forEach(w => { whMap[w.id] = w.name; });
 
+  const users = sheetToObjects(getSheet('users'));
+  const userMap = {};
+  users.forEach(u => {
+    if (u.email) userMap[String(u.email).toLowerCase().trim()] = u.name || u.email;
+  });
+
   let filtered = operations;
   if (params.warehouseId) {
     filtered = filtered.filter(op =>
@@ -1461,7 +1481,7 @@ function handleMovementReport(params) {
       'Склад': whMap[op.warehouse_from || op.warehouse_to] || '',
       'К-сть': op.quantity,
       'Коментар': op.comment || '',
-      'Автор': op.user || ''
+      'Автор': userMap[String(op.user || '').toLowerCase().trim()] || op.user || '—'
     };
   });
 
