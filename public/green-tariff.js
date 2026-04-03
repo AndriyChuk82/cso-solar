@@ -272,7 +272,8 @@ function renderProjectList() {
     }
     
     list.innerHTML = filtered.map(p => {
-        const id   = getProp(p, ['id', 'ID']);
+        const actualId = getProp(p, ['id', 'ID']);
+        const id   = actualId || `idx_${gtState.projects.indexOf(p)}`;
         const name = getProp(p, gtState.mapping.field4) || "Без імені";
         const num  = getProp(p, gtState.mapping.field3) || "---";
         const stat = getProp(p, gtState.mapping.field1) || "";
@@ -380,7 +381,14 @@ function resetForm() {
 }
 
 function loadProject(id) {
-    const p = gtState.projects.find(x => getProp(x, ['id', 'ID']).toString() === id.toString());
+    let p;
+    if (typeof id === 'string' && id.startsWith('idx_')) {
+        const idx = parseInt(id.replace('idx_', ''));
+        p = gtState.projects[idx];
+    } else {
+        p = gtState.projects.find(x => getProp(x, ['id', 'ID']).toString() === id.toString());
+    }
+
     if (!p) {
         console.warn('❌ Project not found in state:', id);
         return;
