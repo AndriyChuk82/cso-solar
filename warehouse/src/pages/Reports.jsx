@@ -288,7 +288,7 @@ export default function Reports() {
                 <thead>
                   <tr>
                     {reportData.columns?.map((col, i) => (
-                      <th key={i} style={{ width: (col === 'Товар' || col === 'Назва') ? '100%' : 'auto' }}>
+                      <th key={i} style={{ width: (col === 'Товар' || col === 'Назва') ? '100%' : '1px' }}>
                         <ResizableHeader pageId={`reports-${activeTab}`} columnId={col}>
                           {col}
                         </ResizableHeader>
@@ -312,7 +312,8 @@ export default function Reports() {
                           {reportData.columns?.map((col, colIndex) => (
                             <td key={colIndex} style={{
                               fontWeight: col === 'Всього' || col === 'Кількість' ? 700 : 400,
-                              textAlign: (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) ? 'center' : 'left'
+                              textAlign: (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) ? 'center' : 'left',
+                              width: (col === 'Товар' || col === 'Назва') ? '100%' : '1px'
                             }}>
                               {col === 'Дата' ? formatDate(row[col]) : (
                                 (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) 

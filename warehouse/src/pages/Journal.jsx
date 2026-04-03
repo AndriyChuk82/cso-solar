@@ -280,40 +280,40 @@ export default function Journal() {
             <table className="data-table compact-table">
               <thead>
                  <tr>
-                  <th><ResizableHeader pageId="journal" columnId="date">Дата</ResizableHeader></th>
-                  <th><ResizableHeader pageId="journal" columnId="warehouse">Склад</ResizableHeader></th>
+                  <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="date">Дата</ResizableHeader></th>
+                  <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="warehouse">Склад</ResizableHeader></th>
                   <th style={{ width: '100%' }}><ResizableHeader pageId="journal" columnId="product">Товар</ResizableHeader></th>
-                  <th><ResizableHeader pageId="journal" columnId="type">Тип</ResizableHeader></th>
-                  <th><ResizableHeader pageId="journal" columnId="unit">Од.</ResizableHeader></th>
-                  <th style={{ textAlign: 'center' }}><ResizableHeader pageId="journal" columnId="qty">К-сть</ResizableHeader></th>
-                  <th style={{ textAlign: 'center' }}><ResizableHeader pageId="journal" columnId="balance">Залишок</ResizableHeader></th>
-                  <th><ResizableHeader pageId="journal" columnId="comment">Коментар</ResizableHeader></th>
-                  <th><ResizableHeader pageId="journal" columnId="user">Автор</ResizableHeader></th>
-                  {user?.isAdmin && <th>Дії</th>}
+                  <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="type">Тип</ResizableHeader></th>
+                  <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="unit">Од.</ResizableHeader></th>
+                  <th style={{ textAlign: 'center', width: '1px' }}><ResizableHeader pageId="journal" columnId="qty">К-сть</ResizableHeader></th>
+                  <th style={{ textAlign: 'center', width: '1px' }}><ResizableHeader pageId="journal" columnId="balance">Залишок</ResizableHeader></th>
+                  <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="comment">Коментар</ResizableHeader></th>
+                  <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="user">Автор</ResizableHeader></th>
+                  {user?.isAdmin && <th style={{ width: '1px' }}>Дії</th>}
                 </tr>
               </thead>
               <tbody>
                 {paginatedOperations.map((op) => (
                   <tr key={op.id} className={`row-${op.type}`}>
-                    <td style={{ fontSize: '0.8rem' }}>{formatDate(op.date)}</td>
-                    <td style={{ fontSize: '0.8rem' }}>{getWarehouseName(op.warehouse_from || op.warehouse_to)}</td>
-                    <td style={{ fontSize: '0.85rem' }}>{op.product_name || '—'}</td>
-                    <td>
+                    <td style={{ fontSize: '0.8rem', width: '1px' }}>{formatDate(op.date)}</td>
+                    <td style={{ fontSize: '0.8rem', width: '1px' }}>{getWarehouseName(op.warehouse_from || op.warehouse_to)}</td>
+                    <td style={{ fontSize: '0.85rem', width: '100%' }}>{op.product_name || '—'}</td>
+                    <td style={{ width: '1px' }}>
                       <span className={`badge badge-${op.type}`} style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
                         {CONFIG.OPERATION_LABELS[op.type] || op.type}
                       </span>
                     </td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{op.unit || '—'}</td>
-                    <td style={{ fontSize: '0.85rem', whiteSpace: 'pre-line', textAlign: 'center' }}>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem', width: '1px' }}>{op.unit || '—'}</td>
+                    <td style={{ fontSize: '0.85rem', whiteSpace: 'pre-line', textAlign: 'center', width: '1px' }}>
                       {formatQuantity(op.quantity, op.product_category, op.product_name)}
                     </td>
-                    <td style={{ fontSize: '0.82rem', whiteSpace: 'pre-line', textAlign: 'center' }}>
+                    <td style={{ fontSize: '0.82rem', whiteSpace: 'pre-line', textAlign: 'center', width: '1px' }}>
                       {op.balance_after != null ? formatQuantity(op.balance_after, op.product_category, op.product_name) : '—'}
                     </td>
-                    <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', maxWidth: '200px', whiteSpace: 'normal', lineHeight: '1.2' }}>
+                    <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', maxWidth: '200px', whiteSpace: 'normal', lineHeight: '1.2', width: '1px' }}>
                       {typeof (op.comment || op.note || op.primitka) === 'object' ? JSON.stringify(op.comment || op.note || op.primitka) : String(op.comment || op.note || op.primitka || '—')}
                     </td>
-                    <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{op.user_name || op.user || '—'}</td>
+                    <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '1px' }}>{op.user_name || op.user || '—'}</td>
                     {user?.isAdmin && (
                       <td>
                         <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
