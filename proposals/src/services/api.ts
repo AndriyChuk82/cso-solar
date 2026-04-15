@@ -107,6 +107,18 @@ export async function saveProposalToSheet(proposal: Proposal): Promise<boolean> 
 }
 
 /**
+ * Очищає дані від об'єктів Google Sheets (наприклад {valueType: ...})
+ */
+function sanitize(val: any): any {
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'object') {
+    // Якщо це складний об'єкт комірки Google, спробуємо дістати значення
+    return sanitize(val.value || val.formattedValue || '');
+  }
+  return val;
+}
+
+/**
  * Завантажує всі дані одним запитом (швидше ніж окремі запити)
  */
 export async function fetchAllData(): Promise<{
@@ -117,9 +129,28 @@ export async function fetchAllData(): Promise<{
   try {
     const res = await gasRequest('getAllData');
     if (res.success) {
+      // Очищуємо всі товари та курси від можливих об'єктів Google
+      const products = (res.products || []).map((p: any) => ({
+        id: sanitize(p.id),
+        name: sanitize(p.name),
+        description: sanitize(p.description),
+        price: parseFloat(sanitize(p.price)) || 0,
+        currency: sanitize(p.currency) || 'USD',
+        unit: sanitize(p.unit) || 'шт',
+        category: sanitize(p.category),
+        mainCategory: sanitize(p.mainCategory),
+        subCategory: sanitize(p.subCategory),
+        inStock: p.inStock !== false,
+      }));
+
+      const rates = {
+        usd: parseFloat(sanitize(res.rates?.usd)) || 41.5,
+        eur: parseFloat(sanitize(res.rates?.eur)) || 51.0
+      };
+
       return {
-        rates: res.rates || { usd: 41.5, eur: 45.0 },
-        products: res.products || [],
+        rates,
+        products,
         customMaterials: res.customMaterials || []
       };
     }
