@@ -158,77 +158,92 @@ export async function fetchAllData(): Promise<{
     try {
       const res = await gasRequest('getAllData');
       if (res.success && res.products) {
+        console.log('📦 GAS Unique Categories found:', Array.from(new Set(res.products.map((p: any) => p.mainCategory))));
         
         const mappedProducts = res.products.map((p: any) => {
           let name = '';
           let desc = '';
           let price = 0;
 
-          const mainCat = sanitizeString(p.mainCategory || '');
-          const cat = sanitizeString(p.category || '');
+          // Очистка основних полів
+          let mCatRaw = sanitizeString(p.mainCategory || '');
+          let catRaw = sanitizeString(p.category || '');
+          
+          // Нормалізація категорій для вкладок
+          let mainCat = mCatRaw;
+          if (mCatRaw.toLowerCase().includes('батареї') || mCatRaw.toLowerCase().includes('панелі')) {
+            mainCat = 'Сонячні батареї';
+          } else if (mCatRaw.toLowerCase().includes('інвертор')) {
+            mainCat = 'Інвертори';
+          } else if (mCatRaw.toLowerCase().includes('акб') || mCatRaw.toLowerCase().includes('акумул')) {
+            mainCat = 'АКБ та BMS';
+          }
+
           const col0 = sanitize(p.name);
-          const col1 = sanitize(p.price); // GAS typically parsed this column
+          const col1 = sanitize(p.price); 
           const col2 = sanitize(p.currency);
           const col3 = sanitize(p.unit);
           const col4 = sanitize(p.description);
           const col5 = sanitize(p.manufacturer);
           
           if (mainCat === 'Інвертори') {
-            // In the spreadsheet, Inverters are structured:
-            // Col0: Image, Col1 (price): Power kW, Col3 (unit): Specs, Col4 (description): Wholesale $, Col5 (manufacturer): Retail $
             const powerKW = String(col1).trim();
             const specs = String(col3).trim();
             const wholesale = parseFloat(String(col4)) || 0;
             let retail = parseFloat(String(col5)) || 0;
-            if (retail < wholesale) retail = wholesale; 
+            if (retail <= 0 || retail < wholesale) retail = wholesale; 
 
-            // Infer brand based on category and specs
-            let brand = cat.toLowerCase().includes('мережев') ? 'Huawei' : 'Deye';
+            let brand = catRaw.toLowerCase().includes('мережев') ? 'Huawei' : 'Deye';
             if (specs.toLowerCase().includes('solis')) brand = 'Solis';
             else if (specs.toLowerCase().includes('huawei')) brand = 'Huawei';
 
             name = `Інвертор ${brand} ${powerKW} kW`;
             desc = specs;
-            price = retail > 0 ? retail : wholesale;
+            price = retail;
 
           } else if (mainCat === 'АКБ та BMS') {
-            // Batteries are correctly structured in Col 0
             name = String(col0).trim();
             desc = String(col3).trim() + ', ' + String(col4).trim() + 'Ah, ' + String(col5).trim() + 'V';
             price = parseFloat(String(col1)) || 0;
 
-          } else {
-            // Panels and others
-            const isImageFirst = typeof col0 === 'object' || String(col0).toLowerCase() === 'фото';
+          } else if (mainCat === 'Сонячні батареї') {
+            // Для панелей: частіше за все Col1 це назва, а Col4/5 це ціна
+            name = String(col1).trim();
+            desc = String(col3).trim();
+            const p1 = parseFloat(String(col4)) || 0;
+            const p2 = parseFloat(String(col5)) || 0;
+            price = p2 > p1 ? p2 : p1;
             
-            if (isImageFirst) {
-              name = String(col1).trim();
-              desc = String(col3).trim();
-              const wholesale = parseFloat(String(col4)) || 0;
-              const retail = parseFloat(String(col5)) || 0;
-              price = retail > wholesale ? retail : wholesale;
-            } else {
-              name = String(col0).trim();
-              desc = String(col4).trim();
-              price = parseFloat(String(col1)) || 0;
+            // Якщо Col1 не пасує, пробуємо Col0
+            if (name.toLowerCase() === 'фото' || name.length < 3) {
+              name = String(col0).trim() !== 'фото' ? String(col0).trim() : String(col1).trim();
             }
+          } else {
+            // Всі інші (Кріплення, Кабель і тд)
+            name = String(p.name || p.model || p.productName || '').trim();
+            desc = String(p.description || p.desc || '').trim();
+            price = parseFloat(sanitize(p.price || p.priceUsd || 0)) || 0;
           }
 
           return {
-            id: generateStableId(mainCat + '_' + name + '_' + price),
+            id: generateStableId(mainCat + '_' + name + '_' + price + '_' + Math.random().toString(36).substr(2, 5)),
             name: name,
             description: desc,
             price: price,
             currency: 'USD',
             unit: 'шт',
-            category: cat || mainCat,
+            category: catRaw || mainCat,
             mainCategory: mainCat,
             subCategory: '',
             inStock: true
           };
         }).filter((p: Product) => {
           const lName = p.name.toLowerCase();
-          return lName.length > 2 && lName !== 'фото' && lName !== 'модель' && p.price > 0 && !lName.includes('null kw');
+          // Більш ліберальний фільтр, щоб побачити панелі
+          return lName.length > 1 && 
+                 lName !== 'фото' && 
+                 lName !== 'модель' && 
+                 !lName.includes('null kw');
         });
 
         products.push(...mappedProducts);
