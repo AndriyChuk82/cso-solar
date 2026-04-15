@@ -149,11 +149,11 @@ export function CustomMaterialsModal({ isOpen, onClose, initialProductId }: Cust
       if (editingId === id) resetForm();
 
       // Потім видаляємо з Google Sheets в фоні
-      deleteCustomMaterialAPI(id).then(success => {
+      deleteCustomMaterialAPI(id).then((success: any) => {
         if (!success) {
           console.warn('Failed to delete from Google Sheets, but removed locally');
         }
-      }).catch(error => {
+      }).catch((error: any) => {
         console.error('Failed to delete from Google Sheets:', error);
       });
 

@@ -1,0 +1,1 @@
+import{a as e}from"./index-BYb031sV.js";export{e as fetchAllData};

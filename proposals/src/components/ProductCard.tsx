@@ -102,7 +102,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
 
       // Якщо це товар з Google Sheets - оновлюємо в хмарі (в фоні, не чекаємо)
       if (isCustomFromSheets) {
-        updateMaterialPrice(product.id, newPrice).catch(error => {
+        updateMaterialPrice(product.id, newPrice).catch((error: any) => {
           console.warn('Failed to sync to Google Sheets:', error);
         });
       }
