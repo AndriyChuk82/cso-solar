@@ -134,68 +134,125 @@ export async function fetchAllData(): Promise<{
   products: Product[];
   customMaterials: Product[];
 } | null> {
+  const products: Product[] = [];
   try {
-    const res = await gasRequest('getAllData');
-    if (res.success) {
-      if (res.products && res.products.length > 0) {
-        console.log('📦 GAS Products Count:', res.products.length);
-        console.log('📦 GAS Sample (first 10):', res.products.slice(0, 10));
+    // 1. Отримуємо курси валют через GAS (це працює надійно)
+    let rates = { usd: 41.5, eur: 51.0 };
+    let customMaterials: Product[] = [];
+    try {
+      const res = await gasRequest('getAllData');
+      if (res.success && res.rates) {
+        rates = {
+          usd: parseFloat(sanitize(res.rates?.usd || res.rates?.usdRate)) || 41.5,
+          eur: parseFloat(sanitize(res.rates?.eur || res.rates?.eurRate)) || 51.0
+        };
+      }
+      if (res.success && res.customMaterials) {
+        customMaterials = res.customMaterials;
+      }
+    } catch (e) {
+      console.warn('⚠️ Не вдалося отримати курси з GAS', e);
+    }
+
+    // 1. Отримуємо дані всіх таблиць через авторизований GAS (єдиний спосіб обійти CORS)
+    try {
+      const res = await gasRequest('getAllData');
+      if (res.success && res.products) {
+        
+        const mappedProducts = res.products.map((p: any) => {
+          let name = '';
+          let desc = '';
+          let price = 0;
+
+          const mainCat = sanitizeString(p.mainCategory || '');
+          const cat = sanitizeString(p.category || '');
+          const col0 = sanitize(p.name);
+          const col1 = sanitize(p.price); // GAS typically parsed this column
+          const col2 = sanitize(p.currency);
+          const col3 = sanitize(p.unit);
+          const col4 = sanitize(p.description);
+          const col5 = sanitize(p.manufacturer);
+          
+          if (mainCat === 'Інвертори') {
+            // In the spreadsheet, Inverters are structured:
+            // Col0: Image, Col1 (price): Power kW, Col3 (unit): Specs, Col4 (description): Wholesale $, Col5 (manufacturer): Retail $
+            const powerKW = String(col1).trim();
+            const specs = String(col3).trim();
+            const wholesale = parseFloat(String(col4)) || 0;
+            let retail = parseFloat(String(col5)) || 0;
+            if (retail < wholesale) retail = wholesale; 
+
+            // Infer brand based on category and specs
+            let brand = cat.toLowerCase().includes('мережев') ? 'Huawei' : 'Deye';
+            if (specs.toLowerCase().includes('solis')) brand = 'Solis';
+            else if (specs.toLowerCase().includes('huawei')) brand = 'Huawei';
+
+            name = `Інвертор ${brand} ${powerKW} kW`;
+            desc = specs;
+            price = retail > 0 ? retail : wholesale;
+
+          } else if (mainCat === 'АКБ та BMS') {
+            // Batteries are correctly structured in Col 0
+            name = String(col0).trim();
+            desc = String(col3).trim() + ', ' + String(col4).trim() + 'Ah, ' + String(col5).trim() + 'V';
+            price = parseFloat(String(col1)) || 0;
+
+          } else {
+            // Panels and others
+            const isImageFirst = typeof col0 === 'object' || String(col0).toLowerCase() === 'фото';
+            
+            if (isImageFirst) {
+              name = String(col1).trim();
+              desc = String(col3).trim();
+              const wholesale = parseFloat(String(col4)) || 0;
+              const retail = parseFloat(String(col5)) || 0;
+              price = retail > wholesale ? retail : wholesale;
+            } else {
+              name = String(col0).trim();
+              desc = String(col4).trim();
+              price = parseFloat(String(col1)) || 0;
+            }
+          }
+
+          return {
+            id: generateStableId(mainCat + '_' + name + '_' + price),
+            name: name,
+            description: desc,
+            price: price,
+            currency: 'USD',
+            unit: 'шт',
+            category: cat || mainCat,
+            mainCategory: mainCat,
+            subCategory: '',
+            inStock: true
+          };
+        }).filter((p: Product) => {
+          const lName = p.name.toLowerCase();
+          return lName.length > 2 && lName !== 'фото' && lName !== 'модель' && p.price > 0 && !lName.includes('null kw');
+        });
+
+        products.push(...mappedProducts);
+
+        if (res.customMaterials) {
+          customMaterials.push(...res.customMaterials);
+        }
       }
 
-      // Очищуємо всі товари та курси від можливих об'єктів Google
-      const products = (res.products || []).map((p: any) => {
-        // "Розумний" мапінг полів
-        const name = sanitizeString(p.name || p.productName || p.model || p.назва || p.модель || p.Модель || '');
-        const desc = sanitizeString(p.description || p.desc || p.характеристики || p.опис || '');
-        let category = sanitizeString(p.category || p.категорія || '');
-        let mainCategory = sanitizeString(p.mainCategory || p.головна_категорія || '');
-        const priceVal = parseFloat(sanitize(p.price || p.priceUsd || p.ціна || p.Ціна || 0)) || 0;
-        
-        // Якщо категорії пусті, пробуємо вгадати за назвою (тільки якщо це не "Фото")
-        if (name && name.toLowerCase() !== 'фото' && !mainCategory) {
-          const n = name.toLowerCase();
-          if (n.includes('inverter') || n.includes('інвертор') || n.includes('solis') || n.includes('deye') || n.includes('huawei')) {
-            mainCategory = 'Інвертори';
-          } else if (n.includes('solar') || n.includes('панель') || n.includes('модуль') || n.includes('ja') || n.includes('longi') || n.includes('trina')) {
-            mainCategory = 'Сонячні батареї';
-          } else if (n.includes('batt') || n.includes('акб') || n.includes('pylontech') || n.includes('dyness')) {
-            mainCategory = 'АКБ та BMS';
-          }
-        }
-
-        return {
-          id: sanitizeString(p.id) || generateStableId(mainCategory + '_' + name + '_' + priceVal),
-          name,
-          description: desc,
-          price: priceVal,
-          currency: sanitizeString(p.currency || p.валюта) || 'USD',
-          unit: sanitizeString(p.unit || p.од_вим) || 'шт',
-          category: category || mainCategory,
-          mainCategory: mainCategory,
-          subCategory: sanitizeString(p.subCategory || ''),
-          inStock: p.inStock !== false && p.active !== false,
+      if (res.success && res.rates) {
+        rates = {
+          usd: parseFloat(sanitize(res.rates?.usd || res.rates?.usdRate)) || 41.5,
+          eur: parseFloat(sanitize(res.rates?.eur || res.rates?.eurRate)) || 51.0
         };
-      }).filter((p: any) => {
-        const nameLower = p.name.toLowerCase();
-        // Відфільтровуємо заголовки та пусті рядки
-        return nameLower.length > 0 && 
-               nameLower !== 'фото' && 
-               nameLower !== 'модель' && 
-               nameLower !== 'назва' &&
-               p.price > 0;
-      });
-
-      const rates = {
-        usd: parseFloat(sanitize(res.rates?.usd || res.usdRate)) || 41.5,
-        eur: parseFloat(sanitize(res.rates?.eur || res.eurRate)) || 51.0
-      };
-
-      return {
-        rates,
-        products,
-        customMaterials: res.customMaterials || []
-      };
+      }
+    } catch (e) {
+      console.warn('⚠️ Отримання каталогу з GAS не вдалося:', e);
     }
+
+    return {
+      rates,
+      products,
+      customMaterials
+    };
   } catch (error) {
     console.error('Failed to fetch all data:', error);
   }
