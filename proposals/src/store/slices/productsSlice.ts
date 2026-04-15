@@ -72,17 +72,35 @@ export const createProductsSlice: StateCreator<
       const { fetchAllData } = await import('../../services/api');
       const data = await fetchAllData();
 
-      if (!data || !data.products || data.products.length === 0) {
-        throw new Error('GAS не повернув товарів');
+      if (!data) throw new Error('Дані не отримано');
+
+      // Об'єднуємо основні товари та матеріали (кріплення, кабель тощо), щоб з'явилися всі вкладки
+      const allProducts = [...(data.products || []), ...(data.customMaterials || [])];
+
+      if (allProducts.length === 0) {
+        throw new Error('Каталог пустий');
       }
 
       const rates = data.rates;
-      const products = data.products;
-      const categories = Array.from(new Set(products.map(p => p.mainCategory))).map(name => ({
-        name,
-        mainCategory: name,
-        count: products.filter(p => p.mainCategory === name).length
-      }));
+      const products = allProducts;
+      
+      // Формуємо вкладки на основі ВСІХ товарів
+      const categoryOrder = ['Сонячні батареї', 'Інвертори', 'АКБ та BMS'];
+      const categories = Array.from(new Set(products.map(p => p.mainCategory || 'Інше')))
+        .filter(name => name.length > 0)
+        .map(name => ({
+          name,
+          mainCategory: name,
+          count: products.filter(p => p.mainCategory === name).length
+        }))
+        .sort((a, b) => {
+          const idxA = categoryOrder.indexOf(a.name);
+          const idxB = categoryOrder.indexOf(b.name);
+          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+          if (idxA !== -1) return -1;
+          if (idxB !== -1) return 1;
+          return a.name.localeCompare(b.name);
+        });
 
       // Кешування
       localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, products, categories, rates }));
