@@ -133,7 +133,20 @@ export async function fetchAllData(): Promise<{
  * Отримує курси валют з API
  */
 export async function fetchRates(): Promise<{ usd: number; eur: number } | null> {
-  // 1. Спробуємо через Google Apps Script (надійно та дуже швидше завдяки бекенд виклику)
+  // 1. Спробуємо наш власний Serverless API (найнадійніший метод у продакшні)
+  try {
+    const res = await fetch('/api/fetch-rates');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.usd && data.eur) {
+        return { usd: data.usd, eur: data.eur };
+      }
+    }
+  } catch (e) {
+    console.warn('Local /api/fetch-rates failed', e);
+  }
+
+  // 2. Спробуємо через Google Apps Script
   try {
     const res = await gasRequest('getRates');
     if (res.success && res.usd && res.eur) {
@@ -143,7 +156,7 @@ export async function fetchRates(): Promise<{ usd: number; eur: number } | null>
     console.warn('GAS Rates failed', e);
   }
 
-  // 2. Резерв 1: Говерла через corsproxy (не блокується як JSONP)
+  // 3. Резерв 1: Говерла через нативний /api/proxy (без corsproxy.io)
   try {
     const payload = {
       operationName: "Point",
@@ -151,9 +164,10 @@ export async function fetchRates(): Promise<{ usd: number; eur: number } | null>
       query: "query Point($alias: Alias!) { point(alias: $alias) { rates { currency { codeAlpha } bid { absolute } ask { absolute } } } }"
     };
     
-    const govRes = await fetch(`https://corsproxy.io/?url=${encodeURIComponent('https://api.goverla.ua/graphql')}`, {
+    // Використовуємо власний проксі для Говерли
+    const govRes = await fetch(`/api/proxy?url=${encodeURIComponent('https://api.goverla.ua/graphql')}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
     
@@ -170,10 +184,10 @@ export async function fetchRates(): Promise<{ usd: number; eur: number } | null>
       }
     }
   } catch (e) {
-    console.warn('Goverla fallback via corsproxy failed, trying PrivatBank...', e);
+    console.warn('Goverla fallback failed', e);
   }
 
-  // 3. Резервний випадок 2: PrivatBank API (відкритий CORS, надійний)
+  // 4. Резервний випадок 2: PrivatBank API 
   try {
     const pbRes = await fetch('https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5');
     if (pbRes.ok) {
@@ -412,26 +426,34 @@ export async function fetchAllProducts(eurToUsdRate?: number): Promise<{
 }> {
   try {
     console.log('Loading products from Google Sheets...');
-    const allProducts: Product[] = [];
+    let allProducts: Product[] = [];
 
-    // Завантажуємо стандартні товари з листів
-    for (const sheet of CONFIG.SHEETS) {
-      let data: Product[] = [];
-
-      // Метод 1: CSV через проксі — зберігає текст точно як є (пріоритет)
-      try {
-        data = await fetchSheetProductsViaCSV(sheet);
-        if (data.length > 0) {
-          console.log(`✅ [CSV] Завантажено ${data.length} товарів з "${sheet.name}"`);
-        }
-      } catch (e) {
-        console.warn(`⚠️ CSV proxy не вдалося для "${sheet.name}":`, e instanceof Error ? e.message : e);
+    // МЕТОД 1: Google Apps Script (GAS) — Найнадійніший для закритих таблиць
+    try {
+      const res = await gasRequest('getProducts');
+      if (res.success && res.products && res.products.length > 0) {
+        console.log(`✅ [GAS] Завантажено ${res.products.length} товарів`);
+        allProducts = res.products.map((p: any) => ({
+          ...p,
+          id: p.id || generateStableId(p.mainCategory + '_' + (p.subCategory || p.category) + '_' + p.name)
+        }));
       }
+    } catch (e) {
+      console.warn('⚠️ GAS getProducts не вдався, пробуємо CSV...', e);
+    }
 
-
-
-      if (data && data.length > 0) {
-        allProducts.push(...data);
+    // МЕТОД 2: CSV через проксі (якщо GAS не повернув дані)
+    if (allProducts.length === 0) {
+      for (const sheet of CONFIG.SHEETS) {
+        try {
+          const data = await fetchSheetProductsViaCSV(sheet);
+          if (data && data.length > 0) {
+            console.log(`✅ [CSV] Завантажено ${data.length} товарів з "${sheet.name}"`);
+            allProducts.push(...data);
+          }
+        } catch (e) {
+          console.warn(`⚠️ CSV завантаження не вдалося для "${sheet.name}":`, e instanceof Error ? e.message : e);
+        }
       }
     }
 

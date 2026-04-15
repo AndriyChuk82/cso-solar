@@ -14,6 +14,7 @@ export const CONFIG = {
   ] as SheetConfig[],
 
   CORS_PROXIES: [
+    '/api/proxy?url=',
     '',
     'https://corsproxy.io/?url=',
     'https://api.allorigins.win/raw?url='
