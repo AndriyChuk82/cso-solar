@@ -430,7 +430,7 @@ export async function fetchAllProducts(eurToUsdRate?: number): Promise<{
 
     // МЕТОД 1: Google Apps Script (GAS) — Найнадійніший для закритих таблиць
     try {
-      const res = await gasRequest('getProducts');
+      const res = await gasRequest('getAllData');
       if (res.success && res.products && res.products.length > 0) {
         console.log(`✅ [GAS] Завантажено ${res.products.length} товарів`);
         allProducts = res.products.map((p: any) => ({
@@ -439,7 +439,7 @@ export async function fetchAllProducts(eurToUsdRate?: number): Promise<{
         }));
       }
     } catch (e) {
-      console.warn('⚠️ GAS getProducts не вдався, пробуємо CSV...', e);
+      console.warn('⚠️ GAS getAllData не вдався, пробуємо CSV...', e);
     }
 
     // МЕТОД 2: CSV через проксі (якщо GAS не повернув дані)

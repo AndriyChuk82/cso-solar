@@ -12,15 +12,24 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(decodeURIComponent(url), {
+    const targetUrl = decodeURIComponent(url);
+    console.log(`Proxying request to: ${targetUrl}`);
+
+    const response = await fetch(targetUrl, {
       method: 'GET',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      }
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': '*/*'
+      },
+      redirect: 'follow'
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch from target: ${response.statusText}`);
+      console.error(`Target returned status: ${response.status} ${response.statusText}`);
+      return res.status(response.status).json({ 
+        error: `Target returned error: ${response.statusText}`,
+        status: response.status 
+      });
     }
 
     const data = await response.text();
@@ -30,10 +39,10 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    // In Next.js/Vercel, we can just send the text
-    res.status(200).send(data);
+    // Return the data
+    return res.status(200).send(data);
   } catch (error) {
-    console.error('Proxy error:', error);
-    res.status(500).json({ error: 'Failed to fetch content', details: error.message });
+    console.error('Proxy crash:', error);
+    return res.status(200).json({ error: 'Proxy fetch failed', details: error.message });
   }
 }

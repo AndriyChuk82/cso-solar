@@ -67,32 +67,26 @@ export const createProductsSlice: StateCreator<
         }
       }
 
-      console.log('📡 Оновлення каталогу. Завантажуємо курси та товари ПАРАЛЕЛЬНО...');
+      console.log('📡 Оновлення каталогу через GAS (єдиний запит)...');
       
-      const [rates, data] = await Promise.all([
-        fetchRates(),
-        fetchAllProducts(undefined) // Не передаємо курс, конвертуємо тут
-      ]);
+      const { fetchAllData } = await import('../../services/api');
+      const data = await fetchAllData();
 
-      const eurToUsdRate = rates ? rates.eur / rates.usd : 1.23;
-      
-      // Ручна конвертація EUR -> USD
-      const products = data.products.map(p => {
-        if (p.currency === 'EUR') {
-          return { ...p, price: p.price * eurToUsdRate, currency: 'USD' };
-        }
-        return p;
-      });
-      const categories = data.categories;
-
-      if (eurToUsdRate !== 1.23) {
-        console.log(`✅ Конвертовано EUR → USD за курсом ${eurToUsdRate}`);
+      if (!data || !data.products || data.products.length === 0) {
+        throw new Error('GAS не повернув товарів');
       }
 
-      if (products.length > 0) {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, products, categories, rates }));
-        console.log('✅ Дані кешовано!');
-      }
+      const rates = data.rates;
+      const products = data.products;
+      const categories = Array.from(new Set(products.map(p => p.mainCategory))).map(name => ({
+        name,
+        mainCategory: name,
+        count: products.filter(p => p.mainCategory === name).length
+      }));
+
+      // Кешування
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, products, categories, rates }));
+      console.log('✅ Дані отримано та кешовано!');
 
       set((state: any) => {
         const newState = {
@@ -103,16 +97,9 @@ export const createProductsSlice: StateCreator<
         };
         
         if (rates) {
-          newState.settings = {
-            ...state.settings,
-            usdRate: rates.usd,
-            eurRate: rates.eur
-          };
+          newState.settings = { ...state.settings, usdRate: rates.usd, eurRate: rates.eur };
           if (state.proposal) {
-            newState.proposal = {
-              ...state.proposal,
-              rates: { usdToUah: rates.usd, eurToUah: rates.eur }
-            };
+            newState.proposal = { ...state.proposal, rates: { usdToUah: rates.usd, eurToUah: rates.eur } };
           }
         }
         
