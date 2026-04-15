@@ -1,1 +1,0 @@
-import{a as e}from"./index-DMybw-Jw.js";export{e as fetchAllData};

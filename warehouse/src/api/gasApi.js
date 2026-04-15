@@ -61,6 +61,16 @@ export async function addCategory(category) {
   return { success: true };
 }
 
+export async function updateCategory(category) {
+  if (!supabase) throw new Error('База даних не підключена');
+  const { error } = await supabase.from('categories').update({
+    name: category.name,
+    active: category.active
+  }).eq('id', category.oldName || category.name);
+  if (error) throw error;
+  return { success: true };
+}
+
 // --- КАТАЛОГ ---
 
 export async function getCatalog() {
@@ -86,6 +96,13 @@ export async function updateProduct(product) {
     name: product.name, article: product.article, unit: product.unit,
     category_id: product.category, active: product.active
   }).eq('id', product.id);
+  if (error) throw error;
+  return { success: true };
+}
+
+export async function archiveProduct(productId) {
+  if (!supabase) throw new Error('База даних не підключена');
+  const { error } = await supabase.from('products').update({ active: false }).eq('id', productId);
   if (error) throw error;
   return { success: true };
 }
@@ -241,7 +258,11 @@ export async function getBalances(warehouseId) {
     if (op.type === 'income' || op.type === 'balance') finalBalances[op.product_id].quantity += qty;
     if (op.type === 'expense') finalBalances[op.product_id].quantity -= qty;
   });
-  return { success: true, items: Object.values(finalBalances).filter(b => b.quantity !== 0) };
+  return { 
+    success: true, 
+    items: Object.values(finalBalances).filter(b => b.quantity !== 0),
+    balances: Object.values(finalBalances)
+  };
 }
 
 export async function getBalancesAtDate(warehouseId, date) {
