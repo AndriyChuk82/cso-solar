@@ -171,7 +171,7 @@ export async function fetchAllData(): Promise<{
 
       return {
         rates,
-        products: products.filter(p => p.name.length > 0), // Пропускаємо пусті рядки
+        products: products.filter((p: Product) => p.name.length > 0), // Пропускаємо пусті рядки
         customMaterials: res.customMaterials || []
       };
     }
