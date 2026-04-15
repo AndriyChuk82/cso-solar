@@ -119,6 +119,14 @@ function sanitize(val: any): any {
 }
 
 /**
+ * Примусово перетворює значення на рядок (для безпечних операцій .toLowerCase())
+ */
+function sanitizeString(val: any): string {
+  const sanitized = sanitize(val);
+  return sanitized !== null && sanitized !== undefined ? String(sanitized).trim() : '';
+}
+
+/**
  * Завантажує всі дані одним запитом (швидше ніж окремі запити)
  */
 export async function fetchAllData(): Promise<{
@@ -131,15 +139,15 @@ export async function fetchAllData(): Promise<{
     if (res.success) {
       // Очищуємо всі товари та курси від можливих об'єктів Google
       const products = (res.products || []).map((p: any) => ({
-        id: sanitize(p.id),
-        name: sanitize(p.name),
-        description: sanitize(p.description),
+        id: sanitizeString(p.id) || `item_${Date.now()}_${Math.random()}`,
+        name: sanitizeString(p.name),
+        description: sanitizeString(p.description),
         price: parseFloat(sanitize(p.price)) || 0,
-        currency: sanitize(p.currency) || 'USD',
-        unit: sanitize(p.unit) || 'шт',
-        category: sanitize(p.category),
-        mainCategory: sanitize(p.mainCategory),
-        subCategory: sanitize(p.subCategory),
+        currency: sanitizeString(p.currency) || 'USD',
+        unit: sanitizeString(p.unit) || 'шт',
+        category: sanitizeString(p.category),
+        mainCategory: sanitizeString(p.mainCategory),
+        subCategory: sanitizeString(p.subCategory),
         inStock: p.inStock !== false,
       }));
 
