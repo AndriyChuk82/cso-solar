@@ -138,30 +138,51 @@ export async function fetchAllData(): Promise<{
     const res = await gasRequest('getAllData');
     if (res.success) {
       if (res.products && res.products.length > 0) {
-        console.log('📦 GAS Sample Data Structure:', res.products[0]);
+        console.log('📦 GAS Products Count:', res.products.length);
+        console.log('📦 GAS Sample (first 10):', res.products.slice(0, 10));
       }
 
       // Очищуємо всі товари та курси від можливих об'єктів Google
       const products = (res.products || []).map((p: any) => {
-        // "Розумний" мапінг полів (шукаємо назву в різних варіантах)
-        const name = sanitizeString(p.name || p.productName || p.model || p.назва || p.модель || '');
+        // "Розумний" мапінг полів
+        const name = sanitizeString(p.name || p.productName || p.model || p.назва || p.модель || p.Модель || '');
         const desc = sanitizeString(p.description || p.desc || p.характеристики || p.опис || '');
-        const category = sanitizeString(p.category || p.категорія || '');
-        const mainCategory = sanitizeString(p.mainCategory || p.головна_категорія || '');
-        const priceVal = parseFloat(sanitize(p.price || p.priceUsd || p.ціна || 0)) || 0;
+        let category = sanitizeString(p.category || p.категорія || '');
+        let mainCategory = sanitizeString(p.mainCategory || p.головна_категорія || '');
+        const priceVal = parseFloat(sanitize(p.price || p.priceUsd || p.ціна || p.Ціна || 0)) || 0;
         
+        // Якщо категорії пусті, пробуємо вгадати за назвою (тільки якщо це не "Фото")
+        if (name && name.toLowerCase() !== 'фото' && !mainCategory) {
+          const n = name.toLowerCase();
+          if (n.includes('inverter') || n.includes('інвертор') || n.includes('solis') || n.includes('deye') || n.includes('huawei')) {
+            mainCategory = 'Інвертори';
+          } else if (n.includes('solar') || n.includes('панель') || n.includes('модуль') || n.includes('ja') || n.includes('longi') || n.includes('trina')) {
+            mainCategory = 'Сонячні батареї';
+          } else if (n.includes('batt') || n.includes('акб') || n.includes('pylontech') || n.includes('dyness')) {
+            mainCategory = 'АКБ та BMS';
+          }
+        }
+
         return {
-          id: sanitizeString(p.id) || generateStableId(mainCategory + '_' + name),
+          id: sanitizeString(p.id) || generateStableId(mainCategory + '_' + name + '_' + priceVal),
           name,
           description: desc,
           price: priceVal,
           currency: sanitizeString(p.currency || p.валюта) || 'USD',
           unit: sanitizeString(p.unit || p.од_вим) || 'шт',
-          category: category,
+          category: category || mainCategory,
           mainCategory: mainCategory,
           subCategory: sanitizeString(p.subCategory || ''),
           inStock: p.inStock !== false && p.active !== false,
         };
+      }).filter((p: any) => {
+        const nameLower = p.name.toLowerCase();
+        // Відфільтровуємо заголовки та пусті рядки
+        return nameLower.length > 0 && 
+               nameLower !== 'фото' && 
+               nameLower !== 'модель' && 
+               nameLower !== 'назва' &&
+               p.price > 0;
       });
 
       const rates = {
@@ -171,7 +192,7 @@ export async function fetchAllData(): Promise<{
 
       return {
         rates,
-        products: products.filter((p: Product) => p.name.length > 0), // Пропускаємо пусті рядки
+        products,
         customMaterials: res.customMaterials || []
       };
     }
