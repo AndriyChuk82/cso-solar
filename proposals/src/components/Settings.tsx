@@ -247,6 +247,22 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <p className="mt-2 text-xs text-gray-500 text-center">
               Це оновить список всіх товарів та актуальні ліміти/ціни з основного прайсу
             </p>
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <div className="text-sm font-medium text-gray-700">База товарів</div>
+                <div className="text-xs text-gray-500">Примусове оновлення каталогу з Google Sheets</div>
+              </div>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('cso-products-cache');
+                  window.location.reload();
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors shadow-sm"
+              >
+                <RefreshCw size={14} />
+                Оновити каталог
+              </button>
+            </div>
           </div>
         </div>
 
