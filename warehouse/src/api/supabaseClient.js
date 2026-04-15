@@ -10,5 +10,9 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
   : null;
 
 if (!supabase) {
-  console.warn('⚠️ Supabase не ініціалізовано: перевірте VITE_SUPABASE_URL та VITE_SUPABASE_ANON_KEY у .env.local');
+  console.warn('⚠️ Supabase не ініціалізовано. Статус ключів:', {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseAnonKey,
+    urlLength: supabaseUrl?.length || 0
+  });
 }
