@@ -320,13 +320,13 @@ function generateTTNHTMLWithData(proposal: Proposal, data: TTNData): string {
           th { font-family: 'Times New Roman', Times, serif; font-size: 9.5px; font-weight: normal; }
           
           .signatures { display: flex; justify-content: space-between; margin-top: 15px; }
-          .sig-block { width: 45%; text-align: center; }
+          .sig-block { width: 45%; text-align: center; position: relative; }
           .sig-line { border-bottom: 1px solid #000; height: 18px; margin-top: 5px; }
           .page-break { page-break-after: always; }
           
           .info-box { border: 1px solid #000; padding: 5px; margin-bottom: 15px; }
           .stamp-box { display: inline-block; position: relative; width: 0; height: 0; vertical-align: top; }
-          .cso-seal-overlay { position: absolute; width: 130px; bottom: -30px; left: -100px; pointer-events: none; mix-blend-mode: multiply; opacity: 0.9; z-index: 10; }
+          .cso-seal-overlay { position: absolute; width: 140px; top: 10px; left: 50%; transform: translateX(-50%); pointer-events: none; mix-blend-mode: multiply; opacity: 0.9; z-index: 10; }
         </style>
       </head>
       <body>
@@ -484,6 +484,7 @@ function generateTTNHTMLWithData(proposal: Proposal, data: TTNData): string {
             <div class="sig-block">
               Здав (відповідальна особа вантажовідправника)
               <div class="sig-line"></div>
+              ${data.sealType !== 'none' ? `<img src="${window.location.origin}/proposals/doc/${data.sealType === 'cso' ? 'sign_cso.png' : 'fop_past.jpg'}" class="cso-seal-overlay">` : ''}
               <div class="field-subtext">(ПІБ, посада, підпис)</div>
             </div>
             <div class="sig-block">
@@ -519,7 +520,6 @@ function generateTTNHTMLWithData(proposal: Proposal, data: TTNData): string {
               </tr>
             </tbody>
           </table>
-          ${data.sealType !== 'none' ? `<div style="text-align: right; margin-top: -60px; margin-right: 150px;"><div class="stamp-box"><img src="${window.location.origin}/proposals/doc/${data.sealType === 'cso' ? 'sign_cso.png' : 'fop_past.jpg'}" class="cso-seal-overlay"></div></div>` : ''}
         </div>
         <script>
           window.onload = () => setTimeout(() => window.print(), 800);
