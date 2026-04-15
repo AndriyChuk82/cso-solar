@@ -4,23 +4,20 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 
 export default defineConfig(({ mode }) => {
-  // Визначаємо шлях до кореня монорепозиторію
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const rootDir = path.resolve(__dirname, '../');
-  
-  // Завантажуємо змінні з кореня
   const env = loadEnv(mode, rootDir, '');
   
-  // ДЕБАГ: Якщо ключів немає навіть у системних змінних, ми хочемо знати про це під час білду
-  const supabaseUrl = env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-  const supabaseKey = env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+  // Беремо ключі з усіх можливих джерел
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || env.VITE_SUPABASE_URL || '';
+  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY || '';
 
-  console.log('--- Build Environment Check ---');
-  console.log('Mode:', mode);
-  console.log('Looking for env in:', rootDir);
-  console.log('Supabase URL found:', !!supabaseUrl);
-  console.log('Supabase Key found:', !!supabaseKey);
-  console.log('-------------------------------');
+  console.log('--- DETAILED BUILD LOG ---');
+  console.log('Project Root:', rootDir);
+  console.log('VITE_ variables in process.env:', Object.keys(process.env).filter(k => k.startsWith('VITE_')));
+  console.log('VITE_ variables in loadEnv:', Object.keys(env).filter(k => k.startsWith('VITE_')));
+  console.log('Supabase URL status:', !!supabaseUrl, supabaseUrl ? '(length: ' + supabaseUrl.length + ')' : '(EMPTY)');
+  console.log('--------------------------');
 
   return {
     plugins: [react()],
