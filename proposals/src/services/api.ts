@@ -232,10 +232,24 @@ export async function updateMaterialPrice(id: string, price: number) {
   return gasRequest('updateMaterialPrice', { id, price });
 }
 
+function normalizeForSearch(str: string): string {
+  if (!str) return '';
+  return str.toLowerCase()
+    .replace(/а/g, 'a')
+    .replace(/в/g, 'b') // Cyrillic в -> Latin b
+    .replace(/е/g, 'e')
+    .replace(/о/g, 'o')
+    .replace(/с/g, 'c')
+    .replace(/х/g, 'x')
+    .replace(/р/g, 'p')
+    .replace(/і/g, 'i')
+    .replace(/\s+/g, ''); // ignore spaces for better matching
+}
+
 export function searchProducts(products: Product[], query: string): Product[] {
-  const q = query.toLowerCase();
+  const q = normalizeForSearch(query);
   return products.filter(p => 
-    p.name.toLowerCase().includes(q) || 
-    (p.description && p.description.toLowerCase().includes(q))
+    normalizeForSearch(p.name).includes(q) || 
+    normalizeForSearch(p.description || '').includes(q)
   );
 }

@@ -646,7 +646,7 @@ function generateWarrantyHTMLWithData(proposal: Proposal, data: WarrantyData): s
               <div class="sig-subtext">(підпис продавця)</div>
               <div class="stamp-box">
                 М.П.
-                ${data.applySeal ? `<img src="${window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'https://cso.solar/doc/sign_cso.png' : '/doc/sign_cso.png'}" class="cso-seal-overlay" style="display:block">` : ''}
+                ${data.applySeal ? `<img src="${window.location.origin}/proposals/doc/sign_cso.png" class="cso-seal-overlay" style="display:block">` : ''}
               </div>
             </div>
             <div class="sig-block">
