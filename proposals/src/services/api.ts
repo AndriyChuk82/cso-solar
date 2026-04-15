@@ -98,6 +98,7 @@ export async function fetchAllData() {
           const col4 = sanitizeString(p.description);
           const col5 = sanitizeString(p.manufacturer);
           const col6 = sanitizeString(p.power);
+          const originalName = sanitizeString(p.originalName);
 
           let mCatRaw = sanitizeString(p.mainCategory || '');
           let mainCat = mCatRaw;
@@ -116,28 +117,46 @@ export async function fetchAllData() {
           let desc = col3 || col4;
           let priceObj = { value: 0, currency: 'USD' };
 
+          // Витягуємо точну назву (знаходимо колонку, яка містить текст назви, а не просто цифру чи слово "Фото")
+          let exactName = '';
+          if (originalName && isNaN(Number(originalName)) && originalName !== 'Фото' && originalName.length > 2) exactName = originalName;
+          else if (col1 && isNaN(Number(col1)) && col1 !== 'Фото' && col1.length > 2) exactName = col1;
+          else if (col0 && col0 !== 'Фото' && col0.length > 2) exactName = col0;
+          
           if (mainCat === 'Інвертори') {
             const powerKW = col1;
             const specs = col3;
             priceObj = parsePrice(col5 || col4);
-            name = `Інвертор Deye ${powerKW} kW`;
-            if (specs.toLowerCase().includes('huawei')) name = name.replace('Deye', 'Huawei');
-            else if (specs.toLowerCase().includes('solis')) name = name.replace('Deye', 'Solis');
-            desc = specs;
+            
+            // Якщо точна назва є в таблиці — беремо її, інакше генеруємо "Інвертор 5 kW"
+            name = exactName ? exactName : `Інвертор ${powerKW} kW`;
+            desc = specs || (powerKW ? `Потужність: ${powerKW} kW` : '');
           } 
           else if (mainCat === 'АКБ та BMS') {
-            name = col0;
-            if (name === 'Фото') name = col1;
+            name = exactName || col0;
             priceObj = parsePrice(col1);
             desc = `Технологія: ${col2}, Ємність: ${col3}Ah, Напруга: ${col4}V`;
           } 
           else if (mainCat === 'Сонячні батареї') {
-            const watts = parseInt(col1) || parseInt(col3.match(/\d+/)?.[0] || '0') || 0;
+            const match = exactName.match(/\d+(?=\s*Вт|\s*W)/i) || exactName.match(/\d{3}/);
+            const watts = match ? parseInt(match[0]) : 0;
             const wattPriceStr = col6 || col5 || col4;
-            const parsed = parsePrice(wattPriceStr);
-            name = `Сонячна панель ${watts} Вт`;
-            desc = col3;
-            priceObj = (parsed.value > 0 && parsed.value < 2) ? { value: Math.round(parsed.value * watts * 100) / 100, currency: parsed.currency } : parsed;
+            const parsedPrice = parsePrice(wattPriceStr);
+            const isPerWatt = parsedPrice.value > 0 && parsedPrice.value < 2;
+
+            // Точна назва (наприклад: "Longi Solar LR8-66HGD-620M Bificial")
+            name = exactName || `Сонячна панель ${watts} Вт`;
+            // Опис - це технічні характеристики (наприклад: "605 Вт, 12 BB, N type")
+            desc = col3 || col2 || ''; 
+            
+            let finalPrice = parsedPrice.value;
+            if (isPerWatt && watts > 0) {
+              finalPrice = Math.round(parsedPrice.value * watts * 100) / 100;
+            } else if (parsedPrice.value <= 0) {
+              finalPrice = parsePrice(col1)?.value || 0; 
+            }
+
+            priceObj = { value: finalPrice, currency: parsedPrice.currency || 'USD' };
           } 
           else {
             name = col1;

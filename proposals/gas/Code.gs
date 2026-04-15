@@ -2043,8 +2043,9 @@ function getAllProducts() {
           if (!row[0] || row[0].toString().trim() === "" || row[0] === "Модель") return;
 
           allProducts.push({
-            id: generateProductId(row[0], sheet.name),
+            id: generateProductId(row[0] && typeof row[0] === 'string' ? row[0] : 'img_'+index, sheet.name),
             name: row[0] || '',
+            originalName: row[1] || '',
             price: parsePriceFromString(row[1]),
             currency: parseCurrencyFromString(row[1]),
             unit: row[2] || 'шт',
@@ -2052,6 +2053,7 @@ function getAllProducts() {
             manufacturer: row[4] || '',
             power: row[5] || '',
             warranty: row[6] || '',
+            raw: row,
             category: sheet.name,
             mainCategory: sheet.mainCat,
             inStock: true
