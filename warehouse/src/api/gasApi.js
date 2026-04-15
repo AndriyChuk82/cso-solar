@@ -6,6 +6,7 @@ import CONFIG from '../config';
  */
 
 async function gasRequest(action, params = {}, method = 'GET') {
+  const startTime = performance.now();
   const url = new URL(CONFIG.GAS_URL);
 
   if (method === 'GET') {
@@ -24,7 +25,10 @@ async function gasRequest(action, params = {}, method = 'GET') {
     if (!response.ok) {
       throw new Error(`Помилка сервера: ${response.status}`);
     }
-    return response.json();
+    const data = await response.json();
+    const endTime = performance.now();
+    console.log(`[Warehouse API] ${action} completed in ${(endTime - startTime).toFixed(2)}ms`);
+    return data;
   }
 
   const response = await fetch(CONFIG.GAS_URL, {
@@ -36,7 +40,10 @@ async function gasRequest(action, params = {}, method = 'GET') {
   if (!response.ok) {
     throw new Error(`Помилка сервера: ${response.status}`);
   }
-  return response.json();
+  const data = await response.json();
+  const endTime = performance.now();
+  console.log(`[Warehouse API] ${action} completed in ${(endTime - startTime).toFixed(2)}ms`);
+  return data;
 }
 
 /** Спеціальний запит до Vercel API для задач з хешуванням (користувачі) */

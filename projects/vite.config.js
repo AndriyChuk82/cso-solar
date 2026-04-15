@@ -7,6 +7,23 @@ export default defineConfig({
   base: '/projects/',
   build: {
     outDir: '../public/projects',
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react-router-dom')) {
+              return 'router';
+            }
+            if (id.includes('lucide-react') || id.includes('framer-motion')) {
+              return 'ui';
+            }
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor';
+            }
+          }
+        }
+      }
+    }
   }
 })

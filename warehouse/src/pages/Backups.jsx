@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createBackup } from '../api/gasApi';
 import { useToast } from '../context/ToastContext';
+import { Button } from '@cso/design-system';
 
 /**
  * Управління резервними копіями. Лише для адміністратора.
@@ -51,13 +52,15 @@ export default function Backups() {
             </div>
           </div>
 
-          <button
-            className="btn btn-primary btn-lg"
+          <Button
+            variant="primary"
+            size="lg"
             onClick={handleBackup}
             disabled={creating}
+            loading={creating}
           >
-            {creating ? '⏳ Створення копії...' : '💾 Зберегти резервну копію зараз'}
-          </button>
+            {creating ? 'Створення копії...' : '💾 Зберегти резервну копію зараз'}
+          </Button>
 
           {lastResult && (
             <div className={`alert ${lastResult.success ? 'alert-success' : 'alert-danger'}`} style={{ marginTop: '16px' }}>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getWarehouses, addWarehouse, updateWarehouse } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { Button } from '@cso/design-system';
 
 /**
  * Управління складами. Лише для адміністратора.
@@ -85,7 +86,7 @@ export default function Warehouses() {
           <h1 className="page-title">🏭 Склади</h1>
           <p className="page-subtitle">Управління переліком складів</p>
         </div>
-        <button className="btn btn-primary" onClick={openAdd}>➕ Додати склад</button>
+        <Button variant="primary" onClick={openAdd}>➕ Додати склад</Button>
       </div>
 
       <div className="card">
@@ -118,14 +119,15 @@ export default function Warehouses() {
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: '4px' }}>
-                        <button className="btn btn-ghost btn-sm" onClick={() => openEdit(wh)}>✏️</button>
-                        <button
-                          className="btn btn-ghost btn-sm"
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(wh)}>✏️</Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleToggleActive(wh)}
                           style={{ color: wh.active ? 'var(--danger)' : 'var(--income)' }}
                         >
                           {wh.active ? '⏸️' : '▶️'}
-                        </button>
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -159,8 +161,8 @@ export default function Warehouses() {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>Скасувати</button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Збереження...' : 'Зберегти'}</button>
+                <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>Скасувати</Button>
+                <Button type="submit" variant="primary" disabled={saving} loading={saving}>{saving ? 'Збереження...' : 'Зберегти'}</Button>
               </div>
             </form>
           </div>

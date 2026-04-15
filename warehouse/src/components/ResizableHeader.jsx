@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 
 /**
  * ResizableHeader — компонент для заголовка таблиці, який запам'ятовує ширину в localStorage.
  * Використовує ResizeObserver для відстеження змін ширини через CSS resize.
  */
-export default function ResizableHeader({ children, columnId, pageId }) {
+function ResizableHeader({ children, columnId, pageId }) {
   const ref = useRef(null);
   const startX = useRef(0);
   const startWidth = useRef(0);
@@ -71,7 +71,7 @@ export default function ResizableHeader({ children, columnId, pageId }) {
   return (
     <div ref={ref} className="resizable-header">
       <span className="resizer-label">{children}</span>
-      <div 
+      <div
         ref={handleRef}
         className="resizer-handle"
         onMouseDown={handleStart}
@@ -79,4 +79,6 @@ export default function ResizableHeader({ children, columnId, pageId }) {
     </div>
   );
 }
+
+export default memo(ResizableHeader);
 

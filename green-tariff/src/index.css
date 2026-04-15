@@ -1,0 +1,195 @@
+/* ===== CSO Solar — Green Tariff Styles ===== */
+
+:root {
+  /* Основні кольори — CSO Solar Orange */
+  --primary: #E8890A;
+  --primary-light: #F5A623;
+  --primary-dark: #B86D00;
+  --primary-bg: #FEF3E2;
+  --primary-bg-hover: #FDE8C0;
+
+  /* Акцент (синій) */
+  --accent: #1a3a6b;
+  --accent-light: #2a5298;
+  --accent-dark: #0f2445;
+
+  /* Нейтральні */
+  --bg: #f8fafc;
+  --bg-card: #ffffff;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+
+  /* Текст */
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+
+  /* Стани */
+  --danger: #ef4444;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+
+  /* Тіні */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+
+  /* Округлення */
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* Анімації */
+  --transition: 0.2s ease;
+}
+
+.dark {
+  --primary: #fbbf24;
+  --primary-light: #fcd34d;
+  --primary-dark: #f59e0b;
+  --primary-bg: #422006;
+  --primary-bg-hover: #713f12;
+
+  --accent: #2a5298;
+  --accent-light: #3b6dc7;
+  --accent-dark: #1a3a6b;
+
+  --bg: #0f172a;
+  --bg-card: #1e293b;
+  --border: #334155;
+  --border-light: #1e293b;
+
+  --text: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+
+  --danger: #f87171;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --info: #60a5fa;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+}
+
+/* ===== Фікси для темної теми (Global Dark Fixes) ===== */
+.dark {
+  background-color: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+.dark body, .dark #root, .dark .app-container {
+  background-color: #0f172a !important;
+}
+
+.dark .bg-white, .dark .bg-slate-50, .dark .bg-gray-50 {
+  background-color: var(--bg-card) !important;
+}
+
+/* Виправлення заголовків та тексту */
+.dark h1, .dark h2, .dark h3, .dark .text-slate-900, .dark .text-gray-900 {
+  color: #f1f5f9 !important;
+}
+
+.dark .text-slate-700, .dark .text-gray-700 {
+  color: #cbd5e1 !important;
+}
+
+/* Картки та Sidebar */
+.dark aside, .dark .sidebar, .dark .card, .dark [class*="card"] {
+  background-color: #1e293b !important;
+  border-color: var(--border) !important;
+}
+
+/* Фільтри (кнопки в списку проектів) */
+.dark .bg-white.text-gray-400, 
+.dark button.bg-white:not(.bg-primary),
+.dark button.bg-gray-100:not(.bg-primary) {
+  background-color: #1e293b !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #334155 !important;
+}
+
+.dark button.bg-white:hover:not(.bg-primary),
+.dark button.bg-gray-100:hover:not(.bg-primary) {
+  background-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+/* Список проектів (кнопки елементів) */
+.dark .divide-y button:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark .divide-y button .text-gray-900 {
+  color: #f1f5f9 !important;
+}
+
+.dark .divide-y button .text-gray-500 {
+  color: #cbd5e1 !important;
+}
+
+/* Поля вводу (Inputs) */
+.dark input, .dark select, .dark textarea {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+.dark input::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.5;
+}
+
+/* Хедер */
+.dark header, .dark .app-header {
+  background-color: var(--bg-card) !important;
+  border-bottom-color: var(--border) !important;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.6;
+  margin: 0;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

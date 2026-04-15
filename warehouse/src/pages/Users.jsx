@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getUsers, addUser, updateUser, getWarehouses, getProjects, verifySession } from '../api/gasApi';
 import { useToast } from '../context/ToastContext';
 import CONFIG from '../config';
+import { Button } from '@cso/design-system';
 
 /**
  * Управління користувачами. Лише для адміністратора.
@@ -105,7 +106,7 @@ export default function Users() {
           <h1 className="page-title">👥 Користувачі</h1>
           <p className="page-subtitle">Управління доступом до системи</p>
         </div>
-        <button className="btn btn-primary" onClick={openAdd}>➕ Додати користувача</button>
+        <Button variant="primary" onClick={openAdd}>➕ Додати користувача</Button>
       </div>
 
       <div className="card">
@@ -159,7 +160,7 @@ export default function Users() {
                       </span>
                     </td>
                     <td>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(u)}>✏️</button>
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(u)}>✏️</Button>
                     </td>
                   </tr>
                 ))}
@@ -287,8 +288,8 @@ export default function Users() {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>Скасувати</button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Збереження...' : 'Зберегти'}</button>
+                <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>Скасувати</Button>
+                <Button type="submit" variant="primary" disabled={saving} loading={saving}>{saving ? 'Збереження...' : 'Зберегти'}</Button>
               </div>
             </form>
           </div>

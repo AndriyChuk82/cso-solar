@@ -5,24 +5,63 @@ import { verifySession, getUser } from '../api/gasApi';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Миттєва ініціалізація з кешу
+  const getInitialUser = () => {
+    try {
+      const cached = localStorage.getItem('cso_user');
+      return cached ? JSON.parse(cached) : null;
+    } catch (e) { return null; }
+  };
+
+  const [user, setUser] = useState(getInitialUser);
+  const [loading, setLoading] = useState(!getInitialUser());
   const [error, setError] = useState(null);
 
   useEffect(() => {
     async function checkAuth() {
       try {
-        setLoading(true);
+        // 1. ПЕРЕВІРЯЄМО КЕШ (LocalStorage) - для миттєвого входу при перемиканні модулів
+        const cachedUser = localStorage.getItem('cso_user');
+        if (cachedUser) {
+          try {
+            const parsedUser = JSON.parse(cachedUser);
+            setUser(parsedUser);
+            setLoading(false); // ПРИБИРАЄМО ЕКРАН ЗАВАНТАЖЕННЯ МИТТЄВО
+          } catch (e) {
+            console.error('Error parsing cached user:', e);
+          }
+        }
 
-        // 1. Перевіряємо JWT токен через /api/verify — отримуємо email, role та module_access
+        // DEV MODE: Тимчасово пропускаємо авторизацію для тестування UI
+        if (import.meta.env.DEV) {
+          const devUser = {
+            email: 'dev@test.com',
+            name: 'Dev User',
+            role: 'admin',
+            warehouseId: null,
+            module_access: 'warehouse,projects,gt,proposals',
+            isAdmin: true,
+            isStorekeeper: false,
+            isManager: false,
+          };
+          setUser(devUser);
+          localStorage.setItem('cso_user', JSON.stringify(devUser));
+          setLoading(false);
+          return;
+        }
+
+        // 2. ФОНОВА ПЕРЕВІРКА JWT (не блокує UI якщо є кеш)
         const response = await fetch(CONFIG.VERIFY_URL, { credentials: 'include' });
         if (!response.ok) {
-          setUser(null);
-          setLoading(false);
+          if (!cachedUser) {
+            setUser(null);
+            setLoading(false);
+          }
           return;
         }
         const verifyData = await response.json();
         if (!verifyData.authenticated) {
+          localStorage.removeItem('cso_user');
           setUser(null);
           setLoading(false);
           return;
@@ -30,7 +69,7 @@ export function AuthProvider({ children }) {
 
         const { user: email, name, role, module_access } = verifyData;
 
-        // 2. Отримуємо розширені дані (warehouse_id тощо) з Google Sheets
+        // 3. Отримуємо розширені дані з Google Sheets (також у фоні)
         const gasResult = await getUser(email);
 
         let warehouseId = null;
@@ -40,10 +79,7 @@ export function AuthProvider({ children }) {
         if (gasResult?.success && gasResult.user) {
           const u = gasResult.user;
           warehouseId = u.warehouse_id || null;
-          // GAS може мати свіжішу роль — але довіряємо тій що в токені (JWT)
-          // Якщо роль "manager" — блокуємо доступ до складу
           if (u.role) finalRole = u.role.toLowerCase();
-          // module_access з токена актуальніший (встановлюється під час логіну)
           if (!finalModuleAccess && u.module_access) {
             finalModuleAccess = u.module_access;
           }
@@ -51,7 +87,7 @@ export function AuthProvider({ children }) {
 
         const isAdmin = finalRole === 'admin' || finalRole === 'адмін' || finalRole === 'адміністратор';
 
-        setUser({
+        const updatedUser = {
           email,
           name: name || email,
           role: finalRole,
@@ -60,10 +96,15 @@ export function AuthProvider({ children }) {
           isAdmin,
           isStorekeeper: finalRole === 'storekeeper',
           isManager: finalRole === 'manager',
-        });
+        };
+
+        setUser(updatedUser);
+        localStorage.setItem('cso_user', JSON.stringify(updatedUser));
       } catch (err) {
         console.error('Auth error:', err);
-        setError('Помилка авторизації.');
+        if (!localStorage.getItem('cso_user')) {
+          setError('Помилка авторизації.');
+        }
       } finally {
         setLoading(false);
       }

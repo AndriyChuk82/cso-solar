@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { formatQuantity } from '../utils/formatUtils';
 import ResizableHeader from '../components/ResizableHeader';
+import { Button } from '@cso/design-system';
 
 /**
  * Підсумок дня — «Ввести залишки на кінець дня».
@@ -227,16 +228,17 @@ export default function DailyBalance() {
           </div>
 
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <button type="button" className="btn btn-outline" onClick={() => navigate('/')}>
+            <Button type="button" variant="ghost" onClick={() => navigate('/')}>
               Скасувати
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="btn btn-primary"
+              variant="primary"
               disabled={saving || changedCount === 0}
+              loading={saving}
             >
               {saving ? 'Збереження...' : `📊 Зберегти підсумок (${changedCount} відхилень)`}
-            </button>
+            </Button>
           </div>
         </form>
       ) : warehouseId ? (

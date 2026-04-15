@@ -5,6 +5,7 @@ import { formatDate } from '../utils/dateUtils';
 import { formatQuantity } from '../utils/formatUtils';
 import CONFIG from '../config';
 import ResizableHeader from '../components/ResizableHeader';
+import { Button } from '@cso/design-system';
 
 /**
  * Звіти та аналітика — 3 типи звітів з експортом Excel/PDF.
@@ -171,9 +172,9 @@ export default function Reports() {
         width: 'fit-content'
       }}>
         {tabs.map((tab) => (
-          <button
+          <Button
             key={tab.key}
-            className="btn"
+            variant="ghost"
             style={{
               background: activeTab === tab.key ? 'var(--bg-card)' : 'transparent',
               color: activeTab === tab.key ? 'var(--primary)' : 'var(--text-secondary)',
@@ -187,7 +188,7 @@ export default function Reports() {
             onClick={() => { setActiveTab(tab.key); setReportData(null); }}
           >
             {tab.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -253,9 +254,9 @@ export default function Reports() {
           )}
 
           <div>
-            <button className="btn btn-primary" onClick={generateReport} disabled={loading} style={{ height: '36px', padding: '0 20px' }}>
-              {loading ? '⏳' : '📊 Сформувати'}
-            </button>
+            <Button variant="primary" onClick={generateReport} disabled={loading} loading={loading} style={{ height: '36px', padding: '0 20px' }}>
+              {loading ? 'Формування...' : '📊 Сформувати'}
+            </Button>
           </div>
         </div>
       </div>
@@ -274,12 +275,12 @@ export default function Reports() {
               >
                 {sortAsc ? 'Сортування: А-Я' : 'Сортувати А-Я'}
               </button>
-              <button className="btn btn-outline btn-sm" onClick={handleExportExcel}>
+              <Button variant="ghost" size="sm" onClick={handleExportExcel}>
                 📥 Завантажити Excel (.csv)
-              </button>
-              <button className="btn btn-outline btn-sm" onClick={handleExportPdf}>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleExportPdf}>
                 📄 Завантажити PDF
-              </button>
+              </Button>
             </div>
           </div>
           <div className="data-table-wrap">

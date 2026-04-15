@@ -1,6 +1,7 @@
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxqQEMJ4vKBExxmh5-ft-UGVpU9rms4vPd9z0XgZv3b33sJDvXyZoIntOj61TVg9fLK/exec';
+const GAS_URL = import.meta.env.VITE_GAS_URL || 'https://script.google.com/macros/s/AKfycbxqQEMJ4vKBExxmh5-ft-UGVpU9rms4vPd9z0XgZv3b33sJDvXyZoIntOj61TVg9fLK/exec';
 
 async function gasRequest(action, params = {}, method = 'GET') {
+  const startTime = performance.now();
   const url = new URL(GAS_URL);
 
   if (method === 'GET') {
@@ -15,7 +16,10 @@ async function gasRequest(action, params = {}, method = 'GET') {
       headers: { 'Content-Type': 'text/plain' }
     });
     if (!response.ok) throw new Error(`Помилка сервера: ${response.status}`);
-    return response.json();
+    const data = await response.json();
+    const endTime = performance.now();
+    console.log(`[Projects API] ${action} completed in ${(endTime - startTime).toFixed(2)}ms`);
+    return data;
   }
 
   const response = await fetch(GAS_URL, {
@@ -24,13 +28,16 @@ async function gasRequest(action, params = {}, method = 'GET') {
     body: JSON.stringify({ action, ...params })
   });
   if (!response.ok) throw new Error(`Помилка сервера: ${response.status}`);
-  return response.json();
+  const data = await response.json();
+  const endTime = performance.now();
+  console.log(`[Projects API] ${action} completed in ${(endTime - startTime).toFixed(2)}ms`);
+  return data;
 }
 
 export const projectService = {
   // Projects
-  getProjects: (userEmail) => gasRequest('getProjects', { userEmail }),
-  getProjectDetails: (projectId) => gasRequest('getProjectDetails', { projectId }),
+  getProjects: (userEmail) => gasRequest('getProjects', { userEmail }, 'POST'),
+  getProjectDetails: (projectId) => gasRequest('getProjectDetails', { projectId }, 'POST'),
 
   // Save project (supports agreed_sum field)
   saveProject: (project) => gasRequest('saveProject', { project }, 'POST'),

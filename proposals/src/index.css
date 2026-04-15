@@ -1,0 +1,409 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+:root {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --bg-input: #ffffff;
+  --accent: #F59E0B;
+  --accent-light: #fbbf24;
+  --accent-dark: #d97706;
+  --accent-glow: rgba(245, 158, 11, 0.1);
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --border-light: #cbd5e1;
+  --success: #10B981;
+  --danger: #EF4444;
+  --info: #3B82F6;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --primary: var(--accent);
+}
+
+.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #0f172a;
+  --bg-card: #1e293b;
+  --bg-card-hover: #334155;
+  --bg-input: #334155;
+  --accent: #fbbf24;
+  --accent-light: #fcd34d;
+  --accent-dark: #f59e0b;
+  --accent-glow: rgba(251, 191, 36, 0.15);
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+  --border: #334155;
+  --border-light: #475569;
+  --success: #34d399;
+  --danger: #f87171;
+  --info: #60a5fa;
+}
+
+html { font-size: 14px; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* ===== Фікси для темної теми (Global Dark Fixes) ===== */
+.dark {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark .bg-white, .dark .bg-secondary {
+  background-color: var(--bg-card) !important;
+}
+
+.dark .text-slate-900, .dark .text-gray-900 {
+  color: var(--text-primary) !important;
+}
+
+.dark .text-slate-600, .dark .text-gray-700 {
+  color: var(--text-secondary) !important;
+}
+
+/* Назви товарів у каталозі та картках */
+.dark h3, .dark h4, .dark .product-title, .dark .font-bold {
+  color: #ffffff !important;
+}
+
+.dark .text-blue-600 {
+  color: #60a5fa !important; /* Світліший синій для посилань/цін */
+}
+
+/* Картки та форми */
+.dark .card, .dark [class*="card"] {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border) !important;
+}
+
+/* Поля вводу (Inputs) - критично для КП */
+.dark input, .dark select, .dark textarea {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border) !important;
+}
+
+.dark input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Хедер */
+.dark header, .dark .app-header {
+  background-color: var(--bg-card) !important;
+  border-bottom-color: var(--border) !important;
+}
+
+/* Таблиці та виділені стовпці */
+.dark thead th {
+  background-color: #2d3748 !important; /* Темніший сірий для шапки */
+  color: var(--text-primary) !important;
+  border-bottom: 2px solid var(--border) !important;
+}
+
+/* Прибираємо будь-яке виділення стовпців (Сума, Собівартість тощо) */
+.dark [class*="bg-blue-50"], 
+.dark [class*="bg-green-50"],
+.dark [class*="bg-slate-50"],
+.dark .cost-column {
+  background-color: var(--bg-card) !important;
+}
+
+/* Текст у стовпцях має бути чітким */
+.dark td[class*="bg-"], 
+.dark th[class*="bg-"],
+.dark tfoot tr,
+.dark .cost-column {
+  color: #f1f5f9 !important;
+}
+
+.dark tfoot, .dark tfoot tr, .dark tfoot td {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+.dark tfoot .text-gray-500,
+.dark tfoot .text-gray-400 {
+  color: #94a3b8 !important;
+}
+
+.dark td, .dark th {
+  border-color: var(--border) !important;
+}
+
+/* Кнопки вибору валют та налаштувань */
+.dark button.bg-gray-100 {
+  background-color: #1e293b !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #334155 !important;
+}
+
+.dark button.bg-gray-100:hover {
+  background-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .text-gray-600 {
+  color: #f1f5f9 !important;
+}
+
+/* Темні скроллбари */
+.dark ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 5px;
+  border: 2px solid #1e293b;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Каталог та картки товарів */
+.dark .product-card, .dark [class*="product-item"] {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.dark .product-card:hover {
+  background-color: var(--bg-card-hover) !important;
+}
+
+input, textarea, select, button { font-family: var(--font); }
+h1, h2, h3, h4 { font-weight: 600; }
+
+* {
+  box-sizing: border-box;
+}
+
+/* Print-ready elements common styles */
+.print-logo {
+  height: 45px !important;
+  width: auto !important;
+  max-width: 140px !important;
+  object-fit: contain;
+}
+
+/* Print styles matching PDF/Print version */
+@media print {
+  *, *::before, *::after {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #111 !important;
+    font-size: 11pt;
+  }
+
+  /* Show print header */
+  .print-header {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1.5px solid #f59e0b;
+  }
+
+  .print-logo-row {
+    display: flex !important;
+    width: 100% !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
+
+  .print-company {
+    text-align: right !important;
+  }
+
+  .print-company p {
+    font-size: 11pt;
+    color: #f59e0b !important;
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .print-company div {
+    color: #444 !important;
+    font-weight: 500;
+    font-size: 9pt;
+  }
+
+  .print-contact-info {
+    margin-top: 4px;
+  }
+
+  /* Hide UI elements and sidebar */
+  header, aside, nav, .sidebar, button,
+  [class*="sidebar"], [class*="catalog"], .no-print {
+    display: none !important;
+  }
+
+  /* Hide cost columns (собівартість) */
+  .cost-column,
+  th.bg-blue-50,
+  td.bg-blue-50,
+  table thead tr th:nth-child(5),
+  table thead tr th:nth-child(6),
+  table tbody tr td:nth-child(5),
+  table tbody tr td:nth-child(6) {
+    display: none !important;
+  }
+
+  /* Hide profit row (прибуток) */
+  table tfoot tr:last-child {
+    display: none !important;
+  }
+
+  /* Adjust totals row to align under price column */
+  table tfoot tr td:first-child {
+    text-align: right !important;
+  }
+
+  /* Show only main content */
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Table styles for print */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th {
+    background: #f5f5f5 !important;
+    color: #333 !important;
+    border: 1px solid #ccc;
+    padding: 4px 10px;
+    font-size: 8pt;
+  }
+
+  td {
+    border: 1px solid #ddd;
+    padding: 4px 10px;
+    font-size: 9pt;
+    color: #111 !important;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  /* Totals row */
+  tfoot tr {
+    border-top: 2px solid #F59E0B;
+    background: #fffbeb !important;
+  }
+
+  /* Input fields in print */
+  input, textarea, select {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    font-size: 9pt;
+    color: #111 !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Hide empty state */
+  .empty-state {
+    display: none !important;
+  }
+}
+
+/* Export styles (for screenshots) - identical to print but triggered by class */
+body.is-exporting {
+  background: #fff !important;
+  color: #111 !important;
+}
+
+body.is-exporting .print-header {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1.5px solid #f59e0b;
+}
+
+body.is-exporting .print-logo {
+  height: 45px !important;
+  width: auto !important;
+  max-width: 140px !important;
+  object-fit: contain;
+}
+
+body.is-exporting header, 
+body.is-exporting aside, 
+body.is-exporting nav, 
+body.is-exporting .no-print,
+body.is-exporting button,
+body.is-exporting [class*="sidebar"],
+body.is-exporting [class*="catalog"] {
+  display: none !important;
+}
+
+body.is-exporting .cost-column,
+body.is-exporting th.bg-blue-50,
+body.is-exporting td.bg-blue-50 {
+  display: none !important;
+}
+
+body.is-exporting input, 
+body.is-exporting textarea, 
+body.is-exporting select {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: 11pt;
+  color: #111 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  width: auto !important;
+  min-width: 50px;
+}

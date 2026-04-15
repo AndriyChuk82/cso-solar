@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npm list:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(grep -h \"lucide-react\\\\|zustand\\\\|axios\\\\|react-router-dom\" */package.json)",
+      "Bash(mkdir:*)",
+      "Bash(curl -s http://localhost:5173/proposals/)",
+      "Bash(xargs grep:*)",
+      "Bash(curl -X POST \"https://script.google.com/macros/s/AKfycbxqQEMJ4vKBExxmh5-ft-UGVpU9rms4vPd9z0XgZv3b33sJDvXyZoIntOj61TVg9fLK/exec\" -H \"Content-Type: application/json\" -d \"{\\\\\"action\\\\\":\\\\\"getCustomMaterials\\\\\"}\")",
+      "Bash(grep -n \"fetchCustomMaterials\" src/**/*.ts src/**/*.tsx)",
+      "Bash(curl -X POST \"https://script.google.com/macros/s/AKfycbxqQEMJ4vKBExxmh5-ft-UGVpU9rms4vPd9z0XgZv3b33sJDvXyZoIntOj61TVg9fLK/exec\" -H \"Content-Type: application/json\" -d '{\"action\":\"getCustomMaterials\"}')",
+      "Bash(rm -rf node_modules/.vite)",
+      "Bash(npx tsc:*)",
+      "Bash(grep -r \"from.*store.*useProposalStore\" D:/Antigravity/cso-solar-komerc/cso-solar/proposals/src/components/*.tsx)",
+      "Bash(curl -s http://localhost:5174)",
+      "Bash(curl -s \"https://script.google.com/macros/s/AKfycbxqQEMJ4vKBExxmh5-ft-UGVpU9rms4vPd9z0XgZv3b33sJDvXyZoIntOj61TVg9fLK/exec?action=getProjects\")",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(ls -lh \"D:\\\\Antigravity\\\\cso-solar-komerc\\\\cso-solar\\\\proposals\\\\gas\\\\Code.gs\"*)",
+      "Bash(ls -lh Code.gs*)"
+    ]
+  }
+}

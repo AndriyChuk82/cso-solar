@@ -1,29 +1,39 @@
 import { useState, useEffect } from 'react';
 
 export function useAuth() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const getInitialUser = () => {
+    try {
+      const stored = localStorage.getItem('cso_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) { return null; }
+  };
+
+  const [user, setUser] = useState(getInitialUser());
+  const [loading, setLoading] = useState(!getInitialUser());
 
   useEffect(() => {
-    async function check() {
-      try {
-        const res = await fetch('/api/verify');
-        const data = await res.json();
-        if (data.authenticated) {
-          setUser({
-            name: data.name || data.user,
-            role: (data.role || 'manager').toLowerCase(),
-            module_access: data.module_access || ''
-          });
-        }
-      } catch (e) {
-        console.error('Auth check failed', e);
-      } finally {
+    try {
+      const stored = localStorage.getItem('cso_user');
+      if (stored) {
+        setUser(JSON.parse(stored));
+        setLoading(false); // МИТТЄВИЙ ВХІД
+      } else {
+        // Якщо в localStorage нічого немає — відправляємо на логін
+        // (Або можна залишити Гість для базового перегляду, але краще на логін)
+        setUser(null);
         setLoading(false);
       }
+    } catch (e) {
+      console.error('Помилка авторизації', e);
+      setLoading(false);
     }
-    check();
   }, []);
 
-  return { user, loading };
+  // Додамо метод logout про всяк випадок
+  const logout = () => {
+    localStorage.removeItem('cso_user');
+    window.location.href = '/'; 
+  };
+
+  return { user, loading, logout };
 }

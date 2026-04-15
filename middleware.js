@@ -1,7 +1,7 @@
 import { jwtVerify } from 'jose';
 
 // Список шляхів, які доступні без авторизації
-const PUBLIC_PATHS = ['/login.html', '/login.css', '/api/login', '/favicon.ico', '/assets/', '/api/verify'];
+const PUBLIC_PATHS = ['/login.html', '/login.css', '/api/login', '/favicon.ico', '/assets/', '/api/verify', '/green-tariff', '/api/proxy'];
 
 export const config = {
     // Запускаємо middleware для всіх шляхів, крім внутрішніх верифікацій Vercel
@@ -53,34 +53,45 @@ export default async function middleware(request) {
             // 4. Перевірка прав доступу до модулів
             const role = (payload.role || 'user').toLowerCase();
             const isAdmin = role === 'admin' || role === 'адмін' || role === 'адміністратор';
-            const moduleAccess = payload.module_access || '';
+            const moduleAccess = (payload.module_access || '').toLowerCase();
+            const hasAccess = (mod) => {
+                if (isAdmin) return true;
+                const mapping = {
+                    'proposals': ['proposals', 'кп', 'комперційні'],
+                    'warehouse': ['warehouse', 'склад'],
+                    'projects': ['projects', 'проєкти', 'проекти'],
+                    'gt': ['gt', 'зелений тариф', 'зт']
+                };
+                const allowed = mapping[mod] || [mod];
+                return allowed.some(a => moduleAccess.includes(a));
+            };
 
             // Перевірка доступу до КП (/)
             if (pathname === '/' || pathname === '/index.html') {
-                if (!isAdmin && !moduleAccess.includes('proposals')) {
-                    if (moduleAccess.includes('warehouse')) return Response.redirect(new URL('/warehouse/', request.url), 302);
-                    if (moduleAccess.includes('projects')) return Response.redirect(new URL('/projects/', request.url), 302);
-                    if (moduleAccess.includes('gt')) return Response.redirect(new URL('/green-tariff.html', request.url), 302);
+                if (!hasAccess('proposals')) {
+                    if (hasAccess('warehouse')) return Response.redirect(new URL('/warehouse/', request.url), 302);
+                    if (hasAccess('projects')) return Response.redirect(new URL('/projects/', request.url), 302);
+                    if (hasAccess('gt')) return Response.redirect(new URL('/green-tariff/', request.url), 302);
                 }
             }
 
             // Перевірка доступу до /warehouse
             if (pathname.startsWith('/warehouse')) {
-                if (!isAdmin && !moduleAccess.includes('warehouse')) {
+                if (!hasAccess('warehouse')) {
                     return Response.redirect(new URL('/', request.url), 302);
                 }
             }
 
             // Перевірка доступу до /green-tariff
             if (pathname.startsWith('/green-tariff')) {
-                if (!isAdmin && !moduleAccess.includes('gt')) {
+                if (!hasAccess('gt')) {
                     return Response.redirect(new URL('/', request.url), 302);
                 }
             }
 
             // Перевірка доступу до /projects
             if (pathname.startsWith('/projects')) {
-                if (!isAdmin && !moduleAccess.includes('projects')) {
+                if (!hasAccess('projects')) {
                     return Response.redirect(new URL('/', request.url), 302);
                 }
             }

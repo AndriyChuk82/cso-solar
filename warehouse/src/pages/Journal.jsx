@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useDeferredValue } from 'react';
 import { Link } from 'react-router-dom';
 import { getOperations, getWarehouses, deleteOperation, updateOperation } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +8,25 @@ import { formatDate } from '../utils/dateUtils';
 import { matchesSearch } from '../utils/searchUtils';
 import { formatQuantity } from '../utils/formatUtils';
 import CONFIG from '../config';
+import { Button } from '@cso/design-system';
 import ResizableHeader from '../components/ResizableHeader';
+
+// Debounce hook
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 /**
  * Журнал операцій — основний документ системи.
@@ -27,13 +45,15 @@ export default function Journal() {
     dateTo: ''
   });
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
+  const deferredSearch = useDeferredValue(debouncedSearch);
   const [sortAsc, setSortAsc] = useState(false);
   const [editModal, setEditModal] = useState(null); // { op, formData }
   const [savingEdit, setSavingEdit] = useState(false);
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 20;
+  const PAGE_SIZE = 15;
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -115,7 +135,7 @@ export default function Journal() {
 
   useEffect(() => {
     setCurrentPage(1); // Reset page on search change
-  }, [search]);
+  }, [deferredSearch]);
 
   function getWarehouseName(id) {
     return warehouses.find((w) => w.id === id)?.name || id || '—';
@@ -124,15 +144,15 @@ export default function Journal() {
   // Пошукова фільтрація на клієнті та сортування
   const filteredOperations = useMemo(() => {
     const list = operations.filter((op) => {
-      if (!search.trim()) return true;
+      if (!deferredSearch.trim()) return true;
       const content = `${op.product_name || ''} ${op.product_article || ''} ${op.comment || ''}`;
-      return matchesSearch(content, search);
+      return matchesSearch(content, deferredSearch);
     });
     if (sortAsc) {
       list.sort((a, b) => (a.product_name || '').localeCompare(b.product_name || '', undefined, { numeric: true, sensitivity: 'base' }));
     }
     return list;
-  }, [operations, search, sortAsc]);
+  }, [operations, deferredSearch, sortAsc]);
 
   const totalPages = Math.ceil(filteredOperations.length / PAGE_SIZE);
   const paginatedOperations = useMemo(() => {
@@ -168,15 +188,21 @@ export default function Journal() {
             <p className="page-subtitle">Хронологічна історія руху товарів</p>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <Link to="/income" className="btn btn-success btn-sm">📥 Прихід</Link>
-            <Link to="/expense" className="btn btn-danger btn-sm">📤 Розхід</Link>
-            <Link to="/transfer" className="btn btn-primary btn-sm">🔄 Переміщення</Link>
+            <Link to="/income">
+              <Button variant="success" size="sm">📥 Прихід</Button>
+            </Link>
+            <Link to="/expense">
+              <Button variant="danger" size="sm">📤 Розхід</Button>
+            </Link>
+            <Link to="/transfer">
+              <Button variant="primary" size="sm">🔄 Переміщення</Button>
+            </Link>
           </div>
         </div>
         <div>
-          <button className="btn btn-outline btn-sm" onClick={handleExport} disabled={filteredOperations.length === 0}>
+          <Button variant="ghost" size="sm" onClick={handleExport} disabled={filteredOperations.length === 0}>
             📥 Експорт Excel
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -236,7 +262,14 @@ export default function Journal() {
           </div>
 
           <div className="form-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
-            <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Пошук товару</label>
+            <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>
+              Пошук товару
+              {debouncedSearch !== deferredSearch && (
+                <span style={{ marginLeft: '8px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                  ⏳ Пошук...
+                </span>
+              )}
+            </label>
             <input
               type="text"
               className="form-input"
@@ -265,8 +298,8 @@ export default function Journal() {
         <div className="data-table-wrap">
           {loading ? (
             <div className="empty-state">
-              <div className="spinner" style={{ margin: '0 auto' }} />
-              <p style={{ marginTop: '12px' }}>Завантаження журналу...</p>
+              <div className="spinner" />
+              <p>Завантаження журналу...</p>
             </div>
           ) : filteredOperations.length === 0 ? (
             <div className="empty-state">
@@ -317,22 +350,24 @@ export default function Journal() {
                     {user?.isAdmin && (
                       <td>
                         <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                          <button
-                            className="btn btn-ghost btn-sm"
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleOpenEdit(op)}
                             title="Редагувати"
                             style={{ padding: '2px 6px' }}
                           >
                             ✏️
-                          </button>
-                          <button
-                            className="btn btn-ghost btn-sm"
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleDelete(op.id)}
                             title="Видалити"
                             style={{ color: 'var(--danger)', padding: '2px 6px' }}
                           >
                             🗑️
-                          </button>
+                          </Button>
                         </div>
                       </td>
                     )}
@@ -347,25 +382,27 @@ export default function Journal() {
       {/* Пагінація */}
       {totalPages > 1 && (
         <div className="pagination-wrap">
-          <button 
-            className="btn btn-outline btn-sm"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
             disabled={currentPage === 1}
           >
             ← Попередня
-          </button>
-          
+          </Button>
+
           <div className="pagination-info">
             Сторінка <strong>{currentPage}</strong> з {totalPages} (Всього: {filteredOperations.length} зап.)
           </div>
 
-          <button 
-            className="btn btn-outline btn-sm"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}
           >
             Наступна →
-          </button>
+          </Button>
         </div>
       )}
       
@@ -375,7 +412,7 @@ export default function Journal() {
           <div className="modal-container" style={{ maxWidth: '450px', background: 'white', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)', padding: '20px' }}>
             <div className="modal-header">
               <h3>✏️ Редагування операції</h3>
-              <button className="btn-close" onClick={() => setEditModal(null)}>×</button>
+              <Button variant="ghost" size="sm" onClick={() => setEditModal(null)} style={{ padding: '4px 8px' }}>×</Button>
             </div>
             <form onSubmit={handleSaveEdit}>
               <div className="modal-body">
@@ -434,12 +471,12 @@ export default function Journal() {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-outline" onClick={() => setEditModal(null)}>
+                <Button type="button" variant="ghost" onClick={() => setEditModal(null)}>
                   Скасувати
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={savingEdit}>
-                  {savingEdit ? '⏳ Збереження...' : 'Зберегти зміни'}
-                </button>
+                </Button>
+                <Button type="submit" variant="primary" disabled={savingEdit} loading={savingEdit}>
+                  {savingEdit ? 'Збереження...' : 'Зберегти зміни'}
+                </Button>
               </div>
             </form>
           </div>

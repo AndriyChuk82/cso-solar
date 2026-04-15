@@ -1,0 +1,1 @@
+function a(e){return e?e.toString().toLowerCase().replace(/р/g,"p").replace(/с/g,"c").replace(/о/g,"o").replace(/а/g,"a").replace(/х/g,"x").replace(/у/g,"y").replace(/е/g,"e").replace(/і/g,"i").replace(/в/g,"b"):""}function l(e,r){if(!r||!r.trim())return!0;const c=r.trim().split(/\s+/).filter(t=>t.length>0),n=a(e);return c.every(t=>n.includes(a(t)))}export{l as m,a as n};

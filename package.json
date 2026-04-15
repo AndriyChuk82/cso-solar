@@ -1,11 +1,24 @@
 {
-  "name": "cso-solar-proposals",
+  "name": "cso-solar-monorepo",
   "version": "1.0.0",
-  "description": "CSO Solar — Commercial Proposals System",
+  "description": "CSO Solar — Unified Monorepo with Design System",
   "private": true,
+  "workspaces": [
+    "packages/*",
+    "warehouse",
+    "projects",
+    "proposals",
+    "green-tariff"
+  ],
   "scripts": {
-    "build": "cd warehouse && npm install && npm run build && cd ../projects && npm install && npm run build",
-    "hash-password": "node scripts/hash-password.js"
+    "build": "npm run build --workspaces --if-present",
+    "dev:warehouse": "npm run dev --workspace=warehouse",
+    "dev:projects": "npm run dev --workspace=projects",
+    "dev:proposals": "npm run dev --workspace=proposals",
+    "dev:green-tariff": "npm run dev --workspace=green-tariff",
+    "hash-password": "node scripts/hash-password.js",
+    "install:all": "npm install",
+    "clean": "rm -rf node_modules packages/*/node_modules warehouse/node_modules projects/node_modules proposals/node_modules green-tariff/node_modules"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

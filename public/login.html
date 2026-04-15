@@ -97,6 +97,11 @@
                 const data = await resp.json();
 
                 if (resp.ok && data.success) {
+                    // Зберігаємо дані користувача для миттєвого перемикання між модулями
+                    if (data.user) {
+                        localStorage.setItem('cso_user', JSON.stringify(data.user));
+                    }
+                    
                     btnText.textContent = '✅ Успіх!';
                     setTimeout(() => {
                         window.location.href = data.redirect || '/';

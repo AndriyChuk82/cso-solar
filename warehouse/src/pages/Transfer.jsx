@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext';
 import ProductSearch from '../components/ProductSearch';
 import { formatQuantity } from '../utils/formatUtils';
 import { getBalances } from '../api/gasApi';
+import { Button } from '@cso/design-system';
 
 /**
  * Форма переміщення товарів між складами.
@@ -236,12 +237,13 @@ export default function Transfer() {
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem', textAlign: 'center' }}>
                       {item.unit}
                     </span>
-                    <button
+                    <Button
                       type="button"
-                      className="btn btn-ghost btn-icon-only"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => removeItem(index)}
-                      style={{ color: 'var(--danger)' }}
-                    >✕</button>
+                      style={{ color: 'var(--danger)', padding: '4px 8px' }}
+                    >✕</Button>
                   </div>
                 ))}
               </div>
@@ -250,14 +252,15 @@ export default function Transfer() {
         </div>
 
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-          <button type="button" className="btn btn-outline" onClick={() => navigate('/')}>Скасувати</button>
-          <button
+          <Button type="button" variant="ghost" onClick={() => navigate('/')}>Скасувати</Button>
+          <Button
             type="submit"
-            className="btn btn-primary"
+            variant="primary"
             disabled={saving || formData.items.length === 0}
+            loading={saving}
           >
             {saving ? 'Збереження...' : '🔄 Зберегти переміщення'}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

@@ -15,6 +15,14 @@ export default defineConfig({
   },
   build: {
     outDir: '../public/warehouse',
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom']
+        }
+      }
+    }
   }
 });

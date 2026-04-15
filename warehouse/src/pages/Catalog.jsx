@@ -4,6 +4,24 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { matchesSearch } from '../utils/searchUtils';
 import CONFIG from '../config';
+import { Button } from '@cso/design-system';
+
+// Debounce hook
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 /**
  * Управління каталогом товарів.
@@ -16,6 +34,7 @@ export default function Catalog() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -134,9 +153,9 @@ export default function Catalog() {
 
   const filtered = products.filter((p) => {
     if (!showArchived && !p.active) return false;
-    if (!search.trim()) return true;
+    if (!debouncedSearch.trim()) return true;
     const content = `${p.name} ${p.article} ${p.category}`;
-    return matchesSearch(content, search);
+    return matchesSearch(content, debouncedSearch);
   }).sort((a, b) => sortAsc ? a.name.localeCompare(b.name) : 0);
 
   return (
@@ -147,9 +166,9 @@ export default function Catalog() {
           <p className="page-subtitle">Управління переліком товарів</p>
         </div>
         {user?.isAdmin && (
-          <button className="btn btn-primary" onClick={openAddModal}>
+          <Button variant="primary" onClick={openAddModal}>
             ➕ Додати товар
-          </button>
+          </Button>
         )}
       </div>
 
@@ -219,13 +238,14 @@ export default function Catalog() {
                     {user?.isAdmin && (
                       <td>
                         <div style={{ display: 'flex', gap: '4px' }}>
-                          <button className="btn btn-ghost btn-sm" onClick={() => openEditModal(p)}>✏️</button>
+                          <Button variant="ghost" size="sm" onClick={() => openEditModal(p)}>✏️</Button>
                           {p.active && (
-                            <button
-                              className="btn btn-ghost btn-sm"
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => handleArchive(p.id)}
                               style={{ color: 'var(--danger)' }}
-                            >🗄️</button>
+                            >🗄️</Button>
                           )}
                         </div>
                       </td>
@@ -286,12 +306,12 @@ export default function Catalog() {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>
+                <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
                   Скасувати
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
+                </Button>
+                <Button type="submit" variant="primary" disabled={saving} loading={saving}>
                   {saving ? 'Збереження...' : 'Зберегти'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

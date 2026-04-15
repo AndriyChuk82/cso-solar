@@ -1,0 +1,137 @@
+/* Button Component Styles - Based on proposals module */
+
+.ds-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+  border: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.ds-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ds-button:hover:not(:disabled) {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.ds-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Sizes */
+.ds-button-sm {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  gap: 6px;
+}
+
+.ds-button-md {
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  gap: 6px;
+}
+
+.ds-button-lg {
+  padding: 12px 24px;
+  font-size: 1rem;
+  gap: 8px;
+}
+
+/* Variants */
+.ds-button-primary {
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.ds-button-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: none;
+}
+
+.ds-button-success {
+  background: var(--income, #22c55e);
+  color: white;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);
+}
+
+.ds-button-success:hover:not(:disabled) {
+  background: #16a34a;
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.4);
+}
+
+.ds-button-danger {
+  background: var(--expense, #ef4444);
+  color: white;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.ds-button-danger:hover:not(:disabled) {
+  background: #dc2626;
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
+}
+
+.ds-button-warning {
+  background: linear-gradient(to right, #eab308, #f97316);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(234, 179, 8, 0.3);
+}
+
+.ds-button-warning:hover:not(:disabled) {
+  background: linear-gradient(to right, #ca8a04, #ea580c);
+  box-shadow: 0 4px 8px rgba(234, 179, 8, 0.4);
+}
+
+.ds-button-secondary {
+  background: var(--primary, #1a3a6b);
+  color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.ds-button-secondary:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ds-button-ghost {
+  background: #f3f4f6;
+  color: #374151;
+  box-shadow: none;
+}
+
+.ds-button-ghost:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+/* Full width */
+.ds-button-full {
+  width: 100%;
+}
+
+/* Loading spinner */
+.ds-button-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

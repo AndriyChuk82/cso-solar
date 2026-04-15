@@ -7,7 +7,9 @@ import {
 } from 'lucide-react';
 import { projectService } from '../services/api';
 import { formatAmount, formatDate } from '../lib/utils';
+import { hapticLight, hapticMedium, hapticSuccess, hapticError } from '../lib/haptic';
 import { AddPaymentSheet } from '../components/AddPaymentSheet';
+import { MaterialCard } from '../components/MaterialCard';
 
 /* ---------- helpers ---------- */
 function FL({ icon: Icon, children }) {
@@ -139,6 +141,7 @@ export function ProjectDetail({
   /* save project fields */
   const handleSave = async () => {
     if (!project) return;
+    hapticLight();
     setIsSaving(true);
     setIsSaved(false);
     try {
@@ -148,8 +151,10 @@ export function ProjectDetail({
       }
       const res = await projectService.saveProject(pToSave);
       if (!res.success) {
+        hapticError();
         alert('Помилка збереження: ' + (res.error || ''));
       } else {
+        hapticSuccess();
         const savedProject = res.updatedProject || pToSave;
         setProject(savedProject);
         // Оновити заголовок вкладки, якщо змінилася назва
@@ -165,16 +170,19 @@ export function ProjectDetail({
 
   /* close project */
   const handleCloseProject = async () => {
-    if (!confirm('Перевести проект у статус "Виконано"?')) return;
+    if (!confirm('Ви дійсно впевнені щодо завершення проєкту?')) return;
+    hapticMedium();
     setIsClosing(true);
     const today = new Date().toISOString().split('T')[0];
     try {
       const updated = { ...project, status: 'Виконано', closed_date: today };
       const res = await projectService.saveProject(updated);
       if (res.success) {
+        hapticSuccess();
         setProject(updated);
         if (onClosed) onClosed();
       } else {
+        hapticError();
         alert('Помилка: ' + (res.error || ''));
       }
     } finally { setIsClosing(false); }
@@ -187,6 +195,7 @@ export function ProjectDetail({
   };
 
   const handleSaveItems = async () => {
+    hapticLight();
     setIsSavingItems(true);
     try {
       const removedIds = origItems
@@ -195,8 +204,11 @@ export function ProjectDetail({
       for (const id of removedIds) await projectService.deleteProjectItem(id);
       for (const item of pendingItems)
         await projectService.saveProjectItem({ ...item, project_id: projectId });
+      hapticSuccess();
       setEditingItems(false);
       await load();
+    } catch (err) {
+      hapticError();
     } finally { setIsSavingItems(false); }
   };
 
@@ -219,8 +231,14 @@ export function ProjectDetail({
   /* cancel payment */
   const handleCancelPayment = async (paymentId) => {
     if (!confirm('Скасувати цей платіж?')) return;
+    hapticMedium();
     const res = await projectService.cancelPayment(paymentId);
-    if (res.success) load();
+    if (res.success) {
+      hapticSuccess();
+      load();
+    } else {
+      hapticError();
+    }
   };
 
   /* ---- loading states ---- */
@@ -248,16 +266,13 @@ export function ProjectDetail({
   const isModified    = !editingItems && project.proposal_id && items.length > 0 && itemsModified(items, origItems);
   const isClosed      = project.status === 'Виконано';
 
-  // Project "number" for display
-  // Prefer: proposal_number (returned from GAS) → proposal_id → created_at date → id
-  const proposalDisplay = project.proposal_number
-    ? `КП №${project.proposal_number}`
-    : project.proposal_id
-      ? `КП #${project.proposal_id.slice(0, 8)}`
-      : project.created_at
-        ? `Пр. від ${formatDate(project.created_at)}`
-        : `Пр. #${String(project.id).slice(0, 8)}`;
-
+  // Project subtitle for display
+  // Prefer: project name → created_at date → id
+  const proposalDisplay = project.name
+    ? project.name
+    : project.created_at
+      ? `Створено ${formatDate(project.created_at)}`
+      : `Проект #${String(project.id).slice(0, 8)}`;
   /* ================================================================ */
   return (
     <>
@@ -277,64 +292,77 @@ export function ProjectDetail({
         <button className="btn btn-ghost btn-sm" onClick={onBack} style={{ padding:'6px 8px', marginLeft:-6 }}>
           <ChevronLeft size={20} />
         </button>
-        <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ fontWeight:700, fontSize:'0.92rem', color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-            {project.client_name || project.client || project.name || 'Проект'}
+        <div style={{ flex:1, minWidth:0, paddingRight: '10px' }}>
+          <div style={{ fontWeight:700, fontSize:'1rem', color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+            {project.client_name || project.client || project.name || 'Проєкт'}
           </div>
-          <div style={{ fontSize:'0.7rem', color:'var(--text-muted)', display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
+          <div style={{ fontSize:'0.75rem', color:'var(--text-muted)', display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginTop: '2px' }}>
             <span style={{ color:'var(--primary)', fontWeight:700 }}>{proposalDisplay}</span>
-            <span>·</span>
+            <span style={{ opacity: 0.5 }}>·</span>
             <span style={{
               fontWeight:600,
-              color: isClosed ? 'var(--success)' : 'var(--info)'
+              color: isClosed ? 'var(--success)' : 'var(--info)',
             }}>
               {isClosed ? '✓ Виконано' : 'В роботі'}
             </span>
-            {isClosed && project.closed_date && (
-              <span>{formatDate(project.closed_date)}</span>
-            )}
           </div>
         </div>
 
-        {/* Currency switcher */}
-        <div style={{ display:'flex', alignItems:'center', gap:6, marginRight:6 }}>
-          <button
-            className={`currency-btn ${currency === 'USD' ? 'active' : ''}`}
-            onClick={() => { setCurrency('USD'); setShowRateInput(false); }}
-          >$</button>
-          <button
-            className={`currency-btn ${currency === 'UAH' ? 'active' : ''}`}
-            onClick={() => { setCurrency('UAH'); setShowRateInput(true); }}
-          >₴</button>
+        {/* Action buttons (Currency + Close) */}
+        <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink: 0 }}>
+          {!isClosed && (
+            <button
+              className="btn btn-sm"
+              onClick={handleCloseProject}
+              disabled={isClosing}
+              title="Завершити проєкт"
+              style={{ 
+                background: 'rgba(34, 197, 94, 0.15)', 
+                color: 'var(--success)',
+                border: '1px solid var(--success)',
+                padding: '6px 12px',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                textTransform: 'uppercase'
+              }}
+            >
+              {isClosing ? '...' : 'Завершити проєкт'}
+            </button>
+          )}
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button
+              className={`currency-btn ${currency === 'USD' ? 'active' : ''}`}
+              onClick={() => { setCurrency('USD'); setShowRateInput(false); }}
+            >$</button>
+            <button
+              className={`currency-btn ${currency === 'UAH' ? 'active' : ''}`}
+              onClick={() => { setCurrency('UAH'); setShowRateInput(true); }}
+            >₴</button>
+          </div>
           {currency === 'UAH' && showRateInput && (
             <div style={{ display:'flex', alignItems:'center', gap:4 }}>
               <input
                 type="number" min="1" value={rate}
                 onChange={e => setRate(parseFloat(e.target.value) || 41)}
                 className="form-input"
-                style={{ width:64, padding:'4px 6px', fontSize:'0.78rem', textAlign:'center' }}
+                style={{ width:60, padding:'4px 6px', fontSize:'0.78rem', textAlign:'center' }}
               />
-              <span style={{ fontSize:'0.72rem', color:'var(--text-muted)', whiteSpace:'nowrap' }}>грн/$</span>
             </div>
           )}
+          <button 
+            className="btn btn-sm btn-primary" 
+            onClick={handleSave} 
+            disabled={isSaving} 
+            style={{ 
+              background: isSaved ? 'var(--success)' : 'var(--primary)',
+              borderColor: isSaved ? 'var(--success)' : 'var(--primary)',
+              display: isMobile ? 'none' : 'flex',
+            }}
+          >
+            {isSaved ? <Check size={14} /> : <Save size={14} />}
+            <span style={{ marginLeft: 6 }}>{isSaving ? '...' : (isSaved ? 'Збережено' : 'Зберегти')}</span>
+          </button>
         </div>
-
-        <button 
-          className="btn btn-sm" 
-          onClick={handleSave} 
-          disabled={isSaving} 
-          style={{ 
-            flexShrink:0,
-            background: isSaved ? 'var(--success)' : 'var(--primary)',
-            color: 'white',
-            borderColor: isSaved ? 'var(--success)' : 'var(--primary)',
-            transition: 'background 0.3s ease',
-            display: isMobile ? 'none' : undefined,
-          }}
-        >
-          {isSaved ? <Check size={14} /> : <Save size={14} />}
-          {isSaving ? '...' : (isSaved ? 'Збережено' : 'Зберегти')}
-        </button>
       </div>
 
       {/* ---- BODY ---- */}
@@ -345,45 +373,50 @@ export function ProjectDetail({
 
           {/* CLIENT */}
           <div className="card">
-            <div className="card-header" style={{ padding:'10px 14px' }}>
+            <div className="card-header">
               <span className="section-label">👤 Клієнт</span>
               <select
                 value={project.status || 'В роботі'}
                 onChange={e => setProject({ ...project, status: e.target.value })}
                 className="badge"
                 style={{
-                  background: isClosed ? 'var(--success-bg)' : 'var(--primary-bg)',
+                  background: isClosed ? 'rgba(34, 197, 94, 0.15)' : 'rgba(240, 148, 51, 0.15)',
                   color: isClosed ? 'var(--success)' : 'var(--primary)',
                   cursor:'pointer', border:'none', outline:'none',
-                  fontWeight:700, fontSize:'0.68rem', textTransform:'uppercase', letterSpacing:'0.8px',
+                  fontWeight:800, fontSize:'0.7rem', textTransform:'uppercase',
+                  padding: '4px 8px', borderRadius: '4px'
                 }}
               >
                 <option value="В роботі">В роботі</option>
                 <option value="Виконано">Виконано</option>
               </select>
             </div>
-            <div style={{ padding:'12px 14px', display:'flex', flexDirection:'column', gap:10 }}>
-              <div>
-                <FL icon={User}>ПІБ</FL>
-                <input type="text" className="form-input"
-                  value={project.client_name || ''}
-                  onChange={e => setProject({ ...project, client_name: e.target.value })}
-                  placeholder="Прізвище Ім'я По-батькові"
-                  style={{ fontSize:'0.9rem', fontWeight:600 }} />
-              </div>
-              <div>
-                <FL icon={Phone}>Телефон</FL>
-                <input type="tel" className="form-input"
-                  value={project.client_phone || ''}
-                  onChange={e => setProject({ ...project, client_phone: e.target.value })}
-                  placeholder="+380..."
-                  style={{ fontSize:'0.9rem', fontWeight:600, color: project.client_phone ? 'var(--accent-light)' : 'var(--text)' }} />
-                {project.client_phone && (
-                  <a href={`tel:${project.client_phone}`}
-                    style={{ display:'inline-block', marginTop:4, fontSize:'0.72rem', color:'var(--accent-light)', fontWeight:600, textDecoration:'none' }}>
-                    📞 Зателефонувати
-                  </a>
-                )}
+            <div style={{ padding:'16px', display:'flex', flexDirection:'column', gap:12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+                <div>
+                  <FL icon={User}>Клієнт</FL>
+                  <input type="text" className="form-input"
+                    value={project.client_name || ''}
+                    onChange={e => setProject({ ...project, client_name: e.target.value })}
+                    placeholder="ПІБ"
+                    style={{ fontWeight:600 }} />
+                </div>
+                <div>
+                  <FL icon={Phone}>Телефон</FL>
+                  <div style={{ display:'flex', gap:6 }}>
+                    <input type="tel" className="form-input"
+                      value={project.client_phone || ''}
+                      onChange={e => setProject({ ...project, client_phone: e.target.value })}
+                      placeholder="+380..."
+                      style={{ fontWeight:600, flex:1 }} />
+                    {project.client_phone && (
+                      <a href={`tel:${project.client_phone}`} className="btn btn-ghost"
+                        style={{ padding:'4px 8px', color:'var(--success)' }}>
+                        <Phone size={16} />
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
               <div>
                 <FL icon={MapPin}>Адреса об'єкта</FL>
@@ -392,45 +425,14 @@ export function ProjectDetail({
                   onChange={e => setProject({ ...project, address: e.target.value })}
                   placeholder="Вулиця, будинок, місто" />
               </div>
-              <div>
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
                 <FL>Примітка</FL>
                 <textarea className="form-input"
                   value={project.notes || ''}
                   onChange={e => setProject({ ...project, notes: e.target.value })}
-                  placeholder="Додаткова інформація..."
-                  rows={2} style={{ resize:'none', fontSize:'0.85rem' }} />
+                  placeholder="Коментар..."
+                  rows={2} style={{ resize:'none', minHeight: '60px' }} />
               </div>
-
-              {/* CLOSE PROJECT BUTTON */}
-              {!isClosed ? (
-                <button
-                  onClick={handleCloseProject}
-                  disabled={isClosing}
-                  style={{
-                    width:'100%', padding:'10px 14px', marginTop: 10,
-                    background: 'var(--success)',
-                    color:'white', border:'none', borderRadius:'var(--radius)',
-                    fontWeight:700, fontSize:'0.85rem', cursor:'pointer',
-                    display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-                    opacity: isClosing ? 0.6 : 1,
-                    transition:'opacity 0.2s, transform 0.1s',
-                  }}
-                  onMouseDown={e => e.currentTarget.style.transform='scale(0.98)'}
-                  onMouseUp={e => e.currentTarget.style.transform='scale(1)'}
-                >
-                  <Lock size={15} />
-                  {isClosing ? 'Закриваємо...' : 'Проект закрито'}
-                </button>
-              ) : (
-                <div style={{
-                  padding:'10px 14px', background:'var(--success-bg)', marginTop: 10,
-                  border:'1px solid var(--success)', borderRadius:'var(--radius)',
-                  color:'var(--success)', fontWeight:700, fontSize:'0.85rem',
-                  textAlign:'center'
-                }}>
-                  ✓ Проект виконано {project.closed_date ? `· ${formatDate(project.closed_date)}` : ''}
-                </div>
-              )}
             </div>
           </div>
 
@@ -456,7 +458,7 @@ export function ProjectDetail({
               <div>
                 <FL>Погоджена сума з клієнтом ({currency})</FL>
                 <input type="number" inputMode="numeric" className="form-input"
-                  value={project.agreed_sum !== undefined && project.agreed_sum !== '' ? project.agreed_sum : (kpSum > 0 ? kpSum : '')}
+                  value={project.agreed_sum !== undefined && project.agreed_sum !== '' ? Number(project.agreed_sum).toFixed(2).replace(/\.00$/, '') : (kpSum > 0 ? Number(kpSum).toFixed(2).replace(/\.00$/, '') : '')}
                   onChange={e => setProject({ ...project, agreed_sum: e.target.value })}
                   placeholder="0"
                   style={{ fontSize:'1.1rem', fontWeight:700 }} />
@@ -594,68 +596,114 @@ export function ProjectDetail({
               </button>
             </div>
           ) : (
-            <div style={{ overflowX:'auto' }}>
-              <table style={{ width:'100%', borderCollapse:'collapse' }}>
-                <thead>
-                  <tr style={{ background:'var(--border-light)' }}>
-                    <th style={{ ...thStyle('left','14px'), minWidth: '200px' }}>Назва</th>
-                    <th style={thStyle('center','6px',70)}>К-сть</th>
-                    <th style={thStyle('right','6px',100)}>Ціна ({currency})</th>
-                    <th style={thStyle('right','14px',100)}>Сума</th>
-                    {editingItems && <th style={{ width:36 }} />}
-                  </tr>
-                </thead>
-                <tbody>
-                  {editingItems ? (
-                    pendingItems.map((item, i) => (
-                      <ItemRow key={item.id || i} item={item}
-                        onUpdate={handleUpdateItem} onDelete={handleDeletePending}
-                        currency={currency} rate={rate} />
-                    ))
-                  ) : (
-                    displayItems.map((item, i) => (
-                      <tr key={item.id || i} style={{ borderBottom:'1px solid var(--border-light)' }}>
-                        <td style={{ padding:'9px 14px', fontSize:'0.85rem', color:'var(--text)', fontWeight:500 }}>
-                          {item.name}
-                          {item.note && <div style={{ fontSize:'0.7rem', color:'var(--text-muted)', marginTop:1 }}>{item.note}</div>}
-                        </td>
-                        <td style={{ padding:'9px 6px', textAlign:'center', fontSize:'0.82rem', color:'var(--text-secondary)' }}>
-                          {parseFloat(item.quantity) || 1}
-                        </td>
-                        <td style={{ padding:'9px 6px', textAlign:'right', fontSize:'0.82rem', color:'var(--text-secondary)' }}>
-                          {parseFloat(item.price) > 0 ? formatAmount(item.price, currency, rate) : '—'}
-                        </td>
-                        <td style={{ padding:'9px 14px', textAlign:'right', fontWeight:700, fontSize:'0.88rem', color:'var(--text)' }}>
-                          {parseFloat(item.sum) > 0 ? formatAmount(item.sum, currency, rate) : '—'}
+            <>
+              {/* Desktop: Table view */}
+              <div className="hidden md:block" style={{ overflowX:'auto' }}>
+                <table style={{ width:'100%', borderCollapse:'collapse' }}>
+                  <thead>
+                    <tr style={{ background:'var(--border-light)' }}>
+                      <th style={{ ...thStyle('left','14px'), minWidth: '200px' }}>Назва</th>
+                      <th style={thStyle('center','6px',70)}>К-сть</th>
+                      <th style={thStyle('right','6px',100)}>Ціна ({currency})</th>
+                      <th style={thStyle('right','14px',100)}>Сума</th>
+                      {editingItems && <th style={{ width:36 }} />}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {editingItems ? (
+                      pendingItems.map((item, i) => (
+                        <ItemRow key={item.id || i} item={item}
+                          onUpdate={handleUpdateItem} onDelete={handleDeletePending}
+                          currency={currency} rate={rate} />
+                      ))
+                    ) : (
+                      displayItems.map((item, i) => (
+                        <tr key={item.id || i} style={{ borderBottom:'1px solid var(--border-light)' }}>
+                          <td style={{ padding:'9px 14px', fontSize:'0.85rem', color:'var(--text)', fontWeight:500 }}>
+                            {item.name}
+                            {item.note && <div style={{ fontSize:'0.7rem', color:'var(--text-muted)', marginTop:1 }}>{item.note}</div>}
+                          </td>
+                          <td style={{ padding:'9px 6px', textAlign:'center', fontSize:'0.82rem', color:'var(--text-secondary)' }}>
+                            {parseFloat(item.quantity) || 1}
+                          </td>
+                          <td style={{ padding:'9px 6px', textAlign:'right', fontSize:'0.82rem', color:'var(--text-secondary)' }}>
+                            {parseFloat(item.price) > 0 ? formatAmount(item.price, currency, rate) : '—'}
+                          </td>
+                          <td style={{ padding:'9px 14px', textAlign:'right', fontWeight:700, fontSize:'0.88rem', color:'var(--text)' }}>
+                            {parseFloat(item.sum) > 0 ? formatAmount(item.sum, currency, rate) : '—'}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                  <tfoot>
+                    {editingItems && (
+                      <tr>
+                        <td colSpan={5} style={{ padding:'8px 10px' }}>
+                          <button onClick={handleAddItem} className="btn btn-ghost btn-sm"
+                            style={{ color:'var(--primary)', fontSize:'0.78rem', display:'flex', alignItems:'center', gap:4, width:'100%', justifyContent:'center', borderTop:'1px dashed var(--border)' }}>
+                            <Plus size={13} /> Додати позицію
+                          </button>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-                <tfoot>
-                  {editingItems && (
-                    <tr>
-                      <td colSpan={5} style={{ padding:'8px 10px' }}>
-                        <button onClick={handleAddItem} className="btn btn-ghost btn-sm"
-                          style={{ color:'var(--primary)', fontSize:'0.78rem', display:'flex', alignItems:'center', gap:4, width:'100%', justifyContent:'center', borderTop:'1px dashed var(--border)' }}>
-                          <Plus size={13} /> Додати позицію
-                        </button>
+                    )}
+                    <tr style={{ background:'var(--primary-bg)' }}>
+                      <td colSpan={editingItems ? 4 : 3}
+                        style={{ padding:'9px 14px', fontSize:'0.78rem', fontWeight:700, color:'var(--primary)', textTransform:'uppercase', letterSpacing:'0.6px' }}>
+                        Разом по КП
                       </td>
+                      <td style={{ padding:'9px 14px', textAlign:'right', fontSize:'0.95rem', fontWeight:800, color:'var(--primary)' }}>
+                        {formatAmount(itemsTotal, currency, rate)}
+                      </td>
+                      {editingItems && <td />}
                     </tr>
-                  )}
-                  <tr style={{ background:'var(--primary-bg)' }}>
-                    <td colSpan={editingItems ? 4 : 3}
-                      style={{ padding:'9px 14px', fontSize:'0.78rem', fontWeight:700, color:'var(--primary)', textTransform:'uppercase', letterSpacing:'0.6px' }}>
-                      Разом по КП
-                    </td>
-                    <td style={{ padding:'9px 14px', textAlign:'right', fontSize:'0.95rem', fontWeight:800, color:'var(--primary)' }}>
-                      {formatAmount(itemsTotal, currency, rate)}
-                    </td>
-                    {editingItems && <td />}
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+                  </tfoot>
+                </table>
+              </div>
+
+              {/* Mobile: Card view */}
+              <div className="md:hidden" style={{ padding:'12px' }}>
+                {(editingItems ? pendingItems : displayItems).map((item, i) => (
+                  <MaterialCard
+                    key={item.id || i}
+                    item={item}
+                    onUpdate={handleUpdateItem}
+                    onDelete={handleDeletePending}
+                    isEditing={editingItems}
+                    currency={currency}
+                    rate={rate}
+                  />
+                ))}
+
+                {editingItems && (
+                  <button
+                    onClick={handleAddItem}
+                    className="btn btn-ghost"
+                    style={{
+                      width:'100%', marginTop:'8px', padding:'12px',
+                      color:'var(--primary)', fontSize:'0.88rem',
+                      display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+                      border:'2px dashed var(--border)', borderRadius:'var(--radius-md)'
+                    }}
+                  >
+                    <Plus size={16} /> Додати позицію
+                  </button>
+                )}
+
+                {/* Total for mobile */}
+                <div style={{
+                  marginTop:'12px', padding:'14px', background:'var(--primary-bg)',
+                  borderRadius:'var(--radius-md)', display:'flex', justifyContent:'space-between', alignItems:'center'
+                }}>
+                  <span style={{ fontSize:'0.82rem', fontWeight:700, color:'var(--primary)', textTransform:'uppercase', letterSpacing:'0.6px' }}>
+                    Разом по КП
+                  </span>
+                  <span style={{ fontSize:'1.1rem', fontWeight:800, color:'var(--primary)' }}>
+                    {formatAmount(itemsTotal, currency, rate)}
+                  </span>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>

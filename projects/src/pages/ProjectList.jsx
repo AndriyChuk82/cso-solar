@@ -10,7 +10,7 @@ const FILTERS = [
   { key: 'all',    label: 'Всі' },
 ];
 
-export function ProjectList({ selectedId, onSelect, onAddNew, currency = 'USD', rate = 41 }) {
+export function ProjectList({ selectedId, onSelect, onAddNew, currency = 'USD', rate = 41, isMobile }) {
   const { projects, isLoading, fetchProjects } = useProjectStore();
   const { user } = useAuth();
   const [search, setSearch] = useState('');
@@ -45,21 +45,7 @@ export function ProjectList({ selectedId, onSelect, onAddNew, currency = 'USD', 
   return (
     <>
       {/* Header */}
-      <div className="panel-list-header">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 10 }}>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => fetchProjects(user?.email)} className="btn btn-ghost btn-sm" title="Оновити">
-              <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} />
-            </button>
-            <button
-              onClick={onAddNew}
-              className="btn btn-sm btn-primary"
-              style={{ border: 'none' }}
-            >
-              <Plus size={15} /> Новий
-            </button>
-          </div>
-        </div>
+      <div className="panel-list-header" style={{ paddingTop: 10 }}>
 
         {/* Filter tabs */}
         <div className="filter-tabs">
@@ -143,6 +129,12 @@ export function ProjectList({ selectedId, onSelect, onAddNew, currency = 'USD', 
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Разом:</span>
                       <span style={{ fontWeight: 700, color: 'var(--text)', fontSize: '1.05rem' }}>{formatAmount(agreedSum, currency, rate)}</span>
                     </div>
+                    {paid > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', width: '100%', marginTop: -2 }}>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Сплачено:</span>
+                        <span style={{ fontWeight: 700, color: 'var(--success)', fontSize: '1.05rem' }}>{formatAmount(paid, currency, rate)}</span>
+                      </div>
+                    )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', width: '100%', marginTop: -2 }}>
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Залишок:</span>
                       {isDone ? (
@@ -162,6 +154,35 @@ export function ProjectList({ selectedId, onSelect, onAddNew, currency = 'USD', 
           })
         )}
       </div>
+
+      {/* Floating Action Button */}
+      {!isLoading && (
+        <button
+          onClick={onAddNew}
+          style={{
+            position: 'fixed',
+            bottom: isMobile ? '92px' : '24px',
+            right: '24px',
+            width: '58px',
+            height: '58px',
+            borderRadius: '50%',
+            background: 'var(--primary)',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 6px 16px rgba(0,0,0,0.25)',
+            border: 'none',
+            cursor: 'pointer',
+            zIndex: 1000,
+            transition: 'transform 0.2s active',
+          }}
+          onMouseDown={e => e.currentTarget.style.transform = 'scale(0.92)'}
+          onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <Plus size={28} />
+        </button>
+      )}
     </>
   );
 }

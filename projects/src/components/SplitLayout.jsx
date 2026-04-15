@@ -32,7 +32,34 @@ export function SplitLayout() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 'calc(100vh - 80px)',
+        gap: '16px'
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '4px solid #f3f3f3',
+          borderTop: '4px solid #f09433',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <p style={{ color: '#666', fontSize: '14px' }}>Завантаження проєктів...</p>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   if (!hasAccess) {
     return (
@@ -99,35 +126,9 @@ export function SplitLayout() {
           onAddNew={() => setIsAddModalOpen(true)}
           currency={currency}
           rate={rate}
+          isMobile={isMobile}
         />
 
-        {/* Mobile FAB — floating "+" button */}
-        {isMobile && showList && (
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            title="Новий проект"
-            style={{
-              position: 'fixed',
-              bottom: 24,
-              right: 20,
-              zIndex: 1000,
-              width: 52,
-              height: 52,
-              borderRadius: '50%',
-              background: 'var(--primary, #f09433)',
-              color: '#fff',
-              border: 'none',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              fontSize: '24px',
-            }}
-          >
-            <Plus size={24} />
-          </button>
-        )}
       </div>
 
       {/* Right Panel */}

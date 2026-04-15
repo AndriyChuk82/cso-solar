@@ -1,16 +1,20 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import Layout from './components/Layout';
-import Journal from './pages/Journal';
-import OperationForm from './pages/OperationForm';
-import Transfer from './pages/Transfer';
-import DailyBalance from './pages/DailyBalance';
-import Catalog from './pages/Catalog';
-import Warehouses from './pages/Warehouses';
-import Users from './pages/Users';
-import Categories from './pages/Categories';
-import Reports from './pages/Reports';
+
+// Lazy load pages
+const Journal = lazy(() => import('./pages/Journal'));
+const OperationForm = lazy(() => import('./pages/OperationForm'));
+const Transfer = lazy(() => import('./pages/Transfer'));
+const DailyBalance = lazy(() => import('./pages/DailyBalance'));
+const Catalog = lazy(() => import('./pages/Catalog'));
+const Warehouses = lazy(() => import('./pages/Warehouses'));
+const Users = lazy(() => import('./pages/Users'));
+const Categories = lazy(() => import('./pages/Categories'));
+const Reports = lazy(() => import('./pages/Reports'));
 
 
 function AppContent() {
@@ -28,10 +32,10 @@ function AppContent() {
 
   if (error || !user) {
     return (
-      <div className="access-denied">
+      <div className="access-denied" style={{ background: 'var(--bg)', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text)' }}>
         <span className="denied-icon">🔒</span>
-        <h2>Доступ заборонено</h2>
-        <p>{error || 'Ви не авторизовані. Увійдіть через основний сайт CSO Solar.'}</p>
+        <h2 style={{ color: 'var(--text)' }}>Доступ заборонено</h2>
+        <p style={{ color: 'var(--text-secondary)' }}>{error || 'Ви не авторизовані. Увійдіть через основний сайт CSO Solar.'}</p>
         <a href="/" className="btn btn-primary" style={{ marginTop: '20px' }}>
           🏠 Перейти на основний сайт
         </a>
@@ -39,14 +43,16 @@ function AppContent() {
     );
   }
 
-  const hasWarehouseAccess = user.isAdmin || (user.module_access || '').includes('warehouse');
+  const moduleAccess = (user.module_access || '').toLowerCase();
+  const hasWarehouseAccess = user.isAdmin || moduleAccess.includes('warehouse') || moduleAccess.includes('склад');
 
   if (!hasWarehouseAccess) {
     return (
-      <div className="access-denied">
+      <div className="access-denied" style={{ background: 'var(--bg)', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text)' }}>
         <span className="denied-icon">🔒</span>
-        <h2>Доступ заборонено</h2>
-        <p>У вас немає доступу до модуля Склад.</p>
+        <h2 style={{ color: 'var(--text)' }}>Доступ заборонено</h2>
+        <p style={{ color: 'var(--text-secondary)' }}>У вас немає доступу до модуля Склад.</p>
+        <div style={{ fontSize: '12px', opacity: 0.5, marginTop: '10px' }}>Доступні модулі: {user.module_access || 'немає'}</div>
         <a href="/" className="btn btn-primary" style={{ marginTop: '20px' }}>
           🏠 Перейти на головну сторінку
         </a>
@@ -56,36 +62,45 @@ function AppContent() {
 
   return (
     <BrowserRouter basename="/warehouse">
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Journal />} />
-          <Route path="/income" element={<OperationForm type="income" />} />
-          <Route path="/expense" element={<OperationForm type="expense" />} />
-          <Route path="/transfer" element={<Transfer />} />
-          <Route path="/daily-balance" element={<DailyBalance />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/catalog" element={<Catalog />} />
+      <Suspense fallback={
+        <div className="loading-screen" style={{ background: 'var(--bg)', color: 'var(--text-secondary)' }}>
+          <div className="spinner" />
+          <p style={{ fontWeight: 600 }}>Завантаження Складу...</p>
+        </div>
+      }>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Journal />} />
+            <Route path="/income" element={<OperationForm type="income" />} />
+            <Route path="/expense" element={<OperationForm type="expense" />} />
+            <Route path="/transfer" element={<Transfer />} />
+            <Route path="/daily-balance" element={<DailyBalance />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/catalog" element={<Catalog />} />
 
-          {/* Лише адміністратор */}
-          {user.isAdmin && (
-            <>
-              <Route path="/warehouses" element={<Warehouses />} />
-              <Route path="/users" element={<Users />} />
-              <Route path="/categories" element={<Categories />} />
-            </>
-          )}
-        </Route>
-      </Routes>
+            {/* Лише адміністратор */}
+            {user.isAdmin && (
+              <>
+                <Route path="/warehouses" element={<Warehouses />} />
+                <Route path="/users" element={<Users />} />
+                <Route path="/categories" element={<Categories />} />
+              </>
+            )}
+          </Route>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

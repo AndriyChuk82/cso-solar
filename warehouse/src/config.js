@@ -3,7 +3,7 @@
  * GAS_URL потрібно замінити після деплою Google Apps Script.
  */
 const CONFIG = {
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbxqQEMJ4vKBExxmh5-ft-UGVpU9rms4vPd9z0XgZv3b33sJDvXyZoIntOj61TVg9fLK/exec',
+  GAS_URL: import.meta.env.VITE_GAS_URL || 'https://script.google.com/macros/s/AKfycbxqQEMJ4vKBExxmh5-ft-UGVpU9rms4vPd9z0XgZv3b33sJDvXyZoIntOj61TVg9fLK/exec',
   VERIFY_URL: '/api/verify',
   UNITS: ['шт', 'компл', 'м'],
   OPERATION_TYPES: {
@@ -44,8 +44,8 @@ const CONFIG = {
   ],
   // Конфігурація Комерційних пропозицій
   CP_SPREADSHEETS: {
-    MAIN: '1dXuNar4t3aemQSk5LnPOXxcB7DAqqEzraWEFASa2r4g',
-    MATERIALS: '1FeQGoFst-DWfLemnXI_0T5xQzMsYdSMC2Xj9Cjs5C1U'
+    MAIN: import.meta.env.VITE_CP_SPREADSHEET_MAIN || '1dXuNar4t3aemQSk5LnPOXxcB7DAqqEzraWEFASa2r4g',
+    MATERIALS: import.meta.env.VITE_CP_SPREADSHEET_MATERIALS || '1FeQGoFst-DWfLemnXI_0T5xQzMsYdSMC2Xj9Cjs5C1U'
   },
   CP_SHEETS: [
     { name: 'Сонячні батареї', mainCat: 'Сонячні батареї', gid: 1271219295, sId: 'MAIN' },

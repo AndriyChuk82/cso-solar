@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext';
 import ProductSearch from '../components/ProductSearch';
 import { formatQuantity } from '../utils/formatUtils';
 import CONFIG from '../config';
+import { Button } from '@cso/design-system';
 
 /**
  * Форма створення операції Прихід / Розхід.
@@ -271,15 +272,16 @@ export default function OperationForm({ type = 'income' }) {
                     <span style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                       {item.unit}
                     </span>
-                    <button
+                    <Button
                       type="button"
-                      className="btn btn-ghost btn-icon-only"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => removeItem(index)}
                       title="Видалити"
-                      style={{ color: 'var(--danger)' }}
+                      style={{ color: 'var(--danger)', padding: '4px 8px' }}
                     >
                       ✕
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -288,16 +290,17 @@ export default function OperationForm({ type = 'income' }) {
         </div>
 
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-          <button type="button" className="btn btn-outline" onClick={() => navigate('/')}>
+          <Button type="button" variant="ghost" onClick={() => navigate('/')}>
             Скасувати
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className={`btn ${isIncome ? 'btn-success' : 'btn-danger'}`}
+            variant={isIncome ? 'success' : 'danger'}
             disabled={saving || formData.items.length === 0}
+            loading={saving}
           >
             {saving ? 'Збереження...' : (isIncome ? '📥 Зберегти прихід' : '📤 Зберегти розхід')}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

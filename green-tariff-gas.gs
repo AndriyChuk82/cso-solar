@@ -18,6 +18,10 @@ function doPost(e) {
     if (action === 'saveProject') {
       return jsonResponse(saveProjectWithFiles(data));
     }
+
+    if (action === 'getEquipment') {
+      return jsonResponse({ success: true, equipment: getEquipmentFromProjects() });
+    }
     
     return jsonResponse({ success: false, error: 'Unknown action: ' + action });
   } catch (err) {
@@ -247,4 +251,90 @@ function saveProjectWithFiles(data) {
 function jsonResponse(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Normalizes a header string for case-insensitive comparison.
+ * Removes extra spaces, quotes, newlines and lowercases.
+ */
+function normalizeHeader(s) {
+  return String(s || '').toLowerCase().replace(/[\s\n\r"']+/g, ' ').trim();
+}
+
+/**
+ * Extracts unique equipment (inverters, panels, batteries) from existing projects.
+ * This avoids the need for a separate equipment catalog sheet.
+ */
+function getEquipmentFromProjects() {
+  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
+  if (!sheet) return { inverters: [], panels: [], batteries: [] };
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0].map(normalizeHeader);
+
+  // Column index helpers
+  const col = (names) => {
+    for (const n of names) {
+      const idx = headers.indexOf(normalizeHeader(n));
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+
+  const iModel    = col(['Інвертор', 'Модель інвертора', 'field27']);
+  const iMfr      = col(['Виробник Інвертора', 'field30']);
+  const iPwr      = col(['Потужність інвертора, кВт', 'field28']);
+  const iWarranty = col(['Гарантія на інвертор, р.', 'field32']);
+  const pModel    = col(['Сонячна панель', 'Модель панелі', 'field34']);
+  const pMfr      = col(['Виробник сонячних панелей', 'field33']);
+  const pWarranty = col(['Гарантія на панелі, років', 'field35']);
+  const bModel    = col(['Акумуляторна батарея', 'Модель АКБ', 'field36']);
+  const bPwr      = col(['Номінальна потужність батарей', 'Номінальна потужність, кВт*год', 'field37']);
+
+  const invertersMap = {};
+  const panelsMap = {};
+  const batteriesMap = {};
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const get = (idx) => idx !== -1 ? String(row[idx] || '').trim() : '';
+    const cleanMfr = (s) => {
+      if (!s) return '';
+      let name = String(s).split('\n')[0].split('\r')[0].trim();
+      const suffixes = ['Co., Ltd.', 'Ltd.', 'GmbH', 'Inc.', 'Corp.', 'Corporation', 'S.p.A.', 'LLC'];
+      for (const f of suffixes) {
+        const idx = name.toLowerCase().indexOf(f.toLowerCase());
+        if (idx !== -1) return name.substring(0, idx + f.length).trim();
+      }
+      return name;
+    };
+
+    const inv   = get(iModel);
+    const iMf   = cleanMfr(get(iMfr));
+    const iPw   = get(iPwr);
+    const iWar  = get(iWarranty);
+    if (inv && !invertersMap[inv]) {
+      invertersMap[inv] = { model: inv, manufacturer: iMf, power: iPw, warranty: iWar };
+    }
+
+    const pan   = get(pModel);
+    const pMf   = cleanMfr(get(pMfr));
+    const pWar  = get(pWarranty);
+    if (pan && !panelsMap[pan]) {
+      panelsMap[pan] = { model: pan, manufacturer: pMf, warranty: pWar };
+    }
+
+    const bat   = get(bModel);
+    const bPw   = get(bPwr);
+    if (bat && !batteriesMap[bat]) {
+      batteriesMap[bat] = { model: bat, power: bPw };
+    }
+  }
+
+  return {
+    inverters: Object.values(invertersMap),
+    panels: Object.values(panelsMap),
+    batteries: Object.values(batteriesMap)
+  };
 }

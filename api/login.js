@@ -151,12 +151,22 @@ export default async function handler(req, res) {
             if (!hasProposals) {
                 if (moduleAccess.includes('warehouse')) redirectUrl = '/warehouse/';
                 else if (moduleAccess.includes('projects')) redirectUrl = '/projects/';
-                else if (moduleAccess.includes('gt')) redirectUrl = '/green-tariff.html';
+                else if (moduleAccess.includes('gt')) redirectUrl = '/green-tariff/';
             }
         }
 
         res.setHeader('Set-Cookie', cookieOptions);
-        return res.status(200).json({ success: true, redirect: redirectUrl });
+        return res.status(200).json({ 
+            success: true, 
+            redirect: redirectUrl,
+            user: {
+                email: username,
+                name: displayName,
+                role: userRole,
+                module_access: moduleAccess,
+                isAdmin: isAdmin
+            }
+        });
     } catch (err) {
         console.error('Login error:', err);
         return res.status(500).json({ error: 'Внутрішня помилка сервера' });

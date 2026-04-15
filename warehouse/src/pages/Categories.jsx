@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getCategories, addCategory, updateCategory } from '../api/gasApi';
 import { useToast } from '../context/ToastContext';
+import { Button } from '@cso/design-system';
 
 /**
  * Управління категоріями товарів.
@@ -74,7 +75,7 @@ export default function Categories() {
           <h1 className="page-title">🏷️ Категорії товарів</h1>
           <p className="page-subtitle">Управління списком категорій для каталогу</p>
         </div>
-        <button className="btn btn-primary" onClick={openAdd}>➕ Додати категорію</button>
+        <Button variant="primary" onClick={openAdd}>➕ Додати категорію</Button>
       </div>
 
       <div className="card">
@@ -100,7 +101,7 @@ export default function Categories() {
                       </span>
                     </td>
                     <td>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(c)}>✏️</button>
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>✏️</Button>
                     </td>
                   </tr>
                 ))}
@@ -142,8 +143,8 @@ export default function Categories() {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>Скасувати</button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Збереження...' : 'Зберегти'}</button>
+                <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>Скасувати</Button>
+                <Button type="submit" variant="primary" disabled={saving} loading={saving}>{saving ? 'Збереження...' : 'Зберегти'}</Button>
               </div>
             </form>
           </div>

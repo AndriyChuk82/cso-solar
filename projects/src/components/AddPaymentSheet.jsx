@@ -35,7 +35,7 @@ export function AddPaymentSheet({ projectId, balance = 0, currency = 'USD', rate
       const baseSum = currency === 'UAH' ? (inputSum / rate) : inputSum;
 
       const res = await projectService.savePayment({
-        projectId,
+        project_id: projectId,
         sum: Number(baseSum.toFixed(2)),
         payment_type: type,
         date,
