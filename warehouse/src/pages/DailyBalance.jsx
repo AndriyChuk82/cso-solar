@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getWarehouses, getDailyBalanceData, submitDailyBalance } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
@@ -106,9 +106,15 @@ export default function DailyBalance() {
 
   const changedCount = items.filter((item) => item.diff !== 0).length;
 
-  const displayedItems = sortAsc 
-    ? [...items].sort((a, b) => (a.product_name || '').localeCompare(b.product_name || ''))
-    : items;
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      // Спочатку за категорією
+      const catCompare = (a.category || '').localeCompare(b.category || '');
+      if (catCompare !== 0) return catCompare;
+      // Потім за назвою всередині категорії
+      return (a.product_name || '').localeCompare(b.product_name || '');
+    });
+  }, [items]);
 
   return (
     <div>
@@ -150,14 +156,6 @@ export default function DailyBalance() {
             <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <h3 style={{ margin: 0 }}>Позиції ({items.length})</h3>
-                <button 
-                  type="button"
-                  className={`btn btn-sm ${sortAsc ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => setSortAsc(!sortAsc)}
-                  title="Сортувати від А до Я за назвою"
-                >
-                  {sortAsc ? 'Сортування: А-Я' : 'Сортувати А-Я'}
-                </button>
               </div>
               {changedCount > 0 && (
                 <span className="badge badge-balance">{changedCount} відхилень</span>
@@ -175,51 +173,73 @@ export default function DailyBalance() {
                   </tr>
                 </thead>
                 <tbody>
-                  {displayedItems.map((item) => {
+                  {sortedItems.map((item, idx) => {
                     const originalIndex = items.findIndex(i => i.product_id === item.product_id);
+                    const showCategoryHeader = idx === 0 || sortedItems[idx-1].category !== item.category;
+
                     return (
-                    <tr
-                      key={item.product_id}
-                      style={{
-                        background: item.diff > 0
-                          ? 'var(--income-bg)'
-                          : item.diff < 0
-                            ? 'var(--expense-bg)'
-                            : 'transparent'
-                      }}
-                    >
-                      <td style={{ fontWeight: 500 }}>{item.product_name}</td>
-                      <td>{item.unit}</td>
-                      <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
-                        {formatQuantity(item.quantity, item.product_category)}
-                      </td>
-                      <td>
-                        <input
-                           type="number"
-                          className="form-input"
-                          value={item.factQuantity}
-                          onChange={(e) => updateFact(originalIndex, e.target.value)}
-                          min="0"
-                          step="1"
-                          style={{
-                            width: '100px',
-                            textAlign: 'center',
-                            display: 'inline-block',
-                            fontWeight: 600
-                          }}
-                        />
-                      </td>
-                      <td style={{
-                        fontWeight: 700,
-                        color: item.diff > 0
-                          ? 'var(--income)'
-                          : item.diff < 0
-                            ? 'var(--expense)'
-                            : 'var(--text-muted)'
-                      }}>
-                        {item.diff > 0 ? `+${item.diff}` : item.diff === 0 ? '—' : item.diff}
-                      </td>
-                    </tr>
+                    <Fragment key={item.product_id}>
+                      {showCategoryHeader && (
+                        <tr className="category-row" style={{ background: 'var(--bg-light)', fontWeight: 'bold' }}>
+                          <td colSpan="5" style={{ padding: '4px 12px', fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            📁 {item.category || 'Без категорії'}
+                          </td>
+                        </tr>
+                      )}
+                      <tr
+                        style={{
+                          background: item.diff > 0
+                            ? 'var(--income-bg)'
+                            : item.diff < 0
+                              ? 'var(--expense-bg)'
+                              : 'transparent'
+                        }}
+                      >
+                        <td style={{ fontWeight: 500, paddingLeft: '24px', paddingTop: '4px', paddingBottom: '4px', fontSize: '0.85rem' }}>{item.product_name}</td>
+                        <td style={{ paddingTop: '4px', paddingBottom: '4px', fontSize: '0.8rem' }}>{item.unit}</td>
+                        <td style={{ fontWeight: 600, whiteSpace: 'nowrap', paddingTop: '4px', paddingBottom: '4px', fontSize: '0.85rem' }}>
+                          {formatQuantity(item.quantity, item.product_category)}
+                        </td>
+                        <td style={{ paddingTop: '2px', paddingBottom: '2px' }}>
+                          <input
+                             type="number"
+                            className="form-input"
+                            value={item.factQuantity}
+                            onChange={(e) => updateFact(originalIndex, e.target.value)}
+                            onFocus={(e) => {
+                              const target = e.target;
+                              setTimeout(() => target.select(), 0);
+                            }}
+                            min="0"
+                            step="1"
+                            style={{
+                              width: '80px',
+                              height: '28px',
+                              padding: '2px 8px',
+                              textAlign: 'center',
+                              display: 'inline-block',
+                              fontWeight: 700,
+                              fontSize: '0.9rem',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: '4px'
+                            }}
+                          />
+                        </td>
+                        <td style={{
+                          fontWeight: 700,
+                          paddingTop: '4px',
+                          paddingBottom: '4px',
+                          fontSize: '0.85rem',
+                          color: item.diff > 0
+                            ? 'var(--income)'
+                            : item.diff < 0
+                              ? 'var(--expense)'
+                              : 'var(--text-muted)'
+                        }}>
+                          {item.diff > 0 ? `+${item.diff}` : item.diff === 0 ? '—' : item.diff}
+                        </td>
+                      </tr>
+                    </Fragment>
                     );
                   })}
                 </tbody>

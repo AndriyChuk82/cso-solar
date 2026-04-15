@@ -21,6 +21,7 @@
     "clean": "rm -rf node_modules packages/*/node_modules warehouse/node_modules projects/node_modules proposals/node_modules green-tariff/node_modules"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.103.2",
     "bcryptjs": "^2.4.3",
     "jose": "^5.2.0"
   },

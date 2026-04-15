@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { createBackup } from '../api/gasApi';
+import { runMigration } from '../api/migration';
 import { useToast } from '../context/ToastContext';
 import { Button } from '@cso/design-system';
 
@@ -9,6 +10,7 @@ import { Button } from '@cso/design-system';
 export default function Backups() {
   const { showToast } = useToast();
   const [creating, setCreating] = useState(false);
+  const [migrating, setMigrating] = useState(false);
   const [lastResult, setLastResult] = useState(null);
 
   async function handleBackup() {
@@ -29,6 +31,24 @@ export default function Backups() {
       showToast('Помилка підключення', 'error');
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handleMigrate() {
+    if (!confirm('Це скопіює ВСІ дані з Google Sheets у Supabase. Ви впевнені?')) return;
+    setMigrating(true);
+    try {
+      const result = await runMigration();
+      if (result.success) {
+        showToast('Міграція завершена успішно!', 'success');
+      } else {
+        showToast(result.error || 'Помилка міграції', 'error');
+      }
+    } catch (err) {
+      console.error('Migration error:', err);
+      showToast('Критична помилка міграції', 'error');
+    } finally {
+      setMigrating(false);
     }
   }
 
@@ -73,6 +93,26 @@ export default function Backups() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: '16px', border: '1px solid #3b82f6' }}>
+        <div className="card-header" style={{ background: '#f0f9ff' }}>
+          <h3>🚀 Міграція на Supabase</h3>
+        </div>
+        <div className="card-body">
+          <p style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
+            Це перенесе всі Товари, Склади та Історію операцій у базу даних Supabase для прискорення роботи модуля.
+            <strong> Переконайтеся, що ви заповнили ключі в .env.local!</strong>
+          </p>
+          <Button
+            variant="secondary"
+            onClick={handleMigrate}
+            disabled={migrating}
+            loading={migrating}
+          >
+            {migrating ? 'Міграція триває...' : '📥 Запустити міграцію даних'}
+          </Button>
         </div>
       </div>
 

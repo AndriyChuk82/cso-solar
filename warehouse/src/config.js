@@ -35,6 +35,10 @@ const CONFIG = {
     'user': 'Користувач'
   },
 
+  // Supabase
+  SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || '',
+  SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+  
   // Доступні модулі
   APP_MODULES: [
     { id: 'warehouse', label: 'Склад' },

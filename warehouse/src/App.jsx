@@ -15,6 +15,7 @@ const Warehouses = lazy(() => import('./pages/Warehouses'));
 const Users = lazy(() => import('./pages/Users'));
 const Categories = lazy(() => import('./pages/Categories'));
 const Reports = lazy(() => import('./pages/Reports'));
+const Backups = lazy(() => import('./pages/Backups'));
 
 
 function AppContent() {
@@ -84,6 +85,7 @@ function AppContent() {
                 <Route path="/warehouses" element={<Warehouses />} />
                 <Route path="/users" element={<Users />} />
                 <Route path="/categories" element={<Categories />} />
+                <Route path="/backups" element={<Backups />} />
               </>
             )}
           </Route>

@@ -98,7 +98,7 @@ export default function Journal() {
         date: op.date,
         quantity: op.quantity,
         comment: op.comment || '',
-        warehouse_id: op.warehouse_from || op.warehouse_to,
+        warehouse_id: op.warehouse_id,
         type: op.type
       }
     });
@@ -166,7 +166,7 @@ export default function Journal() {
     const columns = ['Дата', 'Склад', 'Товар', 'Тип', 'Од.', 'К-сть', 'Залишок після', 'Коментар', 'Автор'];
     const items = filteredOperations.map(op => ({
       'Дата': formatDate(op.date),
-      'Склад': getWarehouseName(op.warehouse_from || op.warehouse_to),
+      'Склад': op.warehouse_name || '',
       'Товар': op.product_name || '',
       'Тип': CONFIG.OPERATION_LABELS[op.type] || op.type,
       'Од.': op.unit || '',
@@ -329,7 +329,7 @@ export default function Journal() {
                 {paginatedOperations.map((op) => (
                   <tr key={op.id} className={`row-${op.type}`}>
                     <td style={{ fontSize: '0.8rem', width: '1px' }}>{formatDate(op.date)}</td>
-                    <td style={{ fontSize: '0.8rem', width: '1px' }}>{getWarehouseName(op.warehouse_from || op.warehouse_to)}</td>
+                    <td style={{ fontSize: '0.8rem', width: '1px' }}>{op.warehouse_name}</td>
                     <td style={{ fontSize: '0.85rem', width: '100%' }}>{op.product_name || '—'}</td>
                     <td style={{ width: '1px' }}>
                       <span className={`badge badge-${op.type}`} style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
