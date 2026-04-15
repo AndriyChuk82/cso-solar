@@ -137,28 +137,41 @@ export async function fetchAllData(): Promise<{
   try {
     const res = await gasRequest('getAllData');
     if (res.success) {
+      if (res.products && res.products.length > 0) {
+        console.log('📦 GAS Sample Data Structure:', res.products[0]);
+      }
+
       // Очищуємо всі товари та курси від можливих об'єктів Google
-      const products = (res.products || []).map((p: any) => ({
-        id: sanitizeString(p.id) || `item_${Date.now()}_${Math.random()}`,
-        name: sanitizeString(p.name),
-        description: sanitizeString(p.description),
-        price: parseFloat(sanitize(p.price)) || 0,
-        currency: sanitizeString(p.currency) || 'USD',
-        unit: sanitizeString(p.unit) || 'шт',
-        category: sanitizeString(p.category),
-        mainCategory: sanitizeString(p.mainCategory),
-        subCategory: sanitizeString(p.subCategory),
-        inStock: p.inStock !== false,
-      }));
+      const products = (res.products || []).map((p: any) => {
+        // "Розумний" мапінг полів (шукаємо назву в різних варіантах)
+        const name = sanitizeString(p.name || p.productName || p.model || p.назва || p.модель || '');
+        const desc = sanitizeString(p.description || p.desc || p.характеристики || p.опис || '');
+        const category = sanitizeString(p.category || p.категорія || '');
+        const mainCategory = sanitizeString(p.mainCategory || p.головна_категорія || '');
+        const priceVal = parseFloat(sanitize(p.price || p.priceUsd || p.ціна || 0)) || 0;
+        
+        return {
+          id: sanitizeString(p.id) || generateStableId(mainCategory + '_' + name),
+          name,
+          description: desc,
+          price: priceVal,
+          currency: sanitizeString(p.currency || p.валюта) || 'USD',
+          unit: sanitizeString(p.unit || p.од_вим) || 'шт',
+          category: category,
+          mainCategory: mainCategory,
+          subCategory: sanitizeString(p.subCategory || ''),
+          inStock: p.inStock !== false && p.active !== false,
+        };
+      });
 
       const rates = {
-        usd: parseFloat(sanitize(res.rates?.usd)) || 41.5,
-        eur: parseFloat(sanitize(res.rates?.eur)) || 51.0
+        usd: parseFloat(sanitize(res.rates?.usd || res.usdRate)) || 41.5,
+        eur: parseFloat(sanitize(res.rates?.eur || res.eurRate)) || 51.0
       };
 
       return {
         rates,
-        products,
+        products: products.filter(p => p.name.length > 0), // Пропускаємо пусті рядки
         customMaterials: res.customMaterials || []
       };
     }
