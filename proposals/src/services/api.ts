@@ -79,7 +79,16 @@ export async function fetchAllData() {
       }
 
       if (res.customMaterials) {
-        customMaterialsFromGAS = res.customMaterials.map((m: any) => ({
+        customMaterialsFromGAS = res.customMaterials
+          .filter((m: any) => {
+            const cat = (m.category || '').toLowerCase();
+            return !cat.includes('інвертор') && 
+                   !cat.includes('панел') && 
+                   !cat.includes('батаре') && 
+                   !cat.includes('акб') && 
+                   !cat.includes('акумул');
+          })
+          .map((m: any) => ({
           ...m,
           id: m.id || `c_${Math.random().toString(36).substring(7)}`,
           mainCategory: m.mainCategory || 'Власні матеріали',
@@ -117,25 +126,33 @@ export async function fetchAllData() {
           let desc = col3 || col4;
           let priceObj = { value: 0, currency: 'USD' };
 
-          // Витягуємо точну назву (знаходимо колонку, яка містить текст назви, а не просто цифру чи слово "Фото")
+          // Витягуємо точну назву для тих таблиць, де перша колонка це "Фото"
           let exactName = '';
-          if (originalName && isNaN(Number(originalName)) && originalName !== 'Фото' && originalName.length > 2) exactName = originalName;
-          else if (col1 && isNaN(Number(col1)) && col1 !== 'Фото' && col1.length > 2) exactName = col1;
-          else if (col0 && col0 !== 'Фото' && col0.length > 2) exactName = col0;
+          if (col0 === 'Фото' || col0 === '') {
+            if (originalName && isNaN(Number(originalName)) && originalName.length > 2) exactName = originalName;
+            else if (col1 && isNaN(Number(col1)) && col1.length > 2) exactName = col1;
+          } else {
+            exactName = col0;
+          }
           
           if (mainCat === 'Інвертори') {
             const powerKW = col1;
             const specs = col3;
             priceObj = parsePrice(col5 || col4);
             
-            // Якщо точна назва є в таблиці — беремо її, інакше генеруємо "Інвертор 5 kW"
-            name = exactName ? exactName : `Інвертор ${powerKW} kW`;
+            name = exactName && exactName !== 'Фото' ? exactName : `Інвертор ${powerKW} kW`;
             desc = specs || (powerKW ? `Потужність: ${powerKW} kW` : '');
           } 
           else if (mainCat === 'АКБ та BMS') {
-            name = exactName || col0;
-            priceObj = parsePrice(col1);
-            desc = `Технологія: ${col2}, Ємність: ${col3}Ah, Напруга: ${col4}V`;
+            // Для АКБ col0 - це завжди назва
+            name = col0;
+            // originalName зберігає сиру ціну ("800 гот / 960 з ПДВ")
+            priceObj = parsePrice(originalName || col1);
+            // Дані зміщені бекендом: unit=row[2], description=row[3], manufacturer=row[4]
+            const tech = col3; // LiFePO4
+            const capacity = col4; // 100
+            const voltage = col5; // 51.2
+            desc = `Технологія: ${tech}, Ємність: ${capacity}Ah, Напруга: ${voltage}V`;
           } 
           else if (mainCat === 'Сонячні батареї') {
             const match = exactName.match(/\d+(?=\s*Вт|\s*W)/i) || exactName.match(/\d{3}/);
