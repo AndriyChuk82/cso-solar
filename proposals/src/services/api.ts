@@ -170,7 +170,7 @@ export async function fetchAllData() {
             category: sanitizeString(p.category) || mainCat,
             inStock: true
           };
-        }).filter(p => p.name.length > 2 && p.name !== 'Фото' && p.price > 0);
+        }).filter((p: Product) => p.name.length > 2 && p.name !== 'Фото' && p.price > 0);
 
         products.push(...mapped);
       }
