@@ -22,7 +22,7 @@ export interface WarrantyData {
   seller: string;
   sellerAddress: string;
   buyer: string;
-  applySeal: boolean;
+  sealType: 'none' | 'cso' | 'fop';
   notes: string;
 }
 
@@ -47,7 +47,7 @@ export function WarrantyModal({ isOpen, onClose, proposal, onPrint, onComplete }
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [buyer, setBuyer] = useState(proposal.clientName || '');
-  const [applySeal, setApplySeal] = useState(false);
+  const [sealType, setSealType] = useState<'none' | 'cso' | 'fop'>('none');
   const [notes, setNotes] = useState('');
 
   if (!isOpen) return null;
@@ -98,7 +98,7 @@ export function WarrantyModal({ isOpen, onClose, proposal, onPrint, onComplete }
       seller: proposal.seller?.fullName || '',
       sellerAddress: proposal.seller?.address || proposal.seller?.office || '',
       buyer,
-      applySeal,
+      sealType,
       notes,
     };
 
@@ -138,16 +138,40 @@ export function WarrantyModal({ isOpen, onClose, proposal, onPrint, onComplete }
                 className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-primary"
               />
             </div>
-            <div className="flex items-center pt-5">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={applySeal}
-                  onChange={(e) => setApplySeal(e.target.checked)}
-                  className="w-4 h-4 text-primary rounded focus:ring-1 focus:ring-primary"
-                />
-                <span className="text-xs font-medium text-gray-700">Накласти печатку</span>
-              </label>
+            <div className="pt-4">
+              <label className="block text-xs font-medium text-gray-700 mb-2">Електронна печатка</label>
+              <div className="flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sealType"
+                    checked={sealType === 'none'}
+                    onChange={() => setSealType('none')}
+                    className="w-4 h-4 text-primary focus:ring-primary"
+                  />
+                  <span className="text-xs font-medium text-gray-600">Без печатки</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sealType"
+                    checked={sealType === 'cso'}
+                    onChange={() => setSealType('cso')}
+                    className="w-4 h-4 text-primary focus:ring-primary"
+                  />
+                  <span className="text-xs font-medium text-gray-600">Печатка ЦСО</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sealType"
+                    checked={sealType === 'fop'}
+                    onChange={() => setSealType('fop')}
+                    className="w-4 h-4 text-primary focus:ring-primary"
+                  />
+                  <span className="text-xs font-medium text-gray-600">Печатка ФОП</span>
+                </label>
+              </div>
             </div>
           </div>
 

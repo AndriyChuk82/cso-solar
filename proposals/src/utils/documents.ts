@@ -325,6 +325,8 @@ function generateTTNHTMLWithData(proposal: Proposal, data: TTNData): string {
           .page-break { page-break-after: always; }
           
           .info-box { border: 1px solid #000; padding: 5px; margin-bottom: 15px; }
+          .stamp-box { display: inline-block; position: relative; width: 0; height: 0; vertical-align: top; }
+          .cso-seal-overlay { position: absolute; width: 130px; bottom: -30px; left: -100px; pointer-events: none; mix-blend-mode: multiply; opacity: 0.9; z-index: 10; }
         </style>
       </head>
       <body>
@@ -517,6 +519,7 @@ function generateTTNHTMLWithData(proposal: Proposal, data: TTNData): string {
               </tr>
             </tbody>
           </table>
+          ${data.sealType !== 'none' ? `<div style="text-align: right; margin-top: -60px; margin-right: 150px;"><div class="stamp-box"><img src="${window.location.origin}/proposals/doc/${data.sealType === 'cso' ? 'sign_cso.png' : 'fop_past.jpg'}" class="cso-seal-overlay"></div></div>` : ''}
         </div>
         <script>
           window.onload = () => setTimeout(() => window.print(), 800);
@@ -646,7 +649,7 @@ function generateWarrantyHTMLWithData(proposal: Proposal, data: WarrantyData): s
               <div class="sig-subtext">(підпис продавця)</div>
               <div class="stamp-box">
                 М.П.
-                ${data.applySeal ? `<img src="${window.location.origin}/proposals/doc/sign_cso.png" class="cso-seal-overlay" style="display:block">` : ''}
+                ${data.sealType !== 'none' ? `<img src="${window.location.origin}/proposals/doc/${data.sealType === 'cso' ? 'sign_cso.png' : 'fop_past.jpg'}" class="cso-seal-overlay" style="display:block">` : ''}
               </div>
             </div>
             <div class="sig-block">

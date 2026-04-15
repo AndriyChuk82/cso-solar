@@ -31,6 +31,7 @@ export interface TTNData {
   totalSumWords: string;
   vatSum: string;
   additionalDocs: string;
+  sealType: 'none' | 'cso' | 'fop';
 }
 
 export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTNModalProps) {
@@ -61,6 +62,7 @@ export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTN
   const [totalSumWords, setTotalSumWords] = useState('');
   const [vatSum, setVatSum] = useState('');
   const [additionalDocs, setAdditionalDocs] = useState('');
+  const [sealType, setSealType] = useState<'none' | 'cso' | 'fop'>('none');
 
   if (!isOpen) return null;
 
@@ -129,6 +131,7 @@ export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTN
       totalSumWords,
       vatSum,
       additionalDocs,
+      sealType,
     };
 
     if (onPrint) onPrint(data);
@@ -378,6 +381,42 @@ export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTN
               onChange={(e) => setAdditionalDocs(e.target.value)}
               className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-primary"
             />
+          </div>
+
+          <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Електронна печатка</label>
+            <div className="flex flex-wrap gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="ttnSealType"
+                  checked={sealType === 'none'}
+                  onChange={() => setSealType('none')}
+                  className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-xs font-medium text-gray-600">Без печатки</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="ttnSealType"
+                  checked={sealType === 'cso'}
+                  onChange={() => setSealType('cso')}
+                  className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-xs font-medium text-gray-600">Печатка ЦСО</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="ttnSealType"
+                  checked={sealType === 'fop'}
+                  onChange={() => setSealType('fop')}
+                  className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-xs font-medium text-gray-600">Печатка ФОП</span>
+              </label>
+            </div>
           </div>
 
           {/* Список товарів */}
