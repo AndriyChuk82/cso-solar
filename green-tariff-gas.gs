@@ -123,7 +123,7 @@ function getProjectsList() {
     sheet = ss.insertSheet(CONFIG.SHEET_NAME);
     const h = [];
     for(let i=1; i<=45; i++) h.push("Field " + i);
-    h.push("ID", "Folder URL", "Created At");
+    h.push("id", "Folder URL", "Created At");
     sheet.appendRow(h);
     SpreadsheetApp.flush();
   }
@@ -137,19 +137,35 @@ function getProjectsList() {
   const normHs = headers.map(normalizeHeader);
   const idIdx = normHs.indexOf("id");
 
+  let modifiedData = false;
+
   for (let i = 1; i < d.length; i++) {
     const row = d[i];
+    
+    // Перевірка: Якщо ID порожній - генеруємо його і записуємо в таблицю
+    let currentId = (idIdx !== -1 && row[idIdx]) ? row[idIdx] : "";
+    if (idIdx !== -1 && !currentId) {
+       currentId = Utilities.getUuid();
+       sheet.getRange(i + 1, idIdx + 1).setValue(currentId);
+       row[idIdx] = currentId;
+       modifiedData = true;
+    }
+
     const project = {};
     headers.forEach((h, idx) => {
       const key = normalizeHeader(h);
       project[key] = row[idx];
+      // Також заповнюємо fieldX для прямого доступу
       if (h.toLowerCase().startsWith("field ")) {
         project[h.toLowerCase().replace(" ", "")] = row[idx];
       }
     });
-    project.id = (idIdx !== -1 && row[idIdx]) ? row[idIdx] : "";
+
+    project.id = currentId;
     projects.push(project);
   }
+
+  if (modifiedData) SpreadsheetApp.flush();
   return projects;
 }
 
@@ -230,12 +246,20 @@ function saveProjectWithFiles(data) {
   try {
     const dValues = sheet.getDataRange().getValues();
     let fRow = -1;
-    if (idIdx !== -1) {
+    
+    // 1. Пріоритет: пошук по порядковому індексу (якщо прийшло idx_X)
+    if (id && id.toString().startsWith('idx_')) {
+      const idx = parseInt(id.toString().replace('idx_', ''));
+      if (!isNaN(idx)) fRow = idx + 2; // +1 (0->1) +1 (header)
+    } 
+    
+    // 2. Пошук по унікальному ID (якщо fRow ще не знайдено або якщо ID не idx_)
+    if (fRow === -1 && idIdx !== -1) {
       for (let i = 1; i < dValues.length; i++) {
-          if (dValues[i].length > idIdx && dValues[i][idIdx] === id) {
-              fRow = i + 1;
-              break;
-          }
+        if (dValues[i].length > idIdx && dValues[i][idIdx] === id) {
+          fRow = i + 1;
+          break;
+        }
       }
     }
     
@@ -253,13 +277,7 @@ function jsonResponse(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-/**
- * Normalizes a header string for case-insensitive comparison.
- * Removes extra spaces, quotes, newlines and lowercases.
- */
-function normalizeHeader(s) {
-  return String(s || '').toLowerCase().replace(/[\s\n\r"']+/g, ' ').trim();
-}
+
 
 /**
  * Extracts unique equipment (inverters, panels, batteries) from existing projects.
