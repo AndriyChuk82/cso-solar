@@ -215,54 +215,32 @@ export async function fetchAllData() {
 export async function fetchRates() {
   console.log('📡 Отримання курсів валют...');
   
-  // 1. Спочатку пробуємо через GAS (як було раніше)
-  const data = await fetchAllData();
-  if (data && data.rates && data.rates.source !== 'default') {
-    console.log('✅ Курси отримано через GAS:', data.rates);
-    return data.rates;
+  // 1. Спочатку пробуємо через GAS
+  try {
+    const data = await fetchAllData();
+    if (data && data.rates && data.rates.source !== 'default') {
+      console.log('✅ Курси отримано через GAS:', data.rates);
+      return data.rates;
+    }
+  } catch (e) {
+    console.warn('⚠️ GAS fetch failed, trying Vercel proxy...');
   }
   
-  // 2. Якщо GAS повернув дефолт або помилку — пробуємо напряму через CORS-проксі
-  console.log('⚠️ GAS не зміг отримати курси. Пробуємо прямий запит через проксі...');
+  // 2. Спеціальний надійний проксі на Vercel (наш власний)
+  console.log('🚀 Пробуємо отримати курси через Vercel Proxy...');
   try {
-    const query = `query Point($alias: Alias!) { point(alias: $alias) { rates { currency { codeAlpha } ask { absolute } } } }`;
-    const variables = { alias: "goverla-ua" };
-    
-    // Використовуємо allorigins для обходу CORS
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://api.goverla.ua/graphql')}`;
-    
-    const response = await fetch(proxyUrl, {
-      method: 'POST',
-      body: JSON.stringify({
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, variables })
-      })
-    });
-    
-    // На жаль, allorigins для POST запитів працює специфічно, 
-    // спробуємо простіший метод через інший проксі або прямий запит (якщо пощастить)
-    const directRes = await fetch('https://api.goverla.ua/graphql', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables })
-    }).catch(() => null);
-
-    if (directRes && directRes.ok) {
-      const result = await directRes.json();
-      const rates = result?.data?.point?.rates;
-      if (rates) {
-        const usd = rates.find((r: any) => r.currency.codeAlpha === 'USD')?.ask.absolute / 100;
-        const eur = rates.find((r: any) => r.currency.codeAlpha === 'EUR')?.ask.absolute / 100;
-        console.log('✅✅ Курси отримано НАПРЯМУ:', { usd, eur });
-        return { usd, eur };
-      }
+    const response = await fetch('/api/get-rates');
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅✅ Курси отримано через Vercel Proxy:', data);
+      return { usd: data.usd, eur: data.eur };
     }
   } catch (err) {
-    console.error('❌ Не вдалося отримати курси навіть через проксі:', err);
+    console.error('❌ Vercel Proxy failed:', err);
   }
 
-  return { usd: 41.5, eur: 51.0 };
+  // 3. Якщо все провалилося — дефолтні значення
+  return { usd: 44.0, eur: 51.43 };
 }
 
 export async function fetchAllProducts() {
