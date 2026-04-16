@@ -2176,7 +2176,7 @@ function getCustomMaterials() {
 }
 
 function getRates() {
-  let result = { success: true, usd: 41.5, eur: 45.0, source: 'default', debug: [] };
+  let result = { success: true, usd: 44.0, eur: 51.43, source: 'default', debug: [] };
   
   const aliases = ["goverla-ua", "main"];
   
