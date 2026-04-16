@@ -92,6 +92,8 @@ const createEmptyProposal = (): Proposal => ({
   },
   seller: SELLERS.tov_cso,
   status: 'draft',
+  vatMode: 'none',
+  vatAmount: 0,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 });
@@ -110,16 +112,27 @@ function getNextProposalNumber(): string {
 
 function calculateProposalTotals(proposal: Proposal): Proposal {
   const subtotal = proposal.items.reduce((sum, item) => sum + item.total, 0);
-  // Націнка вже врахована в item.price, тому proposal.markup тут більше як інформаційне поле
-  // або для нових товарів. Але ми можемо рахувати total як subtotal (якщо він вже з націнкою)
-  // В старій версії markup додавався зверху до subtotal? 
-  // Ні, в старій версії націнка вказувалась для кожного товару. 
-  // Але був "Apply global markup" кнопка.
+  
+  let total = subtotal;
+  let vatAmount = 0;
+
+  if (proposal.vatMode === 'add') {
+    vatAmount = subtotal * 0.2;
+    total = subtotal + vatAmount;
+  } else if (proposal.vatMode === 'extract') {
+    // Вже враховано в subtotal, вираховуємо частину ПДВ
+    vatAmount = subtotal - (subtotal / 1.2);
+    total = subtotal; // Сама сума не змінюється, кажемо що вона вже з ПДВ
+  } else {
+    vatAmount = 0;
+    total = subtotal;
+  }
   
   return {
     ...proposal,
     subtotal,
-    total: subtotal, // Сума всіх айтемів вже з нацїнкою
+    vatAmount: Math.round(vatAmount * 100) / 100,
+    total: Math.round(total * 100) / 100,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -577,7 +590,8 @@ export const useProposalStore = create<ProposalStore>()(
 
       updateProposalField: (field: keyof Proposal, value: any) => {
         const { proposal } = get();
-        set({ proposal: { ...proposal, [field]: value, updatedAt: new Date().toISOString() } });
+        const updatedProposal = { ...proposal, [field]: value, updatedAt: new Date().toISOString() };
+        set({ proposal: calculateProposalTotals(updatedProposal) });
       },
     }),
     {

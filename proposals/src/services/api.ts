@@ -242,14 +242,18 @@ function normalizeForSearch(str: string): string {
     .replace(/с/g, 'c')
     .replace(/х/g, 'x')
     .replace(/р/g, 'p')
-    .replace(/і/g, 'i')
-    .replace(/\s+/g, ''); // ignore spaces for better matching
+    .replace(/і/g, 'i');
 }
 
 export function searchProducts(products: Product[], query: string): Product[] {
-  const q = normalizeForSearch(query);
-  return products.filter(p => 
-    normalizeForSearch(p.name).includes(q) || 
-    normalizeForSearch(p.description || '').includes(q)
-  );
+  const words = query.trim().split(/\s+/).map(w => normalizeForSearch(w)).filter(w => w.length > 0);
+  
+  if (words.length === 0) return products;
+
+  return products.filter(p => {
+    const name = normalizeForSearch(p.name);
+    
+    // Всі слова запиту повинні бути в назві
+    return words.every(word => name.includes(word));
+  });
 }

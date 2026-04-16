@@ -2176,6 +2176,8 @@ function getCustomMaterials() {
 }
 
 function getRates() {
+  const result = { success: true, usd: 41.5, eur: 45.0, source: 'default' };
+  
   try {
     const payload = {
       operationName: "Point",
@@ -2191,19 +2193,37 @@ function getRates() {
     };
 
     const response = UrlFetchApp.fetch('https://api.goverla.ua/graphql', options);
-    const data = JSON.parse(response.getContentText());
-    const rates = data.data.point.rates;
-    const usdRateObj = rates.find(r => r.currency.codeAlpha === 'USD');
-    const eurRateObj = rates.find(r => r.currency.codeAlpha === 'EUR');
-
-    return {
-      success: true,
-      usd: usdRateObj ? usdRateObj.ask.absolute / 100 : 41.5,
-      eur: eurRateObj ? eurRateObj.ask.absolute / 100 : 45.0
-    };
+    const responseCode = response.getResponseCode();
+    const responseText = response.getContentText();
+    
+    if (responseCode === 200) {
+      const data = JSON.parse(responseText);
+      if (data && data.data && data.data.point && data.data.point.rates) {
+        const rates = data.data.point.rates;
+        const usdRateObj = rates.find(r => r.currency.codeAlpha === 'USD');
+        const eurRateObj = rates.find(r => r.currency.codeAlpha === 'EUR');
+        
+        if (usdRateObj) {
+          result.usd = usdRateObj.ask.absolute / 100;
+          result.source = 'hoverla';
+        }
+        if (eurRateObj) {
+          result.eur = eurRateObj.ask.absolute / 100;
+        }
+        
+        console.log('Успішно отримано курси Hoverla:', result.usd, result.eur);
+        return result;
+      } else {
+        console.warn('Hoverla: невалідна структура даних', responseText);
+      }
+    } else {
+      console.warn('Hoverla: помилка запиту (код ' + responseCode + ')', responseText);
+    }
   } catch (err) {
-    return { success: false, error: err.toString() };
+    console.error('Hoverla: помилка fetch:', err.toString());
   }
+
+  return result;
 }
 
 function getAllData() {

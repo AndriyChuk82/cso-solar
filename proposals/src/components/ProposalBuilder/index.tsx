@@ -173,6 +173,9 @@ export function ProposalBuilderTable() {
         itemsCount={proposal.items.length}
         costSubtotal={costSubtotal}
         saleSubtotal={saleSubtotal}
+        vatMode={proposal.vatMode || 'none'}
+        vatAmount={proposal.vatAmount || 0}
+        total={proposal.total}
         profit={profit}
         profitPercent={profitPercent}
         activeCurrency={activeCurrency}
@@ -180,6 +183,7 @@ export function ProposalBuilderTable() {
         eurRate={settings.eurRate}
         notes={proposal.notes || ''}
         onUpdateNotes={(notes) => updateProposalField('notes', notes)}
+        onUpdateVatMode={(mode) => updateProposalField('vatMode', mode)}
         convert={convert}
       />
 

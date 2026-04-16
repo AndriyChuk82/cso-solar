@@ -57,6 +57,8 @@ export interface Proposal {
   };
   seller: SellerInfo;
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
+  vatMode: 'none' | 'add' | 'extract';
+  vatAmount: number;
   createdAt: string;
   updatedAt: string;
 }
