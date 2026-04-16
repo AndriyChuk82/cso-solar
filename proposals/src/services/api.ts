@@ -74,7 +74,7 @@ async function gasRequest(action: string, data: any = {}) {
 // --- ОСНОВНА ФУНКЦІЯ (нова) ---
 export async function fetchAllData() {
   const products: Product[] = [];
-  let rates = { usd: 41.5, eur: 51.0 };
+  let rates: { usd: number; eur: number; source?: string; debug?: any[] } = { usd: 44.0, eur: 51.43, source: 'default' };
   let customMaterialsFromGAS: Product[] = [];
 
   try {
@@ -82,8 +82,10 @@ export async function fetchAllData() {
     if (res.success) {
       if (res.rates) {
         rates = {
-          usd: parseFloat(sanitize(res.rates.usd || res.rates.usdRate)) || 41.5,
-          eur: parseFloat(sanitize(res.rates.eur || res.rates.eurRate)) || 51.0
+          usd: parseFloat(sanitize(res.rates.usd || res.rates.usdRate)) || 44.0,
+          eur: parseFloat(sanitize(res.rates.eur || res.rates.eurRate)) || 51.43,
+          source: sanitize(res.rates.source),
+          debug: res.rates.debug
         };
       }
 
