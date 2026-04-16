@@ -146,7 +146,7 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
     return { panels: allPanels, recommended: recommendedPanel };
   }, [products]);
 
-  // 3. Get batteries filtered by inverter type (HV/LV)
+  // 3. Get batteries filtered and sorted by inverter type (HV/LV)
   const filteredBatteries = useMemo(() => {
     if (stationType !== 'hybrid' || backup <= 0 || !selectedInverterId) {
       return { batteries: [], needsBms: false };
@@ -157,13 +157,17 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
 
     if (inverter) {
       const titleLower = inverter.name.toLowerCase();
-      if (titleLower.includes('hv')) {
+      const descLower = (inverter.description || '').toLowerCase();
+      
+      // Пріоритет за явним маркуванням в назві або описі
+      if (titleLower.includes('hv') || descLower.includes('hv')) {
         isInverterHV = true;
-      } else if (titleLower.includes('lv')) {
+      } else if (titleLower.includes('lv') || descLower.includes('lv')) {
         isInverterHV = false;
       } else {
+        // Якщо немає маркування, орієнтуємось на потужність (> 20 кВт = HV)
         const invPower = parsePowerFromTitle(inverter.name) || 0;
-        isInverterHV = invPower >= 30;
+        isInverterHV = invPower > 20;
       }
     }
 
@@ -172,15 +176,32 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
       !p.name.toLowerCase().includes('bms')
     );
 
+    // Фільтрація та сортування за типом
     const matchedBats = allBats.filter(b => {
       const t = b.name.toLowerCase();
       if (t.includes('cluster')) return false;
       if (isInverterHV) return t.includes('hv') || t.includes('bos');
-      return t.includes('lv') || t.includes('m6.1') || t.includes('g5.1');
+      return t.includes('lv') || t.includes('m6.1') || t.includes('g5.1') || t.includes('pro-b') || t.includes('pro-c');
+    }).sort((a, b) => {
+      const tA = a.name.toLowerCase();
+      const tB = b.name.toLowerCase();
+      
+      if (isInverterHV) {
+        const isABosG = tA.includes('bos-g');
+        const isBBosG = tB.includes('bos-g');
+        if (isABosG && !isBBosG) return -1;
+        if (!isABosG && isBBosG) return 1;
+      } else {
+        const isAPro = tA.includes('pro-b') || tA.includes('pro-c');
+        const isBPro = tB.includes('pro-b') || tB.includes('pro-c');
+        if (isAPro && !isBPro) return -1;
+        if (!isAPro && isBPro) return 1;
+      }
+      return 0;
     });
 
     return { batteries: matchedBats, needsBms: isInverterHV };
-  }, [products, selectedInverterId, stationType, backup]);
+  }, [products, selectedInverterId, stationType, backup, allAvailableProducts]);
 
   // Auto-select first recommended items
   useEffect(() => {

@@ -1,1 +1,0 @@
-import{i as e}from"./index-tBog2tV9.js";export{e as fetchAllData};
