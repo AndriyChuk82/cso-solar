@@ -8,6 +8,7 @@ const STATUS_TABS = [
   { label: 'В процесі', value: 'В процесі' },
   { label: 'Готовий', value: 'Готовий' },
   { label: 'Відкл.', value: 'Відкладено' },
+  { label: 'Неопл.', value: 'unpaid' },
   { label: 'Всі', value: 'all' },
 ];
 
@@ -37,6 +38,18 @@ export function ProjectList() {
     fetchProjects();
   }, [fetchProjects]);
 
+  // Calculate unpaid projects count
+  const unpaidCount = React.useMemo(() => {
+    return projects.filter((p) => {
+      const obj = p as unknown as Record<string, unknown>;
+      const paymentStatus = getProp(obj, ['Розрахунок', 'Оплата']) || p.field2 || '';
+      const name = getProp(obj, ['ПІБ фізичної особи', 'ПІБ', 'Прізвище']) || p.field4 || '';
+      const num = getProp(obj, ['№ проекту']) || p.field3 || '';
+      if (!name && !num) return false;
+      return paymentStatus === 'Не оплачено';
+    }).length;
+  }, [projects]);
+
   const filteredProjects = React.useMemo(() => {
     return projects.filter((p) => {
       const obj = p as unknown as Record<string, unknown>;
@@ -44,10 +57,15 @@ export function ProjectList() {
       const name = getProp(obj, ['ПІБ фізичної особи', 'ПІБ', 'Прізвище']) || p.field4 || '';
       const num = getProp(obj, ['№ проекту']) || p.field3 || '';
       const stat = getProp(obj, ['Стан проєкту', 'Статус', 'Стан']) || p.field1 || '';
+      const paymentStatus = getProp(obj, ['Розрахунок', 'Оплата']) || p.field2 || '';
 
       if (!id && !name && !num) return false;
 
-      if (activeStatusFilter !== 'all' && stat !== activeStatusFilter) return false;
+      if (activeStatusFilter === 'unpaid') {
+        if (paymentStatus !== 'Не оплачено') return false;
+      } else if (activeStatusFilter !== 'all' && stat !== activeStatusFilter) {
+        return false;
+      }
 
       const searchStr = (name + ' ' + num).toLowerCase();
       return searchStr.includes(searchQuery.toLowerCase());
@@ -83,18 +101,18 @@ export function ProjectList() {
       </div>
 
       {/* Status Filters */}
-      <div className="flex gap-1 p-2 border-b border-gray-200">
+      <div className="flex flex-wrap gap-1 p-2 border-b border-gray-200">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value}
             onClick={() => setStatusFilter(tab.value)}
-            className={`flex-1 px-2 py-1 text-xs font-medium rounded transition ${
+            className={`flex-1 px-1 py-1 text-[10px] font-medium rounded transition text-center min-w-[40px] whitespace-nowrap ${
               activeStatusFilter === tab.value
-                ? 'bg-primary text-white'
+                ? tab.value === 'unpaid' ? 'bg-red-500 text-white' : 'bg-primary text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            {tab.label}
+            {tab.label} {tab.value === 'unpaid' && unpaidCount > 0 && `(${unpaidCount})`}
           </button>
         ))}
       </div>

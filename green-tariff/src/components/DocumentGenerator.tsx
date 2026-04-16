@@ -18,8 +18,6 @@ const DOC_OPTIONS = [
   { value: '5', label: '5. Договір про встановлення' },
 ];
 
-const STATION_TYPE_OPTIONS = ['Мережева станція', 'Гібридна станція'];
-
 // ---- helpers ----
 
 function fileToBase64(file: File): Promise<string> {
@@ -102,23 +100,12 @@ export function DocumentGenerator({ formData }: { formData: GreenTariffProject }
 
   const [selected, setSelected] = useState<string[]>([]);
   const [useSign, setUseSign] = useState(false);
-  const [stationType, setStationType] = useState(
-    (currentProject?.stationType) || ''
-  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'info' | 'success' | 'error' | 'warning' } | null>(null);
-
-  // Persist stationType changes to the form's local state
-  React.useEffect(() => {
-    if (currentProject?.stationType) {
-      setStationType(currentProject.stationType);
-    }
-  }, [currentProject]);
 
   const photo1Ref = useRef<HTMLInputElement>(null);
   const photo2Ref = useRef<HTMLInputElement>(null);
   const photo3Ref = useRef<HTMLInputElement>(null);
-  const stationTypeId = React.useId();
 
   const showToast = (text: string, type: 'info' | 'success' | 'error' | 'warning') => {
     setToastMsg({ text, type });
@@ -150,7 +137,7 @@ export function DocumentGenerator({ formData }: { formData: GreenTariffProject }
         mergedData[key] = formData[key] ?? '';
       }
       mergedData.currentDate = new Date().toLocaleDateString('uk-UA');
-      mergedData.stationType = stationType;
+      mergedData.stationType = formData.stationType || '';
       mergedData.useSign = useSign;
 
       // Prepare photos
@@ -272,28 +259,7 @@ export function DocumentGenerator({ formData }: { formData: GreenTariffProject }
         </div>
       </div>
 
-      {/* Station type selector */}
-      <div className="pt-2 border-t border-gray-100">
-        <>
-          <label htmlFor={stationTypeId} className="block text-[11px] font-medium text-gray-700 mb-1">
-            Тип станції
-          </label>
-          <input
-            id={stationTypeId}
-            type="text"
-            value={stationType}
-            onChange={(e) => setStationType(e.target.value)}
-            list={`${stationTypeId}-list`}
-            placeholder="Мережева / Гібридна"
-            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
-          />
-          <datalist id={`${stationTypeId}-list`}>
-            {STATION_TYPE_OPTIONS.map((opt) => (
-              <option key={opt} value={opt} />
-            ))}
-          </datalist>
-        </>
-      </div>
+
 
       {/* Generate button */}
       <button
