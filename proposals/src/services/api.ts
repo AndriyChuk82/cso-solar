@@ -50,14 +50,17 @@ function generateStableId(base: string): string {
 // Базовий запит до GAS
 async function gasRequest(action: string, data: any = {}) {
   try {
+    console.log(`🚀 GAS Request: ${action}`, data);
     const response = await fetch(CONFIG.GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action, ...data })
     });
-    return await response.json();
+    const result = await response.json();
+    console.log(`📥 GAS Response: ${action}`, result);
+    return result;
   } catch (error) {
-    console.error(`GAS error (${action}):`, error);
+    console.error(`❌ GAS error (${action}):`, error);
     return { success: false };
   }
 }
@@ -202,8 +205,13 @@ export async function fetchAllData() {
 // --- ВІДНОВЛЕНІ ФУНКЦІЇ ДЛЯ СУМІСНОСТІ ТА БІЛДУ ---
 
 export async function fetchRates() {
+  console.log('📡 Отримання курсів валют через GAS...');
   const data = await fetchAllData();
-  return data ? data.rates : { usd: 41.5, eur: 51.0 };
+  if (data) {
+    console.log('✅ Курси отримано:', data.rates);
+    return data.rates;
+  }
+  return { usd: 41.5, eur: 51.0 };
 }
 
 export async function fetchAllProducts() {
