@@ -26,7 +26,7 @@ export const CONFIG = {
 
   CACHE_VERSION: 'v50',
 
-  GAS_URL: import.meta.env.VITE_GAS_URL || 'https://script.google.com/macros/s/AKfycbyT7TOg-e0kStqy9ODUY2_QG5KsMurp2VbKntkNo3MicxNxModnk65v_xqK8za_-gVN/exec',
+  GAS_URL: import.meta.env.VITE_GAS_URL || 'https://script.google.com/macros/s/AKfycbyvYNoyGINAtWlbExzONJWoReE8OC3_-FhOase5pHkCZ_PdCLXuMQqXqMYBWLzaNX-s/exec',
 
   UNITS: ['шт', 'компл', 'м', 'кг', 'л'],
 
