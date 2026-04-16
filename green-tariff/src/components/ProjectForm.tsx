@@ -104,27 +104,27 @@ export function ProjectForm() {
 
   return (
     <form onSubmit={handleSubmit} className="p-6 space-y-6 relative">
-      {/* Sticky Top Actions */}
-      <div className="sticky top-0 z-10 -mx-6 -mt-6 px-6 py-4 bg-white/80 backdrop-blur-sm border-b border-gray-100 flex gap-3 shadow-sm rounded-t-lg">
+      {/* Minimalistic Sticky Top Actions */}
+      <div className="sticky top-0 z-10 -mx-6 -mt-6 px-6 py-3 bg-white/90 backdrop-blur-md border-b border-gray-200/50 flex items-center justify-end gap-3 shadow-sm transition-all duration-300">
         <button
           type="button"
           onClick={handleReset}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition shadow-sm"
+          className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-all duration-200 flex items-center gap-1.5"
         >
-          ❌ Очистити
+          🗑️ Очистити
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-md transition disabled:opacity-50 shadow-sm flex items-center justify-center gap-2"
+          className="px-6 py-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-dark rounded-full shadow-md shadow-primary/20 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2"
         >
           {isLoading ? (
             <>
-              <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               Збереження...
             </>
           ) : (
-            <>💾 Зберегти проєкт</>
+            <>💾 Зберегти</>
           )}
         </button>
       </div>
