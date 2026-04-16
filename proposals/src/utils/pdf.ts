@@ -60,8 +60,8 @@ export async function exportToPDF(proposal: Proposal, returnBlob = false): Promi
             <tr>
               <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 12px; text-align: center;">${i + 1}</td>
               <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 12px;">
-                <strong>${item.name}</strong>
-                ${item.product.description ? `<div style="font-size: 9px; color: #6B7280; margin-top: 2px;">${item.product.description}</div>` : ''}
+                <strong>${item.name || item.product.name}</strong>
+                ${(item.description || item.product.description) ? `<div style="font-size: 9px; color: #6B7280; margin-top: 2px;">${item.description || item.product.description}</div>` : ''}
               </td>
               <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 12px; text-align: center;">${item.unit || 'шт.'}</td>
               <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 12px; text-align: center;">${item.quantity}</td>

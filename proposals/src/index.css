@@ -347,6 +347,11 @@ h1, h2, h3, h4 { font-weight: 600; }
     box-shadow: none !important;
   }
 
+  input::placeholder, textarea::placeholder {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+  }
+
   /* Hide empty state */
   .empty-state {
     display: none !important;

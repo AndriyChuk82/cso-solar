@@ -89,9 +89,10 @@ async function sendTelegramPhoto(proposal: Proposal, botToken?: string, chatId?:
             span.style.fontFamily = style.fontFamily;
             span.style.minHeight = '1.2em';
             
-            if (input.placeholder?.includes('Опис') || input.className.includes('text-[10px]')) {
+            if (input.placeholder?.includes('Опис') || input.className.includes('text-[0.7rem]')) {
               span.style.marginTop = '2px';
               span.style.opacity = '0.8';
+              if (!input.value) span.style.display = 'none';
             }
             
             input.parentNode.replaceChild(span, input);
@@ -363,9 +364,10 @@ async function sendViberPhoto() {
             span.style.fontFamily = style.fontFamily;
             span.style.minHeight = '1.2em';
 
-            if (input.placeholder?.includes('Опис') || input.className.includes('text-[10px]')) {
+            if (input.placeholder?.includes('Опис') || input.className.includes('text-[0.7rem]')) {
               span.style.marginTop = '2px';
               span.style.opacity = '0.8';
+              if (!input.value) span.style.display = 'none';
             }
             input.parentNode.replaceChild(span, input);
           });
