@@ -2241,10 +2241,16 @@ function getAllData() {
 
     try {
       const ratesResult = getRates();
-      if (ratesResult.success) {
-        result.rates = { usd: ratesResult.usd, eur: ratesResult.eur };
-      }
-    } catch (e) { console.warn('Failed to fetch rates:', e); }
+      result.rates = { 
+        usd: ratesResult.usd, 
+        eur: ratesResult.eur,
+        source: ratesResult.source,
+        debug: ratesResult.debug
+      };
+    } catch (e) { 
+      console.warn('Failed to fetch rates:', e); 
+      result.rates.error = e.toString();
+    }
 
     try {
       const productsResult = getAllProducts();
