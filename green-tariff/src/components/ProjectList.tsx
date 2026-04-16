@@ -45,8 +45,8 @@ export function ProjectList() {
       const paymentStatus = getProp(obj, ['Розрахунок', 'Оплата']) || p.field2 || '';
       const name = getProp(obj, ['ПІБ фізичної особи', 'ПІБ', 'Прізвище']) || p.field4 || '';
       const num = getProp(obj, ['№ проекту']) || p.field3 || '';
-      if (!name && !num) return false;
-      return paymentStatus === 'Не оплачено';
+      const pStr = paymentStatus.toLowerCase().trim();
+      return pStr.includes('не оплачено') || pStr.includes('неоплачено');
     }).length;
   }, [projects]);
 
@@ -62,7 +62,13 @@ export function ProjectList() {
       if (!id && !name && !num) return false;
 
       if (activeStatusFilter === 'unpaid') {
-        if (paymentStatus !== 'Не оплачено') return false;
+        const pStr = paymentStatus.toLowerCase().trim();
+        // Вважаємо неоплаченим, якщо прямо вказано "не оплачено" або щось подібне,
+        // або якщо воно не вказано "оплачено" - але користувач скаржився на ті, що оплачені.
+        // Тож шукаємо строго входження "не оплачено" або "неоплачено", і виключаємо "оплачено"
+        if (!pStr.includes('не оплачено') && !pStr.includes('неоплачено')) {
+           return false;
+        }
       } else if (activeStatusFilter !== 'all' && stat !== activeStatusFilter) {
         return false;
       }
@@ -130,6 +136,7 @@ export function ProjectList() {
               const name = getProp(obj, ['ПІБ фізичної особи', 'ПІБ', 'Прізвище']) || project.field4 || 'Без імені';
               const num = getProp(obj, ['№ проекту']) || project.field3 || '---';
               const stat = getProp(obj, ['Стан проєкту', 'Статус', 'Стан']) || project.field1 || '';
+              const paymentStatus = getProp(obj, ['Розрахунок', 'Оплата']) || project.field2 || '';
 
               return (
                 <button
@@ -140,6 +147,11 @@ export function ProjectList() {
                   <div className="text-sm font-medium text-gray-900 truncate">{name}</div>
                   <div className="text-xs text-gray-500 mt-0.5">
                     {num} | {stat}
+                    {activeStatusFilter === 'unpaid' && (
+                       <span className="ml-1 px-1 py-0.5 bg-red-100 text-red-700 rounded text-[9px] font-mono leading-none">
+                          [{paymentStatus}]
+                       </span>
+                    )}
                   </div>
                 </button>
               );
