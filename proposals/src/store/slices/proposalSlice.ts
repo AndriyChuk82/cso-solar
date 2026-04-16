@@ -49,10 +49,25 @@ function getNextProposalNumber(): string {
 function calculateProposalTotals(proposal: Proposal): Proposal {
   const subtotal = proposal.items.reduce((sum, item) => sum + item.total, 0);
 
+  let total = subtotal;
+  let vatAmount = 0;
+
+  if (proposal.vatMode === 'add') {
+    vatAmount = subtotal * 0.2;
+    total = subtotal + vatAmount;
+  } else if (proposal.vatMode === 'extract') {
+    vatAmount = subtotal - (subtotal / 1.2);
+    total = subtotal;
+  } else {
+    vatAmount = 0;
+    total = subtotal;
+  }
+
   return {
     ...proposal,
     subtotal,
-    total: subtotal,
+    vatAmount: Math.round(vatAmount * 100) / 100,
+    total: Math.round(total * 100) / 100,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -78,6 +93,8 @@ function createEmptyProposal(): Proposal {
     },
     seller: SELLERS.tov_cso,
     status: 'draft',
+    vatMode: 'none',
+    vatAmount: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -317,7 +334,8 @@ export const createProposalSlice: StateCreator<
 
   updateProposalField: (field: keyof Proposal, value: any) => {
     const { proposal } = get();
-    set({ proposal: { ...proposal, [field]: value, updatedAt: new Date().toISOString() } });
+    const updatedProposal = { ...proposal, [field]: value, updatedAt: new Date().toISOString() };
+    set({ proposal: calculateProposalTotals(updatedProposal) });
   },
 
   updateProposalRates: (usd: number, eur: number) => {
