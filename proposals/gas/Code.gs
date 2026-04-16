@@ -2176,15 +2176,12 @@ function getCustomMaterials() {
 }
 
 function getRates() {
-  const result = { success: true, usd: 41.5, eur: 45.0, source: 'default' };
+  let result = { success: true, usd: 41.5, eur: 45.0, source: 'default', debug: [] };
   
-  // Перелік аліасів для спроб
   const aliases = ["goverla-ua", "main"];
   
   for (let alias of aliases) {
     try {
-      console.log('Спроба отримати курс Hoverla для аліасу:', alias);
-      
       const payload = {
         query: "query Point($alias: Alias!) { point(alias: $alias) { rates { currency { codeAlpha } ask { absolute } } } }",
         variables: { alias: alias }
@@ -2202,37 +2199,33 @@ function getRates() {
       };
 
       const response = UrlFetchApp.fetch('https://api.goverla.ua/graphql', options);
-      const responseCode = response.getResponseCode();
-      const responseText = response.getContentText();
+      const code = response.getResponseCode();
+      const text = response.getContentText();
       
-      if (responseCode === 200) {
-        const data = JSON.parse(responseText);
+      result.debug.push({ alias, code, text: text.substring(0, 200) });
+
+      if (code === 200) {
+        const data = JSON.parse(text);
         const point = data?.data?.point;
         
         if (point && point.rates) {
           const rates = point.rates;
-          const usdRateObj = rates.find(r => r.currency.codeAlpha === 'USD');
-          const eurRateObj = rates.find(r => r.currency.codeAlpha === 'EUR');
+          const usd = rates.find(r => r.currency.codeAlpha === 'USD');
+          const eur = rates.find(r => r.currency.codeAlpha === 'EUR');
           
-          if (usdRateObj || eurRateObj) {
-            if (usdRateObj) result.usd = usdRateObj.ask.absolute / 100;
-            if (eurRateObj) result.eur = eurRateObj.ask.absolute / 100;
+          if (usd || eur) {
+            if (usd) result.usd = usd.ask.absolute / 100;
+            if (eur) result.eur = eur.ask.absolute / 100;
             result.source = 'hoverla_' + alias;
-            
-            console.log('Успішно отримано курси Hoverla (' + alias + '):', result.usd, result.eur);
             return result;
           }
         }
-        console.warn('Hoverla (' + alias + '): аліас знайдено, але курсів немає');
-      } else {
-        console.warn('Hoverla (' + alias + '): помилка запиту ' + responseCode);
       }
     } catch (err) {
-      console.error('Hoverla (' + alias + '): помилка fetch:', err.toString());
+      result.debug.push({ alias, error: err.toString() });
     }
   }
 
-  console.error('Не вдалося отримати курси з жодного джерела Hoverla. Використовуємо значення за замовчуванням.');
   return result;
 }
 
