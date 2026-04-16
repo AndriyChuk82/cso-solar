@@ -43,10 +43,8 @@ export function ProjectList() {
     return projects.filter((p) => {
       const obj = p as unknown as Record<string, unknown>;
       const paymentStatus = getProp(obj, ['Розрахунок', 'Оплата']) || p.field2 || '';
-      const name = getProp(obj, ['ПІБ фізичної особи', 'ПІБ', 'Прізвище']) || p.field4 || '';
-      const num = getProp(obj, ['№ проекту']) || p.field3 || '';
       const pStr = paymentStatus.toLowerCase().trim();
-      return pStr.includes('не оплачено') || pStr.includes('неоплачено');
+      return pStr === 'не оплачено' || pStr === 'неоплачено';
     }).length;
   }, [projects]);
 
@@ -63,10 +61,7 @@ export function ProjectList() {
 
       if (activeStatusFilter === 'unpaid') {
         const pStr = paymentStatus.toLowerCase().trim();
-        // Вважаємо неоплаченим, якщо прямо вказано "не оплачено" або щось подібне,
-        // або якщо воно не вказано "оплачено" - але користувач скаржився на ті, що оплачені.
-        // Тож шукаємо строго входження "не оплачено" або "неоплачено", і виключаємо "оплачено"
-        if (!pStr.includes('не оплачено') && !pStr.includes('неоплачено')) {
+        if (pStr !== 'не оплачено' && pStr !== 'неоплачено') {
            return false;
         }
       } else if (activeStatusFilter !== 'all' && stat !== activeStatusFilter) {
@@ -131,27 +126,22 @@ export function ProjectList() {
           <div className="p-4 text-center text-sm text-gray-500">Проєктів не знайдено</div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {filteredProjects.map((project, index) => {
+            {filteredProjects.map((project) => {
               const obj = project as unknown as Record<string, unknown>;
               const name = getProp(obj, ['ПІБ фізичної особи', 'ПІБ', 'Прізвище']) || project.field4 || 'Без імені';
               const num = getProp(obj, ['№ проекту']) || project.field3 || '---';
               const stat = getProp(obj, ['Стан проєкту', 'Статус', 'Стан']) || project.field1 || '';
-              const paymentStatus = getProp(obj, ['Розрахунок', 'Оплата']) || project.field2 || '';
+              const originalIndex = projects.indexOf(project);
 
               return (
                 <button
-                  key={index}
-                  onClick={() => handleProjectClick(project, index)}
+                  key={originalIndex}
+                  onClick={() => handleProjectClick(project, originalIndex)}
                   className="w-full p-3 text-left hover:bg-gray-50 transition"
                 >
                   <div className="text-sm font-medium text-gray-900 truncate">{name}</div>
                   <div className="text-xs text-gray-500 mt-0.5">
                     {num} | {stat}
-                    {activeStatusFilter === 'unpaid' && (
-                       <span className="ml-1 px-1 py-0.5 bg-red-100 text-red-700 rounded text-[9px] font-mono leading-none">
-                          [{paymentStatus}]
-                       </span>
-                    )}
                   </div>
                 </button>
               );
