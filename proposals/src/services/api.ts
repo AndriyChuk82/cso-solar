@@ -226,13 +226,13 @@ export async function fetchRates() {
     console.warn('⚠️ GAS fetch failed, trying Vercel proxy...');
   }
   
-  // 2. Спеціальний надійний проксі на Vercel (наш власний)
-  console.log('🚀 Пробуємо отримати курси через Vercel Proxy...');
+  // 2. Спеціальний надійний проксі на Vercel
+  console.log('🚀 Пробуємо отримати курси через Vercel API...');
   try {
-    const response = await fetch('/api/get-rates');
+    const response = await fetch('/api/fetch-rates');
     if (response.ok) {
       const data = await response.json();
-      console.log('✅✅ Курси отримано через Vercel Proxy:', data);
+      console.log('✅✅ Курси отримано через Vercel API:', data);
       return { usd: data.usd, eur: data.eur };
     }
   } catch (err) {
