@@ -58,6 +58,12 @@ async function gasRequest(action: string, data: any = {}) {
     });
     const result = await response.json();
     console.log(`📥 GAS Response: ${action}`, result);
+    
+    // Спеціальний лог для налагодження курсів
+    if (action === 'getAllData' && result.rates && result.rates.debug) {
+      console.log('🐞 Hoverla Debug Info:', result.rates.debug);
+    }
+    
     return result;
   } catch (error) {
     console.error(`❌ GAS error (${action}):`, error);
