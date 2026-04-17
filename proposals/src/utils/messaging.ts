@@ -310,16 +310,14 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
     (node as HTMLElement).style.display = 'none';
   });
 
-  if (!showCost) {
-    el.querySelectorAll('.cost-column').forEach(node => {
-      (node as HTMLElement).style.display = 'none';
-    });
-  } else {
-    // Якщо показуємо собівартість, впевнимось що колонка видима
-    el.querySelectorAll('.cost-column').forEach(node => {
-      (node as HTMLElement).style.display = 'table-cell';
-    });
-  }
+  el.querySelectorAll('.cost-column').forEach(node => {
+    const htmlNode = node as HTMLElement;
+    if (!showCost) {
+      htmlNode.style.setProperty('display', 'none', 'important');
+    } else {
+      htmlNode.style.setProperty('display', 'table-cell', 'important');
+    }
+  });
 
   const table = el.querySelector('table');
   if (table) {
@@ -367,20 +365,36 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
       th.style.letterSpacing = '0.05em';
     });
 
-    if (tableHeaders.length >= 8) {
-      tableHeaders[0].style.width = '45px';
-      tableHeaders[1].style.width = 'auto';
-      tableHeaders[2].style.width = '65px';
-      tableHeaders[3].style.width = '85px';
+    const headersArray = Array.from(tableHeaders);
+    if (headersArray.length >= 8) {
+      headersArray[0].style.width = '45px';
+      headersArray[1].style.width = 'auto';
+      headersArray[2].style.width = '65px';
+      headersArray[3].style.width = '85px';
       
       if (showCost) {
-        tableHeaders[4].style.width = '100px'; // Cost Price
-        tableHeaders[5].style.width = '110px'; // Total Cost
-        tableHeaders[6].style.width = '110px'; // Sale Price
-        tableHeaders[7].style.width = '130px'; // Total Sale
+        headersArray[4].style.width = '100px'; // Cost Price
+        headersArray[5].style.width = '110px'; // Total Cost
+        headersArray[6].style.width = '110px'; // Sale Price
+        headersArray[7].style.width = '130px'; // Total Sale
+        
+        // Переконаємось що для собівартості встановлена ширина
+        [4, 5].forEach(idx => {
+          if (headersArray[idx]) {
+            headersArray[idx].style.setProperty('display', 'table-cell', 'important');
+            headersArray[idx].style.textAlign = 'center';
+          }
+        });
       } else {
-        tableHeaders[6].style.width = '110px';
-        tableHeaders[7].style.width = '130px';
+        headersArray[6].style.width = '110px';
+        headersArray[7].style.width = '130px';
+        
+        // Примусово приховуємо якщо не потрібно
+        [4, 5].forEach(idx => {
+          if (headersArray[idx]) {
+            headersArray[idx].style.setProperty('display', 'none', 'important');
+          }
+        });
       }
     }
   }

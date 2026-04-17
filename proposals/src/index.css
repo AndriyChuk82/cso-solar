@@ -268,7 +268,6 @@ h1, h2, h3, h4 { font-weight: 600; }
     display: none !important;
   }
 
-  /* Hide cost columns (собівартість) */
   .cost-column,
   th.bg-blue-50,
   td.bg-blue-50,
@@ -276,7 +275,7 @@ h1, h2, h3, h4 { font-weight: 600; }
   table thead tr th:nth-child(6),
   table tbody tr td:nth-child(5),
   table tbody tr td:nth-child(6) {
-    display: none !important;
+    display: none;
   }
 
   /* Hide profit row (прибуток) */
@@ -394,7 +393,7 @@ body.is-exporting [class*="catalog"] {
 body.is-exporting .cost-column,
 body.is-exporting th.bg-blue-50,
 body.is-exporting td.bg-blue-50 {
-  display: none !important;
+  /* Visibility is controlled by JS in messaging.ts */
 }
 
 body.is-exporting input, 
