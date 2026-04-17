@@ -346,7 +346,10 @@ export const useProposalStore = create<ProposalStore>()(
                 }
               });
 
-              return { history: merged };
+              // Перераховуємо кожен елемент історії, щоб заповнити можливі нулі
+              const validatedHistory = merged.map(p => calculateProposalTotals(p));
+
+              return { history: validatedHistory };
             });
           }
         } catch (error) {
@@ -508,7 +511,9 @@ export const useProposalStore = create<ProposalStore>()(
         const { history } = get();
         const found = history.find(p => p.id === id);
         if (found) {
-          set({ proposal: { ...found, updatedAt: new Date().toISOString() } });
+          // При завантаженні робимо перерахунок, щоб переконатися, що total не 0
+          const revalidated = calculateProposalTotals(found);
+          set({ proposal: { ...revalidated, updatedAt: new Date().toISOString() } });
         }
       },
 
