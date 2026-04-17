@@ -160,6 +160,9 @@ export async function getOperations(filters = {}) {
     let finalWhId = String(op.warehouse_id || '').trim();
     let finalProdId = String(op.product_id || '').trim();
 
+    // Ігноруємо записи без ID товару для розрахунку залишків та відображення
+    if (!finalProdId) return null;
+
     // Розумний пошук складу якщо в ID лежить назва
     if (finalWhId && !whMap[finalWhId]) {
         const potentialId = whNameMap[finalWhId.toLowerCase()];
@@ -188,7 +191,7 @@ export async function getOperations(filters = {}) {
       balance_after: runningBalances[key] || 0,
       category: prodMap[finalProdId]?.category_id || ''
     };
-  });
+  }).filter(Boolean);
 
   if (filters.warehouseId) operations = operations.filter(op => String(op.warehouse_id).trim() === String(filters.warehouseId).trim());
   if (filters.type) operations = operations.filter(op => op.type === filters.type);
@@ -224,8 +227,12 @@ export async function addOperation(operation) {
 export async function updateOperation(operation) {
   if (!supabase) throw new Error('База даних не підключена');
   const { error } = await supabase.from('operations').update({
-    date: operation.date, product_id: operation.productId, warehouse_id: operation.warehouseId,
-    quantity: operation.quantity, comment: operation.comment, user_email: operation.user
+    date: operation.date,
+    product_id: operation.product_id || operation.productId,
+    warehouse_id: operation.warehouse_id || operation.warehouseId,
+    quantity: operation.quantity,
+    comment: operation.comment,
+    user_email: operation.user_email || operation.user
   }).eq('id', operation.id);
   if (error) throw error;
   return { success: true };

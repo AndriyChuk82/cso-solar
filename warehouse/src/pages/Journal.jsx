@@ -98,6 +98,7 @@ export default function Journal() {
         date: op.date,
         quantity: op.quantity,
         comment: op.comment || '',
+        product_id: op.product_id,
         warehouse_id: op.warehouse_id,
         type: op.type
       }
@@ -111,7 +112,7 @@ export default function Journal() {
       const result = await updateOperation({
         id: editModal.op.id,
         ...editModal.formData,
-        edited_by: user?.email
+        user_email: user?.email
       });
       if (result?.success) {
         showToast('Операцію успішно оновлено', 'success');
