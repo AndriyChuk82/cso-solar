@@ -174,15 +174,16 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
               key={p.id}
               onClick={() => toggleSelected(p.id)}
               style={{
-                padding: '8px 14px', cursor: 'pointer', borderBottom: '1px solid var(--border-light)',
+                padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid var(--border-light)',
                 fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '10px',
-                background: selectedIds.includes(p.id) ? 'var(--primary-bg)' : 'transparent'
+                background: selectedIds.includes(p.id) ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+                color: 'var(--text)'
               }}
             >
-              <input type="checkbox" checked={selectedIds.includes(p.id)} readOnly style={{ pointerEvents: 'none' }} />
+              <input type="checkbox" checked={selectedIds.includes(p.id)} readOnly style={{ pointerEvents: 'none', accentColor: 'var(--primary)' }} />
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600 }}>{p.name}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <div style={{ fontWeight: 600, color: 'var(--text)' }}>{p.name}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                   {p.article && `Арт: ${p.article}`} {p.unit && `· ${p.unit}`}
                 </div>
               </div>
@@ -207,13 +208,13 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
             <div
               key={'ext-' + idx}
               onClick={() => handleSelect(p)}
-              style={{
-                padding: '8px 14px', cursor: 'pointer', borderBottom: '1px solid var(--border-light)',
-                fontSize: '0.85rem'
+               style={{
+                padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid var(--border-light)',
+                fontSize: '0.85rem', color: 'var(--text)'
               }}
             >
-              <div style={{ fontWeight: 600 }}>{p.name} <span style={{ fontSize: '0.6rem', color: 'var(--primary)' }}>КП</span></div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{p.category}</div>
+              <div style={{ fontWeight: 600, color: 'var(--text)' }}>{p.name} <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 800 }}>КП</span></div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{p.category}</div>
             </div>
           ))}
 

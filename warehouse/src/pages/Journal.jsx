@@ -92,17 +92,25 @@ export default function Journal() {
   }
 
   function handleOpenEdit(op) {
-    setEditModal({
-      op,
-      formData: {
-        date: op.date,
-        quantity: op.quantity,
-        comment: op.comment || '',
-        product_id: op.product_id,
-        warehouse_id: op.warehouse_id,
-        type: op.type
-      }
-    });
+    if (!op) return;
+    try {
+      setEditModal({
+        op,
+        formData: {
+          date: op.date || new Date().toISOString().split('T')[0],
+          quantity: op.quantity || 0,
+          comment: typeof (op.comment || op.note || op.primitka) === 'object' 
+            ? JSON.stringify(op.comment || op.note || op.primitka) 
+            : String(op.comment || op.note || op.primitka || ''),
+          product_id: op.product_id || '',
+          warehouse_id: op.warehouse_id || '',
+          type: op.type || ''
+        }
+      });
+    } catch (err) {
+      console.error('Помилка при спробі редагування:', err);
+      showToast('Не вдалося відкрити вікно редагування', 'error');
+    }
   }
 
   async function handleSaveEdit(e) {
@@ -470,12 +478,22 @@ export default function Journal() {
                 </div>
               </div>
               <div className="modal-footer">
-                <Button type="button" variant="ghost" onClick={() => setEditModal(null)}>
+                <button 
+                  type="button" 
+                  className="btn btn-ghost" 
+                  onClick={() => setEditModal(null)}
+                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '10px 20px' }}
+                >
                   Скасувати
-                </Button>
-                <Button type="submit" variant="primary" disabled={savingEdit} loading={savingEdit}>
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  disabled={savingEdit}
+                  style={{ cursor: savingEdit ? 'not-allowed' : 'pointer', padding: '10px 20px' }}
+                >
                   {savingEdit ? 'Збереження...' : 'Зберегти зміни'}
-                </Button>
+                </button>
               </div>
             </form>
           </div>
