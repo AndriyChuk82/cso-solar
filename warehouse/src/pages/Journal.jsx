@@ -363,20 +363,20 @@ export default function Journal() {
                       <td>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', position: 'relative', zIndex: 100 }}>
                           <button
-                            className="btn btn-ghost btn-sm"
-                            onClick={(e) => { e.stopPropagation(); handleDelete(op.id); }}
-                            title="Видалити"
-                            style={{ color: 'var(--danger)', padding: '6px 8px', border: '1px solid #ef444433', background: 'transparent', cursor: 'pointer', fontSize: '1rem', borderRadius: '6px' }}
-                          >
-                            🗑️
-                          </button>
-                          <button
                             className="btn btn-primary btn-sm"
                             onClick={(e) => { e.stopPropagation(); handleOpenEdit(op); }}
                             title="Редагувати"
                             style={{ background: 'var(--primary)', color: '#000', padding: '6px 8px', border: 'none', cursor: 'pointer', fontSize: '1rem', borderRadius: '6px' }}
                           >
                             ✏️
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            onClick={(e) => { e.stopPropagation(); handleDelete(op.id); }}
+                            title="Видалити"
+                            style={{ color: 'var(--danger)', padding: '6px 8px', border: '1px solid #ef444433', background: 'transparent', cursor: 'pointer', fontSize: '1rem', borderRadius: '6px' }}
+                          >
+                            🗑️
                           </button>
                         </div>
                       </td>

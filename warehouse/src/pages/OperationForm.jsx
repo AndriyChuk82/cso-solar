@@ -267,7 +267,7 @@ export default function OperationForm({ type = 'income' }) {
                       min="1"
                       step="1"
                       required
-                      style={{ textAlign: 'center' }}
+                      style={{ textAlign: 'center', maxWidth: '100px', border: '1px solid var(--border)' }}
                     />
                     <span style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                       {item.unit}
