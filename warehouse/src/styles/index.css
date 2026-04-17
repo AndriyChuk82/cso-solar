@@ -234,6 +234,40 @@
 .badge-income { background: var(--income-bg); color: var(--income); border: 1px solid var(--income-border); }
 .badge-expense { background: var(--expense-bg); color: var(--expense); border: 1px solid var(--expense-border); }
 .badge-transfer { background: var(--transfer-bg); color: var(--transfer); border: 1px solid var(--transfer-border); }
+.badge-balance { background: var(--balance-bg); color: var(--balance); border: 1px solid var(--balance-border); }
+
+/* ===== Операційні позиції (Operation Items) ===== */
+.op-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.op-item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all var(--transition);
+}
+
+.op-item-row:hover {
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.op-item-row > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.op-item-row .stock-warning {
+  font-size: 0.72rem;
+  margin-top: 2px;
+}
 
 @tailwind base;
 @tailwind components;

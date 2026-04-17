@@ -215,7 +215,20 @@ export async function addOperation(operation) {
     });
   } else {
     operation.items.forEach(item => {
-      items.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random()), date: operation.date, type: operation.type, product_id: item.productId, warehouse_id: operation.warehouseId, quantity: item.quantity, comment: operation.comment, user_email: operation.user, created_at: timestamp });
+      const type = item.type || operation.type;
+      const quantity = item.type === 'expense' ? Math.abs(item.quantity) : item.quantity;
+      
+      items.push({ 
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()), 
+        date: operation.date, 
+        type: type, 
+        product_id: item.productId, 
+        warehouse_id: operation.warehouseId, 
+        quantity: quantity, 
+        comment: item.comment || operation.comment, 
+        user_email: operation.user, 
+        created_at: timestamp 
+      });
     });
   }
   const { error } = await supabase.from('operations').insert(items);
@@ -326,11 +339,15 @@ export async function submitDailyBalance(data) {
     type: 'balance', 
     user: data.user, 
     warehouseId: data.warehouseId,
-    comment: data.comment || `📦 Коригування залишків (Підсумок дня ${data.date})`,
-    items: data.items.map(item => ({ 
-      productId: item.product_id || item.productId, 
-      quantity: item.diff ?? item.quantity 
-    }))
+    comment: data.comment || `📦 Підсумок дня (${data.date})`,
+    items: data.items.map(item => {
+      const diff = item.diff ?? item.quantity;
+      return { 
+        productId: item.product_id || item.productId, 
+        quantity: Math.abs(diff),
+        type: diff >= 0 ? 'income' : 'expense'
+      };
+    })
   });
 }
 
