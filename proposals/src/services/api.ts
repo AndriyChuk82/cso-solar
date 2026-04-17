@@ -149,7 +149,7 @@ export async function fetchAllData() {
           if (mainCat === 'Інвертори') {
             const powerKW = col1;
             const specs = col3;
-            priceObj = parsePrice(col5 || col4);
+            priceObj = parsePrice(col4);
             
             name = exactName && exactName !== 'Фото' ? exactName : `Інвертор ${powerKW} kW`;
             desc = specs || (powerKW ? `Потужність: ${powerKW} kW` : '');
