@@ -323,9 +323,15 @@ export async function getMovementReport(filters) {
 export async function getDailyBalanceData(warehouseId) { return getBalances(warehouseId); }
 export async function submitDailyBalance(data) {
   return addOperation({
-    date: data.date, type: 'balance', user: data.user, warehouseId: data.warehouseId,
-    comment: `📦 Коригування залишків (Підсумок дня ${data.date})`,
-    items: data.items.map(item => ({ productId: item.product_id, quantity: item.diff }))
+    date: data.date, 
+    type: 'balance', 
+    user: data.user, 
+    warehouseId: data.warehouseId,
+    comment: data.comment || `📦 Коригування залишків (Підсумок дня ${data.date})`,
+    items: data.items.map(item => ({ 
+      productId: item.product_id || item.productId, 
+      quantity: item.diff ?? item.quantity 
+    }))
   });
 }
 
