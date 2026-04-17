@@ -351,24 +351,22 @@ export default function Journal() {
                     {user?.isAdmin && (
                       <td>
                         <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                          <button
+                            className="btn btn-ghost btn-sm"
                             onClick={() => handleOpenEdit(op)}
                             title="Редагувати"
-                            style={{ padding: '2px 6px' }}
+                            style={{ padding: '2px 6px', border: 'none', background: 'transparent', cursor: 'pointer' }}
                           >
                             ✏️
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm"
                             onClick={() => handleDelete(op.id)}
                             title="Видалити"
-                            style={{ color: 'var(--danger)', padding: '2px 6px' }}
+                            style={{ color: 'var(--danger)', padding: '2px 6px', border: 'none', background: 'transparent', cursor: 'pointer' }}
                           >
                             🗑️
-                          </Button>
+                          </button>
                         </div>
                       </td>
                     )}
