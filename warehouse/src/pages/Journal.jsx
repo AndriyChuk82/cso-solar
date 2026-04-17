@@ -371,10 +371,10 @@ export default function Journal() {
                             ВИДАЛИТИ
                           </button>
                           <button
-                            className="btn btn-ghost btn-sm"
+                            className="btn btn-primary"
                             onClick={(e) => { e.stopPropagation(); handleOpenEdit(op); }}
                             title="Редагувати"
-                            style={{ color: 'var(--primary)', padding: '4px 8px', border: '1px solid #f59e0b33', background: 'transparent', cursor: 'pointer', fontSize: '0.7rem', borderRadius: '4px' }}
+                            style={{ background: 'var(--primary)', color: '#000', padding: '6px 12px', border: 'none', cursor: 'pointer', fontSize: '0.75rem', borderRadius: '4px', fontWeight: '800' }}
                           >
                             РЕДАГУВАТИ
                           </button>

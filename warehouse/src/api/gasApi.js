@@ -156,12 +156,11 @@ export async function getOperations(filters = {}) {
   const runningBalances = {};
   let operations = ops.map((op, idx) => {
     const qty = parseFloat(op.quantity) || 0;
-    
-    let finalWhId = String(op.warehouse_id || '').trim();
-    let finalProdId = String(op.product_id || '').trim();
+    let finalWhId = String(op.warehouse_id || op.warehouseId || '').trim();
+    let finalProdId = String(op.product_id || op.productId || '').trim();
 
-    // Ігноруємо записи без ID товару для розрахунку залишків та відображення
-    if (!finalProdId) return null;
+    // ПРИМУСОВА ФІЛЬТРАЦІЯ: Ігноруємо записи без ID товару
+    if (!finalProdId || finalProdId === 'null' || finalProdId === 'undefined') return null;
 
     // Розумний пошук складу якщо в ID лежить назва
     if (finalWhId && !whMap[finalWhId]) {
