@@ -303,25 +303,39 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
       inner.style.marginBottom = '20px';
     }
 
+    const companyInfo = header.querySelector('.print-company') as HTMLElement;
+    if (companyInfo) {
+      companyInfo.style.textAlign = 'left';
+      
+      const title = companyInfo.querySelector('p');
+      if (title) {
+        title.style.color = '#f59e0b';
+        title.style.fontSize = '20px';
+        title.style.fontWeight = '800';
+        title.style.margin = '0';
+        title.style.textTransform = 'uppercase';
+      }
+    }
+
     const contactInfo = header.querySelector('.print-contact-info') as HTMLElement;
     if (contactInfo) {
-      contactInfo.style.textAlign = 'right';
-      contactInfo.style.fontSize = '10px';
+      contactInfo.style.textAlign = 'left';
+      contactInfo.style.fontSize = '11px';
       contactInfo.style.lineHeight = '1.4';
-      contactInfo.style.color = '#475569';
+      contactInfo.style.color = '#1e293b';
       
       const infoChildren = contactInfo.querySelectorAll('div');
       infoChildren.forEach((child: any, idx) => {
         if (idx === 0) {
-          child.style.fontSize = '12px';
+          child.style.fontSize = '13px';
           child.style.fontWeight = '700';
-          child.style.color = '#1e293b';
+          child.style.marginBottom = '4px';
         }
       });
     }
     const logo = el.querySelector('.print-logo') as HTMLImageElement;
     if (logo) {
-      logo.style.height = '48px';
+      logo.style.height = '55px';
       logo.style.width = 'auto';
     }
   }
