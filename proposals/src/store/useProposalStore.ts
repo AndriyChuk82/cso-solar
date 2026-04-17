@@ -625,6 +625,13 @@ export const useProposalStore = create<ProposalStore>()(
         selectedSeller: state.selectedSeller,
         proposal: state.proposal, //Persist current proposal too
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state && state.proposal && (!state.proposal.seller || !state.proposal.seller.office)) {
+          console.warn('⚠️ Відновлення відсутнього продавця в КП');
+          const sellerId = (state.proposal as any).sellerId || state.selectedSeller || 'fop_pastushok';
+          state.proposal.seller = SELLERS[sellerId as keyof typeof SELLERS] || SELLERS.fop_pastushok;
+        }
+      },
     }
   )
 );

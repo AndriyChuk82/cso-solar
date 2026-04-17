@@ -131,8 +131,8 @@ export function ProposalBuilderTable() {
           <div className="print-company">
             <p>Комерційна пропозиція</p>
             <div className="print-contact-info">
-              <div>{proposal.seller.office}</div>
-              <div>{proposal.seller.phone}</div>
+              <div>{proposal.seller?.office || ''}</div>
+              <div>{proposal.seller?.phone || ''}</div>
             </div>
           </div>
         </div>
