@@ -1238,21 +1238,24 @@ function handleSaveProposal(proposal, userParams) {
       proposal.date || "",                              // ДАТА
       proposal.clientName || "",                        // КЛІЄНТ
       proposal.clientPhone || "",                       // КОНТАКТ
-      Number(proposal.courseUSD || 0),                  // КУРС $
+      Number(proposal.rates?.usdToUah || proposal.courseUSD || 0), // КУРС $
       Number(proposal.markup || 0),                     // НАЦІНКА %
-      Number(proposal.totalAmount || 0),                // СУМА
+      Number(proposal.total || proposal.totalAmount || 0), // СУМА
       proposal.status || "Чернетка",                    // СТАТУС
       JSON.stringify({ 
         items: proposal.items || [],
         discountType: proposal.discountType || 'percentage',
         discountValue: proposal.discountValue || 0,
-        sellerId: proposal.sellerId || 'fop_pastushok',
+        sellerId: proposal.sellerId || (proposal.seller && proposal.seller.id) || 'fop_pastushok',
         currency: proposal.currency || 'UAH',
-        courseEUR: proposal.courseEUR || 0
+        courseEUR: proposal.courseEUR || (proposal.rates && proposal.rates.eurToUah) || 0,
+        subtotal: proposal.subtotal || 0,
+        vatMode: proposal.vatMode || 'none',
+        vatAmount: proposal.vatAmount || 0
       }),                                               // ПОЗИЦІЇ ТА НАЛАШТУВАННЯ
-      proposal.comment || "",                           // ПРИМІТКИ
+      proposal.notes || proposal.comment || "",         // ПРИМІТКИ
       userEmail || "невідомо",                          // АВТОР
-      new Date().toLocaleString('uk-UA')                // ОНОВЛЕНО
+      new Date().toISOString()                          // ОНОВЛЕНО (ISO для кращого парсингу)
     ];
     
     if (rowIndex > 0) {
@@ -1308,9 +1311,14 @@ function handleGetProposals() {
         let sellerId = 'fop_pastushok';
         let currency = 'UAH';
         let courseEUR = 0;
+        let subtotal = 0;
+        let vatMode = 'none';
+        let vatAmount = 0;
 
         if (Array.isArray(itemsData)) {
           items = itemsData;
+          // Розраховуємо subtotal якщо він не вказаний
+          subtotal = items.reduce((sum, item) => sum + (item.total || 0), 0);
         } else if (itemsData && typeof itemsData === 'object') {
           items = itemsData.items || [];
           discountType = itemsData.discountType || 'percentage';
@@ -1318,6 +1326,22 @@ function handleGetProposals() {
           sellerId = itemsData.sellerId || 'fop_pastushok';
           currency = itemsData.currency || 'UAH';
           courseEUR = itemsData.courseEUR || 0;
+          subtotal = itemsData.subtotal || items.reduce((sum, item) => sum + (item.total || 0), 0);
+          vatMode = itemsData.vatMode || 'none';
+          vatAmount = itemsData.vatAmount || 0;
+        }
+
+        // Мапінг статусів
+        let status = row[8] || 'draft';
+        if (status === 'Чернетка') status = 'draft';
+        if (status === 'Відправлено') status = 'sent';
+        if (status === 'Прийнято') status = 'accepted';
+        if (status === 'Відхилено') status = 'rejected';
+
+        // Валідація дати оновлення
+        let updatedAt = row[12];
+        if (!updatedAt || updatedAt === '') {
+          updatedAt = row[2] || new Date().toISOString(); 
         }
 
         proposals.push({
@@ -1326,19 +1350,25 @@ function handleGetProposals() {
           date: row[2],
           clientName: row[3],
           clientPhone: row[4],
-          courseUSD: parseFloat(row[5]) || 0,
+          rates: {
+            usdToUah: parseFloat(row[5]) || 0,
+            eurToUah: courseEUR || 0
+          },
           markup: parseFloat(row[6]) || 0,
-          totalAmount: parseFloat(row[7]) || 0,
-          status: row[8] || 'Чернетка',
+          total: parseFloat(row[7]) || 0,
+          status: status,
           items: items,
           discountType: discountType,
           discountValue: discountValue,
           sellerId: sellerId,
           currency: currency,
-          courseEUR: courseEUR,
-          comment: row[10] || '',
+          subtotal: subtotal,
+          vatMode: vatMode,
+          vatAmount: vatAmount,
+          notes: row[10] || '',
           userEmail: row[11] || '',
-          updatedAt: row[12] || ''
+          updatedAt: updatedAt,
+          createdAt: row[2] || updatedAt // Fallback for createdAt
         });
       } catch (parseErr) {
         console.warn('Помилка рядка ' + (i + 1) + ':', parseErr);

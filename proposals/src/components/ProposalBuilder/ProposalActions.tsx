@@ -34,19 +34,19 @@ export function ProposalActions({
         <>
           <button
             onClick={onSave}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded hover:bg-opacity-90 transition font-semibold text-xs shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary dark:bg-blue-600 text-white rounded hover:bg-opacity-90 transition font-semibold text-xs shadow-sm"
           >
             <Save className="w-3.5 h-3.5" />
             Зберегти
           </button>
           <button
             onClick={onShowDocModal}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition font-bold text-sm shadow-md"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 dark:from-blue-700 dark:to-indigo-800 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition font-bold text-sm shadow-md"
           >
             <FileText className="w-4 h-4" />
             📄 Сформувати документ
           </button>
-          <div className="h-8 w-[1px] bg-gray-300 mx-1"></div>
+          <div className="h-8 w-[1px] bg-gray-300 dark:bg-slate-700 mx-1"></div>
           <button
             onClick={onShowTelegram}
             className="flex items-center gap-1.5 px-3 py-1.5 text-white rounded hover:bg-opacity-90 transition font-semibold text-xs"
@@ -65,7 +65,7 @@ export function ProposalActions({
           </button>
           <button
             onClick={onClear}
-            className="ml-auto px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition font-semibold text-xs"
+            className="ml-auto px-3 py-1.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 rounded hover:bg-gray-200 dark:hover:bg-slate-700 transition font-semibold text-xs"
           >
             Очистити
           </button>

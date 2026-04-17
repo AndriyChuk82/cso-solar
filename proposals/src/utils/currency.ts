@@ -35,24 +35,21 @@ export function convertCurrency(
  * Форматує суму в валюті
  */
 export function formatCurrency(amount: number, currency: Currency): string {
+  if (amount === undefined || amount === null) return `0.00 ${getCurrencySymbol(currency)}`;
+  
   const formatted = amount.toLocaleString('uk-UA', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
-  const symbols: Record<Currency, string> = {
-    USD: '$',
-    EUR: '€',
-    UAH: '₴',
-  };
-
-  return `${formatted} ${symbols[currency]}`;
+  return `${formatted} ${getCurrencySymbol(currency)}`;
 }
 
 /**
  * Форматує суму без валюти
  */
 export function formatNumber(amount: number, decimals: number = 2): string {
+  if (amount === undefined || amount === null) return '0.00';
   return amount.toLocaleString('uk-UA', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

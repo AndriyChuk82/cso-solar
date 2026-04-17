@@ -105,18 +105,18 @@ export function ProjectForm() {
   return (
     <form onSubmit={handleSubmit} className="p-6 space-y-6 relative">
       {/* Minimalistic Sticky Top Actions */}
-      <div className="sticky top-0 z-10 -mx-6 -mt-6 px-6 py-3 bg-white/90 backdrop-blur-md border-b border-gray-200/50 flex items-center justify-end gap-3 shadow-sm transition-all duration-300">
+      <div className="sticky top-0 z-10 -mx-6 -mt-6 px-6 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-gray-200/50 dark:border-slate-800/50 flex items-center justify-end gap-3 shadow-sm transition-all duration-300">
         <button
           type="button"
           onClick={handleReset}
-          className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-all duration-200 flex items-center gap-1.5"
+          className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-all duration-200 flex items-center gap-1.5"
         >
           🗑️ Очистити
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="px-6 py-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-dark rounded-full shadow-md shadow-primary/20 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2"
+          className="px-6 py-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-dark rounded-full shadow-md shadow-primary/20 hover:shadow-primary/30 dark:shadow-blue-900/40 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2"
         >
           {isLoading ? (
             <>
@@ -358,8 +358,8 @@ export function ProjectForm() {
 // Helper Components
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-      <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+    <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-4 space-y-3 shadow-sm">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100">{title}</h3>
       {children}
     </div>
   );
@@ -368,7 +368,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function FormField({ label, children, fullWidth }: { label: string; children: React.ReactNode; fullWidth?: boolean }) {
   return (
     <div className={fullWidth ? 'col-span-2' : ''}>
-      <label className="block text-xs font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-xs font-medium text-gray-700 dark:text-slate-400 mb-1">{label}</label>
       {children}
     </div>
   );
@@ -394,7 +394,7 @@ function Input({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       step={step}
-      className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+      className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
     />
   );
 }
@@ -416,7 +416,7 @@ function Textarea({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+      className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
     />
   );
 }
@@ -484,11 +484,11 @@ function SearchableSelect({
           }}
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder || (isOpen ? "Пошук..." : "Виберіть або введіть...")}
-          className="w-full pl-3 pr-8 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-900 bg-white transition-shadow"
+          className="w-full pl-3 pr-8 py-1.5 text-sm border border-gray-300 dark:border-slate-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-800 transition-all"
           autoComplete="off"
         />
         <div 
-          className="absolute inset-y-0 right-0 flex items-center pr-2 cursor-pointer text-gray-400 hover:text-gray-600"
+          className="absolute inset-y-0 right-0 flex items-center pr-2 cursor-pointer text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"
           onClick={() => setIsOpen(!isOpen)}
         >
           <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
@@ -500,7 +500,7 @@ function SearchableSelect({
               onChange('');
               setIsOpen(true);
             }}
-            className="absolute inset-y-0 right-7 flex items-center pr-1 text-gray-400 hover:text-red-500"
+            className="absolute inset-y-0 right-7 flex items-center pr-1 text-gray-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400"
           >
             <X className="w-3 h-3" />
           </button>
@@ -508,9 +508,9 @@ function SearchableSelect({
       </div>
 
       {isOpen && (
-        <div className="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-y-auto py-1">
+        <div className="absolute z-[100] w-full mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md shadow-xl max-h-60 overflow-y-auto py-1">
           {filteredOptions.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-gray-500 italic text-center">
+            <div className="px-3 py-2 text-xs text-gray-500 dark:text-slate-400 italic text-center">
               Схожих варіантів не знайдено
             </div>
           ) : (
@@ -518,7 +518,9 @@ function SearchableSelect({
               <div
                 key={`${opt.value}-${idx}`}
                 className={`px-3 py-1.5 text-sm cursor-pointer transition-colors ${
-                  opt.value === value ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-gray-50 text-gray-700'
+                  opt.value === value 
+                    ? 'bg-primary/10 dark:bg-primary/20 text-primary dark:text-blue-400 font-medium' 
+                    : 'hover:bg-gray-50 dark:hover:bg-slate-700/50 text-gray-700 dark:text-slate-300'
                 }`}
                 onClick={() => {
                   onChange(opt.value);
@@ -527,7 +529,7 @@ function SearchableSelect({
               >
                 <div className="font-medium">{opt.label}</div>
                 {opt.search && opt.search !== opt.label && (
-                   <div className="text-[10px] text-gray-400 truncate">{opt.search}</div>
+                   <div className="text-[10px] text-gray-400 dark:text-slate-500 truncate">{opt.search}</div>
                 )}
               </div>
             ))
