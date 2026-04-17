@@ -299,9 +299,9 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
       inner.style.display = 'flex';
       inner.style.justifyContent = 'space-between';
       inner.style.width = '100%';
-      inner.style.alignItems = 'center';
-      inner.style.paddingBottom = '16px';
-      inner.style.marginBottom = '20px';
+      inner.style.alignItems = 'flex-end';
+      inner.style.paddingBottom = '8px';
+      inner.style.marginBottom = '0px';
     }
 
     const contactInfo = header.querySelector('.print-contact-info') as HTMLElement;

@@ -201,9 +201,9 @@ h1, h2, h3, h4 { font-weight: 600; }
 
 /* Print-ready elements common styles */
 .print-logo {
-  height: 45px !important;
+  height: 72px !important;
   width: auto !important;
-  max-width: 140px !important;
+  max-width: 180px !important;
   object-fit: contain;
 }
 
@@ -367,16 +367,16 @@ body.is-exporting .print-header {
   display: flex !important;
   flex-direction: row !important;
   justify-content: space-between !important;
-  align-items: flex-start !important;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 1.5px solid #f59e0b;
+  align-items: flex-end !important;
+  margin-bottom: 25px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #f59e0b;
 }
 
 body.is-exporting .print-logo {
-  height: 45px !important;
+  height: 72px !important;
   width: auto !important;
-  max-width: 140px !important;
+  max-width: 180px !important;
   object-fit: contain;
 }
 
@@ -390,11 +390,6 @@ body.is-exporting [class*="catalog"] {
   display: none !important;
 }
 
-body.is-exporting .cost-column,
-body.is-exporting th.bg-blue-50,
-body.is-exporting td.bg-blue-50 {
-  /* Visibility is controlled by JS in messaging.ts */
-}
 
 body.is-exporting input, 
 body.is-exporting textarea, 
