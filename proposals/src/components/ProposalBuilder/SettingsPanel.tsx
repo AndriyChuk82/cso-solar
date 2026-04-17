@@ -2,11 +2,11 @@ import { TrendingUp, RefreshCcw, Zap } from 'lucide-react';
 import type { Settings, Currency } from '../../types';
 
 interface SettingsPanelProps {
-  settings: Settings;
+  rates: { usdToUah: number; eurToUah: number };
   activeCurrency: Currency;
   markup: number;
   isRefreshingRates: boolean;
-  onUpdateSettings: (settings: Partial<Settings>) => void;
+  onUpdateRates: (rates: { usdToUah: number; eurToUah: number }) => void;
   onSetActiveCurrency: (currency: Currency) => void;
   onUpdateMarkup: (markup: number) => void;
   onRefreshRates: () => void;
@@ -14,11 +14,11 @@ interface SettingsPanelProps {
 }
 
 export function SettingsPanel({
-  settings,
+  rates,
   activeCurrency,
   markup,
   isRefreshingRates,
-  onUpdateSettings,
+  onUpdateRates,
   onSetActiveCurrency,
   onUpdateMarkup,
   onRefreshRates,
@@ -30,16 +30,16 @@ export function SettingsPanel({
         <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Курс $:</label>
         <input
           type="number"
-          value={settings.usdRate}
-          onChange={(e) => onUpdateSettings({ usdRate: parseFloat(e.target.value) || 0 })}
+          value={rates.usdToUah}
+          onChange={(e) => onUpdateRates({ ...rates, usdToUah: parseFloat(e.target.value) || 0 })}
           className="w-16 px-1.5 py-1 text-xs border border-gray-300 dark:border-slate-700 rounded focus:ring-1 focus:ring-primary font-bold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-900/10 transition-colors"
           step="0.1"
         />
         <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">€:</label>
         <input
           type="number"
-          value={settings.eurRate}
-          onChange={(e) => onUpdateSettings({ eurRate: parseFloat(e.target.value) || 0 })}
+          value={rates.eurToUah}
+          onChange={(e) => onUpdateRates({ ...rates, eurToUah: parseFloat(e.target.value) || 0 })}
           className="w-16 px-1.5 py-1 text-xs border border-gray-300 dark:border-slate-700 rounded focus:ring-1 focus:ring-primary font-bold text-purple-600 dark:text-purple-400 bg-purple-50/30 dark:bg-purple-900/10 transition-colors"
           step="0.1"
         />

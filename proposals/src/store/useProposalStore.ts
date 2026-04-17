@@ -72,7 +72,7 @@ export interface ProposalStore {
   updateProposalField: (field: keyof Proposal, value: any) => void;
 }
 
-const createEmptyProposal = (): Proposal => ({
+const createEmptyProposal = (settings?: Settings): Proposal => ({
   id: generateId(),
   number: getNextProposalNumber(),
   date: new Date().toISOString().split('T')[0],
@@ -82,13 +82,13 @@ const createEmptyProposal = (): Proposal => ({
   clientAddress: '',
   items: [],
   subtotal: 0,
-  markup: CONFIG.DEFAULT_MARKUP,
+  markup: settings?.defaultMarkup ?? CONFIG.DEFAULT_MARKUP,
   total: 0,
   currency: 'USD',
   notes: '',
   rates: {
-    usdToUah: 41.5, // Default if settings not available
-    eurToUah: 51.0,
+    usdToUah: settings?.usdRate ?? 41.5,
+    eurToUah: settings?.eurRate ?? 51.0,
   },
   seller: SELLERS.tov_cso,
   status: 'draft',
@@ -111,7 +111,13 @@ function getNextProposalNumber(): string {
 }
 
 function calculateProposalTotals(proposal: Proposal): Proposal {
-  const subtotal = proposal.items.reduce((sum, item) => sum + item.total, 0);
+  // Ensure items have correct individual totals
+  const validatedItems = (proposal.items || []).map(item => ({
+    ...item,
+    total: Math.round((item.price || 0) * (item.quantity || 0) * 100) / 100
+  }));
+
+  const subtotal = validatedItems.reduce((sum, item) => sum + (item.total || 0), 0);
   
   let total = subtotal;
   let vatAmount = 0;
@@ -130,7 +136,8 @@ function calculateProposalTotals(proposal: Proposal): Proposal {
   
   return {
     ...proposal,
-    subtotal,
+    items: validatedItems,
+    subtotal: Math.round(subtotal * 100) / 100,
     vatAmount: Math.round(vatAmount * 100) / 100,
     total: Math.round(total * 100) / 100,
     updatedAt: new Date().toISOString(),
@@ -470,25 +477,28 @@ export const useProposalStore = create<ProposalStore>()(
       },
 
       clearProposal: () => {
-        set({ proposal: createEmptyProposal() });
+        set({ proposal: createEmptyProposal(get().settings) });
       },
 
       saveProposal: async () => {
         const { proposal, history, settings } = get();
-        const updatedProposal = {
+        
+        // Перераховуємо перед збереженням
+        const finalizedProposal = calculateProposalTotals({
           ...proposal,
+          // Якщо рейтів немає (старі дані), беремо з налаштувань. Якщо є - зберігаємо як є.
           rates: {
-            usdToUah: settings.usdRate,
-            eurToUah: settings.eurRate,
+            usdToUah: proposal.rates?.usdToUah || settings.usdRate,
+            eurToUah: proposal.rates?.eurToUah || settings.eurRate,
           },
           updatedAt: new Date().toISOString(),
-        };
-        const updatedHistory = [updatedProposal, ...history.filter(p => p.id !== proposal.id)];
-        set({ history: updatedHistory, proposal: updatedProposal });
+        });
+
+        const updatedHistory = [finalizedProposal, ...history.filter(p => p.id !== proposal.id)];
+        set({ history: updatedHistory, proposal: finalizedProposal });
         
-        // Зберігаємо в Google Sheets
         try {
-          await saveProposalToSheet(updatedProposal);
+          await saveProposalToSheet(finalizedProposal);
         } catch (error) {
           console.error('Failed to save to cloud:', error);
         }

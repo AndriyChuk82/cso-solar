@@ -50,7 +50,10 @@ export function ProposalBuilderTable() {
   const [showDocModal, setShowDocModal] = useState(false);
   const [isRefreshingRates, setIsRefreshingRates] = useState(false);
 
-  const { convert, rates } = useCurrencyConverter(settings.usdRate, settings.eurRate);
+  const { convert, rates } = useCurrencyConverter(
+    proposal.rates?.usdToUah || settings.usdRate,
+    proposal.rates?.eurToUah || settings.eurRate
+  );
   const { costSubtotal, saleSubtotal, profit, profitPercent } = useProposalCalculations(proposal.items);
 
   // Конвертовані товари для відображення
@@ -145,11 +148,11 @@ export function ProposalBuilderTable() {
       />
 
       <SettingsPanel
-        settings={settings}
+        rates={proposal.rates || { usdToUah: settings.usdRate, eurToUah: settings.eurRate }}
         activeCurrency={activeCurrency}
         markup={proposal.markup}
         isRefreshingRates={isRefreshingRates}
-        onUpdateSettings={updateSettings}
+        onUpdateRates={(newRates) => updateProposalField('rates', newRates)}
         onSetActiveCurrency={setActiveCurrency}
         onUpdateMarkup={(markup) => updateProposalField('markup', markup)}
         onRefreshRates={handleRefreshRates}
