@@ -1232,30 +1232,30 @@ function handleSaveProposal(proposal, userParams) {
     }
     
     // Формуємо рядок за скріншотом
+    const usdRate = Number(proposal.rates?.usdToUah || proposal.courseUSD || proposal.usdRate || 0);
+    const totalAmount = Number(proposal.total || proposal.totalAmount || 0);
+    const markupValue = Number(proposal.markup || 0);
+
     const rowData = [
-      pId,                                              // ID (прихований)
-      proposal.number || "",                            // НОМЕР
-      proposal.date || "",                              // ДАТА
-      proposal.clientName || "",                        // КЛІЄНТ
-      proposal.clientPhone || "",                       // КОНТАКТ
-      Number(proposal.rates?.usdToUah || proposal.courseUSD || 0), // КУРС $
-      Number(proposal.markup || 0),                     // НАЦІНКА %
-      Number(proposal.total || proposal.totalAmount || 0), // СУМА
-      proposal.status || "Чернетка",                    // СТАТУС
+      pId,                                              // 0: ID (прихований)
+      proposal.number || "",                            // 1: НОМЕР
+      proposal.date || "",                              // 2: ДАТА
+      proposal.clientName || "",                        // 3: КЛІЄНТ
+      proposal.clientPhone || "",                       // 4: КОНТАКТ
+      usdRate,                                          // 5: КУРС $
+      markupValue,                                      // 6: НАЦІНКА %
+      totalAmount,                                      // 7: СУМА
+      proposal.status || "Чернетка",                    // 8: СТАТУС
       JSON.stringify({ 
+        ...proposal,
         items: proposal.items || [],
-        discountType: proposal.discountType || 'percentage',
-        discountValue: proposal.discountValue || 0,
-        sellerId: proposal.sellerId || (proposal.seller && proposal.seller.id) || 'fop_pastushok',
-        currency: proposal.currency || 'UAH',
-        courseEUR: proposal.courseEUR || (proposal.rates && proposal.rates.eurToUah) || 0,
-        subtotal: proposal.subtotal || 0,
-        vatMode: proposal.vatMode || 'none',
-        vatAmount: proposal.vatAmount || 0
-      }),                                               // ПОЗИЦІЇ ТА НАЛАШТУВАННЯ
-      proposal.notes || proposal.comment || "",         // ПРИМІТКИ
-      userEmail || "невідомо",                          // АВТОР
-      new Date().toISOString()                          // ОНОВЛЕНО (ISO для кращого парсингу)
+        rates: proposal.rates || { usdToUah: usdRate, eurToUah: proposal.eurToUah || proposal.courseEUR || 0 },
+        total: totalAmount,
+        subtotal: proposal.subtotal || totalAmount
+      }),                                               // 9: ПОЗИЦІЇ ТА НАЛАШТУВАННЯ
+      proposal.notes || proposal.comment || "",         // 10: ПРИМІТКИ
+      userEmail || "невідомо",                          // 11: АВТОР
+      new Date().toISOString()                          // 12: ОНОВЛЕНО (ISO для кращого парсингу)
     ];
     
     if (rowIndex > 0) {
@@ -1344,6 +1344,14 @@ function handleGetProposals() {
           updatedAt = row[2] || new Date().toISOString(); 
         }
 
+        // Відновлюємо дані з JSON якщо в колонках нулі
+        const total = parseFloat(row[7]) || itemsData.total || itemsData.totalAmount || 0;
+        const usdRate = parseFloat(row[5]) || itemsData.rates?.usdToUah || itemsData.courseUSD || 0;
+        const eurRate = itemsData.rates?.eurToUah || itemsData.courseEUR || 0;
+        const markup = parseFloat(row[6]) || itemsData.markup || 0;
+        const items = itemsData.items || [];
+        const subtotal = itemsData.subtotal || items.reduce((sum, item) => sum + (item.total || 0), 0);
+
         proposals.push({
           id: row[0],
           number: row[1],
@@ -1351,24 +1359,24 @@ function handleGetProposals() {
           clientName: row[3],
           clientPhone: row[4],
           rates: {
-            usdToUah: parseFloat(row[5]) || 0,
-            eurToUah: courseEUR || 0
+            usdToUah: usdRate,
+            eurToUah: eurRate
           },
-          markup: parseFloat(row[6]) || 0,
-          total: parseFloat(row[7]) || 0,
+          markup: markup,
+          total: total,
           status: status,
           items: items,
-          discountType: discountType,
-          discountValue: discountValue,
-          sellerId: sellerId,
-          currency: currency,
+          discountType: itemsData.discountType || 'percentage',
+          discountValue: itemsData.discountValue || 0,
+          sellerId: itemsData.sellerId || 'fop_pastushok',
+          currency: itemsData.currency || (total > 10000 ? 'UAH' : 'USD'), // Проста евристика якщо валюта не зберіглась
           subtotal: subtotal,
-          vatMode: vatMode,
-          vatAmount: vatAmount,
-          notes: row[10] || '',
+          vatMode: itemsData.vatMode || 'none',
+          vatAmount: itemsData.vatAmount || 0,
+          notes: row[10] || itemsData.notes || '',
           userEmail: row[11] || '',
-          updatedAt: updatedAt,
-          createdAt: row[2] || updatedAt // Fallback for createdAt
+          updatedAt: row[12] || updatedAt,
+          createdAt: row[2] || updatedAt
         });
       } catch (parseErr) {
         console.warn('Помилка рядка ' + (i + 1) + ':', parseErr);
