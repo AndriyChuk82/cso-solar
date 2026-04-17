@@ -163,6 +163,7 @@ export const useProposalStore = create<ProposalStore>()(
         defaultSeller: 'tov_cso',
         showPrices: true,
         autoSave: true,
+        showCostInCapture: false,
       },
       history: [],
       activeCurrency: 'USD',
