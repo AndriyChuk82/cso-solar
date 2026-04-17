@@ -15,8 +15,6 @@ export async function sendToTelegram(
   const botToken = settings.telegramBotToken;
   const chatId = settings.telegramChatId;
 
-  // На localhost дозволяємо відсутність токенів в налаштуваннях, 
-  // якщо розраховуємо на серверний проксі (.env.local)
   const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   if (!IS_DEPLOYED && !isLocal && (!botToken || !chatId)) {
@@ -68,27 +66,16 @@ async function sendTelegramPhoto(proposal: Proposal, botToken?: string, chatId?:
     const caption = `📋 ${proposal.number} від ${proposal.date}`;
 
     await telegramRequest('sendPhoto', { photoBase64, caption }, botToken, chatId);
-  } finally { }
-}
-
-    const photoBase64 = canvas.toDataURL('image/png').split(',')[1];
-    const caption = `📋 ${proposal.number} від ${proposal.date}`;
-
-    await telegramRequest('sendPhoto', { photoBase64, caption }, botToken, chatId);
-  } finally {
-    // No more manual restores needed as we didn't touch the real DOM
+  } catch (error) {
+    console.error('Telegram photo generation error:', error);
+    throw error;
   }
 }
 
 async function sendTelegramPdf(proposal: Proposal, botToken?: string, chatId?: string) {
-  // Generate PDF using existing function
   const pdfBlob = await exportToPDF(proposal, true);
+  if (!pdfBlob) throw new Error('Failed to generate PDF');
 
-  if (!pdfBlob) {
-    throw new Error('Failed to generate PDF');
-  }
-
-  // Convert blob to base64
   const reader = new FileReader();
   const pdfBase64 = await new Promise<string>((resolve, reject) => {
     reader.onloadend = () => {
@@ -116,7 +103,6 @@ async function telegramRequest(
 
   if (shouldTryProxy) {
     try {
-      // Server-side proxy
       const resp = await fetch('/api/telegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -128,7 +114,7 @@ async function telegramRequest(
       try {
         result = text ? JSON.parse(text) : {};
       } catch (e) {
-        throw new Error(`Сервер повернув некоректну відповідь (можливо, бекенд не запущено). Статус: ${resp.status}`);
+        throw new Error(`Сервер повернув некоректну відповідь. Статус: ${resp.status}`);
       }
       
       if (!resp.ok) throw new Error(result.error || `Помилка сервера: ${resp.status}`);
@@ -136,61 +122,57 @@ async function telegramRequest(
     } catch (e) {
       console.warn('Proxy failed, checking direct API fallback:', e);
       if (!botToken || !chatId) {
-        const errorMsg = e instanceof Error ? e.message : 'серверний проксі не відповідає';
-        throw new Error(`Не вдалося надіслати: ${errorMsg}. Перевірте, чи запущено 'npx vercel dev' та чи вказані токени в налаштуваннях.`);
+        throw new Error(`Не вдалося надіслати: ${e instanceof Error ? e.message : 'proxy error'}`);
       }
-      // Continue to direct API below
     }
   }
 
-  // Direct Telegram API fallback or default for non-deployed
   if (!botToken || !chatId) throw new Error('Помилка: Токени не вказано в налаштуваннях');
 
-    if (action === 'sendMessage') {
-      const resp = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: data.text,
-          parse_mode: data.parseMode || 'HTML',
-        }),
-      });
-      if (!resp.ok) throw new Error(await resp.text());
-    } else if (action === 'sendPhoto') {
-      const photoData = Uint8Array.from(atob(data.photoBase64), c => c.charCodeAt(0));
-      const blob = new Blob([photoData], { type: 'image/png' });
-      const fd = new FormData();
-      fd.append('chat_id', chatId);
-      fd.append('photo', blob, 'proposal.png');
-      if (data.caption) fd.append('caption', data.caption);
-      const resp = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-        method: 'POST',
-        body: fd,
-      });
-      if (!resp.ok) {
-        const errData = await resp.json();
-        throw new Error(errData.description || 'Telegram API error');
-      }
-    } else if (action === 'sendDocument') {
-      const dataBytes = Uint8Array.from(atob(data.pdfBase64), c => c.charCodeAt(0));
-      const blob = new Blob([dataBytes], { type: 'application/pdf' });
-      const fd = new FormData();
-      fd.append('chat_id', chatId);
-      fd.append('document', blob, data.filename || 'proposal.pdf');
-      if (data.caption) fd.append('caption', data.caption);
-      const resp = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
-        method: 'POST',
-        body: fd,
-      });
-      if (!resp.ok) {
-        const errData = await resp.json();
-        throw new Error(errData.description || 'Telegram API error');
-      }
+  if (action === 'sendMessage') {
+    const resp = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: data.text,
+        parse_mode: data.parseMode || 'HTML',
+      }),
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+  } else if (action === 'sendPhoto') {
+    const photoData = Uint8Array.from(atob(data.photoBase64), c => c.charCodeAt(0));
+    const blob = new Blob([photoData], { type: 'image/png' });
+    const fd = new FormData();
+    fd.append('chat_id', chatId);
+    fd.append('photo', blob, 'proposal.png');
+    if (data.caption) fd.append('caption', data.caption);
+    const resp = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+      method: 'POST',
+      body: fd,
+    });
+    if (!resp.ok) {
+      const errData = await resp.json();
+      throw new Error(errData.description || 'Telegram API error');
+    }
+  } else if (action === 'sendDocument') {
+    const dataBytes = Uint8Array.from(atob(data.pdfBase64), c => c.charCodeAt(0));
+    const blob = new Blob([dataBytes], { type: 'application/pdf' });
+    const fd = new FormData();
+    fd.append('chat_id', chatId);
+    fd.append('document', blob, data.filename || 'proposal.pdf');
+    if (data.caption) fd.append('caption', data.caption);
+    const resp = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
+      method: 'POST',
+      body: fd,
+    });
+    if (!resp.ok) {
+      const errData = await resp.json();
+      throw new Error(errData.description || 'Telegram API error');
     }
   }
+}
 
-// Viber integration
 export async function sendToViber(
   proposal: Proposal,
   format: 'link' | 'photo' | 'pdf'
@@ -207,9 +189,7 @@ export async function sendToViber(
 async function sendViberLink(proposal: Proposal) {
   const phone = proposal.clientPhone ? proposal.clientPhone.replace(/\D/g, '') : '';
   const totalSum = proposal.items.reduce((s, it) => s + it.price * it.quantity, 0);
-
-  let text = `📋 Пропозиція ${proposal.number} від ${proposal.date}\n`;
-  text += `💰 Сума: ${formatCurrency(totalSum, proposal.currency)}`;
+  let text = `📋 Пропозиція ${proposal.number} від ${proposal.date}\n💰 Сума: ${formatCurrency(totalSum, proposal.currency)}`;
 
   const url = phone
     ? `viber://chat?number=%2B${phone}&draft=${encodeURIComponent(text)}`
@@ -234,10 +214,7 @@ async function sendViberPhoto() {
     });
 
     canvas.toBlob(async (blob) => {
-
-    canvas.toBlob(async (blob) => {
       if (!blob) throw new Error('Failed to create image');
-
       try {
         const data = [new ClipboardItem({ [blob.type]: blob })];
         await navigator.clipboard.write(data);
@@ -249,12 +226,17 @@ async function sendViberPhoto() {
         window.open(url);
       }
     }, 'image/png');
-  } finally {
-    document.body.classList.remove('is-exporting');
+  } catch (error) {
+    console.error('Viber photo generation error:', error);
+    throw error;
   }
 }
 
-// Helper to prepare element for capture (screenshot)
+async function sendViberPdf(proposal: Proposal) {
+  await exportToPDF(proposal);
+  alert('📥 PDF готовий. Надішліть його вручну у Viber');
+}
+
 function prepareElementForCapture(clonedDoc: Document, elementId: string) {
   const el = clonedDoc.getElementById(elementId);
   if (!el) return;
@@ -266,7 +248,6 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string) {
   el.style.fontFamily = "'Inter', -apple-system, sans-serif";
   el.style.color = '#1e293b';
 
-  // Вся текстова інформація має бути в одному стилі за замовчуванням
   const allElements = el.querySelectorAll('*');
   allElements.forEach((node: any) => {
     node.style.fontFamily = "'Inter', -apple-system, sans-serif";
@@ -287,11 +268,10 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string) {
     span.style.width = '100%';
     span.style.textAlign = style.textAlign;
     span.style.color = '#1e293b';
-    span.style.fontSize = '12px'; // Уніфікований розмір для полів вводу
+    span.style.fontSize = '12px';
     span.style.fontWeight = style.fontWeight;
     span.style.minHeight = '1.2em';
     
-    // Спеціальний стиль для опису товару
     if (input.placeholder?.includes('Опис') || input.className.includes('text-[0.7rem]')) {
       span.style.fontSize = '10px';
       span.style.marginTop = '2px';
@@ -316,7 +296,6 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string) {
       inner.style.paddingBottom = '16px';
       inner.style.marginBottom = '20px';
     }
-    
     const logo = el.querySelector('.print-logo') as HTMLImageElement;
     if (logo) {
       logo.style.height = '48px';
@@ -332,7 +311,6 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string) {
     (node as HTMLElement).style.display = 'none';
   });
 
-  // Уніфікація таблиці
   const table = el.querySelector('table');
   if (table) {
     table.style.width = '100%';
@@ -346,7 +324,6 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string) {
       cell.style.color = '#1e293b';
       cell.style.borderColor = '#e2e8f0';
 
-      // Назва та опис товару у другій колонці
       if (cell.cellIndex === 1) {
         const spans = cell.querySelectorAll('span');
         if (spans.length >= 1) {
@@ -363,7 +340,6 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string) {
         }
       }
       
-      // Центрування (крім назви та підсумкового рядка)
       if (cell.cellIndex !== 1 && !cell.hasAttribute('colspan')) {
         cell.style.textAlign = 'center';
       } else if (cell.hasAttribute('colspan')) {
@@ -372,7 +348,6 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string) {
       }
     });
 
-    // Шапка таблиці
     const tableHeaders = el.querySelectorAll('th');
     tableHeaders.forEach((th: any) => {
       th.style.backgroundColor = '#f8fafc';
@@ -383,16 +358,15 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string) {
     });
 
     if (tableHeaders.length >= 8) {
-      tableHeaders[0].style.width = '45px';  // # 
-      tableHeaders[1].style.width = 'auto';  // Назва
-      tableHeaders[2].style.width = '65px';  // Од.
-      tableHeaders[3].style.width = '85px';  // Кіл.
-      tableHeaders[6].style.width = '110px'; // Ціна
-      tableHeaders[7].style.width = '130px'; // Сума
+      tableHeaders[0].style.width = '45px';
+      tableHeaders[1].style.width = 'auto';
+      tableHeaders[2].style.width = '65px';
+      tableHeaders[3].style.width = '85px';
+      tableHeaders[6].style.width = '110px';
+      tableHeaders[7].style.width = '130px';
     }
   }
 
-  // Summary labels alignment
   const summaryLabels = el.querySelectorAll('span[class*="uppercase"]');
   summaryLabels.forEach((label: any) => {
     label.style.fontSize = '10px';
@@ -412,7 +386,6 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, m => map[m]);
 }
 
-// Helper: Convert all images in container to Base64 to avoid CORS issues in canvas
 async function prepImagesForCapture(container: HTMLElement) {
   const imgs = container.querySelectorAll('img');
   for (const img of Array.from(imgs)) {
@@ -427,7 +400,6 @@ async function prepImagesForCapture(container: HTMLElement) {
   }
 }
 
-// Helper: Image URL to Base64
 function convertImgToBase64(url: string): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
