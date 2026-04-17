@@ -5,7 +5,7 @@ import { Proposal, ProposalItem } from '../types';
 /**
  * Генерує PDF, який повністю повторює дизайн друкованої форми
  */
-export async function exportToPDF(proposal: Proposal, returnBlob = false): Promise<Blob | void> {
+export async function exportToPDF(proposal: Proposal, returnBlob = false, showCost = false): Promise<Blob | void> {
   const currencySymbol = proposal.currency === 'UAH' ? '₴' : (proposal.currency === 'EUR' ? '€' : '$');
   const dateStr = new Date(proposal.date).toLocaleDateString('uk-UA');
   const accentColor = '#F59E0B';
@@ -23,10 +23,11 @@ export async function exportToPDF(proposal: Proposal, returnBlob = false): Promi
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <img src="https://i.ibb.co/32JD4dc/logo.png" height="45">
         <div style="text-align: right;">
-          <div style="color: ${accentColor}; font-weight: 700; font-size: 14px; letter-spacing: 1px; margin-bottom: 5px;">КОМЕРЦІЙНА ПРОПОЗИЦІЯ</div>
-          <div style="font-size: 10px; color: #6B7280; line-height: 1.5;">
-            ${proposal.seller.office}<br>
-            ${proposal.seller.phone}
+          <div style="color: ${accentColor}; font-weight: 800; font-size: 15px; letter-spacing: 0.5px; margin-bottom: 5px;">КОМЕРЦІЙНА ПРОПОЗИЦІЯ</div>
+          <div style="font-size: 11px; color: #1F2937; line-height: 1.4;">
+            <strong style="font-size: 13px;">${proposal.seller.fullName}</strong><br>
+            ${proposal.seller.address}<br>
+            <span style="color: #6B7280;">${proposal.seller.phone}</span>
           </div>
         </div>
       </div>
@@ -51,6 +52,10 @@ export async function exportToPDF(proposal: Proposal, returnBlob = false): Promi
             <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase; text-align: left;">Найменування</th>
             <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase;">Од.</th>
             <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase;">К-сть</th>
+            ${showCost ? `
+              <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase; background: #EFF6FF;">Собівартість</th>
+              <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase; background: #DBEAFE;">Сума соб.</th>
+            ` : ''}
             <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase;">Ціна (${currencySymbol})</th>
             <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase;">Сума (${currencySymbol})</th>
           </tr>
@@ -58,28 +63,37 @@ export async function exportToPDF(proposal: Proposal, returnBlob = false): Promi
         <tbody>
           ${proposal.items.map((item: ProposalItem, i: number) => `
             <tr>
-              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 12px; text-align: center;">${i + 1}</td>
-              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 12px;">
+              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
+              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px;">
                 <strong>${item.name || item.product.name}</strong>
                 ${(item.description || item.product.description) ? `<div style="font-size: 9px; color: #6B7280; margin-top: 2px;">${item.description || item.product.description}</div>` : ''}
               </td>
-              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 12px; text-align: center;">${item.unit || 'шт.'}</td>
-              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 12px; text-align: center;">${item.quantity}</td>
-              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 12px; text-align: center;">${item.price.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
-              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 12px; text-align: center; font-weight: 600;">${(item.price * item.quantity).toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
+              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.unit || 'шт.'}</td>
+              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.quantity}</td>
+              ${showCost ? `
+                <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; background: #EFF6FF;">${item.costPrice.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; background: #DBEAFE;">${(item.costPrice * item.quantity).toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
+              ` : ''}
+              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.price.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
+              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 600;">${(item.price * item.quantity).toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
             </tr>
           `).join('')}
         </tbody>
       </table>
 
       <div style="margin-top: 20px; display: flex; flex-direction: column; align-items: flex-end;">
-        <div style="background: #FFFBEB; border: 1px solid #FEF3C7; padding: 15px 25px; border-radius: 4px; text-align: right; min-width: 250px;">
-          <div style="font-size: 18px; font-weight: 700; color: #B45309;">
-            <span>Загальний підсумок:</span> <span style="margin-left: 5px;">${currencySymbol} ${proposal.total.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</span>
+        <div style="background: #FFFBEB; border: 1px solid #FEF3C7; padding: 15px 25px; border-radius: 4px; text-align: right; min-width: 300px;">
+          ${showCost ? `
+            <div style="font-size: 12px; color: #15803d; margin-bottom: 8px; font-weight: 600;">
+              ПРИБУТОК: ${currencySymbol} ${((proposal.subtotal || 0) - proposal.items.reduce((sum, item) => sum + (item.costPrice * item.quantity), 0)).toLocaleString('uk-UA', { minimumFractionDigits: 2 })} (${(((proposal.subtotal - proposal.items.reduce((sum, item) => sum + (item.costPrice * item.quantity), 0)) / proposal.subtotal) * 100).toFixed(1)}%)
+            </div>
+          ` : ''}
+          <div style="font-size: 18px; font-weight: 800; color: #B45309;">
+            <span>ЗАГАЛОМ:</span> <span style="margin-left: 5px;">${currencySymbol} ${proposal.total.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</span>
           </div>
         </div>
         <div style="margin-top: 10px; font-size: 10px; color: #9CA3AF; text-align: right;">
-          Курс за замовчуванням: 1 USD = ${proposal.rates?.usdToUah || '41.50'} грн | 1 EUR = ${proposal.rates?.eurToUah || '51.00'} грн
+          Курс: 1 USD = ${proposal.rates?.usdToUah || '41.50'} грн | 1 EUR = ${proposal.rates?.eurToUah || '51.00'} грн
         </div>
       </div>
 

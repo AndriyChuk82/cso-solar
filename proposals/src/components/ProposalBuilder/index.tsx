@@ -127,21 +127,27 @@ export function ProposalBuilderTable() {
     <div className="space-y-4" id="proposal-container">
       {/* Print-only header */}
       <div className="print-header" style={{ display: 'none' }}>
-        <div className="print-logo-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', borderBottom: '2px solid #f59e0b', paddingBottom: '15px' }}>
-          <div className="print-company" style={{ textAlign: 'left' }}>
-            <p style={{ color: '#f59e0b', fontSize: '20px', fontWeight: 800, margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <div className="print-logo-row">
+          <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" className="print-logo" />
+          <div className="print-company" style={{ textAlign: 'right' }}>
+            <p style={{ 
+              fontSize: '15px', 
+              color: '#f59e0b', 
+              fontWeight: 800, 
+              textTransform: 'uppercase',
+              marginBottom: '4px',
+              letterSpacing: '0.025em'
+            }}>
               Комерційна пропозиція
             </p>
-            <div className="print-contact-info" style={{ marginTop: '10px', color: '#1e293b', fontSize: '11px', lineHeight: '1.4' }}>
-              <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '4px' }}>{SELLERS[selectedSeller].fullName}</div>
-              <div style={{ maxWidth: '400px' }}>{SELLERS[selectedSeller].address}</div>
-              {selectedSeller !== 'fop_pastushok' && SELLERS[selectedSeller].office !== SELLERS[selectedSeller].address && (
-                <div>{SELLERS[selectedSeller].office}</div>
-              )}
-              <div style={{ marginTop: '4px', fontWeight: 600 }}>{SELLERS[selectedSeller].phone}</div>
+            <div className="print-contact-info" style={{ color: '#475569', fontSize: '11px' }}>
+              <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '13px', marginBottom: '2px' }}>
+                {SELLERS[selectedSeller].fullName}
+              </div>
+              <div style={{ marginBottom: '1px' }}>{SELLERS[selectedSeller].address}</div>
+              <div style={{ color: '#64748b' }}>{SELLERS[selectedSeller].phone}</div>
             </div>
           </div>
-          <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" className="print-logo" style={{ height: '55px', width: 'auto' }} />
         </div>
       </div>
 
