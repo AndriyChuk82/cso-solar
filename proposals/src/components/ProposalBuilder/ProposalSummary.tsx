@@ -127,7 +127,7 @@ export function ProposalSummary({
               </td>
               <td className="no-print"></td>
             </tr>
-            <tr className="text-[10px] bg-white dark:bg-slate-900 no-print">
+            <tr className="text-[10px] bg-white dark:bg-slate-900 no-print profit-row">
               <td colSpan={3} className="px-2 py-1.5 text-right text-gray-400 dark:text-slate-500 font-medium">
                 Маржинальність пропозиції:
               </td>

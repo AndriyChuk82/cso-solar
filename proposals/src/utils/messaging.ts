@@ -299,6 +299,23 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
       inner.style.paddingBottom = '16px';
       inner.style.marginBottom = '20px';
     }
+
+    const contactInfo = header.querySelector('.print-contact-info') as HTMLElement;
+    if (contactInfo) {
+      contactInfo.style.textAlign = 'right';
+      contactInfo.style.fontSize = '10px';
+      contactInfo.style.lineHeight = '1.4';
+      contactInfo.style.color = '#475569';
+      
+      const infoChildren = contactInfo.querySelectorAll('div');
+      infoChildren.forEach((child: any, idx) => {
+        if (idx === 0) {
+          child.style.fontSize = '12px';
+          child.style.fontWeight = '700';
+          child.style.color = '#1e293b';
+        }
+      });
+    }
     const logo = el.querySelector('.print-logo') as HTMLImageElement;
     if (logo) {
       logo.style.height = '48px';
@@ -316,6 +333,17 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
       htmlNode.style.setProperty('display', 'none', 'important');
     } else {
       htmlNode.style.setProperty('display', 'table-cell', 'important');
+    }
+  });
+
+  // Profit row visibility
+  el.querySelectorAll('.profit-row').forEach(node => {
+    const htmlNode = node as HTMLElement;
+    if (showCost) {
+      htmlNode.style.setProperty('display', 'table-row', 'important');
+      htmlNode.style.background = '#f8fafc';
+    } else {
+      htmlNode.style.setProperty('display', 'none', 'important');
     }
   });
 
