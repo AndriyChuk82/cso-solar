@@ -118,8 +118,7 @@ export async function fetchAllData() {
           const col4 = sanitizeString(p.description);
           const col5 = sanitizeString(p.manufacturer);
           const col6 = sanitizeString(p.power);
-          const col7 = p.raw && p.raw[7] ? sanitizeString(p.raw[7]) : '';
-          const colG = p.raw && p.raw[6] ? sanitizeString(p.raw[6]) : ''; // Для панелей нам потрібна колонка G
+          const col7 = p.raw && p.raw[6] ? sanitizeString(p.raw[6]) : ''; // Стовпець G (7-й)
           const originalName = sanitizeString(p.originalName);
 
           let mCatRaw = sanitizeString(p.mainCategory || '');
@@ -170,7 +169,7 @@ export async function fetchAllData() {
           else if (mainCat === 'Сонячні батареї') {
             const match = exactName.match(/\d+(?=\s*Вт|\s*W)/i) || exactName.match(/\d{3}/);
             const watts = match ? parseInt(match[0]) : 0;
-            const wattPriceStr = col7 || colG;
+            const wattPriceStr = col7;
             const parsedPrice = parsePrice(wattPriceStr);
             const isPerWatt = parsedPrice.value > 0 && parsedPrice.value < 2;
 
