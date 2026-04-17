@@ -147,10 +147,10 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
             {selectedProposal ? (
               <div className="p-6 space-y-4">
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">
+                  <h3 className="font-semibold text-gray-900 dark:text-slate-100 mb-2">
                     {selectedProposal.number}
                   </h3>
-                  <div className="text-sm text-gray-600 space-y-1">
+                  <div className="text-sm text-gray-600 dark:text-slate-400 space-y-1">
                     <div>Клієнт: {selectedProposal.clientName}</div>
                     {selectedProposal.clientPhone && (
                       <div>Телефон: {selectedProposal.clientPhone}</div>
@@ -163,50 +163,50 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Товари</h4>
+                  <h4 className="font-semibold text-gray-900 dark:text-slate-200 mb-2">Товари</h4>
                   <div className="space-y-2">
                     {selectedProposal.items.map((item) => (
                       <div
                         key={item.id}
-                        className="flex justify-between text-sm p-2 bg-gray-50 rounded"
+                        className="flex justify-between text-sm p-2 bg-gray-50 dark:bg-slate-800/50 rounded border border-transparent dark:border-slate-800"
                       >
                         <div className="flex-1">
-                          <div className="font-medium">{item.product.name}</div>
-                          <div className="text-gray-500">
+                          <div className="font-medium text-gray-900 dark:text-slate-200">{item.product.name}</div>
+                          <div className="text-gray-500 dark:text-slate-500 text-xs">
                             {item.quantity} {item.product.unit} ×{' '}
-                            {formatCurrency(item.price, item.product.currency)}
+                            {formatCurrency(item.price, selectedProposal.currency)}
                           </div>
                         </div>
-                        <div className="font-semibold">
-                          {formatCurrency(item.total, item.product.currency)}
+                        <div className="font-semibold text-gray-900 dark:text-slate-100">
+                          {formatCurrency(item.total, selectedProposal.currency)}
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="border-t border-gray-200 pt-4">
+                <div className="border-t border-gray-200 dark:border-slate-800 pt-4">
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Підсумок:</span>
-                      <span className="font-medium">
+                      <span className="text-gray-600 dark:text-slate-400">Підсумок:</span>
+                      <span className="font-medium text-gray-900 dark:text-slate-200">
                         {formatCurrency(selectedProposal.subtotal, selectedProposal.currency)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">
+                      <span className="text-gray-600 dark:text-slate-400">
                         Націнка ({selectedProposal.markup}%):
                       </span>
-                      <span className="font-medium">
+                      <span className="font-medium text-gray-900 dark:text-slate-200">
                         {formatCurrency(
                           (selectedProposal.subtotal * selectedProposal.markup) / 100,
                           selectedProposal.currency
                         )}
                       </span>
                     </div>
-                    <div className="flex justify-between pt-2 border-t border-gray-200">
-                      <span className="font-semibold">Всього:</span>
-                      <span className="font-bold text-lg text-primary">
+                    <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-slate-800">
+                      <span className="font-semibold text-gray-900 dark:text-slate-200">Всього:</span>
+                      <span className="font-bold text-lg text-primary dark:text-blue-400">
                         {formatCurrency(selectedProposal.total, selectedProposal.currency)}
                       </span>
                     </div>

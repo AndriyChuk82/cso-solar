@@ -111,6 +111,10 @@ function getNextProposalNumber(): string {
 }
 
 function calculateProposalTotals(proposal: Proposal): Proposal {
+  // Забезпечуємо наявність продавця (щоб не було помилки undefined reading 'office')
+  const sellerId = (proposal as any).sellerId || proposal.seller?.id || 'fop_pastushok';
+  const seller = SELLERS[sellerId as keyof typeof SELLERS] || SELLERS.fop_pastushok;
+
   // Ensure items have correct individual totals
   const validatedItems = (proposal.items || []).map(item => ({
     ...item,
@@ -136,6 +140,7 @@ function calculateProposalTotals(proposal: Proposal): Proposal {
   
   return {
     ...proposal,
+    seller, // Завжди повертаємо повний об'єкт продавця
     items: validatedItems,
     subtotal: Math.round(subtotal * 100) / 100,
     vatAmount: Math.round(vatAmount * 100) / 100,
