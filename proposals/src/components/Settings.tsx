@@ -174,6 +174,23 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 />
                 <span className="text-gray-700">Автоматичне збереження</span>
               </label>
+              <label className="flex items-center gap-3 cursor-pointer bg-blue-50/50 p-2 rounded border border-blue-100/50">
+                <input
+                  type="checkbox"
+                  checked={localSettings.showCostInCapture}
+                  onChange={(e) =>
+                    setLocalSettings({
+                      ...localSettings,
+                      showCostInCapture: e.target.checked,
+                    })
+                  }
+                  className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
+                />
+                <div className="flex flex-col">
+                  <span className="text-gray-900 font-medium text-sm">Показувати собівартість на скріншотах</span>
+                  <span className="text-[10px] text-gray-500 italic">Колонка собівартості буде видима у Viber/Telegram</span>
+                </div>
+              </label>
             </div>
           </div>
 

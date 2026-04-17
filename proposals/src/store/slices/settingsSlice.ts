@@ -31,6 +31,7 @@ export const createSettingsSlice: StateCreator<
     defaultSeller: 'tov_cso',
     showPrices: true,
     autoSave: true,
+    showCostInCapture: false,
   },
   activeCurrency: 'USD',
 

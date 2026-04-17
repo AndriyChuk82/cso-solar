@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Send } from 'lucide-react';
+import { useProposalStore } from '../store';
 
 interface TelegramModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface TelegramModalProps {
 }
 
 export function TelegramModal({ isOpen, onClose, onSend }: TelegramModalProps) {
+  const { settings, updateSettings } = useProposalStore();
   const [format, setFormat] = useState<'text' | 'photo' | 'pdf'>('pdf');
 
   if (!isOpen) return null;
@@ -84,8 +86,19 @@ export function TelegramModal({ isOpen, onClose, onSend }: TelegramModalProps) {
           </div>
 
           {format === 'photo' && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
-              📋 Скріншот КП буде відправлено як зображення
+            <div className="space-y-3">
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+                📋 Скріншот КП буде відправлено як зображення
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer p-2 bg-gray-50 rounded border border-gray-200">
+                <input
+                   type="checkbox"
+                   checked={settings.showCostInCapture}
+                   onChange={(e) => updateSettings({ showCostInCapture: e.target.checked })}
+                   className="w-4 h-4 text-primary border-gray-300 rounded"
+                />
+                <span className="text-xs font-medium text-gray-700">Показати собівартість на фото</span>
+              </label>
             </div>
           )}
 

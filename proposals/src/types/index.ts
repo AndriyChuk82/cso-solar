@@ -91,6 +91,7 @@ export interface Settings {
   defaultSeller: string;
   showPrices: boolean;
   autoSave: boolean;
+  showCostInCapture: boolean; // Чи показувати собівартість при створенні скріншота
   telegramBotToken?: string;
   telegramChatId?: string;
 }

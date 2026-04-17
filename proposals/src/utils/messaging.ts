@@ -58,7 +58,8 @@ async function sendTelegramPhoto(proposal: Proposal, botToken?: string, chatId?:
       logging: false,
       backgroundColor: '#ffffff',
       onclone: (clonedDoc) => {
-        prepareElementForCapture(clonedDoc, mainEl.id);
+        const { settings } = useProposalStore.getState();
+        prepareElementForCapture(clonedDoc, mainEl.id, settings.showCostInCapture);
       }
     });
 
@@ -209,7 +210,8 @@ async function sendViberPhoto() {
       logging: false,
       backgroundColor: '#ffffff',
       onclone: (clonedDoc) => {
-        prepareElementForCapture(clonedDoc, mainEl.id);
+        const { settings } = useProposalStore.getState();
+        prepareElementForCapture(clonedDoc, mainEl.id, settings.showCostInCapture);
       }
     });
 
@@ -237,7 +239,8 @@ async function sendViberPdf(proposal: Proposal) {
   alert('📥 PDF готовий. Надішліть його вручну у Viber');
 }
 
-function prepareElementForCapture(clonedDoc: Document, elementId: string) {
+// Helper to prepare element for capture (screenshot)
+function prepareElementForCapture(clonedDoc: Document, elementId: string, showCost: boolean = false) {
   const el = clonedDoc.getElementById(elementId);
   if (!el) return;
 
@@ -307,9 +310,16 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string) {
     (node as HTMLElement).style.display = 'none';
   });
 
-  el.querySelectorAll('.cost-column').forEach(node => {
-    (node as HTMLElement).style.display = 'none';
-  });
+  if (!showCost) {
+    el.querySelectorAll('.cost-column').forEach(node => {
+      (node as HTMLElement).style.display = 'none';
+    });
+  } else {
+    // Якщо показуємо собівартість, впевнимось що колонка видима
+    el.querySelectorAll('.cost-column').forEach(node => {
+      (node as HTMLElement).style.display = 'table-cell';
+    });
+  }
 
   const table = el.querySelector('table');
   if (table) {
@@ -362,8 +372,16 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string) {
       tableHeaders[1].style.width = 'auto';
       tableHeaders[2].style.width = '65px';
       tableHeaders[3].style.width = '85px';
-      tableHeaders[6].style.width = '110px';
-      tableHeaders[7].style.width = '130px';
+      
+      if (showCost) {
+        tableHeaders[4].style.width = '100px'; // Cost Price
+        tableHeaders[5].style.width = '110px'; // Total Cost
+        tableHeaders[6].style.width = '110px'; // Sale Price
+        tableHeaders[7].style.width = '130px'; // Total Sale
+      } else {
+        tableHeaders[6].style.width = '110px';
+        tableHeaders[7].style.width = '130px';
+      }
     }
   }
 
