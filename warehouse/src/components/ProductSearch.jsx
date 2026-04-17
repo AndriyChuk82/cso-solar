@@ -3,6 +3,7 @@ import { getCatalog, addProduct, getCategories } from '../api/gasApi';
 import { fetchCPCatalog } from '../api/externalApi';
 import { normalizeForSearch, matchesSearch } from '../utils/searchUtils';
 import CONFIG from '../config';
+import { Button } from '@cso/design-system';
 
 // Глобальний кеш для зовнішнього каталогу (щоб не качати щоразу)
 let externalCatalogCache = null;
@@ -192,9 +193,13 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
 
           {selectedIds.length > 0 && (
             <div style={{ position: 'sticky', bottom: 0, background: 'white', padding: '10px', borderTop: '2px solid var(--primary)' }}>
-              <button className="btn btn-primary" onClick={handleBatchAdd} style={{ width: '100%' }}>
+              <Button 
+                variant="primary" 
+                onClick={handleBatchAdd} 
+                style={{ width: '100%', marginTop: '4px', background: 'var(--primary)', color: '#fff' }}
+              >
                 📥 Додати обрані позиції ({selectedIds.length})
-              </button>
+              </Button>
             </div>
           )}
 

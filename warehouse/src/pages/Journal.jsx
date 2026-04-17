@@ -92,6 +92,8 @@ export default function Journal() {
   }
 
   function handleOpenEdit(op) {
+    console.log('Клік по Редагувати!', op);
+    // window.alert('Клік по Редагувати!'); // Тимчасово для тесту
     if (!op) return;
     try {
       setEditModal({
@@ -108,8 +110,7 @@ export default function Journal() {
         }
       });
     } catch (err) {
-      console.error('Помилка при спробі редагування:', err);
-      showToast('Не вдалося відкрити вікно редагування', 'error');
+      console.error('Помилка при відкритті модалки:', err);
     }
   }
 
@@ -358,22 +359,22 @@ export default function Journal() {
                     <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '1px' }}>{op.user_name || op.user || '—'}</td>
                     {user?.isAdmin && (
                       <td>
-                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', position: 'relative', zIndex: 100 }}>
                           <button
                             className="btn btn-ghost btn-sm"
-                            onClick={() => handleOpenEdit(op)}
-                            title="Редагувати"
-                            style={{ padding: '2px 6px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                            onClick={(e) => { e.stopPropagation(); handleDelete(op.id); }}
+                            title="Видалити"
+                            style={{ color: 'var(--danger)', padding: '4px 8px', border: '1px solid #ef444433', background: 'transparent', cursor: 'pointer', fontSize: '0.7rem', borderRadius: '4px' }}
                           >
-                            ✏️
+                            ВИДАЛИТИ
                           </button>
                           <button
                             className="btn btn-ghost btn-sm"
-                            onClick={() => handleDelete(op.id)}
-                            title="Видалити"
-                            style={{ color: 'var(--danger)', padding: '2px 6px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                            onClick={(e) => { e.stopPropagation(); handleOpenEdit(op); }}
+                            title="Редагувати"
+                            style={{ color: 'var(--primary)', padding: '4px 8px', border: '1px solid #f59e0b33', background: 'transparent', cursor: 'pointer', fontSize: '0.7rem', borderRadius: '4px' }}
                           >
-                            🗑️
+                            РЕДАГУВАТИ
                           </button>
                         </div>
                       </td>
