@@ -92,25 +92,27 @@ export default function Journal() {
   }
 
   function handleOpenEdit(op) {
-    console.log('Клік по Редагувати!', op);
-    // window.alert('Клік по Редагувати!'); // Тимчасово для тесту
-    if (!op) return;
+    console.log('--- HANDLE OPEN EDIT START ---', op);
+    // window.alert('Натиснуто РЕДАГУВАТИ!'); 
+    
+    if (!op) {
+      console.warn('Об’єкт операції порожній');
+      return;
+    }
+
     try {
-      setEditModal({
-        op,
-        formData: {
-          date: op.date || new Date().toISOString().split('T')[0],
-          quantity: op.quantity || 0,
-          comment: typeof (op.comment || op.note || op.primitka) === 'object' 
-            ? JSON.stringify(op.comment || op.note || op.primitka) 
-            : String(op.comment || op.note || op.primitka || ''),
-          product_id: op.product_id || '',
-          warehouse_id: op.warehouse_id || '',
-          type: op.type || ''
-        }
-      });
+      const initialData = {
+        date: op.date || new Date().toISOString().split('T')[0],
+        quantity: parseFloat(op.quantity) || 0,
+        comment: String(op.comment || op.note || op.primitka || ''),
+        product_id: op.product_id || op.productId || '',
+        warehouse_id: op.warehouse_id || op.warehouseId || '',
+        type: op.type || ''
+      };
+
+      setEditModal({ op, formData: initialData });
     } catch (err) {
-      console.error('Помилка при відкритті модалки:', err);
+      console.error('Помилка логіки редагування:', err);
     }
   }
 
