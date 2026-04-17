@@ -60,127 +60,16 @@ async function sendTelegramPhoto(proposal: Proposal, botToken?: string, chatId?:
       logging: false,
       backgroundColor: '#ffffff',
       onclone: (clonedDoc) => {
-        const el = clonedDoc.getElementById(mainEl.id);
-        if (el) {
-          // Add is-exporting class ONLY to the clone
-          clonedDoc.body.classList.add('is-exporting');
-          
-          el.style.width = '1200px';
-          el.style.padding = '40px';
-          el.style.background = '#ffffff';
-          
-          const inputs = el.querySelectorAll('input, select, textarea');
-          inputs.forEach((input: any) => {
-            const span = clonedDoc.createElement('span');
-            span.textContent = input.value || (input.placeholder && !input.value ? '' : input.value);
-            
-            if (input.tagName === 'SELECT') {
-              const selectedOption = input.options[input.selectedIndex];
-              span.textContent = selectedOption ? selectedOption.text : '';
-            }
-
-            const style = window.getComputedStyle(input);
-            span.style.display = 'block';
-            span.style.width = '100%';
-            span.style.textAlign = style.textAlign;
-            span.style.color = style.color;
-            span.style.fontSize = style.fontSize;
-            span.style.fontWeight = style.fontWeight;
-            span.style.fontFamily = style.fontFamily;
-            span.style.minHeight = '1.2em';
-            
-            if (input.placeholder?.includes('Опис') || input.className.includes('text-[0.7rem]')) {
-              span.style.marginTop = '2px';
-              span.style.opacity = '0.8';
-              if (!input.value) span.style.display = 'none';
-            }
-            
-            input.parentNode.replaceChild(span, input);
-          });
-
-          const header = el.querySelector('.print-header') as HTMLElement;
-          if (header) {
-            header.style.display = 'block'; // Outer wrapper
-            const inner = header.querySelector('.print-logo-row') as HTMLElement;
-            if (inner) {
-              inner.style.display = 'flex';
-              inner.style.justifyContent = 'space-between';
-              inner.style.width = '100%';
-              inner.style.alignItems = 'flex-start';
-              inner.style.borderBottom = '2px solid #f59e0b';
-              inner.style.paddingBottom = '16px';
-              inner.style.marginBottom = '16px';
-            }
-            
-            const logo = el.querySelector('.print-logo') as HTMLImageElement;
-            if (logo) {
-              logo.style.height = '45px';
-              logo.style.width = 'auto';
-            }
-          }
-          
-          el.querySelectorAll('.no-print').forEach(node => {
-            (node as HTMLElement).style.display = 'none';
-          });
-
-          el.querySelectorAll('.cost-column').forEach(node => {
-            (node as HTMLElement).style.display = 'none';
-          });
-
-          // Уніфікація шрифтів та стилізація опису
-          const table = el.querySelector('table');
-          if (table) {
-            table.style.fontSize = '11px';
-            const allCells = el.querySelectorAll('td, th');
-            allCells.forEach((cell: any) => {
-              cell.style.fontSize = '11px';
-              // Назва та опис товару у другій колонці
-              if (cell.cellIndex === 1) {
-                const spans = cell.querySelectorAll('span');
-                if (spans.length >= 1) {
-                  spans[0].style.fontWeight = '700';
-                  spans[0].style.fontSize = '11px';
-                  spans[0].style.display = 'block';
-                  spans[0].style.marginBottom = '2px';
-                }
-                if (spans.length >= 2) {
-                  spans[1].style.fontStyle = 'italic';
-                  spans[1].style.fontSize = '10px';
-                  spans[1].style.color = '#64748b';
-                  spans[1].style.display = 'block';
-                  spans[1].style.marginTop = '1px';
-                }
-              }
-              
-              // Центрування (крім назви та підсумкового рядка)
-              if (cell.cellIndex !== 1 && !cell.hasAttribute('colspan')) {
-                cell.style.textAlign = 'center';
-                const spans = cell.querySelectorAll('span');
-                spans.forEach((s: any) => {
-                  s.style.textAlign = 'center';
-                  s.style.display = 'block';
-                  s.style.width = '100%';
-                });
-              } else if (cell.hasAttribute('colspan')) {
-                cell.style.textAlign = 'right';
-                cell.style.paddingRight = '10px';
-              }
-            });
-          }
-
-          // Коригування ширини стовпців для кращого вигляду на скріншоті
-          const tableHeaders = el.querySelectorAll('th');
-          if (tableHeaders.length >= 8) {
-            tableHeaders[0].style.width = '45px';  // # 
-            tableHeaders[1].style.width = 'auto';  // Назва (займає решту)
-            tableHeaders[2].style.width = '65px';  // Од.
-            tableHeaders[3].style.width = '85px';  // Кіл.
-            tableHeaders[6].style.width = '125px'; // Ціна
-            tableHeaders[7].style.width = '145px'; // Сума
-          }
-        }
+        prepareElementForCapture(clonedDoc, mainEl.id);
       }
     });
+
+    const photoBase64 = canvas.toDataURL('image/png').split(',')[1];
+    const caption = `📋 ${proposal.number} від ${proposal.date}`;
+
+    await telegramRequest('sendPhoto', { photoBase64, caption }, botToken, chatId);
+  } finally { }
+}
 
     const photoBase64 = canvas.toDataURL('image/png').split(',')[1];
     const caption = `📋 ${proposal.number} від ${proposal.date}`;
@@ -340,120 +229,11 @@ async function sendViberPhoto() {
       logging: false,
       backgroundColor: '#ffffff',
       onclone: (clonedDoc) => {
-        const el = clonedDoc.getElementById(mainEl.id);
-        if (el) {
-          clonedDoc.body.classList.add('is-exporting');
-          el.style.width = '1200px';
-          el.style.padding = '40px';
-          el.style.background = '#ffffff';
-          
-          const inputs = el.querySelectorAll('input, select, textarea');
-          inputs.forEach((input: any) => {
-            const span = clonedDoc.createElement('span');
-            span.textContent = input.value;
-            if (input.tagName === 'SELECT') {
-              const selectedOption = input.options[input.selectedIndex];
-              span.textContent = selectedOption ? selectedOption.text : '';
-            }
-            const style = window.getComputedStyle(input);
-            span.style.display = 'block';
-            span.style.width = '100%';
-            span.style.color = style.color;
-            span.style.fontSize = style.fontSize;
-            span.style.fontWeight = style.fontWeight;
-            span.style.fontFamily = style.fontFamily;
-            span.style.minHeight = '1.2em';
-
-            if (input.placeholder?.includes('Опис') || input.className.includes('text-[0.7rem]')) {
-              span.style.marginTop = '2px';
-              span.style.opacity = '0.8';
-              if (!input.value) span.style.display = 'none';
-            }
-            input.parentNode.replaceChild(span, input);
-          });
-
-          const header = el.querySelector('.print-header') as HTMLElement;
-          if (header) {
-            header.style.display = 'block';
-            const inner = header.querySelector('.print-logo-row') as HTMLElement;
-            if (inner) {
-              inner.style.display = 'flex';
-              inner.style.justifyContent = 'space-between';
-              inner.style.width = '100%';
-              inner.style.alignItems = 'flex-start';
-              inner.style.borderBottom = '2px solid #f59e0b';
-              inner.style.paddingBottom = '16px';
-              inner.style.marginBottom = '16px';
-            }
-            
-            const logo = el.querySelector('.print-logo') as HTMLImageElement;
-            if (logo) {
-              logo.style.height = '45px';
-              logo.style.width = 'auto';
-            }
-          }
-          
-          el.querySelectorAll('.no-print').forEach(node => {
-            (node as HTMLElement).style.display = 'none';
-          });
-          el.querySelectorAll('.cost-column').forEach(node => {
-            (node as HTMLElement).style.display = 'none';
-          });
-
-          // Уніфікація шрифтів та стилізація опису
-          const table = el.querySelector('table');
-          if (table) {
-            table.style.fontSize = '11px';
-            const allCells = el.querySelectorAll('td, th');
-            allCells.forEach((cell: any) => {
-              cell.style.fontSize = '11px';
-              // Назва та опис товару у другій колонці
-              if (cell.cellIndex === 1) {
-                const spans = cell.querySelectorAll('span');
-                if (spans.length >= 1) {
-                  spans[0].style.fontWeight = '700';
-                  spans[0].style.fontSize = '11px';
-                  spans[0].style.display = 'block';
-                  spans[0].style.marginBottom = '2px';
-                }
-                if (spans.length >= 2) {
-                  spans[1].style.fontStyle = 'italic';
-                  spans[1].style.fontSize = '10px';
-                  spans[1].style.color = '#64748b';
-                  spans[1].style.display = 'block';
-                  spans[1].style.marginTop = '1px';
-                }
-              }
-              
-              // Центрування (крім назви та підсумкового рядка)
-              if (cell.cellIndex !== 1 && !cell.hasAttribute('colspan')) {
-                cell.style.textAlign = 'center';
-                const spans = cell.querySelectorAll('span');
-                spans.forEach((s: any) => {
-                  s.style.textAlign = 'center';
-                  s.style.display = 'block';
-                  s.style.width = '100%';
-                });
-              } else if (cell.hasAttribute('colspan')) {
-                cell.style.textAlign = 'right';
-                cell.style.paddingRight = '10px';
-              }
-            });
-          }
-
-          // Коригування ширини стовпців для кращого вигляду на скріншоті
-          const tableHeaders = el.querySelectorAll('th');
-          if (tableHeaders.length >= 8) {
-            tableHeaders[0].style.width = '45px';  // # 
-            tableHeaders[1].style.width = 'auto';  // Назва (займає решту)
-            tableHeaders[2].style.width = '65px';  // Од.
-            tableHeaders[3].style.width = '85px';  // Кіл.
-            tableHeaders[6].style.width = '125px'; // Ціна
-            tableHeaders[7].style.width = '145px'; // Сума
-          }
-        }
+        prepareElementForCapture(clonedDoc, mainEl.id);
       }
     });
+
+    canvas.toBlob(async (blob) => {
 
     canvas.toBlob(async (blob) => {
       if (!blob) throw new Error('Failed to create image');
@@ -474,10 +254,151 @@ async function sendViberPhoto() {
   }
 }
 
-async function sendViberPdf(proposal: Proposal) {
-  // Generate and download PDF
-  await exportToPDF(proposal);
-  alert('📥 PDF готовий. Надішліть його вручну у Viber');
+// Helper to prepare element for capture (screenshot)
+function prepareElementForCapture(clonedDoc: Document, elementId: string) {
+  const el = clonedDoc.getElementById(elementId);
+  if (!el) return;
+
+  clonedDoc.body.classList.add('is-exporting');
+  el.style.width = '1150px';
+  el.style.padding = '40px 50px';
+  el.style.background = '#ffffff';
+  el.style.fontFamily = "'Inter', -apple-system, sans-serif";
+  el.style.color = '#1e293b';
+
+  // Вся текстова інформація має бути в одному стилі за замовчуванням
+  const allElements = el.querySelectorAll('*');
+  allElements.forEach((node: any) => {
+    node.style.fontFamily = "'Inter', -apple-system, sans-serif";
+  });
+
+  const inputs = el.querySelectorAll('input, select, textarea');
+  inputs.forEach((input: any) => {
+    const span = clonedDoc.createElement('span');
+    span.textContent = input.value || (input.placeholder && !input.value ? '' : input.value);
+    
+    if (input.tagName === 'SELECT') {
+      const selectedOption = input.options[input.selectedIndex];
+      span.textContent = selectedOption ? selectedOption.text : '';
+    }
+
+    const style = window.getComputedStyle(input);
+    span.style.display = 'block';
+    span.style.width = '100%';
+    span.style.textAlign = style.textAlign;
+    span.style.color = '#1e293b';
+    span.style.fontSize = '12px'; // Уніфікований розмір для полів вводу
+    span.style.fontWeight = style.fontWeight;
+    span.style.minHeight = '1.2em';
+    
+    // Спеціальний стиль для опису товару
+    if (input.placeholder?.includes('Опис') || input.className.includes('text-[0.7rem]')) {
+      span.style.fontSize = '10px';
+      span.style.marginTop = '2px';
+      span.style.color = '#64748b';
+      span.style.fontStyle = 'italic';
+      if (!input.value) span.style.display = 'none';
+    }
+    
+    input.parentNode.replaceChild(span, input);
+  });
+
+  const header = el.querySelector('.print-header') as HTMLElement;
+  if (header) {
+    header.style.display = 'block';
+    const inner = header.querySelector('.print-logo-row') as HTMLElement;
+    if (inner) {
+      inner.style.display = 'flex';
+      inner.style.justifyContent = 'space-between';
+      inner.style.width = '100%';
+      inner.style.alignItems = 'center';
+      inner.style.borderBottom = '2px solid #f59e0b';
+      inner.style.paddingBottom = '16px';
+      inner.style.marginBottom = '20px';
+    }
+    
+    const logo = el.querySelector('.print-logo') as HTMLImageElement;
+    if (logo) {
+      logo.style.height = '48px';
+      logo.style.width = 'auto';
+    }
+  }
+  
+  el.querySelectorAll('.no-print').forEach(node => {
+    (node as HTMLElement).style.display = 'none';
+  });
+
+  el.querySelectorAll('.cost-column').forEach(node => {
+    (node as HTMLElement).style.display = 'none';
+  });
+
+  // Уніфікація таблиці
+  const table = el.querySelector('table');
+  if (table) {
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.fontSize = '11.5px';
+    
+    const allCells = el.querySelectorAll('td, th');
+    allCells.forEach((cell: any) => {
+      cell.style.fontSize = '11.5px';
+      cell.style.padding = '8px 10px';
+      cell.style.color = '#1e293b';
+      cell.style.borderColor = '#e2e8f0';
+
+      // Назва та опис товару у другій колонці
+      if (cell.cellIndex === 1) {
+        const spans = cell.querySelectorAll('span');
+        if (spans.length >= 1) {
+          spans[0].style.fontWeight = '600';
+          spans[0].style.fontSize = '12px';
+          spans[0].style.display = 'block';
+          spans[0].style.marginBottom = '2px';
+        }
+        if (spans.length >= 2) {
+          spans[1].style.fontStyle = 'italic';
+          spans[1].style.fontSize = '10px';
+          spans[1].style.color = '#64748b';
+          spans[1].style.display = 'block';
+        }
+      }
+      
+      // Центрування (крім назви та підсумкового рядка)
+      if (cell.cellIndex !== 1 && !cell.hasAttribute('colspan')) {
+        cell.style.textAlign = 'center';
+      } else if (cell.hasAttribute('colspan')) {
+        cell.style.textAlign = 'right';
+        cell.style.paddingRight = '12px';
+      }
+    });
+
+    // Шапка таблиці
+    const tableHeaders = el.querySelectorAll('th');
+    tableHeaders.forEach((th: any) => {
+      th.style.backgroundColor = '#f8fafc';
+      th.style.color = '#64748b';
+      th.style.textTransform = 'uppercase';
+      th.style.fontSize = '10px';
+      th.style.letterSpacing = '0.05em';
+    });
+
+    if (tableHeaders.length >= 8) {
+      tableHeaders[0].style.width = '45px';  // # 
+      tableHeaders[1].style.width = 'auto';  // Назва
+      tableHeaders[2].style.width = '65px';  // Од.
+      tableHeaders[3].style.width = '85px';  // Кіл.
+      tableHeaders[6].style.width = '110px'; // Ціна
+      tableHeaders[7].style.width = '130px'; // Сума
+    }
+  }
+
+  // Summary labels alignment
+  const summaryLabels = el.querySelectorAll('span[class*="uppercase"]');
+  summaryLabels.forEach((label: any) => {
+    label.style.fontSize = '10px';
+    label.style.fontWeight = '700';
+    label.style.color = '#94a3b8';
+  });
 }
 
 function escapeHtml(text: string): string {

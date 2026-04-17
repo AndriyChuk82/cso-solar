@@ -172,12 +172,13 @@ export const createProposalSlice: StateCreator<
 
   updateItemCostPrice: (itemId: string, costPrice: number) => {
     const { proposal } = get();
-    const roundedCost = Math.round(costPrice * 100) / 100;
+    // Використовуємо більшу точність (4 знаки), щоб мінімізувати помилки конвертації
+    const roundedCost = Math.round(costPrice * 10000) / 10000;
     const updatedProposal = calculateProposalTotals({
       ...proposal,
       items: proposal.items.map(item => {
         if (item.id === itemId) {
-          const salePrice = Math.round(roundedCost * (1 + proposal.markup / 100) * 100) / 100;
+          const salePrice = Math.round(roundedCost * (1 + proposal.markup / 100) * 10000) / 10000;
           return {
             ...item,
             costPrice: roundedCost,
@@ -193,7 +194,7 @@ export const createProposalSlice: StateCreator<
 
   updateItemSalePrice: (itemId: string, salePrice: number) => {
     const { proposal } = get();
-    const roundedPrice = Math.round(salePrice * 100) / 100;
+    const roundedPrice = Math.round(salePrice * 10000) / 10000;
     const updatedProposal = calculateProposalTotals({
       ...proposal,
       items: proposal.items.map(item =>
@@ -321,7 +322,7 @@ export const createProposalSlice: StateCreator<
       ...proposal,
       items: proposal.items.map(item => {
         const salePrice = item.costPrice * (1 + proposal.markup / 100);
-        const roundedPrice = Math.round(salePrice * 100) / 100;
+        const roundedPrice = Math.round(salePrice * 10000) / 10000;
         return {
           ...item,
           price: roundedPrice,

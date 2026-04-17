@@ -145,12 +145,12 @@ export const ProposalItemRow = memo(function ProposalItemRow({
         />
       </td>
       <td className="px-1 py-1 text-center text-[11px] text-gray-600 dark:text-slate-400 cost-column bg-blue-50/30 dark:bg-blue-900/20">
-        {costTotal.toFixed(1)}
+        {costTotal.toFixed(2)}
       </td>
       <td className="px-1 py-1 bg-green-50/10 dark:bg-green-900/10">
         <input
           type="number"
-          value={isEditingPrice ? localPrice : item.displayPrice.toFixed(1)}
+          value={isEditingPrice ? localPrice : item.displayPrice.toFixed(2)}
           onFocus={() => setIsEditingPrice(true)}
           onChange={(e) => {
             setLocalPrice(e.target.value);
@@ -159,11 +159,11 @@ export const ProposalItemRow = memo(function ProposalItemRow({
           }}
           onBlur={() => setIsEditingPrice(false)}
           className="w-full px-1 py-0.5 text-[11px] border border-gray-200 dark:border-slate-700 rounded text-center bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:border-green-400 dark:focus:border-green-500 focus:ring-1 focus:ring-green-200 dark:focus:ring-green-900/40 transition-all font-medium"
-          step="0.1"
+          step="0.01"
         />
       </td>
       <td className="px-1 py-1 text-center font-bold text-[12px] text-gray-900 dark:text-slate-100 bg-green-50/30 dark:bg-green-900/20">
-        {saleTotal.toFixed(1)}
+        {saleTotal.toFixed(2)}
       </td>
       <td className="px-1 py-1 text-center no-print">
         <button
