@@ -288,7 +288,10 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
 
   const header = el.querySelector('.print-header') as HTMLElement;
   if (header) {
-    header.style.display = 'block';
+    header.style.setProperty('display', 'flex', 'important');
+    header.style.removeProperty('display'); // Remove inline 'display: none' from React
+    header.classList.remove('no-print');
+    
     const inner = header.querySelector('.print-logo-row') as HTMLElement;
     if (inner) {
       inner.style.display = 'flex';
@@ -341,6 +344,7 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
     const htmlNode = node as HTMLElement;
     if (showCost) {
       htmlNode.style.setProperty('display', 'table-row', 'important');
+      htmlNode.classList.remove('no-print');
       htmlNode.style.background = '#f8fafc';
     } else {
       htmlNode.style.setProperty('display', 'none', 'important');

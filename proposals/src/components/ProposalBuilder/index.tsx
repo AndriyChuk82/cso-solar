@@ -10,6 +10,7 @@ import {
 } from '../../store/selectors';
 import { useCurrencyConverter, useProposalCalculations } from '../../hooks/useCurrency';
 import { sendToTelegram, sendToViber } from '../../utils/messaging';
+import { SELLERS } from '../../config';
 
 import { ClientInfoForm } from './ClientInfoForm';
 import { SettingsPanel } from './SettingsPanel';
@@ -131,10 +132,10 @@ export function ProposalBuilderTable() {
           <div className="print-company">
             <p>Комерційна пропозиція</p>
             <div className="print-contact-info">
-              <div style={{ fontWeight: 600 }}>{proposal.seller?.fullName || ''}</div>
-              <div>{proposal.seller?.address || ''}</div>
-              <div>{proposal.seller?.office || ''}</div>
-              <div style={{ fontWeight: 600, color: '#f59e0b' }}>{proposal.seller?.phone || ''}</div>
+              <div style={{ fontWeight: 600 }}>{SELLERS[selectedSeller].fullName}</div>
+              <div>{SELLERS[selectedSeller].address}</div>
+              <div>{SELLERS[selectedSeller].office}</div>
+              <div style={{ fontWeight: 600, color: '#f59e0b' }}>{SELLERS[selectedSeller].phone}</div>
             </div>
           </div>
         </div>
