@@ -300,7 +300,6 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
       inner.style.justifyContent = 'space-between';
       inner.style.width = '100%';
       inner.style.alignItems = 'center';
-      inner.style.borderBottom = '2px solid #f59e0b';
       inner.style.paddingBottom = '16px';
       inner.style.marginBottom = '20px';
     }
@@ -323,7 +322,7 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
     }
     const logo = el.querySelector('.print-logo') as HTMLImageElement;
     if (logo) {
-      logo.style.height = '48px';
+      logo.style.height = '72px';
       logo.style.width = 'auto';
     }
   }

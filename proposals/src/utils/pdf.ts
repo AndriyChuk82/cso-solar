@@ -21,7 +21,7 @@ export async function exportToPDF(proposal: Proposal, returnBlob = false, showCo
   container.innerHTML = `
     <div style="font-family: Arial, sans-serif; color: #1F2937; padding: 40px 50px; background: #fff;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <img src="https://i.ibb.co/32JD4dc/logo.png" height="45">
+        <img src="https://i.ibb.co/32JD4dc/logo.png" height="70" class="print-logo">
         <div style="text-align: right;">
           <div style="color: ${accentColor}; font-weight: 800; font-size: 15px; letter-spacing: 0.5px; margin-bottom: 5px;">КОМЕРЦІЙНА ПРОПОЗИЦІЯ</div>
           <div style="font-size: 11px; color: #1F2937; line-height: 1.4;">
