@@ -366,17 +366,17 @@ export default function Journal() {
                             className="btn btn-ghost btn-sm"
                             onClick={(e) => { e.stopPropagation(); handleDelete(op.id); }}
                             title="Видалити"
-                            style={{ color: 'var(--danger)', padding: '4px 8px', border: '1px solid #ef444433', background: 'transparent', cursor: 'pointer', fontSize: '0.7rem', borderRadius: '4px' }}
+                            style={{ color: 'var(--danger)', padding: '6px 8px', border: '1px solid #ef444433', background: 'transparent', cursor: 'pointer', fontSize: '1rem', borderRadius: '6px' }}
                           >
-                            ВИДАЛИТИ
+                            🗑️
                           </button>
                           <button
-                            className="btn btn-primary"
+                            className="btn btn-primary btn-sm"
                             onClick={(e) => { e.stopPropagation(); handleOpenEdit(op); }}
                             title="Редагувати"
-                            style={{ background: 'var(--primary)', color: '#000', padding: '6px 12px', border: 'none', cursor: 'pointer', fontSize: '0.75rem', borderRadius: '4px', fontWeight: '800' }}
+                            style={{ background: 'var(--primary)', color: '#000', padding: '6px 8px', border: 'none', cursor: 'pointer', fontSize: '1rem', borderRadius: '6px' }}
                           >
-                            РЕДАГУВАТИ
+                            ✏️
                           </button>
                         </div>
                       </td>
