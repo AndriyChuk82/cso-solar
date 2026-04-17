@@ -1300,35 +1300,17 @@ function handleGetProposals() {
     for (let i = 1; i < data.length; i++) {
       try {
         const row = data[i];
-        let itemsData = [];
+        let itemsData = {};
         try {
-          itemsData = typeof row[9] === 'string' ? JSON.parse(row[9]) : (row[9] || []);
+          itemsData = typeof row[9] === 'string' ? JSON.parse(row[9]) : (row[9] || {});
         } catch (e) { console.warn("Error parsing items for row " + i); }
 
+        // Визначаємо структуру items (масив або об'єкт)
         let items = [];
-        let discountType = 'percentage';
-        let discountValue = 0;
-        let sellerId = 'fop_pastushok';
-        let currency = 'UAH';
-        let courseEUR = 0;
-        let subtotal = 0;
-        let vatMode = 'none';
-        let vatAmount = 0;
-
         if (Array.isArray(itemsData)) {
           items = itemsData;
-          // Розраховуємо subtotal якщо він не вказаний
-          subtotal = items.reduce((sum, item) => sum + (item.total || 0), 0);
-        } else if (itemsData && typeof itemsData === 'object') {
-          items = itemsData.items || [];
-          discountType = itemsData.discountType || 'percentage';
-          discountValue = itemsData.discountValue || 0;
-          sellerId = itemsData.sellerId || 'fop_pastushok';
-          currency = itemsData.currency || 'UAH';
-          courseEUR = itemsData.courseEUR || 0;
-          subtotal = itemsData.subtotal || items.reduce((sum, item) => sum + (item.total || 0), 0);
-          vatMode = itemsData.vatMode || 'none';
-          vatAmount = itemsData.vatAmount || 0;
+        } else if (itemsData && itemsData.items) {
+          items = itemsData.items;
         }
 
         // Мапінг статусів
@@ -1339,17 +1321,13 @@ function handleGetProposals() {
         if (status === 'Відхилено') status = 'rejected';
 
         // Валідація дати оновлення
-        let updatedAt = row[12];
-        if (!updatedAt || updatedAt === '') {
-          updatedAt = row[2] || new Date().toISOString(); 
-        }
+        let updatedAt = row[12] || row[2] || new Date().toISOString(); 
 
-        // Відновлюємо дані з JSON якщо в колонках нулі
+        // Відновлюємо дані з JSON якщо в колонках нулі (Recovery logic)
         const total = parseFloat(row[7]) || itemsData.total || itemsData.totalAmount || 0;
         const usdRate = parseFloat(row[5]) || itemsData.rates?.usdToUah || itemsData.courseUSD || 0;
         const eurRate = itemsData.rates?.eurToUah || itemsData.courseEUR || 0;
         const markup = parseFloat(row[6]) || itemsData.markup || 0;
-        const items = itemsData.items || [];
         const subtotal = itemsData.subtotal || items.reduce((sum, item) => sum + (item.total || 0), 0);
 
         proposals.push({
@@ -1369,13 +1347,13 @@ function handleGetProposals() {
           discountType: itemsData.discountType || 'percentage',
           discountValue: itemsData.discountValue || 0,
           sellerId: itemsData.sellerId || 'fop_pastushok',
-          currency: itemsData.currency || (total > 10000 ? 'UAH' : 'USD'), // Проста евристика якщо валюта не зберіглась
+          currency: itemsData.currency || (total > 10000 ? 'UAH' : 'USD'),
           subtotal: subtotal,
           vatMode: itemsData.vatMode || 'none',
           vatAmount: itemsData.vatAmount || 0,
           notes: row[10] || itemsData.notes || '',
           userEmail: row[11] || '',
-          updatedAt: row[12] || updatedAt,
+          updatedAt: updatedAt,
           createdAt: row[2] || updatedAt
         });
       } catch (parseErr) {
