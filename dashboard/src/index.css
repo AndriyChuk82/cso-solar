@@ -19,5 +19,5 @@ body {
 }
 
 .minimal-card {
-  @apply bg-white border border-slate-200 rounded-xl p-6 sm:p-8 transition-all duration-300 hover:border-amber-400 hover:shadow-xl hover:shadow-amber-500/5 group cursor-pointer flex flex-col items-center justify-center text-center;
+  @apply bg-white border border-slate-200 rounded-xl p-6 sm:p-8 transition-all duration-300 hover:border-amber-400 hover:shadow-xl cursor-pointer flex flex-col items-center justify-center text-center;
 }

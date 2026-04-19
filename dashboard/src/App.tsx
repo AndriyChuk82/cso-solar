@@ -197,7 +197,7 @@ export default function App() {
               <a
                 key={module.id}
                 href={module.path}
-                className="minimal-card group"
+                className="minimal-card group hover:shadow-amber-500/5"
               >
                 <div className={cn("p-4 rounded-2xl bg-slate-50 mb-6 transition-colors group-hover:bg-white", module.color)}>
                   <module.icon className="w-10 h-10" />
