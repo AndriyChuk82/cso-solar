@@ -69,30 +69,41 @@ export function Layout({ children }) {
 
             <div className="flex items-center gap-3">
               <nav className="hidden md:flex items-center gap-1.5">
-                <a
-                  href="/warehouse/"
-                  className="px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
-                >
-                  📦 Склад
-                </a>
-                <a
-                  href="/proposals/"
-                  className="px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
-                >
-                  📄 КП
-                </a>
-                <a
-                  href="/projects/"
-                  className="px-2.5 py-1.5 text-xs font-medium text-primary bg-primary/10 dark:bg-primary/20 rounded-md"
-                >
-                  📊 Проєкти
-                </a>
-                <a
-                  href="/green-tariff/"
-                  className="px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
-                >
-                  🌱 Зелений тариф
-                </a>
+                {(user?.isAdmin || user?.module_access?.includes('proposals') || user?.module_access?.includes('кп') || user?.module_access?.includes('комперційні')) && (
+                  <a
+                    href="/proposals/"
+                    className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
+                  >
+                    📄 КП
+                  </a>
+                )}
+
+                {(user?.isAdmin || user?.module_access?.includes('warehouse') || user?.module_access?.includes('склад')) && (
+                  <a
+                    href="/warehouse/"
+                    className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
+                  >
+                    📦 Склад
+                  </a>
+                )}
+                
+                {(user?.isAdmin || user?.module_access?.includes('projects') || user?.module_access?.includes('проєкти') || user?.module_access?.includes('проекти')) && (
+                  <a
+                    href="/projects/"
+                    className="px-3 py-2 text-sm font-medium text-primary bg-primary/10 dark:bg-primary/20 rounded-md"
+                  >
+                    📊 Проєкти
+                  </a>
+                )}
+                
+                {(user?.isAdmin || user?.module_access?.includes('gt') || user?.module_access?.includes('зелений тариф') || user?.module_access?.includes('зт')) && (
+                  <a
+                    href="/green-tariff/"
+                    className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
+                  >
+                    🌱 Зелений тариф
+                  </a>
+                )}
               </nav>
 
               <div className="flex items-center gap-2 border-l border-gray-200 dark:border-neutral-700 pl-3">

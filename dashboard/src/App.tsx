@@ -94,12 +94,23 @@ export default function App() {
         };
 
         const isAdmin = role === 'admin' || role === 'адмін' || role === 'адміністратор';
+        
+        // Покращена перевірка: якщо не адмін і нема рядка доступу — доступу 0
         const allowedModules = isAdmin 
           ? MODULES.map(m => m.id)
           : MODULES.filter(m => {
+              if (!accessStr) return false;
               const keywords = moduleMapping[m.permKey] || [m.permKey];
               return keywords.some(k => accessStr.includes(k));
             }).map(m => m.id);
+
+        // Якщо доступу взагалі немає і не адмін — на логін
+        if (allowedModules.length === 0 && !isAdmin) {
+          console.warn('No modules allowed for user:', data.user);
+          // Можна вивести повідомлення замість редіректу, але для безпеки краще на логін
+          window.location.href = '/login.html';
+          return;
+        }
 
         // Auto-redirect if only one module is allowed
         if (allowedModules.length === 1) {
@@ -132,7 +143,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center bg-white min-h-screen">
         <div className="w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -145,9 +156,9 @@ export default function App() {
       {/* Header */}
       <header className="bg-white border-b border-slate-200 py-4 px-6 fixed top-0 left-0 right-0 z-10">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/favicon.ico" alt="CSO Solar" className="w-8 h-8" />
-            <span className="font-bold text-slate-800 tracking-tight">CSO SOLAR</span>
+          <div className="flex items-center gap-3">
+            <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" className="h-9" />
+            <span className="font-bold text-slate-800 tracking-tight text-lg">CSO SOLAR</span>
           </div>
           
           <div className="flex items-center gap-6">
