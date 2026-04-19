@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { 
-  Calculator, 
-  Warehouse, 
-  LayoutGrid, 
+  FileText, 
+  Package, 
+  Layout, 
   Zap, 
   LogOut, 
   User,
@@ -20,7 +20,7 @@ interface ModuleInfo {
   name: string;
   description: string;
   path: string;
-  icon: any;
+  icon: React.ElementType;
   permKey: string;
   color: string;
 }
@@ -31,7 +31,7 @@ const MODULES: ModuleInfo[] = [
     name: 'Комерційні пропозиції',
     description: 'Створення та керування пропозиціями для клієнтів',
     path: '/proposals',
-    icon: Calculator,
+    icon: FileText,
     permKey: 'proposals',
     color: 'text-amber-500'
   },
@@ -40,7 +40,7 @@ const MODULES: ModuleInfo[] = [
     name: 'Склад',
     description: 'Облік обладнання та товарних запасів',
     path: '/warehouse',
-    icon: Warehouse,
+    icon: Package,
     permKey: 'warehouse',
     color: 'text-blue-500'
   },
@@ -49,7 +49,7 @@ const MODULES: ModuleInfo[] = [
     name: 'Проєкти',
     description: 'Керування активними об’єктами та монтажами',
     path: '/projects',
-    icon: LayoutGrid,
+    icon: Layout,
     permKey: 'projects',
     color: 'text-indigo-500'
   },
