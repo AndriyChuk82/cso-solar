@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { Home } from 'lucide-react';
 import { SettingsButton } from './Settings';
 import { HistoryButton } from './History';
 import { ThemeToggle } from './ThemeToggle';
@@ -14,11 +15,13 @@ export function Layout({ children }: LayoutProps) {
         <div className="max-w-[100%] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <img
-                src="https://i.ibb.co/32JD4dc/logo.png"
-                alt="CSO Solar"
-                className="h-10"
-              />
+              <a href="/dashboard/" className="hover:opacity-80 transition-opacity">
+                <img
+                  src="https://i.ibb.co/32JD4dc/logo.png"
+                  alt="CSO Solar"
+                  className="h-10"
+                />
+              </a>
               <div>
                 <div className="text-lg font-bold text-gray-900 dark:text-white">CSO Solar</div>
                 <div className="text-xs text-gray-500 dark:text-neutral-400">Комерційні пропозиції</div>
@@ -27,6 +30,13 @@ export function Layout({ children }: LayoutProps) {
 
             <div className="flex items-center gap-4">
               <nav className="flex items-center gap-2">
+                <a
+                  href="/dashboard/"
+                  className="p-2 text-gray-500 hover:text-primary transition-colors mr-2"
+                  title="Головна панель"
+                >
+                  <Home className="w-5 h-5" />
+                </a>
                 <a
                   href="/warehouse/"
                   className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"

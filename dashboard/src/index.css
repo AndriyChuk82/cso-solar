@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #f59e0b;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 font-sans antialiased overflow-x-hidden;
+  margin: 0;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.minimal-card {
+  @apply bg-white border border-slate-200 rounded-xl p-6 sm:p-8 transition-all duration-300 hover:border-amber-400 hover:shadow-xl hover:shadow-amber-500/5 group cursor-pointer flex flex-col items-center justify-center text-center;
+}

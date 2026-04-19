@@ -5,7 +5,7 @@ const PUBLIC_PATHS = ['/login.html', '/login.css', '/api/login', '/favicon.ico',
 
 export const config = {
     // Запускаємо middleware для всіх шляхів, крім внутрішніх верифікацій Vercel
-    matcher: ['/((?!_next/static|_next/image|dashboard|settings).*)']
+    matcher: ['/((?!_next/static|_next/image|settings).*)']
 };
 
 function getCookieValue(request, name) {

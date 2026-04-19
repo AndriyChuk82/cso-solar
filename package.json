@@ -8,7 +8,8 @@
     "warehouse",
     "projects",
     "proposals",
-    "green-tariff"
+    "green-tariff",
+    "dashboard"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
