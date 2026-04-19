@@ -72,9 +72,9 @@ export interface ProposalStore {
   updateProposalField: (field: keyof Proposal, value: any) => void;
 }
 
-const createEmptyProposal = (settings?: Settings): Proposal => ({
+const createEmptyProposal = (settings?: Settings, history: Proposal[] = []): Proposal => ({
   id: generateId(),
-  number: getNextProposalNumber(),
+  number: getNextProposalNumber(history),
   date: new Date().toISOString().split('T')[0],
   clientName: '',
   clientPhone: '',
@@ -102,12 +102,29 @@ function generateId(): string {
   return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-function getNextProposalNumber(): string {
+function getNextProposalNumber(history: Proposal[] = []): string {
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, '0');
   const day = String(today.getDate()).padStart(2, '0');
-  return `КП-${year}${month}${day}-001`;
+  const datePrefix = `${year}${month}${day}`;
+  const prefix = `КП-${datePrefix}`;
+
+  // Шукаємо всі КП за сьогодні
+  const todaysProposals = history.filter(p => p.number.startsWith(prefix));
+  
+  if (todaysProposals.length === 0) {
+    return `${prefix}-001`;
+  }
+
+  // Знаходимо максимальний номер
+  const numbers = todaysProposals.map(p => {
+    const parts = p.number.split('-');
+    return parseInt(parts[parts.length - 1], 10) || 0;
+  });
+
+  const nextNumber = Math.max(...numbers) + 1;
+  return `${prefix}-${String(nextNumber).padStart(3, '0')}`;
 }
 
 function calculateProposalTotals(proposal: Proposal): Proposal {
@@ -155,7 +172,7 @@ export const useProposalStore = create<ProposalStore>()(
       // Initial State
       products: [],
       categories: [],
-      proposal: createEmptyProposal(),
+      proposal: createEmptyProposal(undefined, []),
       settings: {
         defaultMarkup: CONFIG.DEFAULT_MARKUP,
         usdRate: CONFIG.DEFAULT_USD_UAH,
@@ -486,7 +503,7 @@ export const useProposalStore = create<ProposalStore>()(
       },
 
       clearProposal: () => {
-        set({ proposal: createEmptyProposal(get().settings) });
+        set({ proposal: createEmptyProposal(get().settings, get().history) });
       },
 
       saveProposal: async () => {

@@ -138,7 +138,7 @@ export function ProposalBuilderTable() {
               marginBottom: '4px',
               letterSpacing: '0.025em'
             }}>
-              Комерційна пропозиція
+              Комерційна пропозиція №{proposal.number}
             </p>
             <div className="print-contact-info" style={{ color: '#475569', fontSize: '11px' }}>
               <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '13px', marginBottom: '2px' }}>
