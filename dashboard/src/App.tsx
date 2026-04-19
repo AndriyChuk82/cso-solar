@@ -69,30 +69,22 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const parseUser = () => {
+    const fetchUser = async () => {
       try {
-        const cookies = document.cookie.split(';').reduce((acc: any, cookie) => {
-          const [key, value] = cookie.trim().split('=');
-          acc[key] = value;
-          return acc;
-        }, {});
-
-        const token = cookies['cso_auth_token'];
-        if (!token) {
+        const response = await fetch('/api/verify');
+        if (!response.ok) {
           window.location.href = '/login.html';
           return;
         }
 
-        // Parse JWT payload without verification (already verified by middleware)
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
+        const data = await response.json();
+        if (!data.authenticated) {
+          window.location.href = '/login.html';
+          return;
+        }
 
-        const payload = JSON.parse(jsonPayload);
-        const role = (payload.role || 'user').toLowerCase();
-        const accessStr = (payload.module_access || '').toLowerCase();
+        const role = (data.role || 'user').toLowerCase();
+        const accessStr = (data.module_access || '').toLowerCase();
         
         const moduleMapping: Record<string, string[]> = {
           'proposals': ['proposals', 'кп', 'комперційні'],
@@ -119,7 +111,7 @@ export default function App() {
         }
 
         setUser({
-          name: payload.name || payload.email || 'Користувач',
+          name: data.name || data.user || 'Користувач',
           role: role,
           access: allowedModules
         });
@@ -131,12 +123,11 @@ export default function App() {
       }
     };
 
-    parseUser();
+    fetchUser();
   }, []);
 
   const handleLogout = () => {
-    document.cookie = 'cso_auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT;';
-    window.location.href = '/login.html';
+    window.location.href = '/api/logout';
   };
 
   if (loading) {
