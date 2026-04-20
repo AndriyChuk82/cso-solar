@@ -201,16 +201,24 @@ export async function fetchAllData() {
             priceObj = { value: finalPrice, currency: parsedPrice.currency || 'USD' };
 
             // Перевірка наявності для панелей (Стовпець J / index 9)
-            const availability = p.raw && p.raw[9] ? sanitizeString(p.raw[9]) : '';
-            if (availability.toLowerCase().includes('закінчилися')) {
-              p.inStock = false;
+            const rawAvailability = p.raw && p.raw[9] ? p.raw[9] : '';
+            let availability = '';
+            
+            // Якщо це об'єкт дати від Google
+            if (rawAvailability instanceof Date) {
+              availability = rawAvailability.toLocaleDateString('uk-UA');
             } else {
-              // Шукаємо дату у форматі ДД/ММ/РРРР або ДД.ММ.РРРР
-              const dateMatch = availability.match(/(\d{1,2}[\/.]\d{1,2}[\/.]\d{2,4})/);
-              if (dateMatch) {
-                p.inStock = false;
-                p.availabilityDate = dateMatch[0];
-              }
+              availability = sanitizeString(rawAvailability);
+            }
+
+            // Шукаємо дату у форматі ДД/ММ/РРРР, ДД.ММ.РРРР або ДД-ММ-РРРР
+            const dateMatch = availability.match(/(\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{2,4})/);
+            
+            if (dateMatch) {
+              p.inStock = false;
+              p.availabilityDate = dateMatch[0];
+            } else if (availability.toLowerCase().includes('закінчилися') || availability.toLowerCase().includes('нема')) {
+              p.inStock = false;
             }
           } 
           else {
