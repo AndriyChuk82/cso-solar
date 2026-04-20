@@ -121,6 +121,10 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
     const subCatPref = stationType === 'ongrid' ? 'Мережевий' : 'Гібридний';
 
     const sorted = [...allInverters].sort((a, b) => {
+      // Out of stock items always go to the end
+      if (a.inStock !== false && b.inStock === false) return -1;
+      if (a.inStock === false && b.inStock !== false) return 1;
+
       if (recommendedInverter && a.id === recommendedInverter.id) return -1;
       if (recommendedInverter && b.id === recommendedInverter.id) return 1;
 
@@ -183,6 +187,10 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
       if (isInverterHV) return t.includes('hv') || t.includes('bos');
       return t.includes('lv') || t.includes('m6.1') || t.includes('g5.1') || t.includes('pro-b') || t.includes('pro-c');
     }).sort((a, b) => {
+      // Out of stock items always go to the end
+      if (a.inStock !== false && b.inStock === false) return -1;
+      if (a.inStock === false && b.inStock !== false) return 1;
+
       const tA = a.name.toLowerCase();
       const tB = b.name.toLowerCase();
       
@@ -596,8 +604,10 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
                   <option value="">Не знайдено інверторів</option>
                 )}
                 {sortedInverters.inverters.map((inv) => (
-                  <option key={inv.id} value={inv.id}>
-                    {sortedInverters.recommended?.id === inv.id ? '✅ ' : ''}{inv.name}
+                  <option key={inv.id} value={inv.id} className={inv.inStock === false ? 'text-gray-400' : ''}>
+                    {sortedInverters.recommended?.id === inv.id ? '✅ ' : ''}
+                    {inv.name}
+                    {inv.inStock === false ? ' (НЕМАЄ В НАЯВНОСТІ)' : ''}
                   </option>
                 ))}
               </select>
@@ -618,8 +628,10 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
                   <option value="">Не знайдено панелей</option>
                 )}
                 {sortedPanels.panels.map((panel) => (
-                  <option key={panel.id} value={panel.id}>
-                    {sortedPanels.recommended?.id === panel.id ? '✅ ' : ''}{panel.name}
+                  <option key={panel.id} value={panel.id} className={panel.inStock === false ? 'text-gray-400' : ''}>
+                    {sortedPanels.recommended?.id === panel.id ? '✅ ' : ''}
+                    {panel.name}
+                    {panel.inStock === false ? ' (НЕМАЄ В НАЯВНОСТІ)' : ''}
                   </option>
                 ))}
               </select>
@@ -641,8 +653,10 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
                     <option value="">Не знайдено АКБ</option>
                   )}
                   {filteredBatteries.batteries.map((bat) => (
-                    <option key={bat.id} value={bat.id}>
-                      {filteredBatteries.batteries[0]?.id === bat.id ? '✅ ' : ''}{bat.name}
+                    <option key={bat.id} value={bat.id} className={bat.inStock === false ? 'text-gray-400' : ''}>
+                      {filteredBatteries.batteries[0]?.id === bat.id ? '✅ ' : ''}
+                      {bat.name}
+                      {bat.inStock === false ? ' (НЕМАЄ В НАЯВНОСТІ)' : ''}
                     </option>
                   ))}
                 </select>

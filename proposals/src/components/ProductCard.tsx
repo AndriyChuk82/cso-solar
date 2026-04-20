@@ -138,6 +138,13 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
               {product.description}
             </p>
           )}
+          {product.inStock === false && (
+            <div className="mt-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-600 uppercase tracking-tight border border-red-200">
+                Нема в наявності
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Action Group: Price, Star, Plus */}

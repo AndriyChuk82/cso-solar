@@ -154,6 +154,12 @@ export async function fetchAllData() {
             
             name = exactName && exactName !== 'Фото' ? exactName : `Інвертор ${powerKW} kW`;
             desc = specs || (powerKW ? `Потужність: ${powerKW} kW` : '');
+
+            // Стовпець H (index 7) - Наявність
+            const availability = p.raw && p.raw[7] ? sanitizeString(p.raw[7]) : '';
+            if (availability.toLowerCase().includes('нема') || availability.toLowerCase().includes('відсутн')) {
+              p.inStock = false;
+            }
           } 
           else if (mainCat === 'АКБ та BMS') {
             // Для АКБ col0 - це завжди назва
@@ -197,7 +203,8 @@ export async function fetchAllData() {
           return {
             id: generateStableId(mainCat + name + priceObj.value),
             name, description: desc, price: priceObj.value, currency: priceObj.currency,
-            unit: 'шт', mainCategory: mainCat, category: sanitizeString(p.category) || mainCat, inStock: true
+            unit: 'шт', mainCategory: mainCat, category: sanitizeString(p.category) || mainCat, 
+            inStock: p.inStock !== undefined ? p.inStock : true
           };
         }).filter((p: any) => p.name.length > 2 && p.name !== 'Фото' && p.price > 0);
 
