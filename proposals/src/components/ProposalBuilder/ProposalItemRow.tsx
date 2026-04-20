@@ -92,7 +92,7 @@ export const ProposalItemRow = memo(function ProposalItemRow({
             type="text"
             value={item.description || ''}
             onChange={(e) => onUpdateField(item.id, 'description', e.target.value)}
-            className="w-full px-1 py-0.5 text-[0.7rem] border border-transparent focus:border-primary/30 dark:focus:border-blue-500/30 focus:ring-0 rounded bg-transparent text-[#94a3b8] dark:text-[#94a3b8] italic transition-all"
+            className="w-full px-1 py-0.5 text-[0.7rem] border border-transparent focus:border-primary/30 dark:focus:border-blue-500/30 focus:ring-0 rounded bg-transparent text-[#94a3b8] dark:text-[#94a3b8] italic transition-all item-description-input"
             placeholder="Опис (опціонально)"
           />
         </div>
