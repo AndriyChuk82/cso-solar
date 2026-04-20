@@ -101,7 +101,7 @@ function parseGvizJson(response, categoryName, mainCat) {
          const low = model.toLowerCase();
          if (!low.includes('deye') && !low.includes('solis') && !low.includes('huawei') && !low.includes('solax')) continue;
          
-         // Column H (index 7) - Availability comments
+         // Column H (index 7) - Availability comments for Inverters
          const availability = getVal(7);
          if (availability.toLowerCase().includes('нема') || availability.toLowerCase().includes('відсутн')) {
            inStock = false;

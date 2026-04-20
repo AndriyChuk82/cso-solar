@@ -171,6 +171,12 @@ export async function fetchAllData() {
             const capacity = col4; // 100
             const voltage = col5; // 51.2
             desc = `Технологія: ${tech}, Ємність: ${capacity}Ah, Напруга: ${voltage}V`;
+
+            // Стовпець K (col9 -> index 9) - Наявність для АКБ
+            const availability = p.raw && p.raw[9] ? sanitizeString(p.raw[9]) : '';
+            if (availability.toLowerCase().includes('закінчились')) {
+              p.inStock = false;
+            }
           } 
           else if (mainCat === 'Сонячні батареї') {
             const match = exactName.match(/\d+(?=\s*Вт|\s*W)/i) || exactName.match(/\d{3}/);
