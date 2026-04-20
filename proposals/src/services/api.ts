@@ -172,9 +172,10 @@ export async function fetchAllData() {
             const voltage = col5; // 51.2
             desc = `Технологія: ${tech}, Ємність: ${capacity}Ah, Напруга: ${voltage}V`;
 
-            // Стовпець K (col9 -> index 9) - Наявність для АКБ
-            const availability = p.raw && p.raw[9] ? sanitizeString(p.raw[9]) : '';
-            if (availability.toLowerCase().includes('закінчились')) {
+            // Стовпець K (index 10) - Наявність для АКБ
+            const availability = p.raw && p.raw[10] ? sanitizeString(p.raw[10]) : '';
+            
+            if (availability.toLowerCase().includes('закінчились') || availability.toLowerCase().includes('нема')) {
               p.inStock = false;
             }
           } 
