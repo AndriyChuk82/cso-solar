@@ -24,7 +24,7 @@ export const CONFIG = {
   DEFAULT_USD_UAH: 41.50,
   DEFAULT_EUR_UAH: 51.00,
 
-  CACHE_VERSION: 'v54',
+  CACHE_VERSION: 'v55',
 
   GAS_URL: import.meta.env.VITE_GAS_URL || 'https://script.google.com/macros/s/AKfycbyvYNoyGINAtWlbExzONJWoReE8OC3_-FhOase5pHkCZ_PdCLXuMQqXqMYBWLzaNX-s/exec',
 

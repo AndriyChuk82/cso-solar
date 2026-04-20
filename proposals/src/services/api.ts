@@ -216,12 +216,18 @@ export async function fetchAllData() {
             }
 
             // Шукаємо дату у форматі ДД/ММ/РРРР, ДД.ММ.РРРР або ДД-ММ-РРРР
-            const dateMatch = availability.match(/(\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{2,4})/);
+            const dateMatch = availability.match(/(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);
             
             if (dateMatch) {
               p.inStock = false;
-              // Замінюємо всі роздільники на / для уніфікації
-              p.availabilityDate = dateMatch[0].replace(/[.\-]/g, '/');
+              let day = dateMatch[1].padStart(2, '0');
+              let month = dateMatch[2].padStart(2, '0');
+              let year = dateMatch[3];
+              
+              // Якщо рік 2 цифри - робимо 4
+              if (year.length === 2) year = '20' + year;
+              
+              p.availabilityDate = `${day}/${month}/${year}`;
             } else if (availability.toLowerCase().includes('закінчилися') || availability.toLowerCase().includes('нема')) {
               p.inStock = false;
             }
