@@ -218,7 +218,23 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
                 fontSize: '0.85rem', color: 'var(--text)'
               }}
             >
-              <div style={{ fontWeight: 600, color: 'var(--text)' }}>{p.name} <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 800 }}>КП</span></div>
+              <div style={{ fontWeight: 600, color: 'var(--text)' }}>
+                {p.name} 
+                <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 800, marginLeft: '4px' }}>КП</span>
+                {p.inStock === false && (
+                  <span style={{ 
+                    fontSize: '0.65rem', 
+                    background: 'var(--danger)', 
+                    color: 'white', 
+                    padding: '2px 6px', 
+                    borderRadius: '4px', 
+                    marginLeft: '8px',
+                    fontWeight: 700
+                  }}>
+                    НЕМА В НАЯВНОСТІ
+                  </span>
+                )}
+              </div>
               <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{p.category}</div>
             </div>
           ))}

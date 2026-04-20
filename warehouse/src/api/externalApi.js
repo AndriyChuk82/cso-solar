@@ -96,9 +96,16 @@ function parseGvizJson(response, categoryName, mainCat) {
     
     if (model && model.toLowerCase() !== 'модель' && model.length > 2) {
       // Filter brands like in CP app for Inverters
+      let inStock = true;
       if (mainCat === 'Інвертори') {
          const low = model.toLowerCase();
          if (!low.includes('deye') && !low.includes('solis') && !low.includes('huawei') && !low.includes('solax')) continue;
+         
+         // Column H (index 7) - Availability comments
+         const availability = getVal(7);
+         if (availability.toLowerCase().includes('нема') || availability.toLowerCase().includes('відсутн')) {
+           inStock = false;
+         }
       }
 
       products.push({
@@ -106,7 +113,8 @@ function parseGvizJson(response, categoryName, mainCat) {
         article: '',
         unit: unit,
         category: `КП - ${fallbackCategory}`,
-        isExternal: true
+        isExternal: true,
+        inStock: inStock
       });
     }
   }
