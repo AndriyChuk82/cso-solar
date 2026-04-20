@@ -224,14 +224,17 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
                 {p.inStock === false && (
                   <span style={{ 
                     fontSize: '0.65rem', 
-                    background: 'var(--danger)', 
-                    color: 'white', 
+                    background: 'var(--expense-bg)', 
+                    color: 'var(--expense)', 
                     padding: '2px 6px', 
                     borderRadius: '4px', 
                     marginLeft: '8px',
-                    fontWeight: 700
+                    fontWeight: 900,
+                    border: '1px solid var(--expense-border)',
+                    textTransform: 'uppercase',
+                    boxShadow: '0 0 12px rgba(248, 113, 113, 0.15)'
                   }}>
-                    НЕМА В НАЯВНОСТІ
+                    Нема в наявності
                   </span>
                 )}
               </div>

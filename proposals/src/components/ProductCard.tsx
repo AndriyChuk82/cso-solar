@@ -140,7 +140,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
           )}
           {product.inStock === false && (
             <div className="mt-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-600 uppercase tracking-tight border border-red-200">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-red-50 text-red-600 dark:bg-red-950/80 dark:text-red-400 uppercase tracking-tight border border-red-200 dark:border-red-600/50 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
                 Нема в наявності
               </span>
             </div>
