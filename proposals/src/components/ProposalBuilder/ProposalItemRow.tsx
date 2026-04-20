@@ -80,20 +80,22 @@ export const ProposalItemRow = memo(function ProposalItemRow({
         </span>
       </td>
       <td className="px-1 py-1">
-        <input
-          type="text"
-          value={item.name ?? item.product.name}
-          onChange={(e) => onUpdateField(item.id, 'name', e.target.value)}
-          className="w-full px-1.5 py-0.5 text-[0.88rem] border border-transparent hover:border-gray-200 dark:hover:border-slate-700 focus:border-primary dark:focus:border-blue-500 focus:ring-0 rounded bg-transparent font-medium dark:text-slate-100 transition-all"
-          placeholder="Назва"
-        />
-        <input
-          type="text"
-          value={item.description || ''}
-          onChange={(e) => onUpdateField(item.id, 'description', e.target.value)}
-          className="w-full px-1.5 py-0.5 text-[0.7rem] border border-transparent hover:border-gray-200 dark:hover:border-slate-700 focus:border-primary dark:focus:border-blue-500 focus:ring-0 rounded bg-transparent text-[#94a3b8] dark:text-slate-500 italic transition-all"
-          placeholder="Опис (опціонально)"
-        />
+        <div className="flex flex-col gap-0.5 p-1 rounded-md border border-gray-200 dark:border-white/10 hover:border-primary/30 dark:hover:border-white/30 transition-all bg-white/5 dark:bg-slate-900/10">
+          <input
+            type="text"
+            value={item.name ?? item.product.name}
+            onChange={(e) => onUpdateField(item.id, 'name', e.target.value)}
+            className="w-full px-1 py-0.5 text-[0.88rem] border border-transparent focus:border-primary/30 dark:focus:border-blue-500/30 focus:ring-0 rounded bg-transparent font-medium dark:text-slate-100 transition-all"
+            placeholder="Назва"
+          />
+          <input
+            type="text"
+            value={item.description || ''}
+            onChange={(e) => onUpdateField(item.id, 'description', e.target.value)}
+            className="w-full px-1 py-0.5 text-[0.7rem] border border-transparent focus:border-primary/30 dark:focus:border-blue-500/30 focus:ring-0 rounded bg-transparent text-[#94a3b8] dark:text-[#94a3b8] italic transition-all"
+            placeholder="Опис (опціонально)"
+          />
+        </div>
       </td>
       <td className="px-1 py-1 text-center">
         <input
