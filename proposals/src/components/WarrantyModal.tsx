@@ -80,17 +80,23 @@ export function WarrantyModal({ isOpen, onClose, proposal, onPrint, onComplete }
     }));
   };
 
-  const handlePrint = () => {
+    const handlePrint = () => {
     const itemsData = items
       .filter(item => selectedItems.includes(item.id))
-      .map(item => ({
-        ...item,
-        selected: true,
-        editedName: editedItems[item.id]?.name,
-        editedQuantity: editedItems[item.id]?.quantity,
-        serialNumber: editedItems[item.id]?.serialNumber,
-        warrantyPeriod: editedItems[item.id]?.warrantyPeriod,
-      }));
+      .map(item => {
+        const isLabor = (item.name || item.product.name).toLowerCase().includes('роботи') || 
+                        (item.name || item.product.name).toLowerCase().includes('монтаж');
+        const defaultWarranty = isLabor ? '12 місяців' : '5 років';
+        
+        return {
+          ...item,
+          selected: true,
+          editedName: editedItems[item.id]?.name,
+          editedQuantity: editedItems[item.id]?.quantity,
+          serialNumber: editedItems[item.id]?.serialNumber,
+          warrantyPeriod: editedItems[item.id]?.warrantyPeriod ?? item.product.warranty ?? defaultWarranty,
+        };
+      });
 
     const data: WarrantyData = {
       selectedItems: itemsData,
@@ -302,13 +308,20 @@ export function WarrantyModal({ isOpen, onClose, proposal, onPrint, onComplete }
                           />
                         </td>
                         <td className="px-2 py-1.5">
-                          <input
-                            type="text"
-                            value={warrantyPeriod ?? item.product.warranty ?? '5 років'}
-                            onChange={(e) => updateItemField(item.id, 'warrantyPeriod', e.target.value)}
-                            disabled={!isSelected}
-                            className="w-full px-1.5 py-0.5 text-[11px] border border-gray-200 rounded focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
-                          />
+                          {(() => {
+                            const isLabor = (item.name || item.product.name).toLowerCase().includes('роботи') || 
+                                            (item.name || item.product.name).toLowerCase().includes('монтаж');
+                            const defaultWarranty = isLabor ? '12 місяців' : '5 років';
+                            return (
+                              <input
+                                type="text"
+                                value={warrantyPeriod ?? item.product.warranty ?? defaultWarranty}
+                                onChange={(e) => updateItemField(item.id, 'warrantyPeriod', e.target.value)}
+                                disabled={!isSelected}
+                                className="w-full px-1.5 py-0.5 text-[11px] border border-gray-200 rounded focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
+                              />
+                            );
+                          })()}
                         </td>
                         <td className="px-2 py-1.5 text-center">
                           <button

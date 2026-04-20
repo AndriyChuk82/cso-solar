@@ -543,7 +543,7 @@ function generateWarrantyHTMLWithData(proposal: Proposal, data: WarrantyData): s
       <td style="text-align: left;">${item.editedName || item.name || item.product.name}</td>
       <td>${item.editedQuantity || item.quantity}</td>
       <td style="word-break: break-all;">${item.serialNumber || ''}</td>
-      <td>${item.warrantyPeriod || '12 міс.'}</td>
+      <td>${item.warrantyPeriod || ''}</td>
     </tr>
   `).join('');
 
