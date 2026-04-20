@@ -206,7 +206,11 @@ export async function fetchAllData() {
             
             // Якщо це об'єкт дати від Google
             if (rawAvailability instanceof Date) {
-              availability = rawAvailability.toLocaleDateString('uk-UA');
+              const d = rawAvailability;
+              const day = String(d.getDate()).padStart(2, '0');
+              const month = String(d.getMonth() + 1).padStart(2, '0');
+              const year = d.getFullYear();
+              availability = `${day}/${month}/${year}`;
             } else {
               availability = sanitizeString(rawAvailability);
             }
@@ -216,7 +220,8 @@ export async function fetchAllData() {
             
             if (dateMatch) {
               p.inStock = false;
-              p.availabilityDate = dateMatch[0];
+              // Замінюємо всі роздільники на / для уніфікації
+              p.availabilityDate = dateMatch[0].replace(/[.\-]/g, '/');
             } else if (availability.toLowerCase().includes('закінчилися') || availability.toLowerCase().includes('нема')) {
               p.inStock = false;
             }
