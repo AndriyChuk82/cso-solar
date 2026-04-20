@@ -199,6 +199,19 @@ export async function fetchAllData() {
             }
 
             priceObj = { value: finalPrice, currency: parsedPrice.currency || 'USD' };
+
+            // Перевірка наявності для панелей (Стовпець J / index 9)
+            const availability = p.raw && p.raw[9] ? sanitizeString(p.raw[9]) : '';
+            if (availability.toLowerCase().includes('закінчилися')) {
+              p.inStock = false;
+            } else {
+              // Шукаємо дату у форматі ДД/ММ/РРРР або ДД.ММ.РРРР
+              const dateMatch = availability.match(/(\d{1,2}[\/.]\d{1,2}[\/.]\d{2,4})/);
+              if (dateMatch) {
+                p.inStock = false;
+                p.availabilityDate = dateMatch[0];
+              }
+            }
           } 
           else {
             name = col1;
@@ -211,7 +224,8 @@ export async function fetchAllData() {
             id: generateStableId(mainCat + name + priceObj.value),
             name, description: desc, price: priceObj.value, currency: priceObj.currency,
             unit: 'шт', mainCategory: mainCat, category: sanitizeString(p.category) || mainCat, 
-            inStock: p.inStock !== undefined ? p.inStock : true
+            inStock: p.inStock !== undefined ? p.inStock : true,
+            availabilityDate: p.availabilityDate
           };
         }).filter((p: any) => p.name.length > 2 && p.name !== 'Фото' && p.price > 0);
 

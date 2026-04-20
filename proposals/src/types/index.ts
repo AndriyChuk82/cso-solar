@@ -19,6 +19,7 @@ export interface Product {
   priceUah?: number; // Ціна в гривнях
   isCustom?: boolean; // Чи це власний матеріал (з можливістю редагування ціни)
   updatedAt?: string; // Дата останнього оновлення
+  availabilityDate?: string; // Дата очікування (для панелей)
 }
 
 export interface ProposalItem {

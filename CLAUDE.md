@@ -13,6 +13,11 @@
 | **Backend** | `/api` | - | `npx vercel dev` |
 | **Monorepo** | `/` | `npm run build` | - |
 
+## Environment & Commands
+- **OS**: Windows (PowerShell/CMD)
+- **Terminal Rule**: ALWAYS use `cmd /c` for running commands (e.g., `cmd /c npm run dev`) to ensure proper exit and prevent hanging.
+- **Node**: Use `npm` for package management.
+
 ## 🛠️ Технології
 - **Frontend**: React, TypeScript, Zustand (у `/projects`), Vanilla JS (у `/proposals`), Tailwind CSS
 - **Backend**: Vercel Serverless Functions (Node.js) у `/api`, Middleware на Edge

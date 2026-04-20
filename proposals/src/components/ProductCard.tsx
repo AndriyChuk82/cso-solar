@@ -140,8 +140,12 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
           )}
           {product.inStock === false && (
             <div className="mt-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-red-50 text-red-600 dark:bg-red-950/80 dark:text-red-400 uppercase tracking-tight border border-red-200 dark:border-red-600/50 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
-                Нема в наявності
+              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tight border shadow-[0_0_15px_rgba(239,68,68,0.1)] ${
+                product.availabilityDate 
+                  ? "bg-amber-50 text-amber-600 dark:bg-amber-950/80 dark:text-amber-400 border-amber-200 dark:border-amber-600/50" 
+                  : "bg-red-50 text-red-600 dark:bg-red-950/80 dark:text-red-400 border-red-200 dark:border-red-600/50"
+              }`}>
+                {product.availabilityDate ? `Очікується: ${product.availabilityDate}` : "Нема в наявності"}
               </span>
             </div>
           )}
