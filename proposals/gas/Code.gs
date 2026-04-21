@@ -1152,60 +1152,6 @@ function handleCompareReport() {
   return { success: true, columns: columns, items: items };
 }
 
-function handleMovementReport(params) {
-  const operations = sheetToObjects(getSheet('operations'));
-  const catalog = sheetToObjects(getSheet('catalog'));
-  const warehouses = sheetToObjects(getSheet('warehouses'));
-
-  const catalogMap = {};
-  catalog.forEach(p => { catalogMap[p.id] = p; });
-  const whMap = {};
-  warehouses.forEach(w => { whMap[w.id] = w.name; });
-
-  const users = sheetToObjects(getSheet('users'));
-  const userMap = {};
-  users.forEach(u => {
-    if (u.email) userMap[String(u.email).toLowerCase().trim()] = u.name || u.email;
-  });
-
-  let filtered = operations;
-  if (params.warehouseId) {
-    filtered = filtered.filter(op =>
-      op.warehouse_from === params.warehouseId || op.warehouse_to === params.warehouseId
-    );
-  }
-  if (params.productId) {
-    filtered = filtered.filter(op => op.product_id === params.productId);
-  }
-  if (params.dateFrom) {
-    filtered = filtered.filter(op => op.date >= params.dateFrom);
-  }
-  if (params.dateTo) {
-    filtered = filtered.filter(op => op.date <= params.dateTo);
-  }
-  if (params.type) {
-    filtered = filtered.filter(op => op.type === params.type);
-  }
-
-  filtered.sort((a, b) => a.date.localeCompare(b.date));
-
-  const columns = ['Дата', 'Тип', 'Товар', 'Склад', 'К-сть', 'Коментар', 'Автор'];
-  const items = filtered.map(op => {
-    const typeLabels = { income: 'Прихід', expense: 'Розхід', transfer: 'Переміщення', balance: 'Підсумок дня' };
-    return {
-      'Дата': op.date,
-      'Тип': typeLabels[op.type] || op.type,
-      'Товар': catalogMap[op.product_id]?.name || '',
-      'Склад': whMap[op.warehouse_from || op.warehouse_to] || '',
-      'К-сть': op.quantity,
-      'Коментар': op.comment || '',
-      'Автор': userMap[String(op.user || '').toLowerCase().trim()] || op.user || '—',
-      'category': catalogMap[op.product_id]?.category || ''
-    };
-  });
-
-  return { success: true, columns: columns, items: items };
-}
 
 // ===== КОМЕРЦІЙНІ ПРОПОЗИЦІЇ - ФУНКЦІЇ ЗБЕРІГАННЯ І БЕКАПУ =====
  
@@ -1681,27 +1627,6 @@ function handleGetProjects(userEmail) {
   // Отримуємо проєкти
   const projects = sheetToObjects(projectsSheet);
 
-  // Фільтрація за доступом користувача
-  let allowedProjectIds = null;
-  let isAdmin = true;
-
-  if (userEmail) {
-    const userRes = handleGetUser(userEmail);
-    if (userRes.success && userRes.user) {
-      isAdmin = isRoleAdmin(userRes.user.role);
-      
-      if (!isAdmin) {
-        // Якщо не адмін — дивимось доступні проєкти
-        const access = String(userRes.user.project_access || '').trim();
-        if (access) {
-          allowedProjectIds = access.split(',').map(s => s.trim()).filter(s => s);
-        } else {
-          allowedProjectIds = []; // Немає доступу до жодного проєкту
-        }
-      }
-    }
-  }
-
   const paymentsSheet = getSheetWithInit('project_payments', [
     'ID', 'ID Проекту', 'Дата', 'Сума', 'Статус', 'Примітка', 'Тип платежу', 'Автор', 'Створено'
   ], [], ss);
@@ -1721,7 +1646,7 @@ function handleGetProjects(userEmail) {
     const projectPayments = payments.filter(pay => {
       const isCorrectProject = String(pay.project_id) === String(p.id);
       const statusValue = String(pay.status || pay.active || '').toLowerCase();
-      const isPaid = statusValue.includes('оплачено') && !statusValue.includes('скасовано');
+      const isPaid = (statusValue.includes('оплачено') || statusValue === 'active') && !statusValue.includes('скасовано');
       return isCorrectProject && isPaid;
     });
     const totalPaid = projectPayments.reduce((acc, pay) => acc + (parseFloat(pay.sum) || 0), 0);
@@ -1735,11 +1660,6 @@ function handleGetProjects(userEmail) {
       balance: agreedSum - totalPaid
     };
   });
-
-  // Власне фільтрація за списком ID
-  if (!isAdmin && allowedProjectIds !== null) {
-    enrichedProjects = enrichedProjects.filter(p => allowedProjectIds.includes(String(p.id)));
-  }
 
   return { success: true, projects: enrichedProjects };
 }

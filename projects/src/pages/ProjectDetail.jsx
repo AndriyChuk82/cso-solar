@@ -125,8 +125,10 @@ export function ProjectDetail({
         setItems(loaded);
         setOrigItems(loaded.map(i => ({ ...i })));
         setPayments(data.payments || []);
+        return data.project;
       }
     } finally { setIsLoading(false); }
+    return null;
   }, [projectId]);
 
   useEffect(() => { load(); }, [load]);
@@ -162,7 +164,7 @@ export function ProjectDetail({
           document.title = savedProject.name;
         }
         setIsSaved(true);
-        if (onUpdate) onUpdate(); // Refresh the global list
+        if (onUpdate) onUpdate(savedProject); // Local list update without reload
         setTimeout(() => setIsSaved(false), 2500);
       }
     } finally { setIsSaving(false); }
@@ -204,9 +206,9 @@ export function ProjectDetail({
       for (const id of removedIds) await projectService.deleteProjectItem(id);
       for (const item of pendingItems)
         await projectService.saveProjectItem({ ...item, project_id: projectId });
+      const fresh = await load();
+      if (onUpdate && fresh) onUpdate(fresh);
       hapticSuccess();
-      setEditingItems(false);
-      await load();
     } catch (err) {
       hapticError();
     } finally { setIsSavingItems(false); }
@@ -235,7 +237,8 @@ export function ProjectDetail({
     const res = await projectService.cancelPayment(paymentId);
     if (res.success) {
       hapticSuccess();
-      load();
+      const fresh = await load();
+      if (onUpdate && fresh) onUpdate(fresh);
     } else {
       hapticError();
     }
@@ -282,7 +285,10 @@ export function ProjectDetail({
           balance={balance}
           currency={currency}
           rate={rate}
-          onSaved={() => { load(); if (onUpdate) onUpdate(); }}
+          onSaved={async () => { 
+            const fresh = await load(); 
+            if (onUpdate && fresh) onUpdate(fresh); 
+          }}
           onClose={() => setShowPaymentSheet(false)}
         />
       )}
@@ -516,26 +522,34 @@ export function ProjectDetail({
               const isAdv     = p.payment_type === 'Аванс' || p.type === 'Аванс';
               return (
                 <div key={p.id} className={`payment-item ${cancelled ? 'cancelled' : ''}`}>
-                  <div className={`payment-dot ${isAdv ? 'advance' : 'full'}`} />
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
-                      <span style={{ fontWeight:700, fontSize:'0.92rem', color:'var(--text)' }}>
+                  <div className="payment-item-main">
+                    <div className="payment-item-left">
+                      <div className="payment-item-amount">
                         {formatAmount(p.sum, currency, rate)}
-                      </span>
-                      <span className={`badge ${isAdv ? 'badge-info' : 'badge-success'}`} style={{ fontSize:'0.6rem' }}>
+                      </div>
+                      <div className="payment-item-date">
+                        {formatDate(p.date)}
+                      </div>
+                    </div>
+                    
+                    <div className="payment-item-right">
+                      <span className={`badge ${isAdv ? 'badge-info' : 'badge-success'}`} style={{ fontSize:'0.65rem', padding: '2px 8px' }}>
                         {p.payment_type || p.type || (isAdv ? 'Аванс' : 'Повна оплата')}
                       </span>
-                    </div>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:3 }}>
-                      <span style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>{formatDate(p.date)}</span>
-                      {p.note && <span style={{ fontSize:'0.72rem', color:'var(--text-secondary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>· {p.note}</span>}
+                      {!cancelled && (
+                        <button onClick={() => handleCancelPayment(p.id)} className="btn btn-ghost btn-sm"
+                          style={{ padding:4, color:'var(--text-muted)', marginLeft: 8 }}>
+                          <X size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
-                  {!cancelled && (
-                    <button onClick={() => handleCancelPayment(p.id)} className="btn btn-ghost btn-sm"
-                      style={{ padding:6, color:'var(--text-muted)', flexShrink:0 }}>
-                      <X size={14} />
-                    </button>
+
+                  {p.note && (
+                    <div className="payment-item-note">
+                      <FileText size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
+                      <span>{p.note}</span>
+                    </div>
                   )}
                 </div>
               );

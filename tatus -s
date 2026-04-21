@@ -1,137 +1,0 @@
-[33mcommit 493d95598b2f268d78479f7c6119653b3e585e13[m
-Author: andros <andros82@gmail.com>
-Date:   Fri Mar 27 15:10:24 2026 +0200
-
-    3 sklad (cili chusla)
-
-[1mdiff --git a/public/warehouse/index.html b/public/warehouse/index.html[m
-[1mindex d8b3d32..bbb57d2 100644[m
-[1m--- a/public/warehouse/index.html[m
-[1m+++ b/public/warehouse/index.html[m
-[36m@@ -8,7 +8,7 @@[m
-     <link rel="icon" type="image/png" href="https://i.ibb.co/32JD4dc/logo.png">[m
-     <link rel="apple-touch-icon" href="https://i.ibb.co/32JD4dc/logo.png">[m
-     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">[m
-[31m-  <script type="module" crossorigin src="/warehouse/assets/index-C-SkMVXX.js"></script>[m
-[32m+[m[32m  <script type="module" crossorigin src="/warehouse/assets/index-LUkXAVen.js"></script>[m
-   <link rel="stylesheet" crossorigin href="/warehouse/assets/index-BnXVRN7Z.css">[m
- </head>[m
- <body>[m
-
-[33mcommit 0b43fbf90c60f8331c74ec95f507a0e2c1c19ca8[m
-Author: andros <andros82@gmail.com>
-Date:   Fri Mar 27 14:59:04 2026 +0200
-
-    2 (dostypu)
-
-[1mdiff --git a/public/warehouse/index.html b/public/warehouse/index.html[m
-[1mindex 60bbb38..d8b3d32 100644[m
-[1m--- a/public/warehouse/index.html[m
-[1m+++ b/public/warehouse/index.html[m
-[36m@@ -8,8 +8,8 @@[m
-     <link rel="icon" type="image/png" href="https://i.ibb.co/32JD4dc/logo.png">[m
-     <link rel="apple-touch-icon" href="https://i.ibb.co/32JD4dc/logo.png">[m
-     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">[m
-[31m-  <script type="module" crossorigin src="/warehouse/assets/index-BUEkwnmz.js"></script>[m
-[31m-  <link rel="stylesheet" crossorigin href="/warehouse/assets/index-7QCirtm2.css">[m
-[32m+[m[32m  <script type="module" crossorigin src="/warehouse/assets/index-C-SkMVXX.js"></script>[m
-[32m+[m[32m  <link rel="stylesheet" crossorigin href="/warehouse/assets/index-BnXVRN7Z.css">[m
- </head>[m
- <body>[m
-     <div id="root"></div>[m
-
-[33mcommit 65af0cff26bd17b7b40856140840bf40c68d6be5[m
-Author: andros <andros82@gmail.com>
-Date:   Thu Mar 26 14:17:23 2026 +0200
-
-    2
-
-[1mdiff --git a/public/warehouse/index.html b/public/warehouse/index.html[m
-[1mindex 228ef4c..60bbb38 100644[m
-[1m--- a/public/warehouse/index.html[m
-[1m+++ b/public/warehouse/index.html[m
-[36m@@ -8,8 +8,8 @@[m
-     <link rel="icon" type="image/png" href="https://i.ibb.co/32JD4dc/logo.png">[m
-     <link rel="apple-touch-icon" href="https://i.ibb.co/32JD4dc/logo.png">[m
-     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">[m
-[31m-  <script type="module" crossorigin src="/warehouse/assets/index-BSsGyyFm.js"></script>[m
-[31m-  <link rel="stylesheet" crossorigin href="/warehouse/assets/index-BQNQi3UC.css">[m
-[32m+[m[32m  <script type="module" crossorigin src="/warehouse/assets/index-BUEkwnmz.js"></script>[m
-[32m+[m[32m  <link rel="stylesheet" crossorigin href="/warehouse/assets/index-7QCirtm2.css">[m
- </head>[m
- <body>[m
-     <div id="root"></div>[m
-
-[33mcommit e8f56c309a9d85d9ab3513cdfe8d986f729c11aa[m
-Author: andros <andros82@gmail.com>
-Date:   Mon Mar 23 10:19:49 2026 +0200
-
-    1_2
-
-[1mdiff --git a/public/warehouse/index.html b/public/warehouse/index.html[m
-[1mindex e901010..228ef4c 100644[m
-[1m--- a/public/warehouse/index.html[m
-[1m+++ b/public/warehouse/index.html[m
-[36m@@ -1,16 +1,17 @@[m
-[31m-<!DOCTYPE html>[m
-[31m-<html lang="uk">[m
-[31m-<head>[m
-[31m-    <meta charset="UTF-8">[m
-[31m-    <meta name="viewport" content="width=device-width, initial-scale=1.0">[m
-[31m-    <title>CSO Solar — Складський облік</title>[m
-[31m-    <meta name="description" content="Система складського обліку товарів для сонячних станцій CSO Solar">[m
-[31m-    <link rel="icon" type="image/png" href="https://i.ibb.co/32JD4dc/logo.png">[m
-[31m-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">[m
-[31m-  <script type="module" crossorigin src="/warehouse/assets/index-ad-rDUir.js"></script>[m
-[31m-  <link rel="stylesheet" crossorigin href="/warehouse/assets/index-_jZ5B8VL.css">[m
-[31m-</head>[m
-[31m-<body>[m
-[31m-    <div id="root"></div>[m
-[31m-</body>[m
-[31m-</html>[m
-[32m+[m[32m<!DOCTYPE html>[m[41m[m
-[32m+[m[32m<html lang="uk">[m[41m[m
-[32m+[m[32m<head>[m[41m[m
-[32m+[m[32m    <meta charset="UTF-8">[m[41m[m
-[32m+[m[32m    <meta name="viewport" content="width=device-width, initial-scale=1.0">[m[41m[m
-[32m+[m[32m    <title>Склад — CSO Solar</title>[m[41m[m
-[32m+[m[32m    <meta name="description" content="Система складського обліку товарів для сонячних станцій CSO Solar">[m[41m[m
-[32m+[m[32m    <link rel="icon" type="image/png" href="https://i.ibb.co/32JD4dc/logo.png">[m[41m[m
-[32m+[m[32m    <link rel="apple-touch-icon" href="https://i.ibb.co/32JD4dc/logo.png">[m[41m[m
-[32m+[m[32m    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">[m[41m[m
-[32m+[m[32m  <script type="module" crossorigin src="/warehouse/assets/index-BSsGyyFm.js"></script>[m
-[32m+[m[32m  <link rel="stylesheet" crossorigin href="/warehouse/assets/index-BQNQi3UC.css">[m
-[32m+[m[32m</head>[m[41m[m
-[32m+[m[32m<body>[m[41m[m
-[32m+[m[32m    <div id="root"></div>[m[41m[m
-[32m+[m[32m</body>[m[41m[m
-[32m+[m[32m</html>[m[41m[m
-
-[33mcommit c9989ba3da22ea6eb82f49f5ae208ac272f7b76b[m
-Author: AndriyChuk82 <andros82@gmail.com>
-Date:   Fri Mar 13 23:24:11 2026 +0200
-
-    new_sklad
-
-[1mdiff --git a/public/warehouse/index.html b/public/warehouse/index.html[m
-[1mnew file mode 100644[m
-[1mindex 0000000..e901010[m
-[1m--- /dev/null[m
-[1m+++ b/public/warehouse/index.html[m
-[36m@@ -0,0 +1,16 @@[m
-[32m+[m[32m<!DOCTYPE html>[m
-[32m+[m[32m<html lang="uk">[m
-[32m+[m[32m<head>[m
-[32m+[m[32m    <meta charset="UTF-8">[m
-[32m+[m[32m    <meta name="viewport" content="width=device-width, initial-scale=1.0">[m
-[32m+[m[32m    <title>CSO Solar — Складський облік</title>[m
-[32m+[m[32m    <meta name="description" content="Система складського обліку товарів для сонячних станцій CSO Solar">[m
-[32m+[m[32m    <link rel="icon" type="image/png" href="https://i.ibb.co/32JD4dc/logo.png">[m
-[32m+[m[32m    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">[m
-[32m+[m[32m  <script type="module" crossorigin src="/warehouse/assets/index-ad-rDUir.js"></script>[m
-[32m+[m[32m  <link rel="stylesheet" crossorigin href="/warehouse/assets/index-_jZ5B8VL.css">[m
-[32m+[m[32m</head>[m
-[32m+[m[32m<body>[m
-[32m+[m[32m    <div id="root"></div>[m
-[32m+[m[32m</body>[m
-[32m+[m[32m</html>[m

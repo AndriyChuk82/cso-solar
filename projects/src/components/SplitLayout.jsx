@@ -7,7 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 import { Plus } from 'lucide-react';
 
 export function SplitLayout() {
-  const { fetchProjects } = useProjectStore();
+  const { fetchProjects, updateProjectLocal } = useProjectStore();
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -103,8 +103,8 @@ export function SplitLayout() {
     setSelectedProjectId(null);
   };
 
-  const onRefresh = () => {
-    fetchProjects(user?.email);
+  const handleUpdateProjectLocal = (updated) => {
+    updateProjectLocal(updated);
   };
 
   const showList   = !isMobile || selectedProjectId === null;
@@ -137,7 +137,7 @@ export function SplitLayout() {
           <ProjectDetail
             projectId={selectedProjectId}
             onBack={handleBack}
-            onUpdate={onRefresh}
+            onUpdate={handleUpdateProjectLocal}
             isMobile={isMobile}
             onClosed={handleProjectClosed}
             currency={currency}
