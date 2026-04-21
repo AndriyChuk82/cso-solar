@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 import { projectService } from '../services/api';
 
 export function AddPaymentSheet({ projectId, balance = 0, currency = 'USD', rate = 41, onClose, onSaved }) {
