@@ -124,8 +124,22 @@ export function ProjectDetail({
         const loaded = data.items || [];
         setItems(loaded);
         setOrigItems(loaded.map(i => ({ ...i })));
-        setPayments(data.payments || []);
-        return data.project;
+        const loadedPayments = data.payments || [];
+        setPayments(loadedPayments);
+
+        // Calculate finance fields for the list (ProjectList expects these)
+        const itemsTotal = loaded.reduce((a, i) => a + (parseFloat(i.sum) || 0), 0);
+        const kpSum = parseFloat(data.project.total_cost) || itemsTotal || 0;
+        const agreedSum = parseFloat(data.project.agreed_sum) || kpSum;
+        const validPay = loadedPayments.filter(p => !p.status?.toLowerCase().includes('скасовано'));
+        const totalPaid = validPay.reduce((a, p) => a + (parseFloat(p.sum) || 0), 0);
+        const balance = agreedSum - totalPaid;
+
+        return {
+          ...data.project,
+          total_paid: totalPaid,
+          balance: balance
+        };
       }
     } finally { setIsLoading(false); }
     return null;
@@ -159,12 +173,18 @@ export function ProjectDetail({
         hapticSuccess();
         const savedProject = res.updatedProject || pToSave;
         setProject(savedProject);
-        // Оновити заголовок вкладки, якщо змінилася назва
         if (savedProject.name) {
           document.title = savedProject.name;
         }
         setIsSaved(true);
-        if (onUpdate) onUpdate(savedProject); // Local list update without reload
+        if (onUpdate) {
+          // Add current local finance data to the updated project
+          onUpdate({
+            ...savedProject,
+            total_paid: totalPaid,
+            balance: agreedSum - totalPaid
+          });
+        }
         setTimeout(() => setIsSaved(false), 2500);
       }
     } finally { setIsSaving(false); }
@@ -517,43 +537,52 @@ export function ProjectDetail({
               <p style={{ fontSize:'0.75rem', marginTop:4 }}>Натисніть "Додати" щоб внести перший платіж</p>
             </div>
           ) : (
-            payments.map(p => {
-              const cancelled = p.status?.toLowerCase().includes('скасовано');
-              const isAdv     = p.payment_type === 'Аванс' || p.type === 'Аванс';
-              return (
-                <div key={p.id} className={`payment-item ${cancelled ? 'cancelled' : ''}`}>
-                  <div className="payment-item-main">
-                    <div className="payment-item-left">
-                      <div className="payment-item-amount">
-                        {formatAmount(p.sum, currency, rate)}
+            <div className="payments-grid">
+              {payments.map(p => {
+                const cancelled = p.status?.toLowerCase().includes('скасовано');
+                const isAdv     = p.payment_type === 'Аванс' || p.type === 'Аванс';
+                return (
+                  <div key={p.id} className={`payment-item ${cancelled ? 'cancelled' : ''}`}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+                      <div>
+                        <div style={{ fontSize:'1.1rem', fontWeight:800, color: cancelled ? 'var(--text-muted)' : 'var(--text)' }}>
+                          {formatAmount(p.sum, currency, rate)}
+                        </div>
+                        <div style={{ fontSize:'0.7rem', color:'var(--text-muted)', fontWeight:600, marginTop:2 }}>
+                          {formatDate(p.date)}
+                        </div>
                       </div>
-                      <div className="payment-item-date">
-                        {formatDate(p.date)}
+                      <div style={{ display:'flex', gap:4 }}>
+                        {!cancelled && (
+                          <button onClick={() => handleCancelPayment(p.id)} className="btn btn-ghost btn-sm"
+                            style={{ padding:4, color:'var(--text-muted)', borderRadius:'50%' }}>
+                            <X size={14} />
+                          </button>
+                        )}
                       </div>
                     </div>
                     
-                    <div className="payment-item-right">
-                      <span className={`badge ${isAdv ? 'badge-info' : 'badge-success'}`} style={{ fontSize:'0.65rem', padding: '2px 8px' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:2 }}>
+                      <span className={`badge ${isAdv ? 'badge-info' : 'badge-success'}`} style={{ fontSize:'0.6rem', padding: '1px 6px', borderRadius:4 }}>
                         {p.payment_type || p.type || (isAdv ? 'Аванс' : 'Повна оплата')}
                       </span>
-                      {!cancelled && (
-                        <button onClick={() => handleCancelPayment(p.id)} className="btn btn-ghost btn-sm"
-                          style={{ padding:4, color:'var(--text-muted)', marginLeft: 8 }}>
-                          <X size={14} />
-                        </button>
-                      )}
+                      {cancelled && <span className="badge" style={{ background:'var(--border-light)', color:'var(--text-muted)', fontSize:'0.6rem' }}>Скасовано</span>}
                     </div>
-                  </div>
 
-                  {p.note && (
-                    <div className="payment-item-note">
-                      <FileText size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
-                      <span>{p.note}</span>
-                    </div>
-                  )}
-                </div>
-              );
-            })
+                    {p.note && (
+                      <div style={{ 
+                        marginTop:4, padding:8, background:'var(--bg)', borderRadius:6, 
+                        fontSize:'0.72rem', color:'var(--text-secondary)', display:'flex', gap:6,
+                        border:'1px solid var(--border-light)'
+                      }}>
+                        <FileText size={12} style={{ opacity: 0.5, flexShrink:0, marginTop:1 }} />
+                        <span style={{ lineHeight:1.3 }}>{p.note}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
 

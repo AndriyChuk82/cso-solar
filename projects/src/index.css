@@ -446,57 +446,39 @@
 }
 /* ===== Платежі (Payments) ===== */
 .payment-item {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border-light);
-  transition: background var(--transition);
-}
-
-.payment-item:last-child {
-  border-bottom: none;
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  transition: all var(--transition);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
 }
 
 .payment-item:hover {
-  background: rgba(0, 0, 0, 0.01);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
 }
 
-.dark .payment-item:hover {
+.dark .payment-item {
   background: rgba(255, 255, 255, 0.02);
 }
 
-.payment-item.cancelled {
-  opacity: 0.5;
-  filter: grayscale(1);
+.payments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 16px;
 }
 
-.payment-item-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 6px;
-}
-
-.payment-item-left {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.payment-item-amount {
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--text);
-  letter-spacing: -0.2px;
-}
-
-.payment-item-date {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-.payment-item-right {
-  display: flex;
-  align-items: center;
+@media (max-width: 600px) {
+  .payments-grid {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
 }
 
 .payment-item-note {
@@ -576,17 +558,25 @@
 
 @media (max-width: 768px) {
   .sheet-overlay {
-    padding: 10px;
-    align-items: flex-end;
+    padding: 16px;
+    align-items: center; /* Center on mobile to avoid keyboard issues */
   }
   .sheet-panel {
-    width: calc(100% - 4px);
+    width: 100%;
+    max-width: 400px;
     margin: 0 auto;
-    border-radius: var(--radius-xl) var(--radius-xl) 12px 12px;
-    margin-bottom: 8px; /* Lift it slightly off the bottom */
+    border-radius: var(--radius-lg);
     border-bottom: 1px solid var(--border);
-    animation: slideUpMobile 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: scaleInMobile 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
+  .sheet-handle {
+    display: none; /* Handle not needed for centered modal */
+  }
+}
+
+@keyframes scaleInMobile {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @media (min-width: 769px) {
@@ -656,6 +646,26 @@
   background: var(--success);
   color: #fff;
   box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+}
+
+.payment-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 500px) {
+  .payment-form-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* Fix for date inputs to match height of text inputs */
+input[type="date"].form-input {
+  display: flex;
+  align-items: center;
+  line-height: 1;
 }
 
 /* ===== Modals ===== */
