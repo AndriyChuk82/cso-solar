@@ -559,7 +559,8 @@
 @media (max-width: 768px) {
   .sheet-overlay {
     padding: 16px;
-    align-items: center; /* Center on mobile to avoid keyboard issues */
+    align-items: flex-start; /* Align to top */
+    padding-top: 10vh; /* 10% offset from top */
   }
   .sheet-panel {
     width: 100%;
@@ -650,14 +651,13 @@
 
 .payment-form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: 1.2fr 1fr; /* Give more space to Sum */
+  gap: 12px;
 }
 
-@media (max-width: 500px) {
+@media (max-width: 400px) {
   .payment-form-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 8px;
   }
 }
 

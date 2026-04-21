@@ -95,10 +95,10 @@ export function AddPaymentSheet({ projectId, balance = 0, currency = 'USD', rate
           </div>
         </div>
 
-        <div className="payment-form-grid" style={{ marginBottom: 20 }}>
+        <div className="payment-form-grid" style={{ marginBottom: 16 }}>
           {/* Сума */}
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6, display: 'block' }}>Сума ({currency === 'UAH' ? '₴' : '$'})</label>
+            <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4, display: 'block' }}>Сума ({currency === 'UAH' ? '₴' : '$'})</label>
             <div style={{ position: 'relative' }}>
               <input
                 type="number"
@@ -108,12 +108,12 @@ export function AddPaymentSheet({ projectId, balance = 0, currency = 'USD', rate
                 value={sum}
                 onChange={e => setSum(e.target.value)}
                 style={{ 
-                  fontSize: '1.25rem', 
+                  fontSize: '1.1rem', 
                   fontWeight: 800, 
-                  paddingLeft: 14, 
-                  height: 54, 
+                  paddingLeft: 12, 
+                  height: 46, 
                   boxSizing: 'border-box',
-                  borderLeft: `5px solid ${type === 'Аванс' ? '#3b82f6' : 'var(--success)'}`,
+                  borderLeft: `4px solid ${type === 'Аванс' ? '#3b82f6' : 'var(--success)'}`,
                   borderRadius: 'var(--radius)'
                 }}
                 autoFocus
@@ -123,18 +123,18 @@ export function AddPaymentSheet({ projectId, balance = 0, currency = 'USD', rate
 
           {/* Дата */}
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6, display: 'block' }}>Дата</label>
+            <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4, display: 'block' }}>Дата</label>
             <input
               type="date"
               className="form-input"
               value={date}
               onChange={e => setDate(e.target.value)}
               style={{ 
-                height: 54, 
+                height: 46, 
                 fontWeight: 600, 
-                fontSize: '1rem',
+                fontSize: '0.88rem',
                 boxSizing: 'border-box',
-                padding: '0 12px',
+                padding: '0 10px',
                 borderRadius: 'var(--radius)'
               }}
             />
