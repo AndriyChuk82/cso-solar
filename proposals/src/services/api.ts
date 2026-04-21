@@ -199,39 +199,6 @@ export async function fetchAllData() {
             }
 
             priceObj = { value: finalPrice, currency: parsedPrice.currency || 'USD' };
-
-            // Перевірка наявності для панелей (Стовпець J / index 9)
-            const rawAvailability = p.raw && p.raw[9] ? p.raw[9] : '';
-            let availability = '';
-            
-            // Якщо це об'єкт дати від Google
-            // Якщо це об'єкт дати від Google - використовуємо його напряму
-            if (rawAvailability instanceof Date) {
-              p.inStock = false;
-              const d = rawAvailability;
-              const day = String(d.getDate()).padStart(2, '0');
-              const month = String(d.getMonth() + 1).padStart(2, '0');
-              const year = d.getFullYear();
-              p.availabilityDate = `${day}/${month}/${year}`;
-            } else {
-              availability = sanitizeString(rawAvailability);
-              // Шукаємо дату з межами слів, щоб не чіпляти частини інших чисел
-              const dateMatch = availability.match(/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})\b/);
-              
-              if (dateMatch) {
-                p.inStock = false;
-                let day = dateMatch[1].padStart(2, '0');
-                let month = dateMatch[2].padStart(2, '0');
-                let year = dateMatch[3];
-                
-                // Якщо рік 2 цифри - робимо 4
-                if (year.length === 2) year = '20' + year;
-                
-                p.availabilityDate = `${day}/${month}/${year}`;
-              } else if (availability.toLowerCase().includes('закінчилися') || availability.toLowerCase().includes('нема')) {
-                p.inStock = false;
-              }
-            }
           } 
           else {
             name = col1;
