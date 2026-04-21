@@ -137,6 +137,15 @@ function doGet(e) {
       case 'syncProjectItems':
         result = handleSyncProjectItems(e.parameter.projectId);
         break;
+      case 'getStockReport':
+        result = handleStockReport(e.parameter.warehouseId, e.parameter.date);
+        break;
+      case 'getCompareReport':
+        result = handleCompareReport();
+        break;
+      case 'getMovementReport':
+        result = handleMovementReport(e.parameter);
+        break;
       default:
         result = { success: false, error: 'Невідома дія: ' + action };
     }
@@ -345,7 +354,20 @@ const HEADER_MAP = {
   'модулі': 'module_access',
   'розділи': 'module_access',
   'доступ до розділів': 'module_access',
-  'стан': 'active'
+  'стан': 'active',
+  // Англійські версії для надійності
+  'client': 'client_name',
+  'customer': 'client_name',
+  'phone': 'client_phone',
+  'contact': 'client_phone',
+  'address': 'address',
+  'notes': 'notes',
+  'note': 'notes',
+  'proposal_id': 'proposal_id',
+  'project_id': 'project_id',
+  'project_number': 'project_number',
+  'agreed_sum': 'agreed_sum',
+  'closed_date': 'closed_date'
 };
 
 function sheetToObjects(sheet) {
@@ -1545,7 +1567,8 @@ function handleMovementReport(params) {
       'Склад': whMap[op.warehouse_from || op.warehouse_to] || '',
       'К-сть': op.quantity,
       'Коментар': op.comment || '',
-      'Автор': userMap[String(op.user || '').toLowerCase().trim()] || op.user || '—'
+      'Автор': userMap[String(op.user || '').toLowerCase().trim()] || op.user || '—',
+      'category': catalogMap[op.product_id]?.category || ''
     };
   });
 
@@ -1770,102 +1793,87 @@ function handleGetProjectDetails(projectId) {
 function handleSaveProject(projectData, userEmail) {
   const ss = getSpreadsheet();
   const sheet = getSheet('projects', ss.getId());
-  const headers = ['ID', 'Назва', 'Клієнт', 'Телефон', 'Адреса', 'Статус', 'Примітки', 'ID КП',
+  const headersList = ['ID', 'Назва', 'Клієнт', 'Телефон', 'Адреса', 'Статус', 'Примітки', 'ID КП',
                    'Погоджена сума', 'Номер', 'Дата закриття', 'Створено', 'Оновлено'];
   
+  // Переконуємось, що аркуш має заголовки
+  let currentLastCol = sheet.getLastColumn();
+  if (currentLastCol === 0) {
+    sheet.appendRow(headersList);
+    currentLastCol = headersList.length;
+  }
+  
+  // Додаємо відсутні заголовки
+  let headerRow = sheet.getRange(1, 1, 1, currentLastCol).getValues()[0];
+  let headersChanged = false;
+  headersList.forEach(eh => {
+    const lowerEH = eh.toLowerCase();
+    if (!headerRow.some(h => String(h).trim().toLowerCase() === lowerEH)) {
+      sheet.getRange(1, sheet.getLastColumn() + 1).setValue(eh);
+      headersChanged = true;
+    }
+  });
+  
+  if (headersChanged) {
+    headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  }
+  
   let row = findRowByValue(sheet, 'id', projectData.id);
-  // fallback if 'id' uppercase is used in sheet header map
   if (row === -1) row = findRowByValue(sheet, 'ID', projectData.id);
   const ts = now();
 
   if (row === -1) {
     // Створення
     const newId = projectData.id || generateUUID();
-    // Generate project number from date if no КП linked
     const projectNum = projectData.proposal_id
       ? (projectData.project_number || '')
       : (projectData.project_number || dateStr());
     
-    sheet.appendRow([
-      newId,
-      projectData.name || 'Новий проєкт',
-      projectData.client_name || '',
-      projectData.client_phone || '',
-      projectData.address || '',
-      projectData.status || 'В роботі',
-      projectData.notes || '',
-      projectData.proposal_id || '',
-      projectData.agreed_sum || '',
-      projectNum,
-      projectData.closed_date || '',
-      ts,
-      ts
-    ]);
+    const fullData = {
+      ...projectData,
+      id: newId,
+      name: projectData.name || 'Новий проєкт',
+      status: projectData.status || 'В роботі',
+      project_number: projectNum,
+      created_at: ts,
+      updated_at: ts
+    };
+
+    const rowData = headerRow.map(h => {
+      const s = String(h).trim().toLowerCase();
+      const mapped = HEADER_MAP[s] || s;
+      if (mapped === 'created_at' || s === 'створено') return ts;
+      if (mapped === 'updated_at' || s === 'оновлено') return ts;
+      return fullData[mapped] !== undefined ? fullData[mapped] : "";
+    });
+
+    sheet.appendRow(rowData);
     
-    // Якщо проект створюється з КП, копіюємо товари
+    // ... (копіювання товарів)
     if (projectData.items_from_cp && projectData.items_from_cp.length > 0) {
-      console.log('Копіювання товарів з КП: ' + projectData.items_from_cp.length);
       const itemsSheet = getSheet('project_items', ss.getId());
       projectData.items_from_cp.forEach(item => {
         const qty = parseFloat(item.quantity) || 1;
         const price = parseFloat(item.price) || 0;
         const name = item.name || item.productName || 'Товар';
         const note = item.note || item.productArticle || '';
-        
-        itemsSheet.appendRow([
-          generateUUID(),
-          newId,
-          name,
-          qty,
-          price,
-          (qty * price),
-          note
-        ]);
+        itemsSheet.appendRow([generateUUID(), newId, name, qty, price, (qty * price), note]);
       });
     }
     
     return { success: true, id: newId };
   } else {
     // Оновлення
-    let currentLastCol = sheet.getLastColumn();
-    let headerRow = sheet.getRange(1, 1, 1, currentLastCol).getValues()[0];
-    
-    // Auto-append missing headers if schema changed
-    let addedCols = 0;
-    headers.forEach(eh => {
-      const lowerEH = eh.toLowerCase();
-      if (!headerRow.some(h => String(h).trim().toLowerCase() === lowerEH)) {
-        headerRow.push(eh);
-        sheet.getRange(1, currentLastCol + addedCols + 1).setValue(eh);
-        addedCols++;
-      }
-    });
-
-    const updates = { ...projectData, "Оновлено": ts };
-    
     headerRow.forEach((h, idx) => {
-      const key = String(h).trim().toLowerCase();
-      // Мапінг для полів (реєстронезалежний)
-      const valueMap = {
-        'назва':           projectData.name,
-        'клієнт':           projectData.client_name,
-        'телефон':          projectData.client_phone,
-        'адреса':           projectData.address,
-        'статус':           projectData.status,
-        'примітки':         projectData.notes,
-        'id кп':           projectData.proposal_id,
-        'погоджена сума':  projectData.agreed_sum !== undefined ? projectData.agreed_sum : undefined,
-        'номер':           projectData.project_number,
-        'дата закриття':    projectData.closed_date !== undefined ? projectData.closed_date : undefined,
-        'оновлено':         ts
-      };
-      
-      if (valueMap[key] !== undefined) {
-        sheet.getRange(row, idx + 1).setValue(valueMap[key]);
+      const s = String(h).trim().toLowerCase();
+      const mapped = HEADER_MAP[s] || s;
+      if (projectData[mapped] !== undefined && mapped !== 'id') {
+        sheet.getRange(row, idx + 1).setValue(projectData[mapped]);
+      } else if (mapped === 'updated_at' || s === 'оновлено') {
+        sheet.getRange(row, idx + 1).setValue(ts);
       }
     });
-    
-    return { success: true };
+    return { success: true, id: projectData.id };
   }
 }
 
@@ -1997,7 +2005,13 @@ function handleSyncProjectItems(projectId) {
   const proposalData = proposalsSheet.getRange(proposalRow, 1, 1, proposalsSheet.getLastColumn()).getValues()[0];
   let items = [];
   try {
-    items = JSON.parse(proposalData[9] || '[]');
+    const parsed = JSON.parse(proposalData[9] || '[]');
+    // Підтримуємо обидва формати: масив або об'єкт {items: [...]}
+    if (Array.isArray(parsed)) {
+      items = parsed;
+    } else if (parsed && Array.isArray(parsed.items)) {
+      items = parsed.items;
+    }
   } catch (e) {
     return { success: false, error: 'Помилка читання товарів з КП' };
   }
@@ -2005,9 +2019,7 @@ function handleSyncProjectItems(projectId) {
   if (items.length === 0) return { success: false, error: 'У вибраній КП немає товарів' };
   
   const itemsSheet = getSheet('project_items', ss.getId());
-  // Видаляємо старі товари проекту, щоб уникнути дублів при синхронізації?
-  // Або просто додаємо нові. Користувач зазвичай хоче "актуалізувати".
-  // Простіше за все: видалити існуючі і записати заново.
+  // Видаляємо старі товари проекту і записуємо заново (оновлення)
   const existingItems = sheetToObjects(itemsSheet);
   for (let i = existingItems.length - 1; i >= 0; i--) {
      if (String(existingItems[i].project_id) === String(projectId)) {
@@ -2016,12 +2028,12 @@ function handleSyncProjectItems(projectId) {
      }
   }
   
-  // Додаємо нові
+  // Додаємо нові товари
   items.forEach(item => {
     const qty = parseFloat(item.quantity) || 1;
-    const price = parseFloat(item.price || item.total || 0);
+    const price = parseFloat(item.price || item.unitPrice || item.total || 0);
     const name = item.name || item.productName || 'Товар';
-    const note = item.note || item.productArticle || '';
+    const note = item.note || item.productArticle || item.article || '';
     
     itemsSheet.appendRow([
       generateUUID(),
