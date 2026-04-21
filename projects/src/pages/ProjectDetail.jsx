@@ -202,6 +202,8 @@ export function ProjectDetail({
       if (res.success) {
         hapticSuccess();
         setProject(updated);
+        // Important: Update local list immediately so it moves to "Done"
+        if (onUpdate) onUpdate(updated);
         if (onClosed) onClosed();
       } else {
         hapticError();

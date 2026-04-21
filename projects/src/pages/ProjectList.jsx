@@ -17,8 +17,9 @@ export function ProjectList({ selectedId, onSelect, onAddNew, currency = 'USD', 
   const [filter, setFilter] = useState('active');
 
   const byFilter = projects.filter(p => {
-    if (filter === 'active') return p.status !== 'Виконано';
-    if (filter === 'done')   return p.status === 'Виконано';
+    const status = String(p.status || '').trim();
+    if (filter === 'active') return status !== 'Виконано';
+    if (filter === 'done')   return status === 'Виконано';
     return true;
   });
 
