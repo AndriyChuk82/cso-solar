@@ -67,25 +67,37 @@ export function AuthProvider({ children }) {
           return;
         }
 
-        const { user: email, name, role, module_access } = verifyData;
+        const { user: email, name, role: tokenRole, module_access: tokenModuleAccess } = verifyData;
 
         // 3. Отримуємо розширені дані з Google Sheets (також у фоні)
         const gasResult = await getUser(email);
 
         let warehouseId = null;
-        let finalRole = (role || 'user').toLowerCase();
-        let finalModuleAccess = module_access || '';
+        let finalRole = (tokenRole || 'user').trim().toLowerCase();
+        let finalModuleAccess = (tokenModuleAccess || '').trim().toLowerCase();
 
         if (gasResult?.success && gasResult.user) {
           const u = gasResult.user;
           warehouseId = u.warehouse_id || null;
-          if (u.role) finalRole = u.role.toLowerCase();
+          
+          // Тільки якщо в токені 'user', ми беремо роль з таблиці (щоб не понизити Адміна)
+          if (u.role && (finalRole === 'user' || finalRole === '')) {
+            finalRole = u.role.trim().toLowerCase();
+          }
+          
           if (!finalModuleAccess && u.module_access) {
-            finalModuleAccess = u.module_access;
+            finalModuleAccess = u.module_access.trim().toLowerCase();
           }
         }
 
-        const isAdmin = finalRole === 'admin' || finalRole === 'адмін' || finalRole === 'адміністратор';
+        // Розширений список адмінських ролей
+        const adminRoles = ['admin', 'адмін', 'адміністратор', 'administrator'];
+        const isAdmin = adminRoles.includes(finalRole);
+
+        // Якщо Адмін — даємо повний доступ автоматично
+        if (isAdmin && !finalModuleAccess) {
+          finalModuleAccess = 'warehouse,gt,projects,proposals';
+        }
 
         const updatedUser = {
           email,
@@ -94,8 +106,8 @@ export function AuthProvider({ children }) {
           warehouseId,
           module_access: finalModuleAccess,
           isAdmin,
-          isStorekeeper: finalRole === 'storekeeper',
-          isManager: finalRole === 'manager',
+          isStorekeeper: finalRole === 'storekeeper' || finalRole === 'комірник',
+          isManager: finalRole === 'manager' || finalRole === 'менеджер',
         };
 
         setUser(updatedUser);

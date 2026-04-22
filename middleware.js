@@ -51,9 +51,9 @@ export default async function middleware(request) {
             });
 
             // 4. Перевірка прав доступу до модулів
-            const role = (payload.role || 'user').toLowerCase();
-            const isAdmin = role === 'admin' || role === 'адмін' || role === 'адміністратор';
-            const moduleAccess = (payload.module_access || '').toLowerCase();
+            const role = (payload.role || 'user').trim().toLowerCase();
+            const isAdmin = ['admin', 'адмін', 'адміністратор', 'administrator'].includes(role);
+            const moduleAccess = (payload.module_access || '').trim().toLowerCase();
             const hasAccess = (mod) => {
                 if (isAdmin) return true;
                 const mapping = {

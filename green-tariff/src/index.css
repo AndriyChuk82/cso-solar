@@ -147,17 +147,90 @@
   opacity: 0.5;
 }
 
+/* Стилі для полів вводу у світлій темі */
+input, select, textarea {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  background-color: #ffffff !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(212, 163, 115, 0.1) !important;
+}
+
 /* Хедер */
 header, .app-header {
   background-color: var(--bg-card) !important;
   border-bottom-color: var(--border) !important;
 }
 
-/* Картки у світлій темі */
-.card, [class*="card"] {
+/* Глобальні перевизначення для всіх "білих" блоків та їх прозорих варіантів */
+[class*="bg-white"] {
+  background-color: var(--bg-card) !important;
+}
+
+.bg-slate-50, .bg-gray-50, .bg-gray-100, .bg-slate-100 {
+  background-color: var(--bg) !important;
+}
+
+/* Виправлення фону для списків та ховерів */
+.hover\:bg-gray-50:hover, .hover\:bg-gray-100:hover {
+  background-color: #ffffff !important;
+}
+
+/* Перелік проектів - робимо окремі картки у тонах проекту з межами */
+[class*="ProjectList"] button, [class*="project-item"] {
   background-color: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03) !important;
+  border-radius: 8px !important;
+  margin: 4px 8px !important;
+  width: calc(100% - 16px) !important;
+  transition: all 0.2s ease !important;
+}
+
+[class*="ProjectList"] button:hover {
+  border-color: var(--primary) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+}
+
+/* Кнопки хрестики (очищення) та стрілочки у полях у тонах проекту */
+button[class*="absolute"], div[class*="absolute"][class*="cursor-pointer"] {
+  background-color: var(--bg) !important;
+  border: 1px solid var(--border) !important;
+  height: 24px !important;
+  width: 24px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+button[class*="absolute"]:hover, div[class*="absolute"][class*="cursor-pointer"]:hover {
+  border-color: var(--primary) !important;
+  background-color: var(--bg-card) !important;
+}
+
+button[class*="absolute"] {
+  right: 28px !important;
+}
+
+div[class*="absolute"][class*="cursor-pointer"] {
+  right: 2px !important;
+}
+
+/* Виправлення меж для блоків */
+[class*="border-gray-"], [class*="border-slate-"] {
+  border-color: var(--border) !important;
+}
+
+/* Тіні для карток */
+.shadow, .shadow-sm, .shadow-md, .shadow-lg {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
 }
 
 @tailwind base;
@@ -170,14 +243,8 @@ header, .app-header {
   padding: 0;
 }
 
-html {
-  font-size: 16px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+html, body, input, select, textarea, button {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: var(--text);
   background: var(--bg);
   line-height: 1.7;

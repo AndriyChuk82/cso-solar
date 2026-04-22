@@ -144,7 +144,7 @@ export default async function handler(req, res) {
 
         // Determine correct redirect URL
         let redirectUrl = '/';
-        const isAdmin = userRole === 'admin' || userRole === 'адмін' || userRole === 'адміністратор';
+        const isAdmin = ['admin', 'адмін', 'адміністратор', 'administrator'].includes(userRole.trim().toLowerCase());
         
         if (!isAdmin && moduleAccess) {
             const hasProposals = moduleAccess.includes('proposals');

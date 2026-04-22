@@ -7,9 +7,20 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Inter"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
       colors: {
-        primary: '#f09433',
-        secondary: '#3b82f6',
+        primary: {
+          DEFAULT: '#d4a373',
+          light: '#e9c46a',
+          dark: '#bc8a5f',
+        },
+        accent: {
+          DEFAULT: '#374151',
+          light: '#4b5563',
+          dark: '#1f2937',
+        },
       }
     },
   },
