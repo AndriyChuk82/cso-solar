@@ -33,7 +33,7 @@ const MODULES: ModuleInfo[] = [
     path: '/proposals',
     icon: FileText,
     permKey: 'proposals',
-    color: 'text-amber-500'
+    color: 'text-primary'
   },
   {
     id: 'warehouse',
@@ -42,7 +42,7 @@ const MODULES: ModuleInfo[] = [
     path: '/warehouse',
     icon: Package,
     permKey: 'warehouse',
-    color: 'text-blue-500'
+    color: 'text-primary'
   },
   {
     id: 'projects',
@@ -51,7 +51,7 @@ const MODULES: ModuleInfo[] = [
     path: '/projects',
     icon: Layout,
     permKey: 'projects',
-    color: 'text-indigo-500'
+    color: 'text-primary'
   },
   {
     id: 'gt',
@@ -60,7 +60,7 @@ const MODULES: ModuleInfo[] = [
     path: '/green-tariff',
     icon: Zap,
     permKey: 'gt',
-    color: 'text-green-500'
+    color: 'text-primary'
   }
 ];
 

@@ -270,22 +270,28 @@ button[class*="bg-white"] {
 /* Хедер та навігаційні кнопки */
 header nav a {
   transition: all 0.2s ease !important;
-  color: var(--text-secondary) !important;
-  border: 1px solid transparent;
+  color: var(--text-primary) !important;
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  margin: 0 2px !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
 }
 
 header nav a:hover {
-  background-color: var(--bg-primary) !important;
-  border-color: var(--border) !important;
+  border-color: var(--primary) !important;
   color: var(--primary) !important;
+  background-color: #ffffff !important;
+  transform: translateY(-1px);
 }
 
 /* Активна кнопка (поточний модуль) */
 header nav a[class*="text-primary"] {
   background-color: var(--bg-card) !important;
-  border-color: var(--border) !important;
+  border-color: var(--primary) !important;
+  border-width: 2px !important;
   color: var(--primary) !important;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+  font-weight: 700 !important;
 }
 
 * {
