@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getCatalog, addProduct, updateProduct, archiveProduct, getCategories } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { matchesSearch } from '../utils/searchUtils';
+import { matchesSearch, normalizeForSearch } from '../utils/searchUtils';
 import CONFIG from '../config';
 import { Button } from '@cso/design-system';
 
@@ -93,19 +93,21 @@ export default function Catalog() {
     setSaving(true);
     try {
       const productData = {
-        name: formData.name,
-        article: formData.article,
+        name: formData.name.trim(),
+        article: formData.article.trim(),
         unit: formData.unit,
         category: formData.category,
         active: true
       };
+
+      const normalizedNewName = normalizeForSearch(productData.name);
 
       if (editProduct) {
         productData.id = editProduct.id;
         // При редагуванні перевіряємо чи не конфліктує нова назва з іншими існуючими товарами
         const isDuplicate = products.some(p => 
           p.id !== editProduct.id && 
-          p.name.trim().toLowerCase() === formData.name.trim().toLowerCase()
+          normalizeForSearch(p.name) === normalizedNewName
         );
         if (isDuplicate) {
           setSaving(false);
@@ -115,7 +117,7 @@ export default function Catalog() {
       } else {
         // При додаванні нового
         const isDuplicate = products.some(p => 
-          p.name.trim().toLowerCase() === formData.name.trim().toLowerCase()
+          normalizeForSearch(p.name) === normalizedNewName
         );
         if (isDuplicate) {
           setSaving(false);

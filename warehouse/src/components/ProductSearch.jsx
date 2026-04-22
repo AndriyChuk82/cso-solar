@@ -101,6 +101,17 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
 
   async function handleSelect(product) {
     if (product.isExternal) {
+      // Подвійна перевірка на дублікат перед додаванням
+      const isAlreadyLocal = products.some(p => normalizeForSearch(p.name) === normalizeForSearch(product.name));
+      if (isAlreadyLocal) {
+        const localProd = products.find(p => normalizeForSearch(p.name) === normalizeForSearch(product.name));
+        onSelect(localProd);
+        setQuery('');
+        setShowResults(false);
+        setSelectedIds([]);
+        return;
+      }
+
       setSaving(true);
       try {
         const result = await addProduct({
@@ -136,6 +147,16 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
   async function handleAddNew(e) {
     e.preventDefault();
     if (!newProduct.name.trim()) return;
+
+    // Перевірка на дублікат
+    const isDuplicate = products.some(p => 
+      normalizeForSearch(p.name) === normalizeForSearch(newProduct.name)
+    );
+    if (isDuplicate) {
+      alert('Товар з такою назвою вже існує в каталозі!');
+      return;
+    }
+
     setSaving(true);
     try {
       const result = await addProduct({ ...newProduct, active: true });

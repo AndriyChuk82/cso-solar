@@ -450,6 +450,67 @@
   color: #94a3b8 !important; /* Чіткий сірий для опису */
 }
 
+/* ===== Загальні стилі кнопок (Buttons) ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-size: 14px;
+  border: 1px solid transparent;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary-dark);
+}
+
+.btn-success {
+  background: var(--income);
+  color: #fff;
+  border-color: var(--income-border);
+}
+
+.btn-danger {
+  background: var(--expense);
+  color: #fff;
+  border-color: var(--expense-border);
+}
+
+.btn-outline {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+.btn-outline:hover {
+  background: var(--border-light);
+  border-color: var(--text-muted);
+  color: var(--text);
+}
+
+.btn-ghost {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+}
+
+.btn-ghost:hover {
+  background: var(--border-light);
+  color: var(--text);
+}
+
 /* Виділення кнопок у темній темі */
 .dark button, .dark .btn, .dark [class*="btn"] {
   display: inline-flex;

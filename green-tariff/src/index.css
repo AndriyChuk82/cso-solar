@@ -35,44 +35,45 @@
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
 
-  /* Округлення */
-  --radius-sm: 6px;
-  --radius: 8px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  /* Округлення — робимо м'якшим (12px) */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
 
   /* Анімації */
-  --transition: 0.2s ease;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dark {
-  --primary: #fbbf24;
-  --primary-light: #fcd34d;
-  --primary-dark: #f59e0b;
-  --primary-bg: #422006;
-  --primary-bg-hover: #713f12;
+  /* Warm Dark Palette — inspired by the screenshot */
+  --primary: #d4a373;
+  --primary-light: #e9c46a;
+  --primary-dark: #bc8a5f;
+  --primary-bg: #2a241c;
+  --primary-bg-hover: #3d3428;
 
-  --accent: #2a5298;
-  --accent-light: #3b6dc7;
-  --accent-dark: #1a3a6b;
+  --accent: #e9c46a;
+  --accent-light: #f4d35e;
+  --accent-dark: #d4a373;
 
-  --bg: #0f172a;
-  --bg-card: #1e293b;
-  --border: #334155;
-  --border-light: #1e293b;
+  --bg: #121211;
+  --bg-card: #1c1c1b;
+  --border: #2d2d2b;
+  --border-light: #242423;
 
-  --text: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-muted: #64748b;
+  --text: #e8e4d8;
+  --text-secondary: #a3a398;
+  --text-muted: #6b6b63;
 
-  --danger: #f87171;
-  --success: #34d399;
-  --warning: #fbbf24;
-  --info: #60a5fa;
+  --danger: #ff6b6b;
+  --success: #63d471;
+  --warning: #d4a373;
+  --info: #72efdd;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 12px 24px -4px rgba(0, 0, 0, 0.7);
 }
 
 /* ===== Фікси для темної теми (Global Dark Fixes) ===== */
@@ -82,7 +83,7 @@
 }
 
 .dark body, .dark #root, .dark .app-container {
-  background-color: #0f172a !important;
+  background-color: var(--bg) !important;
 }
 
 .dark .bg-white, .dark .bg-slate-50, .dark .bg-gray-50 {
@@ -91,32 +92,34 @@
 
 /* Виправлення заголовків та тексту */
 .dark h1, .dark h2, .dark h3, .dark .text-slate-900, .dark .text-gray-900 {
-  color: #f1f5f9 !important;
+  color: var(--text) !important;
 }
 
 .dark .text-slate-700, .dark .text-gray-700 {
-  color: #cbd5e1 !important;
+  color: var(--text-secondary) !important;
 }
 
-/* Картки та Sidebar */
+/* Картки та Sidebar з ефектом скла */
 .dark aside, .dark .sidebar, .dark .card, .dark [class*="card"] {
-  background-color: #1e293b !important;
-  border-color: var(--border) !important;
+  background-color: rgba(28, 28, 27, 0.7) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: var(--shadow);
 }
 
 /* Фільтри (кнопки в списку проектів) */
 .dark .bg-white.text-gray-400, 
 .dark button.bg-white:not(.bg-primary),
 .dark button.bg-gray-100:not(.bg-primary) {
-  background-color: #1e293b !important;
-  color: #cbd5e1 !important;
-  border: 1px solid #334155 !important;
+  background-color: var(--bg-card) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border) !important;
 }
 
 .dark button.bg-white:hover:not(.bg-primary),
 .dark button.bg-gray-100:hover:not(.bg-primary) {
-  background-color: #334155 !important;
-  color: #f1f5f9 !important;
+  background-color: var(--primary-bg) !important;
+  color: var(--text) !important;
 }
 
 /* Список проектів (кнопки елементів) */
@@ -167,12 +170,12 @@ html {
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   color: var(--text);
   background: var(--bg);
-  line-height: 1.6;
+  line-height: 1.7;
   margin: 0;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* Scrollbar styling */
