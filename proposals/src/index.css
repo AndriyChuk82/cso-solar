@@ -54,8 +54,85 @@ html {
 
 /* Повертаємо стандартний розмір для друку (PDF) */
 @media print {
-  html {
-    font-size: 13px !important;
+  html, body, #root, .min-h-screen, main, #proposal-container {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: economy !important;
+    print-color-adjust: economy !important;
+  }
+
+  .no-print, 
+  button, 
+  nav,
+  header:not(.print-header),
+  aside,
+  .settings-button,
+  .print-button {
+    display: none !important;
+  }
+
+  /* БІЛИЙ ФОН ДЛЯ ОСНОВНИХ ЧАСТИН */
+  html, body, #root, .min-h-screen, main, #proposal-container, 
+  .proposal-card, .table-container, table, tbody, tr, td, 
+  .proposal-summary-table td, textarea, input,
+  .no-print + * td {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* ПРИМУСОВО БІЛИЙ ДЛЯ СТОВПЦІВ ЦІНИ ТА СУМИ */
+  td.cost-column, 
+  td[class*="bg-blue"], 
+  td[class*="bg-green"],
+  td[class*="bg-amber"],
+  .profit-row td {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+  }
+
+  /* СІРИЙ ФОН ДЛЯ ВИБРАНИХ БЛОКІВ */
+  .client-info-block, 
+  .client-info-block *,
+  thead, thead tr, thead th, th,
+  tr.bg-gray-50, th.bg-gray-50 {
+    background-color: #f3f4f6 !important;
+    background: #f3f4f6 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cost-column, .bg-blue-50, .bg-green-50 {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+  }
+
+  /* Зменшуємо висоту підсумку */
+  .proposal-summary-table tr td {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+  }
+
+  /* Стиль для друкованої шапки */
+  .print-header {
+    display: block !important;
+    margin-bottom: 20px !important;
+    border-bottom: 2px solid #000000 !important;
+    padding-bottom: 10px !important;
+    background: #ffffff !important;
+  }
+
+  textarea, input {
+    border: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    resize: none !important;
+    color: #000000 !important;
+    padding: 0 !important;
   }
 }
 

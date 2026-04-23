@@ -19,7 +19,7 @@ export function ClientInfoForm({
   onSetSeller,
 }: ClientInfoFormProps) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-3">
+    <div className="bg-white rounded-lg border border-gray-200 p-3 client-info-block">
       <h3 className="font-semibold text-gray-900 mb-2 text-xs">Інформація про клієнта</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <input

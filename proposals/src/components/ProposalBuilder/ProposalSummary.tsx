@@ -80,9 +80,9 @@ export function ProposalSummary({
       <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 overflow-hidden shadow-sm">
         <table className="w-full text-sm">
           <tfoot className="bg-gray-50 dark:bg-slate-900/50 border-t-2 border-gray-300 dark:border-slate-700">
-            {/* Subtotal row */}
-            <tr className="bg-gray-50/30 dark:bg-slate-800/10">
-              <td colSpan={4} className="px-3 py-2 text-right text-xs text-gray-500 dark:text-slate-400">
+            {/* Subtotal row - hide on print if no VAT */}
+            <tr className={`bg-gray-50/30 dark:bg-slate-800/10 ${vatMode === 'none' ? 'print:hidden' : ''}`}>
+              <td colSpan={3} className="px-3 py-2 text-right text-xs text-gray-500 dark:text-slate-400">
                 Разом (без ПДВ):
               </td>
               <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-600 dark:text-slate-400"></td>
@@ -99,7 +99,7 @@ export function ProposalSummary({
             {/* VAT row */}
             {vatMode !== 'none' && (
               <tr className="bg-gray-50/30 dark:bg-slate-800/10">
-                <td colSpan={4} className="px-3 py-2 text-right text-xs text-gray-500 dark:text-slate-400 italic">
+                <td colSpan={3} className="px-3 py-2 text-right text-xs text-gray-500 dark:text-slate-400 italic">
                   {vatMode === 'add' ? 'ПДВ (20%):' : 'в т.ч. ПДВ (20%):'}
                 </td>
                 <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column"></td>
@@ -114,7 +114,7 @@ export function ProposalSummary({
 
             {/* GRAND TOTAL ROW */}
             <tr className="font-bold bg-gray-100/50 dark:bg-slate-800/30">
-              <td colSpan={4} className="px-3 py-4 text-right uppercase tracking-wider text-xs text-gray-700 dark:text-slate-300">
+              <td colSpan={3} className="px-3 py-2 print:py-1.5 text-right uppercase tracking-wider text-xs text-gray-700 dark:text-slate-300">
                 {vatMode === 'none' ? 'Загальний підсумок:' : 'Всього до сплати (з ПДВ):'}
               </td>
               <td className="px-1 py-4 text-center bg-blue-50/50 dark:bg-blue-900/20 cost-column"></td>
