@@ -418,41 +418,11 @@ export default function Journal() {
       
       {/* Модалка редагування */}
       {editModal && (
-        <div className="modal-overlay" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000,
-          backdropFilter: 'blur(4px)',
-          padding: '20px'
-        }}>
-          <div className="modal-container" style={{ 
-            maxWidth: '500px', 
-            width: '100%',
-            maxHeight: '90vh',
-            overflowY: 'auto',
-            background: 'var(--bg-card)', 
-            color: 'var(--text)',
-            borderRadius: '16px', 
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', 
-            padding: '24px',
-            position: 'relative',
-            border: '1px solid var(--border)'
-          }}>
-            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.25rem' }}>✏️ Редагування операції</h3>
-              <button 
-                onClick={() => setEditModal(null)} 
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.5rem', color: 'var(--text-secondary)' }}
-              >
-                ×
-              </button>
+        <div className="modal-overlay" onClick={() => setEditModal(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>✏️ Редагування операції</h3>
+              <button className="modal-close" onClick={() => setEditModal(null)}>×</button>
             </div>
             <form onSubmit={handleSaveEdit}>
               <div className="modal-body">
@@ -511,22 +481,12 @@ export default function Journal() {
                 </div>
               </div>
               <div className="modal-footer">
-                <button 
-                  type="button" 
-                  className="btn btn-ghost" 
-                  onClick={() => setEditModal(null)}
-                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '10px 20px' }}
-                >
+                <Button type="button" variant="ghost" onClick={() => setEditModal(null)}>
                   Скасувати
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary" 
-                  disabled={savingEdit}
-                  style={{ cursor: savingEdit ? 'not-allowed' : 'pointer', padding: '10px 20px' }}
-                >
+                </Button>
+                <Button type="submit" variant="primary" disabled={savingEdit} loading={savingEdit}>
                   {savingEdit ? 'Збереження...' : 'Зберегти зміни'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

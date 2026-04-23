@@ -70,7 +70,7 @@ export default function Catalog() {
 
   function openAddModal() {
     setEditProduct(null);
-    const firstCat = categories.find(c => c.active)?.name || '';
+    const firstCat = (categories || []).find(c => c.active)?.name || '';
     setFormData({ name: '', article: '', unit: 'шт', category: firstCat });
     setShowModal(true);
   }
@@ -158,7 +158,7 @@ export default function Catalog() {
     if (!debouncedSearch.trim()) return true;
     const content = `${p.name} ${p.article} ${p.category}`;
     return matchesSearch(content, debouncedSearch);
-  }).sort((a, b) => sortAsc ? a.name.localeCompare(b.name) : 0);
+  }).sort((a, b) => sortAsc ? (a.name || '').localeCompare(b.name || '') : 0);
 
   return (
     <div>
@@ -168,7 +168,7 @@ export default function Catalog() {
           <p className="page-subtitle">Управління переліком товарів</p>
         </div>
         {user?.isAdmin && (
-          <Button variant="primary" onClick={openAddModal}>
+          <Button variant="primary" onClick={() => openAddModal()} type="button">
             ➕ Додати товар
           </Button>
         )}
