@@ -16,7 +16,7 @@
     "react-dom": "^18.3.1",
     "tailwind-merge": "^3.0.0",
     "jose": "^5.2.0",
-    "@cso/design-system": "workspace:*"
+    "@cso/design-system": "file:../packages/design-system"
   },
   "devDependencies": {
     "@types/react": "^18.3.1",

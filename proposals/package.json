@@ -24,7 +24,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "zustand": "^5.0.12",
-    "@cso/design-system": "workspace:*"
+    "@cso/design-system": "file:../packages/design-system"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
