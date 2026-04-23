@@ -16,6 +16,11 @@ export function useTheme() {
     return 'light';
   });
 
+  const [fontScale, setFontScale] = useState<number>(() => {
+    const stored = localStorage.getItem('font-scale');
+    return stored ? parseFloat(stored) : 1.0;
+  });
+
   useEffect(() => {
     const root = document.documentElement;
 
@@ -28,9 +33,15 @@ export function useTheme() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--font-scale', fontScale.toString());
+    localStorage.setItem('font-scale', fontScale.toString());
+  }, [fontScale]);
+
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  return { theme, toggleTheme };
+  return { theme, toggleTheme, fontScale, setFontScale };
 }

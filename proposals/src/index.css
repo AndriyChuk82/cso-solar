@@ -3,15 +3,14 @@
 @import "tailwindcss/utilities";
 
 :root {
-  --bg-primary: #fbfaf5;
-  --bg-secondary: #fbfaf5;
-  --bg-card: #f4f1e1;
-  --bg-card-hover: #f1efe2;
-  --bg-input: #ffffff;
-  --accent: #d4a373;
-  --accent-light: #e9c46a;
-  --accent-dark: #bc8a5f;
-  --accent-glow: rgba(212, 163, 115, 0.1);
+  --bg-primary: var(--bg-main);
+  --bg-secondary: var(--bg-main);
+  --bg-card: var(--bg-card);
+  --bg-input: var(--bg-card);
+  --accent: var(--primary);
+  --accent-light: var(--primary-light);
+  --accent-dark: var(--primary-dark);
+  --accent-glow: rgba(245, 158, 11, 0.1);
   --text-primary: #374151;
   --text-secondary: #6b7280;
   --text-muted: #9ca3af;
@@ -49,7 +48,7 @@
 
 html {
   /* Більш стриманий динамічний розмір шрифту: від 14px до 16.5px */
-  font-size: clamp(14px, 0.2vw + 13.5px, 16.5px);
+  font-size: calc(clamp(14px, 0.2vw + 13.5px, 16.5px) * var(--font-scale, 1));
   scroll-behavior: smooth;
 }
 
@@ -91,13 +90,14 @@ header, .app-header {
 
 /* Поля вводу у світлій темі КП */
 input, select, textarea {
-  background-color: rgba(255, 255, 255, 0.5) !important;
+  background-color: transparent !important;
   border-color: var(--border) !important;
   font-family: inherit !important;
 }
 
 input:focus, select:focus, textarea:focus {
   background-color: #ffffff !important;
+  color: #000000 !important;
   border-color: var(--primary) !important;
 }
 
@@ -215,7 +215,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .dark ::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: hsl(45 30% 96%); /* Warm Beige to match design system */
 }
 
 .dark ::-webkit-scrollbar-thumb {

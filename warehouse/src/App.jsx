@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Layout from './components/Layout';
+import { useTheme } from '@cso/design-system';
 
 // Lazy load pages
 const Journal = lazy(() => import('./pages/Journal'));
@@ -20,6 +21,7 @@ const Backups = lazy(() => import('./pages/Backups'));
 
 function AppContent() {
   const { user, loading, error } = useAuth();
+  useTheme(); // Initialize theme and font scale
 
   if (loading) {
     return (

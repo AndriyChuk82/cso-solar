@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Settings as SettingsIcon, X, Save, RefreshCw } from 'lucide-react';
+import { Settings as SettingsIcon, X, Save, RefreshCw, Sun, Moon, Type } from 'lucide-react';
 import { useProposalStore } from '../store';
+import { useTheme } from '@cso/design-system';
 import { CONFIG } from '../config';
 
 interface SettingsModalProps {
@@ -9,6 +10,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+  const { theme, toggleTheme, fontScale, setFontScale } = useTheme();
   const { settings, updateSettings, loadProducts, loading, refreshRates } = useProposalStore();
   const [localSettings, setLocalSettings] = useState(settings);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -174,23 +176,64 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 />
                 <span className="text-gray-700">Автоматичне збереження</span>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer bg-blue-50/50 p-2 rounded border border-blue-100/50">
-                <input
-                  type="checkbox"
-                  checked={localSettings.showCostInCapture}
-                  onChange={(e) =>
-                    setLocalSettings({
-                      ...localSettings,
-                      showCostInCapture: e.target.checked,
-                    })
-                  }
-                  className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
-                />
-                <div className="flex flex-col">
-                  <span className="text-gray-900 font-medium text-sm">Показувати собівартість на скріншотах</span>
-                  <span className="text-[10px] text-gray-500 italic">Колонка собівартості буде видима у Viber/Telegram</span>
+            </div>
+          </div>
+
+          {/* Стиль та Шрифти (NEW) */}
+          <div className="pt-4 border-t border-gray-100">
+            <h3 className="font-semibold text-gray-900 mb-4 uppercase text-xs tracking-widest text-primary">Стиль та Шрифти</h3>
+            
+            <div className="space-y-6">
+              {/* Theme Toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Тема оформлення</div>
+                  <div className="text-xs text-gray-500">Вибір між світлим та темним режимом</div>
                 </div>
-              </label>
+                <div className="flex bg-gray-100 dark:bg-neutral-800 p-1 rounded-lg">
+                  <button
+                    onClick={() => theme === 'dark' && toggleTheme()}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${theme === 'light' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    {(() => { const Icon = Sun as any; return <Icon size={14} />; })()}
+                    Світла
+                  </button>
+                  <button
+                    onClick={() => theme === 'light' && toggleTheme()}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${theme === 'dark' ? 'bg-neutral-700 shadow-sm text-primary' : 'text-gray-500 hover:text-gray-400'}`}
+                  >
+                    {(() => { const Icon = Moon as any; return <Icon size={14} />; })()}
+                    Темна
+                  </button>
+                </div>
+              </div>
+
+              {/* Font Scale */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    {(() => { const Icon = Type as any; return <Icon size={16} className="text-gray-500" />; })()}
+                    <span className="text-sm font-medium text-gray-900">Розмір шрифту</span>
+                  </div>
+                  <span className="text-xs font-bold text-primary px-2 py-0.5 bg-primary/10 rounded">
+                    {Math.round(fontScale * 100)}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0.8"
+                  max="1.5"
+                  step="0.05"
+                  value={fontScale}
+                  onChange={(e) => setFontScale(parseFloat(e.target.value))}
+                  className="w-full h-1.5 bg-gray-200 dark:bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                />
+                <div className="flex justify-between mt-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                  <span>Дрібний</span>
+                  <span>Стандарт</span>
+                  <span>Великий</span>
+                </div>
+              </div>
             </div>
           </div>
 

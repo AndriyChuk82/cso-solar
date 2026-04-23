@@ -8,6 +8,7 @@ import {
   User,
   ArrowRight
 } from 'lucide-react';
+import { useTheme } from '@cso/design-system';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -65,6 +66,7 @@ const MODULES: ModuleInfo[] = [
 ];
 
 export default function App() {
+  const { theme, toggleTheme, fontScale, setFontScale } = useTheme();
   const [user, setUser] = useState<{ name: string; role: string; access: string[] } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -73,12 +75,27 @@ export default function App() {
       try {
         const response = await fetch('/api/verify');
         if (!response.ok) {
+          if (import.meta.env.DEV) {
+            console.log('Dev mode: API error, setting mock user');
+            setUser({
+              name: 'Адмін (Dev)',
+              role: 'admin',
+              access: MODULES.map(m => m.id)
+            });
+            setLoading(false);
+            return;
+          }
           window.location.href = '/login.html';
           return;
         }
 
         const data = await response.json();
         if (!data.authenticated) {
+          if (import.meta.env.DEV) {
+            setUser({ name: 'Адмін (Dev)', role: 'admin', access: MODULES.map(m => m.id) });
+            setLoading(false);
+            return;
+          }
           window.location.href = '/login.html';
           return;
         }
@@ -128,6 +145,16 @@ export default function App() {
         });
       } catch (err) {
         console.error('Auth error:', err);
+        if (import.meta.env.DEV) {
+          console.log('Dev mode: setting mock user');
+          setUser({
+            name: 'Адмін (Dev)',
+            role: 'admin',
+            access: MODULES.map(m => m.id)
+          });
+          setLoading(false);
+          return;
+        }
         window.location.href = '/login.html';
       } finally {
         setLoading(false);
@@ -172,13 +199,15 @@ export default function App() {
               </div>
             </div>
 
-            <button
-              onClick={handleLogout}
-              className="p-2 text-slate-400 hover:text-red-500 transition-colors"
-              title="Вийти"
-            >
-              {(() => { const Icon = LogOut as any; return <Icon className="w-5 h-5" />; })()}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleLogout}
+                className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                title="Вийти"
+              >
+                {(() => { const Icon = LogOut as any; return <Icon className="w-5 h-5" />; })()}
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -202,7 +231,7 @@ export default function App() {
                 className="minimal-card group hover:shadow-amber-500/5"
               >
                 <div className={cn("p-4 rounded-2xl bg-slate-50 mb-6 transition-colors group-hover:bg-white", module.color)}>
-                  <module.icon className="w-10 h-10" />
+                  {(() => { const Icon = module.icon as any; return <Icon className="w-10 h-10" />; })()}
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2">{module.name}</h3>
                 <p className="text-sm text-slate-500 leading-relaxed mb-6">

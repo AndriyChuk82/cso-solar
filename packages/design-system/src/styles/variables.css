@@ -16,17 +16,17 @@
   --secondary-dark: #2563eb;
   --secondary-bg: #eff6ff;
 
-  /* Neutral — Сірі відтінки */
-  --neutral-50: 220 20% 98%;
-  --neutral-100: 220 15% 95%;
-  --neutral-200: 220 13% 91%;
-  --neutral-300: 220 12% 83%;
-  --neutral-400: 220 10% 64%;
-  --neutral-500: 220 9% 46%;
-  --neutral-600: 220 10% 37%;
-  --neutral-700: 220 12% 29%;
-  --neutral-800: 220 15% 20%;
-  --neutral-900: 220 18% 12%;
+  /* Neutral — Теплі бежеві відтінки (Warm Beige/Cream) */
+  --neutral-50: 45 30% 96%;   /* Основний фон (кремовий) */
+  --neutral-100: 45 25% 92%;  /* Другорядний фон */
+  --neutral-200: 45 20% 88%;  /* Межі */
+  --neutral-300: 45 15% 80%;  /* Заблоковані елементи */
+  --neutral-400: 40 10% 60%;  /* М'який текст */
+  --neutral-500: 40 8% 45%;
+  --neutral-600: 40 10% 35%;  /* Допоміжний текст */
+  --neutral-700: 40 12% 25%;
+  --neutral-800: 40 15% 15%;
+  --neutral-900: 40 20% 10%;  /* Основний текст */
 
   /* Semantic — Операції */
   --success-h: 142;
@@ -82,27 +82,28 @@
 
   /* Typography */
   --font-family-base: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-size-xs: 12px;
-  --font-size-sm: 14px;
-  --font-size-base: 16px;
-  --font-size-lg: 18px;
-  --font-size-xl: 20px;
-  --font-size-2xl: 24px;
+  --font-scale: 1;
+  --font-size-xs: calc(12px * var(--font-scale));
+  --font-size-sm: calc(14px * var(--font-scale));
+  --font-size-base: calc(16px * var(--font-scale));
+  --font-size-lg: calc(18px * var(--font-scale));
+  --font-size-xl: calc(20px * var(--font-scale));
+  --font-size-2xl: calc(24px * var(--font-scale));
   --line-height-tight: 1.25;
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.6;
 
-  /* Background & Text */
-  --bg-main: hsl(var(--neutral-50));
-  --bg-card: #ffffff;
-  --bg-sidebar: rgba(255, 255, 255, 0.8);
-  --bg-header: rgba(255, 255, 255, 0.9);
-  --bg-modal: rgba(255, 255, 255, 0.95);
-  --text-main: hsl(var(--neutral-900));
-  --text-secondary: hsl(var(--neutral-600));
-  --text-muted: hsl(var(--neutral-400));
-  --border-color: hsl(var(--neutral-200));
-  --border-light: rgba(255, 255, 255, 0.3);
+  /* Background & Text — Прямі кольори з оригіналу КП (Корекція) */
+  --bg-main: #fbfaf5;         /* Світлий міжрамковий простір */
+  --bg-card: #f4f1e1;         /* Темніші бежеві таблиці та картки */
+  --bg-sidebar: #f4f1e1;      /* Сайдбар теж бежевий */
+  --bg-header: #fbfaf5;       /* Шапка світла */
+  --bg-modal: #ffffff;
+  --text-main: #111827;       /* Майже чорний текст */
+  --text-secondary: #374151;  /* Темно-сірий текст */
+  --text-muted: #6b7280;
+  --border-color: #d1d5db;
+  --border-light: #e5e7eb;
 }
 
 /* Dark Mode */

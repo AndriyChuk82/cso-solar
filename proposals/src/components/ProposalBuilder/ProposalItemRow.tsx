@@ -56,7 +56,7 @@ export const ProposalItemRow = memo(function ProposalItemRow({
   }, [item.quantity, isEditingQuantity]);
 
   return (
-    <tr className="border-b border-gray-100 dark:border-slate-800 hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors">
+    <tr className="border-b border-gray-200/50 dark:border-slate-800 hover:bg-black/5 dark:hover:bg-slate-800/30 transition-colors bg-[#f4f1e1] dark:bg-[#1e293b]">
       <td className="px-1 py-1 text-center align-middle" style={{ whiteSpace: 'nowrap' }}>
         <div style={{ display: 'inline-flex', flexDirection: 'column', verticalAlign: 'middle', marginRight: '4px' }} className="no-print">
           <button

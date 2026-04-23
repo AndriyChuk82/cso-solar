@@ -4,12 +4,14 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Layout } from './components/Layout';
 import { Spinner } from './components/Spinner';
 import { ProductCatalog } from './components/ProductCatalog';
+import { useTheme } from '@cso/design-system';
 import { ProposalBuilderTable } from './components/ProposalBuilder/index';
 import { Product } from './types';
 import { useProposalStore } from './store';
 import { selectLoading, selectError } from './store/selectors';
 
 function App() {
+  useTheme(); // Initialize theme and font scale
   const loading = useProposalStore(selectLoading);
   const error = useProposalStore(selectError);
   const loadProducts = useProposalStore((state) => state.loadProducts);
