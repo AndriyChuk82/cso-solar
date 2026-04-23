@@ -85,7 +85,7 @@ export const ProposalItemRow = memo(function ProposalItemRow({
             type="text"
             value={item.name ?? item.product.name}
             onChange={(e) => onUpdateField(item.id, 'name', e.target.value)}
-            className="w-full px-0 py-0.5 text-base border-0 border-b border-transparent focus:border-primary/40 focus:ring-0 bg-transparent font-semibold dark:text-slate-100 transition-all placeholder:opacity-30"
+            className="w-full px-0 py-0.5 text-sm border-0 border-b border-transparent focus:border-primary/40 focus:ring-0 bg-transparent font-semibold dark:text-slate-100 transition-all placeholder:opacity-30"
             placeholder="Назва товару"
           />
           <input
@@ -127,7 +127,7 @@ export const ProposalItemRow = memo(function ProposalItemRow({
               onUpdateQuantity(item.id, 1);
             }
           }}
-          className="w-full px-1 py-1 text-base border-0 border-b border-gray-200/50 dark:border-slate-700/50 bg-transparent text-gray-900 dark:text-slate-100 text-center font-bold focus:border-primary focus:ring-0 transition-all"
+          className="w-full px-1 py-1 text-sm border-0 border-b border-gray-200/50 dark:border-slate-700/50 bg-transparent text-gray-900 dark:text-slate-100 text-center font-bold focus:border-primary focus:ring-0 transition-all"
         />
       </td>
       <td className="px-2 py-2 cost-column bg-blue-50/5 dark:bg-blue-900/5">

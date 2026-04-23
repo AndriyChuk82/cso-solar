@@ -122,7 +122,7 @@ export function ProposalSummary({
                 {formatCurrency(convert(costSubtotal, 'USD', activeCurrency), activeCurrency)}
               </td>
               <td className="px-1 py-4 text-center bg-green-50/50 dark:bg-green-900/20 no-print"></td>
-              <td className="px-1 py-4 text-center bg-green-50/50 dark:bg-green-900/20 text-primary dark:text-blue-400 text-xl print:text-lg font-black">
+              <td className="px-1 py-4 text-center bg-green-50/50 dark:bg-green-900/20 text-primary dark:text-blue-400 text-lg print:text-base font-black">
                 {formatCurrency(convert(total, 'USD', activeCurrency), activeCurrency)}
               </td>
               <td className="no-print"></td>
