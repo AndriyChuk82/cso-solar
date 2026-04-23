@@ -4,7 +4,6 @@ import type { Currency } from '../../types';
 interface ProposalSummaryProps {
   itemsCount: number;
   costSubtotal: number;
-  saleSubtotal: number;
   vatMode: 'none' | 'add' | 'extract';
   vatAmount: number;
   total: number;
@@ -22,7 +21,6 @@ interface ProposalSummaryProps {
 export function ProposalSummary({
   itemsCount,
   costSubtotal,
-  saleSubtotal,
   vatMode,
   vatAmount,
   total,
