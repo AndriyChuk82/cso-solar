@@ -132,7 +132,7 @@ export const ProposalItemRow = memo(function ProposalItemRow({
         <input
           type="text"
           inputMode="numeric"
-          value={isEditingQuantity ? localQuantity : formatNumber(item.quantity)}
+          value={isEditingQuantity ? localQuantity : formatNumber(item.quantity, item.quantity % 1 === 0 ? 0 : 2)}
           onFocus={() => setIsEditingQuantity(true)}
           onChange={(e) => {
             const val = e.target.value.replace(/\s/g, ''); // Remove spaces if they were somehow added
