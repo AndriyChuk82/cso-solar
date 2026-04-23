@@ -91,7 +91,7 @@ export function ProposalSummary({
               </td>
               <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 no-print"></td>
               <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 text-gray-600 dark:text-slate-400">
-                {formatCurrency(convert(saleSubtotal, 'USD', activeCurrency), activeCurrency)}
+                {formatCurrency(convert(total - vatAmount, 'USD', activeCurrency), activeCurrency)}
               </td>
               <td className="no-print"></td>
             </tr>
