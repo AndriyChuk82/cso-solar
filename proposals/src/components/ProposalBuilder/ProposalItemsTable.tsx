@@ -28,23 +28,23 @@ export function ProposalItemsTable({
   onAddManualItem,
 }: ProposalItemsTableProps) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 overflow-hidden shadow-sm transition-colors">
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200/60 dark:border-slate-800 overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.04)] transition-colors">
       <div className="overflow-x-auto">
-        <table className="w-full text-[11px]">
-          <thead className="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-700">
+        <table className="w-full text-base">
+          <thead className="bg-gray-50/50 dark:bg-slate-800/30 border-b border-gray-100 dark:border-slate-700">
             <tr>
-              <th className="px-1 py-1.5 text-left font-semibold text-gray-700 dark:text-slate-400 w-6">#</th>
-              <th className="px-1 py-2 text-left font-semibold text-gray-700 dark:text-slate-300">Назва / Опис товару</th>
-              <th className="px-1 py-2 text-center font-semibold text-gray-700 dark:text-slate-400 w-12">Од.</th>
-              <th className="px-1 py-2 text-center font-semibold text-gray-700 dark:text-slate-400 w-16">Кіл.</th>
-              <th className="px-1 py-2 text-center font-semibold text-gray-700 dark:text-slate-400 w-24 bg-blue-50/40 dark:bg-blue-900/10 cost-column">Собів. ({activeCurrency})</th>
-              <th className="px-1 py-2 text-center font-semibold text-gray-700 dark:text-slate-400 w-24 bg-blue-50/60 dark:bg-blue-900/20 cost-column">Сума соб.</th>
-              <th className="px-1 py-2 text-center font-semibold text-gray-700 dark:text-slate-400 w-24 bg-green-50/40 dark:bg-green-900/10">Ціна ({activeCurrency})</th>
-              <th className="px-1 py-2 text-center font-semibold text-gray-700 dark:text-slate-300 w-24 bg-green-50/60 dark:bg-green-900/20 font-bold text-gray-900 dark:text-slate-100">Сума</th>
-              <th className="px-1 py-2 w-10 no-print"></th>
+              <th className="px-1 py-3 text-left font-semibold text-gray-500 dark:text-slate-400 w-8">#</th>
+              <th className="px-2 py-3 text-left font-semibold text-gray-700 dark:text-slate-300">Назва / Опис товару</th>
+              <th className="px-1 py-3 text-center font-semibold text-gray-500 dark:text-slate-400 w-14">Од.</th>
+              <th className="px-2 py-3 text-center font-semibold text-gray-500 dark:text-slate-400 w-20">Кіл.</th>
+              <th className="px-2 py-3 text-center font-semibold text-gray-500 dark:text-slate-400 w-28 bg-blue-50/20 dark:bg-blue-900/5 cost-column">Собів. ({activeCurrency})</th>
+              <th className="px-2 py-3 text-center font-semibold text-gray-500 dark:text-slate-400 w-28 bg-blue-50/30 dark:bg-blue-900/10 cost-column">Сума соб.</th>
+              <th className="px-2 py-3 text-center font-semibold text-gray-500 dark:text-slate-400 w-28 bg-green-50/20 dark:bg-green-900/5">Ціна ({activeCurrency})</th>
+              <th className="px-2 py-3 text-center font-semibold text-gray-800 dark:text-slate-200 w-28 bg-green-50/30 dark:bg-green-900/10 font-bold">Сума</th>
+              <th className="px-1 py-3 w-10 no-print"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-gray-100/80 dark:divide-slate-800/50">
             {items.map((item, index) => (
               <ProposalItemRow
                 key={item.id}

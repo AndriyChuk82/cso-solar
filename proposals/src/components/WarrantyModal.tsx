@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, Plus } from 'lucide-react';
 import { Proposal, ProposalItem } from '../types';
 
 interface WarrantyModalProps {
@@ -15,7 +15,7 @@ export interface WarrantyData {
     selected: boolean;
     editedName?: string;
     editedQuantity?: number;
-    serialNumber?: string;
+    serialNumbers?: string[];
     warrantyPeriod?: string;
   }>;
   date: string;
@@ -41,9 +41,20 @@ export function WarrantyModal({ isOpen, onClose, proposal, onPrint, onComplete }
   const [editedItems, setEditedItems] = useState<Record<string, {
     name?: string;
     quantity?: number;
-    serialNumber?: string;
+    serialNumbers?: string[];
     warrantyPeriod?: string;
   }>>({});
+
+  const isComplexDevice = (name: string) => {
+    const n = name.toLowerCase();
+    // Список ключових слів та брендів інверторів/АКБ/BMS
+    const keywords = [
+      'інвертор', 'акумулятор', 'акб', 'батарея', 'bms',
+      'inverter', 'battery', 'deye', 'victron', 'fronius', 
+      'huawei', 'pylontech', 'dyness', 'must', 'growatt', 'goodwe'
+    ];
+    return keywords.some(key => n.includes(key));
+  };
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [buyer, setBuyer] = useState(proposal.clientName || '');
@@ -93,7 +104,7 @@ export function WarrantyModal({ isOpen, onClose, proposal, onPrint, onComplete }
           selected: true,
           editedName: editedItems[item.id]?.name,
           editedQuantity: editedItems[item.id]?.quantity,
-          serialNumber: editedItems[item.id]?.serialNumber,
+          serialNumbers: editedItems[item.id]?.serialNumbers || [],
           warrantyPeriod: editedItems[item.id]?.warrantyPeriod ?? item.product.warranty ?? defaultWarranty,
         };
       });
@@ -250,11 +261,11 @@ export function WarrantyModal({ isOpen, onClose, proposal, onPrint, onComplete }
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="px-2 py-1.5 w-8"></th>
-                    <th className="px-2 py-1.5 text-left font-semibold text-gray-700">Назва</th>
-                     <th className="px-2 py-1.5 text-center font-semibold text-gray-700 w-16">Кіл.</th>
-                    <th className="px-2 py-1.5 text-left font-semibold text-gray-700 w-32">Серійний №</th>
-                    <th className="px-2 py-1.5 text-left font-semibold text-gray-700 w-24">Гарантія</th>
-                    <th className="px-2 py-1.5 w-8"></th>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-700">Назва</th>
+                     <th className="px-3 py-2 text-center font-semibold text-gray-700 w-20">Кіл.</th>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-700 w-48">Серійні номери</th>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-700 w-28">Гарантія</th>
+                    <th className="px-2 py-2 w-10"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -278,36 +289,91 @@ export function WarrantyModal({ isOpen, onClose, proposal, onPrint, onComplete }
                             className="w-4 h-4 text-primary rounded focus:ring-1 focus:ring-primary"
                           />
                         </td>
-                        <td className="px-2 py-1.5">
+                        <td className="px-3 py-2">
                           <input
                             type="text"
                             value={editedName ?? item.name ?? item.product.name}
                             onChange={(e) => updateItemField(item.id, 'name', e.target.value)}
                             disabled={!isSelected}
-                            className="w-full px-1.5 py-0.5 text-[11px] border border-gray-200 rounded focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
+                            className="w-full px-2 py-1 text-[13px] border border-gray-200 rounded focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
                           />
                         </td>
-                        <td className="px-2 py-1.5">
+                        <td className="px-3 py-2">
                           <input
                             type="number"
                             min="1"
                             value={editedQuantity ?? item.quantity}
                             onChange={(e) => updateItemField(item.id, 'quantity', parseInt(e.target.value) || 1)}
                             disabled={!isSelected}
-                            className="w-full px-1.5 py-0.5 text-[11px] text-center border border-gray-200 rounded focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
+                            className="w-full px-2 py-1 text-[13px] text-center border border-gray-200 rounded focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500 font-medium"
                           />
                         </td>
-                        <td className="px-2 py-1.5">
-                          <input
-                            type="text"
-                            value={serialNumber ?? ''}
-                            onChange={(e) => updateItemField(item.id, 'serialNumber', e.target.value)}
-                            disabled={!isSelected}
-                            placeholder="SN123456"
-                            className="w-full px-1.5 py-0.5 text-[11px] border border-gray-200 rounded focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
-                          />
+                        <td className="px-3 py-2">
+                          <div className="space-y-1.5">
+                            {(() => {
+                              const currentName = editedItems[item.id]?.name ?? item.name ?? item.product.name;
+                              const complex = isComplexDevice(currentName);
+                              
+                              // Ініціалізуємо масив, якщо його ще немає
+                              const serials = editedItems[item.id]?.serialNumbers ?? 
+                                             Array.from({ length: complex ? (editedItems[item.id]?.quantity ?? item.quantity) : 1 }).map(() => '');
+                              
+                              return (
+                                <>
+                                  {serials.map((sn, i) => (
+                                    <div key={`${item.id}-sn-container-${i}`} className="flex items-center gap-1">
+                                      <input
+                                        type="text"
+                                        value={sn}
+                                        onChange={(e) => {
+                                          const newSerials = [...serials];
+                                          newSerials[i] = e.target.value;
+                                          setEditedItems(prev => ({
+                                            ...prev,
+                                            [item.id]: { ...prev[item.id], serialNumbers: newSerials }
+                                          }));
+                                        }}
+                                        disabled={!isSelected}
+                                        placeholder={complex ? `SN №${i + 1}` : 'SN / Примітка'}
+                                        className="flex-1 px-2 py-1 text-[12px] border border-gray-200 rounded focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500 font-mono"
+                                      />
+                                      <div className="flex items-center">
+                                        <button
+                                          onClick={() => {
+                                            const newSerials = [...serials];
+                                            newSerials.splice(i + 1, 0, ''); // Додаємо порожнє поле після поточного
+                                            setEditedItems(prev => ({
+                                              ...prev,
+                                              [item.id]: { ...prev[item.id], serialNumbers: newSerials }
+                                            }));
+                                          }}
+                                          className="p-1 text-primary hover:text-primary-dark transition-colors"
+                                          title="Додати ще одне поле"
+                                        >
+                                          <Plus className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            const newSerials = serials.filter((_, index) => index !== i);
+                                            setEditedItems(prev => ({
+                                              ...prev,
+                                              [item.id]: { ...prev[item.id], serialNumbers: newSerials }
+                                            }));
+                                          }}
+                                          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                          title="Видалити це поле"
+                                        >
+                                          <X className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </>
+                              );
+                            })()}
+                          </div>
                         </td>
-                        <td className="px-2 py-1.5">
+                        <td className="px-3 py-2">
                           {(() => {
                             const isLabor = (item.name || item.product.name).toLowerCase().includes('роботи') || 
                                             (item.name || item.product.name).toLowerCase().includes('монтаж');
@@ -318,7 +384,7 @@ export function WarrantyModal({ isOpen, onClose, proposal, onPrint, onComplete }
                                 value={warrantyPeriod ?? item.product.warranty ?? defaultWarranty}
                                 onChange={(e) => updateItemField(item.id, 'warrantyPeriod', e.target.value)}
                                 disabled={!isSelected}
-                                className="w-full px-1.5 py-0.5 text-[11px] border border-gray-200 rounded focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
+                                className="w-full px-2 py-1 text-[12px] border border-gray-200 rounded focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500"
                               />
                             );
                           })()}

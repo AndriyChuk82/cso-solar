@@ -47,7 +47,18 @@
   --info: #60a5fa;
 }
 
-html { font-size: 14px; }
+html {
+  /* Динамічний розмір шрифту: мін 15px, макс 18px, адаптується до ширини екрану */
+  font-size: clamp(15px, 0.4vw + 14px, 18px);
+  scroll-behavior: smooth;
+}
+
+/* Повертаємо стандартний розмір для друку (PDF) */
+@media print {
+  html {
+    font-size: 13px !important;
+  }
+}
 
 body {
   font-family: var(--font);

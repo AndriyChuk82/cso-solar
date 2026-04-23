@@ -40,12 +40,12 @@ export function ProposalSummary({
 
   return (
     <>
-      <div className="flex items-center gap-2 mb-2 no-print">
-        <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">ПДВ:</span>
+      <div className="flex items-center gap-3 mb-3 no-print">
+        <span className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">ПДВ:</span>
         <div className="flex bg-gray-100 dark:bg-slate-800 p-0.5 rounded-lg border border-gray-200 dark:border-slate-700">
           <button
             onClick={() => onUpdateVatMode('none')}
-            className={`px-3 py-1 text-[10px] font-bold rounded-md transition ${
+            className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${
               vatMode === 'none' 
                 ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-700 dark:text-blue-400' 
                 : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'
@@ -55,7 +55,7 @@ export function ProposalSummary({
           </button>
           <button
             onClick={() => onUpdateVatMode('add')}
-            className={`px-3 py-1 text-[10px] font-bold rounded-md transition ${
+            className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${
               vatMode === 'add' 
                 ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-700 dark:text-blue-400' 
                 : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'
@@ -65,7 +65,7 @@ export function ProposalSummary({
           </button>
           <button
             onClick={() => onUpdateVatMode('extract')}
-            className={`px-3 py-1 text-[10px] font-bold rounded-md transition ${
+            className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${
               vatMode === 'extract' 
                 ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-700 dark:text-blue-400' 
                 : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'
@@ -78,19 +78,19 @@ export function ProposalSummary({
 
       {/* Summary Footer */}
       <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 overflow-hidden shadow-sm">
-        <table className="w-full text-[11px]">
+        <table className="w-full text-sm">
           <tfoot className="bg-gray-50 dark:bg-slate-900/50 border-t-2 border-gray-300 dark:border-slate-700">
             {/* Subtotal row */}
             <tr className="bg-gray-50/30 dark:bg-slate-800/10">
-              <td colSpan={4} className="px-2 py-1.5 text-right text-[10px] text-gray-500 dark:text-slate-400">
+              <td colSpan={4} className="px-3 py-2 text-right text-xs text-gray-500 dark:text-slate-400">
                 Разом (без ПДВ):
               </td>
-              <td className="px-1 py-1.5 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-600 dark:text-slate-400"></td>
-              <td className="px-1 py-1.5 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-500 dark:text-slate-400 underline decoration-gray-300 dark:decoration-slate-700">
+              <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-600 dark:text-slate-400"></td>
+              <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-500 dark:text-slate-400 underline decoration-gray-300 dark:decoration-slate-700">
                 {formatCurrency(convert(costSubtotal, 'USD', activeCurrency), activeCurrency)}
               </td>
-              <td className="px-1 py-1.5 text-center bg-green-50/30 dark:bg-green-900/10 no-print"></td>
-              <td className="px-1 py-1.5 text-center bg-green-50/30 dark:bg-green-900/10 text-gray-600 dark:text-slate-400">
+              <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 no-print"></td>
+              <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 text-gray-600 dark:text-slate-400">
                 {formatCurrency(convert(saleSubtotal, 'USD', activeCurrency), activeCurrency)}
               </td>
               <td className="no-print"></td>
@@ -99,13 +99,13 @@ export function ProposalSummary({
             {/* VAT row */}
             {vatMode !== 'none' && (
               <tr className="bg-gray-50/30 dark:bg-slate-800/10">
-                <td colSpan={4} className="px-2 py-1.5 text-right text-[10px] text-gray-500 dark:text-slate-400 italic">
+                <td colSpan={4} className="px-3 py-2 text-right text-xs text-gray-500 dark:text-slate-400 italic">
                   {vatMode === 'add' ? 'ПДВ (20%):' : 'в т.ч. ПДВ (20%):'}
                 </td>
-                <td className="px-1 py-1.5 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column"></td>
-                <td className="px-1 py-1.5 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column"></td>
-                <td className="px-1 py-1.5 text-center bg-green-50/30 dark:bg-green-900/10 no-print"></td>
-                <td className="px-1 py-1.5 text-center bg-green-50/30 dark:bg-green-900/10 text-gray-500 dark:text-slate-400 font-medium">
+                <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column"></td>
+                <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column"></td>
+                <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 no-print"></td>
+                <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 text-gray-500 dark:text-slate-400 font-medium">
                   {formatCurrency(convert(vatAmount, 'USD', activeCurrency), activeCurrency)}
                 </td>
                 <td className="no-print"></td>
@@ -114,25 +114,25 @@ export function ProposalSummary({
 
             {/* GRAND TOTAL ROW */}
             <tr className="font-bold bg-gray-100/50 dark:bg-slate-800/30">
-              <td colSpan={4} className="px-2 py-3 text-right uppercase tracking-wider text-[10px] text-gray-700 dark:text-slate-300">
+              <td colSpan={4} className="px-3 py-4 text-right uppercase tracking-wider text-xs text-gray-700 dark:text-slate-300">
                 {vatMode === 'none' ? 'Загальний підсумок:' : 'Всього до сплати (з ПДВ):'}
               </td>
-              <td className="px-1 py-3 text-center bg-blue-50/50 dark:bg-blue-900/20 cost-column"></td>
-              <td className="px-1 py-3 text-center bg-blue-50/50 dark:bg-blue-900/20 cost-column text-gray-700 dark:text-slate-300 font-black">
+              <td className="px-1 py-4 text-center bg-blue-50/50 dark:bg-blue-900/20 cost-column"></td>
+              <td className="px-1 py-4 text-center bg-blue-50/50 dark:bg-blue-900/20 cost-column text-gray-700 dark:text-slate-300 font-black">
                 {formatCurrency(convert(costSubtotal, 'USD', activeCurrency), activeCurrency)}
               </td>
-              <td className="px-1 py-3 text-center bg-green-50/50 dark:bg-green-900/20 no-print"></td>
-              <td className="px-1 py-3 text-center bg-green-50/50 dark:bg-green-900/20 text-primary dark:text-blue-400 text-[16px] font-black">
+              <td className="px-1 py-4 text-center bg-green-50/50 dark:bg-green-900/20 no-print"></td>
+              <td className="px-1 py-4 text-center bg-green-50/50 dark:bg-green-900/20 text-primary dark:text-blue-400 text-xl print:text-lg font-black">
                 {formatCurrency(convert(total, 'USD', activeCurrency), activeCurrency)}
               </td>
               <td className="no-print"></td>
             </tr>
-            <tr className="text-[10px] bg-white dark:bg-slate-900 no-print profit-row">
-              <td colSpan={3} className="px-2 py-1.5 text-right text-gray-400 dark:text-slate-500 font-medium">
+            <tr className="text-xs bg-white dark:bg-slate-900 no-print profit-row">
+              <td colSpan={3} className="px-3 py-2 text-right text-gray-400 dark:text-slate-500 font-medium">
                 Маржинальність пропозиції:
               </td>
-              <td colSpan={5} className="px-2 py-1.5 text-right font-bold">
-                <span className="text-green-600 dark:text-green-400 px-2 py-0.5 bg-green-50 dark:bg-green-900/20 rounded">
+              <td colSpan={5} className="px-3 py-2 text-right font-bold">
+                <span className="text-green-600 dark:text-green-400 px-3 py-1 bg-green-50 dark:bg-green-900/20 rounded">
                   Прибуток: {formatCurrency(convert(profit, 'USD', activeCurrency), activeCurrency)} ({profitPercent.toFixed(1)}%)
                 </span>
               </td>
@@ -143,10 +143,10 @@ export function ProposalSummary({
       </div>
 
       {/* Currency Note */}
-      <div className="text-[10px] text-gray-400 mt-2 font-medium italic border-t border-gray-100 pt-1">
+      <div className="text-xs text-gray-400 mt-3 font-medium italic border-t border-gray-100 pt-2">
         * Розрахунок проведено за курсом:
-        <span className="ml-2 font-bold">1 USD = {usdRate} грн</span>
-        <span className="ml-4 font-bold">1 EUR = {eurRate} грн</span>
+        <span className="ml-2 font-bold text-gray-500">1 USD = {usdRate} грн</span>
+        <span className="ml-4 font-bold text-gray-500">1 EUR = {eurRate} грн</span>
       </div>
 
       {/* Notes */}

@@ -79,33 +79,33 @@ export const ProposalItemRow = memo(function ProposalItemRow({
           {index + 1}
         </span>
       </td>
-      <td className="px-1 py-1">
-        <div className="flex flex-col gap-0.5 p-1 rounded-md border border-gray-200 dark:border-white/10 hover:border-primary/30 dark:hover:border-white/30 transition-all bg-white/5 dark:bg-slate-900/10">
+      <td className="px-2 py-2">
+        <div className="flex flex-col gap-0 transition-all">
           <input
             type="text"
             value={item.name ?? item.product.name}
             onChange={(e) => onUpdateField(item.id, 'name', e.target.value)}
-            className="w-full px-1 py-0.5 text-[0.88rem] border border-transparent focus:border-primary/30 dark:focus:border-blue-500/30 focus:ring-0 rounded bg-transparent font-medium dark:text-slate-100 transition-all"
-            placeholder="Назва"
+            className="w-full px-0 py-0.5 text-base border-0 border-b border-transparent focus:border-primary/40 focus:ring-0 bg-transparent font-semibold dark:text-slate-100 transition-all placeholder:opacity-30"
+            placeholder="Назва товару"
           />
           <input
             type="text"
             value={item.description || ''}
             onChange={(e) => onUpdateField(item.id, 'description', e.target.value)}
-            className="w-full px-1 py-0.5 text-[0.7rem] border border-transparent focus:border-primary/30 dark:focus:border-blue-500/30 focus:ring-0 rounded bg-transparent text-[#94a3b8] dark:text-[#94a3b8] italic transition-all item-description-input"
-            placeholder="Опис (опціонально)"
+            className="w-full px-0 py-0 text-xs border-0 border-b border-transparent focus:border-primary/30 focus:ring-0 bg-transparent text-slate-500 dark:text-slate-400 italic transition-all placeholder:opacity-30"
+            placeholder="Додати опис..."
           />
         </div>
       </td>
-      <td className="px-1 py-1 text-center">
+      <td className="px-2 py-2 text-center">
         <input
           type="text"
           value={item.unit}
           onChange={(e) => onUpdateField(item.id, 'unit', e.target.value)}
-          className="w-full px-1 py-0.5 text-[10px] border border-transparent hover:border-gray-200 dark:hover:border-slate-700 focus:border-primary dark:focus:border-blue-500 focus:ring-0 rounded text-center bg-transparent dark:text-slate-400 transition-all"
+          className="w-full px-1 py-1 text-sm border-0 border-b border-transparent hover:border-gray-200/50 dark:hover:border-slate-700/50 focus:border-primary focus:ring-0 text-center bg-transparent dark:text-slate-400 transition-all"
         />
       </td>
-      <td className="px-1 py-1">
+      <td className="px-2 py-2">
         <input
           type="text"
           inputMode="numeric"
@@ -113,7 +113,6 @@ export const ProposalItemRow = memo(function ProposalItemRow({
           onFocus={() => setIsEditingQuantity(true)}
           onChange={(e) => {
             const val = e.target.value;
-            // Дозволяємо лише цифри або порожній рядок
             if (val === '' || /^\d*\.?\d*$/.test(val)) {
               setLocalQuantity(val);
               const num = parseFloat(val);
@@ -128,10 +127,10 @@ export const ProposalItemRow = memo(function ProposalItemRow({
               onUpdateQuantity(item.id, 1);
             }
           }}
-          className="w-full px-1 py-0.5 text-[11px] border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded text-center font-bold focus:border-primary dark:focus:border-blue-500 focus:ring-1 focus:ring-primary/20 transition-all"
+          className="w-full px-1 py-1 text-base border-0 border-b border-gray-200/50 dark:border-slate-700/50 bg-transparent text-gray-900 dark:text-slate-100 text-center font-bold focus:border-primary focus:ring-0 transition-all"
         />
       </td>
-      <td className="px-1 py-1 cost-column">
+      <td className="px-2 py-2 cost-column bg-blue-50/5 dark:bg-blue-900/5">
         <input
           type="number"
           value={isEditingCost ? localCost : item.displayCost.toFixed(2)}
@@ -142,14 +141,14 @@ export const ProposalItemRow = memo(function ProposalItemRow({
             if (!isNaN(val)) onUpdateCostPrice(item.id, val);
           }}
           onBlur={() => setIsEditingCost(false)}
-          className="w-full px-1 py-0.5 text-[11px] border border-gray-200 dark:border-slate-700 rounded text-center bg-blue-50/30 dark:bg-blue-900/10 text-gray-900 dark:text-slate-100 focus:border-blue-400 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-900/40 transition-all"
+          className="w-full px-1 py-1 text-sm border-0 border-b border-gray-200/50 dark:border-slate-700/50 rounded-none text-center bg-transparent text-gray-900 dark:text-slate-100 focus:border-blue-400 focus:ring-0 transition-all"
           step="0.01"
         />
       </td>
-      <td className="px-1 py-1 text-center text-[11px] text-gray-600 dark:text-slate-400 cost-column bg-blue-50/30 dark:bg-blue-900/20">
+      <td className="px-1 py-1 text-center text-sm text-gray-600 dark:text-slate-400 cost-column bg-blue-50/30 dark:bg-blue-900/20">
         {costTotal.toFixed(2)}
       </td>
-      <td className="px-1 py-1 bg-green-50/10 dark:bg-green-900/10">
+      <td className="px-2 py-2 bg-green-50/5 dark:bg-green-900/5">
         <input
           type="number"
           value={isEditingPrice ? localPrice : item.displayPrice.toFixed(2)}
@@ -160,11 +159,11 @@ export const ProposalItemRow = memo(function ProposalItemRow({
             if (!isNaN(val)) onUpdateSalePrice(item.id, val);
           }}
           onBlur={() => setIsEditingPrice(false)}
-          className="w-full px-1 py-0.5 text-[11px] border border-gray-200 dark:border-slate-700 rounded text-center bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:border-green-400 dark:focus:border-green-500 focus:ring-1 focus:ring-green-200 dark:focus:ring-green-900/40 transition-all font-medium"
+          className="w-full px-1 py-1 text-sm border-0 border-b border-gray-200/50 dark:border-slate-700/50 rounded-none text-center bg-transparent text-gray-900 dark:text-slate-100 focus:border-green-500 focus:ring-0 transition-all font-semibold"
           step="0.01"
         />
       </td>
-      <td className="px-1 py-1 text-center font-bold text-[12px] text-gray-900 dark:text-slate-100 bg-green-50/30 dark:bg-green-900/20">
+      <td className="px-1 py-1 text-center font-bold text-sm text-gray-900 dark:text-slate-100 bg-green-50/30 dark:bg-green-900/20">
         {saleTotal.toFixed(2)}
       </td>
       <td className="px-1 py-1 text-center no-print">

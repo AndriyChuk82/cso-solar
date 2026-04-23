@@ -537,15 +537,21 @@ function generateTTNHTMLWithData(proposal: Proposal, data: TTNData): string {
 function generateWarrantyHTMLWithData(proposal: Proposal, data: WarrantyData): string {
   const dateStr = data.date ? data.date.split('-').reverse().join('.') : new Date().toLocaleDateString('uk-UA');
   
-  const itemsHTML = data.selectedItems.map((item, i) => `
-    <tr>
-      <td>${i + 1}</td>
-      <td style="text-align: left;">${item.editedName || item.name || item.product.name}</td>
-      <td>${item.editedQuantity || item.quantity}</td>
-      <td style="word-break: break-all;">${item.serialNumber || ''}</td>
-      <td>${item.warrantyPeriod || ''}</td>
-    </tr>
-  `).join('');
+  const itemsHTML = data.selectedItems.map((item, i) => {
+    const serials = item.serialNumbers && item.serialNumbers.length > 0 
+      ? item.serialNumbers.map(sn => sn || '_________________').join('<br>')
+      : '';
+    
+    return `
+      <tr>
+        <td>${i + 1}</td>
+        <td style="text-align: left;">${item.editedName || item.name || item.product.name}</td>
+        <td>${item.editedQuantity || item.quantity}</td>
+        <td style="word-break: break-all; line-height: 1.6;">${serials}</td>
+        <td>${item.warrantyPeriod || ''}</td>
+      </tr>
+    `;
+  }).join('');
 
   return `
     <html>
