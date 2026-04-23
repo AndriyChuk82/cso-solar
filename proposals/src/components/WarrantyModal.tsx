@@ -273,7 +273,6 @@ export function WarrantyModal({ isOpen, onClose, proposal, onPrint, onComplete }
                     const isSelected = selectedItems.includes(item.id);
                     const editedName = editedItems[item.id]?.name;
                     const editedQuantity = editedItems[item.id]?.quantity;
-                    const serialNumber = editedItems[item.id]?.serialNumber;
                     const warrantyPeriod = editedItems[item.id]?.warrantyPeriod;
 
                     return (
