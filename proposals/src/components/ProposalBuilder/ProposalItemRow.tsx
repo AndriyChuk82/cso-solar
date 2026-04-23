@@ -1,4 +1,5 @@
 import { memo, useState, useEffect, useRef } from 'react';
+import { formatNumber } from '../../utils/currency';
 import type { Currency } from '../../types';
 
 interface ProposalItemRowProps {
@@ -131,10 +132,10 @@ export const ProposalItemRow = memo(function ProposalItemRow({
         <input
           type="text"
           inputMode="numeric"
-          value={isEditingQuantity ? localQuantity : item.quantity}
+          value={isEditingQuantity ? localQuantity : formatNumber(item.quantity)}
           onFocus={() => setIsEditingQuantity(true)}
           onChange={(e) => {
-            const val = e.target.value;
+            const val = e.target.value.replace(/\s/g, ''); // Remove spaces if they were somehow added
             if (val === '' || /^\d*\.?\d*$/.test(val)) {
               setLocalQuantity(val);
               const num = parseFloat(val);
@@ -154,39 +155,45 @@ export const ProposalItemRow = memo(function ProposalItemRow({
       </td>
       <td className="px-2 py-2 cost-column bg-blue-50/5 dark:bg-blue-900/5">
         <input
-          type="number"
-          value={isEditingCost ? localCost : item.displayCost.toFixed(2)}
+          type="text"
+          inputMode="decimal"
+          value={isEditingCost ? localCost : formatNumber(item.displayCost)}
           onFocus={() => setIsEditingCost(true)}
           onChange={(e) => {
-            setLocalCost(e.target.value);
-            const val = parseFloat(e.target.value);
-            if (!isNaN(val)) onUpdateCostPrice(item.id, val);
+            const val = e.target.value.replace(/\s/g, '').replace(',', '.');
+            if (val === '' || /^\d*\.?\d*$/.test(val)) {
+              setLocalCost(val);
+              const num = parseFloat(val);
+              if (!isNaN(num)) onUpdateCostPrice(item.id, num);
+            }
           }}
           onBlur={() => setIsEditingCost(false)}
           className="w-full px-1 py-1 text-sm border-0 border-b border-gray-200/50 dark:border-slate-700/50 rounded-none text-center bg-transparent text-gray-900 dark:text-slate-100 focus:border-blue-400 focus:ring-0 transition-all"
-          step="0.01"
         />
       </td>
       <td className="px-1 py-1 text-center text-sm text-gray-600 dark:text-slate-400 cost-column bg-blue-50/30 dark:bg-blue-900/20">
-        {costTotal.toFixed(2)}
+        {formatNumber(costTotal)}
       </td>
       <td className="px-2 py-2 bg-green-50/5 dark:bg-green-900/5">
         <input
-          type="number"
-          value={isEditingPrice ? localPrice : item.displayPrice.toFixed(2)}
+          type="text"
+          inputMode="decimal"
+          value={isEditingPrice ? localPrice : formatNumber(item.displayPrice)}
           onFocus={() => setIsEditingPrice(true)}
           onChange={(e) => {
-            setLocalPrice(e.target.value);
-            const val = parseFloat(e.target.value);
-            if (!isNaN(val)) onUpdateSalePrice(item.id, val);
+            const val = e.target.value.replace(/\s/g, '').replace(',', '.');
+            if (val === '' || /^\d*\.?\d*$/.test(val)) {
+              setLocalPrice(val);
+              const num = parseFloat(val);
+              if (!isNaN(num)) onUpdateSalePrice(item.id, num);
+            }
           }}
           onBlur={() => setIsEditingPrice(false)}
           className="w-full px-1 py-1 text-sm border-0 border-b border-gray-200/50 dark:border-slate-700/50 rounded-none text-center bg-transparent text-gray-900 dark:text-slate-100 focus:border-green-500 focus:ring-0 transition-all font-semibold"
-          step="0.01"
         />
       </td>
       <td className="px-1 py-1 text-center font-bold text-sm text-gray-900 dark:text-slate-100 bg-green-50/30 dark:bg-green-900/20">
-        {saleTotal.toFixed(2)}
+        {formatNumber(saleTotal)}
       </td>
       <td className="px-1 py-1 text-center no-print">
         <button

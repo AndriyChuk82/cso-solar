@@ -236,7 +236,7 @@ export default function DailyBalance() {
                               ? 'var(--expense)'
                               : 'var(--text-muted)'
                         }}>
-                          {item.diff > 0 ? `+${item.diff}` : item.diff === 0 ? '—' : item.diff}
+                          {item.diff > 0 ? `+${item.diff.toLocaleString('uk-UA')}` : item.diff === 0 ? '—' : item.diff.toLocaleString('uk-UA')}
                         </td>
                       </tr>
                     </Fragment>

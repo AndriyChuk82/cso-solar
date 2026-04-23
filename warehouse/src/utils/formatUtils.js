@@ -12,7 +12,7 @@ export function formatQuantity(qty, category, name = '') {
     (catLower === 'панелі');
 
   if (!isSolar) {
-    return num;
+    return num.toLocaleString('uk-UA');
   }
 
   const PALLET_SIZE = 36;
@@ -22,13 +22,13 @@ export function formatQuantity(qty, category, name = '') {
   const isNegative = num < 0;
 
   if (pallets === 0) {
-    return num; // Менше 36 — просто число
+    return num.toLocaleString('uk-UA'); // Менше 36 — просто число
   }
 
   const sign = isNegative ? '-' : '';
-  let result = `${sign}${absNum} шт\n(${pallets} пал`;
+  let result = `${sign}${absNum.toLocaleString('uk-UA')} шт\n(${pallets.toLocaleString('uk-UA')} пал`;
   if (remainder > 0) {
-    result += ` + ${remainder} шт`;
+    result += ` + ${remainder.toLocaleString('uk-UA')} шт`;
   }
   result += `)`;
 
