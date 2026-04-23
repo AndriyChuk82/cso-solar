@@ -451,7 +451,7 @@
 }
 
 /* ===== Загальні стилі кнопок (Buttons) ===== */
-.btn {
+.btn, .ds-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -462,52 +462,60 @@
   cursor: pointer;
   transition: all var(--transition);
   font-size: 14px;
-  border: 1px solid transparent;
+  border: 1px solid rgba(0, 0, 0, 0.1); /* Subtle border for all buttons in light mode */
+  background: var(--bg-card);
+  color: var(--text);
 }
 
-.btn-sm {
+.btn-sm, .ds-button-sm {
   padding: 4px 10px;
   font-size: 13px;
 }
 
-.btn-primary {
+.btn-primary, .ds-button-primary {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary-dark);
 }
 
-.btn-success {
+.btn-primary:hover, .ds-button-primary:hover {
+  background: var(--primary-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-success, .ds-button-success {
   background: var(--income);
   color: #fff;
   border-color: var(--income-border);
 }
 
-.btn-danger {
+.btn-danger, .ds-button-danger {
   background: var(--expense);
   color: #fff;
   border-color: var(--expense-border);
 }
 
-.btn-outline {
+.btn-outline, .ds-button-outline {
   background: transparent;
   border-color: var(--border);
   color: var(--text-secondary);
 }
 
-.btn-outline:hover {
+.btn-outline:hover, .ds-button-outline:hover {
   background: var(--border-light);
   border-color: var(--text-muted);
   color: var(--text);
 }
 
-.btn-ghost {
+.btn-ghost, .ds-button-ghost {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: var(--text-secondary);
 }
 
-.btn-ghost:hover {
+.btn-ghost:hover, .ds-button-ghost:hover {
   background: var(--border-light);
+  border-color: var(--border);
   color: var(--text);
 }
 

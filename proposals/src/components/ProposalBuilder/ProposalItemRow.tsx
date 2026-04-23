@@ -1,4 +1,4 @@
-import { memo, useState, useEffect } from 'react';
+import { memo, useState, useEffect, useRef } from 'react';
 import type { Currency } from '../../types';
 
 interface ProposalItemRowProps {
@@ -81,19 +81,41 @@ export const ProposalItemRow = memo(function ProposalItemRow({
       </td>
       <td className="px-2 py-2">
         <div className="flex flex-col gap-0 transition-all">
-          <input
-            type="text"
+          <textarea
             value={item.name ?? item.product.name}
             onChange={(e) => onUpdateField(item.id, 'name', e.target.value)}
-            className="w-full px-0 py-0.5 text-sm border-0 border-b border-transparent focus:border-primary/40 focus:ring-0 bg-transparent font-semibold dark:text-slate-100 transition-all placeholder:opacity-30"
+            onInput={(e) => {
+              const target = e.currentTarget;
+              target.style.height = 'auto';
+              target.style.height = `${target.scrollHeight}px`;
+            }}
+            rows={1}
+            className="w-full px-0 py-0.5 text-sm border-0 border-b border-transparent focus:border-primary/40 focus:ring-0 bg-transparent font-semibold dark:text-slate-100 transition-all placeholder:opacity-30 resize-none overflow-hidden"
             placeholder="Назва товару"
+            ref={(el) => {
+              if (el) {
+                el.style.height = 'auto';
+                el.style.height = `${el.scrollHeight}px`;
+              }
+            }}
           />
-          <input
-            type="text"
+          <textarea
             value={item.description || ''}
             onChange={(e) => onUpdateField(item.id, 'description', e.target.value)}
-            className="w-full px-0 py-0 text-xs border-0 border-b border-transparent focus:border-primary/30 focus:ring-0 bg-transparent text-slate-500 dark:text-slate-400 italic transition-all placeholder:opacity-30"
+            onInput={(e) => {
+              const target = e.currentTarget;
+              target.style.height = 'auto';
+              target.style.height = `${target.scrollHeight}px`;
+            }}
+            rows={1}
+            className="w-full px-0 py-0 text-xs border-0 border-b border-transparent focus:border-primary/30 focus:ring-0 bg-transparent text-slate-500 dark:text-slate-400 italic transition-all placeholder:opacity-30 resize-none overflow-hidden"
             placeholder="Додати опис..."
+            ref={(el) => {
+              if (el) {
+                el.style.height = 'auto';
+                el.style.height = `${el.scrollHeight}px`;
+              }
+            }}
           />
         </div>
       </td>
