@@ -188,7 +188,6 @@ export function ProposalBuilderTable() {
       <ProposalSummary
         itemsCount={proposal.items.length}
         costSubtotal={costSubtotal}
-        saleSubtotal={saleSubtotal}
         vatMode={proposal.vatMode || 'none'}
         vatAmount={proposal.vatAmount || 0}
         total={proposal.total}
