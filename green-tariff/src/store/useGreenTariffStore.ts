@@ -106,6 +106,7 @@ const FIELD_MAPPING: Record<string, string[]> = {
   field40: ['Паспортні дані'],
   field41: ['Аванс, USD'],
   field42: ['Залишок, USD'],
+  field44: ['Коментар', 'Внутрішній коментар'],
   stationType: ['Тип станції', 'Модель станції'],
 };
 
@@ -175,7 +176,11 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
     try {
       const res = await gtApi.fetchProjects();
       if (res.success) {
-        set({ projects: res.projects || [], isLoading: false });
+        const projects = (res.projects || []).map((p) => ({
+          ...p,
+          isStarred: p.field45 === '1',
+        }));
+        set({ projects, isLoading: false });
       } else {
         set({ error: res.error || 'Unknown error', isLoading: false });
       }
@@ -247,6 +252,7 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
     }
 
     loadedProject.id = getProp(project, ['id', 'ID']);
+    loadedProject.isStarred = loadedProject.field45 === '1';
     set({ currentProject: loadedProject });
   },
 
@@ -398,6 +404,33 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
       console.warn('GT: All equipment sources exhausted');
     } catch (e) {
       console.error('GT: loadEquipment error:', e);
+    }
+  },
+  toggleStar: async (id: string) => {
+    const { projects } = get();
+    const project = projects.find(p => p.id === id);
+    if (!project) return;
+
+    const updatedProject = {
+      ...project,
+      isStarred: !project.isStarred,
+      field45: !project.isStarred ? '1' : ''
+    };
+
+    // Optimistically update local state
+    set(state => ({
+      projects: state.projects.map(p => p.id === id ? updatedProject : p),
+      currentProject: state.currentProject?.id === id ? updatedProject : state.currentProject
+    }));
+
+    try {
+      const res = await gtApi.saveProject(updatedProject, [], id);
+      if (!res.success) {
+        console.error('Failed to toggle star in GAS:', res.error);
+        // Rollback on failure? Maybe later.
+      }
+    } catch (e) {
+      console.error('Error toggling star:', e);
     }
   },
 }));
