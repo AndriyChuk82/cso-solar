@@ -99,7 +99,7 @@ export function DocumentGenerator({ formData }: { formData: GreenTariffProject }
   const { currentProject } = useGreenTariffStore();
 
   const [selected, setSelected] = useState<string[]>([]);
-  const [useSign, setUseSign] = useState(false);
+  const [signMode, setSignMode] = useState<'none' | 'stamp' | 'only'>('none');
   const [isGenerating, setIsGenerating] = useState(false);
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'info' | 'success' | 'error' | 'warning' } | null>(null);
 
@@ -138,7 +138,7 @@ export function DocumentGenerator({ formData }: { formData: GreenTariffProject }
       }
       mergedData.currentDate = new Date().toLocaleDateString('uk-UA');
       mergedData.stationType = formData.stationType || '';
-      mergedData.useSign = useSign;
+      mergedData.signMode = signMode;
 
       // Prepare photos
       const [photo1Base64, photo2Base64, photo3Base64] = await Promise.all([
@@ -212,18 +212,41 @@ export function DocumentGenerator({ formData }: { formData: GreenTariffProject }
           </label>
         ))}
 
-        {/* Digital sign option */}
-        <label className="flex items-center gap-2 cursor-pointer pt-2 mt-1 border-t border-gray-100 group">
-          <input
-            type="checkbox"
-            checked={useSign}
-            onChange={(e) => setUseSign(e.target.checked)}
-            className="w-3.5 h-3.5 accent-accent rounded"
-          />
-          <span className="text-xs font-semibold text-accent group-hover:text-accent-dark transition">
-            🔏 Печатка + підпис
-          </span>
-        </label>
+        <div className="pt-2 mt-1 border-t border-gray-100 space-y-1">
+          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Параметри підпису:</p>
+          <div className="flex flex-col gap-1">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="radio"
+                name="signMode"
+                checked={signMode === 'none'}
+                onChange={() => setSignMode('none')}
+                className="w-3 h-3 accent-gray-500"
+              />
+              <span className="text-xs text-gray-600">Без підпису</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="radio"
+                name="signMode"
+                checked={signMode === 'stamp'}
+                onChange={() => setSignMode('stamp')}
+                className="w-3 h-3 accent-accent"
+              />
+              <span className="text-xs font-semibold text-accent">🔏 Печатка + підпис</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="radio"
+                name="signMode"
+                checked={signMode === 'only'}
+                onChange={() => setSignMode('only')}
+                className="w-3 h-3 accent-blue-600"
+              />
+              <span className="text-xs font-semibold text-blue-600">✍️ Лише підпис</span>
+            </label>
+          </div>
+        </div>
       </div>
 
       {/* Protocol photos */}

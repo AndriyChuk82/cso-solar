@@ -190,11 +190,37 @@
                 // Логіка підпису та печатки (Окремо для кожної сторінки)
                 const signBase = 'position:absolute; width:180px; z-index:10; pointer-events:none; mix-blend-mode: multiply; opacity: 0.94;';
 
-                const signatureTitleHtml = formData.useSign
-                    ? `<img src="/doc/sign_cso.png" style="${signBase} left:-10px; top:-60px;">`
+                // === НАЛАШТУВАННЯ ПІДПИСІВ ===
+                let signImg = '';
+                
+                // 1. Відступи для режиму "Печатка + підпис"
+                let stampTitleTop = '-60px';
+                let stampApp1Top = '-20px';
+
+                // 2. Відступи для режиму "Лише підпис" (РЕДАГУЙТЕ ТУТ)
+                let onlyTitleTop = '0px';   // Титульна сторінка
+                let onlyApp1Top = '0px';    // Протокол (Додаток 1)
+                
+                // =============================
+                
+                let titleTop = '0px';
+                let app1Top = '0px';
+
+                if (formData.signMode === 'stamp' || (formData.useSign && !formData.signMode)) {
+                    signImg = 'doc/sign_cso.png';
+                    titleTop = stampTitleTop;
+                    app1Top = stampApp1Top;
+                } else if (formData.signMode === 'only') {
+                    signImg = 'doc/only_sign_cso.png';
+                    titleTop = onlyTitleTop;
+                    app1Top = onlyApp1Top;
+                }
+
+                const signatureTitleHtml = signImg
+                    ? `<img src="${signImg}" style="${signBase} left:-10px; top:${titleTop};">`
                     : '';
-                const signatureApp1Html = formData.useSign
-                    ? `<img src="/doc/sign_cso.png" style="${signBase} right:70px; top:-20px;">`
+                const signatureApp1Html = signImg
+                    ? `<img src="${signImg}" style="${signBase} right:70px; top:${app1Top};">`
                     : '';
 
                 template = template.split('{{signature_title}}').join(signatureTitleHtml);
@@ -262,7 +288,7 @@
                     template = template.split('{{photo_inverter_settings}}').join(
                         photos.photo3
                             ? `<img src="${photos.photo3}" style="max-width:100%; max-height:280px; object-fit:contain;">`
-                            : `<img src="/doc/foto_1_nastrojka.png" style="max-width:100%; max-height:280px; object-fit:contain;">`
+                            : `<img src="doc/foto_1_nastrojka.png" style="max-width:100%; max-height:280px; object-fit:contain;">`
                     );
                 }
 
