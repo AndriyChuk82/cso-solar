@@ -161,7 +161,7 @@ export function DocumentGenerator({ formData }: { formData: GreenTariffProject }
       // Micro-pause to guarantee localStorage.setItem committed before the new tab reads.
       await new Promise((r) => setTimeout(r, 50));
 
-      window.open(`/green-tariff-print.html?key=${printKey}`, '_blank');
+      window.open(`green-tariff-print.html?key=${printKey}`, '_blank');
       showToast('Документи відкрито у новій вкладці', 'success');
     } catch (err) {
       if (err instanceof DOMException && err.name === 'QuotaExceededError') {

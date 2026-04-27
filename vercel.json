@@ -6,19 +6,19 @@
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/dashboard", "destination": "/dashboard/index.html" },
     { "source": "/dashboard/assets/(.*)", "destination": "/dashboard/assets/$1" },
-    { "source": "/dashboard/(.*)", "destination": "/dashboard/index.html" },
+    { "source": "/dashboard/((?!assets/).*)", "destination": "/dashboard/index.html" },
     { "source": "/warehouse", "destination": "/warehouse/index.html" },
     { "source": "/warehouse/assets/(.*)", "destination": "/warehouse/assets/$1" },
-    { "source": "/warehouse/(.*)", "destination": "/warehouse/index.html" },
+    { "source": "/warehouse/((?!assets/).*)", "destination": "/warehouse/index.html" },
     { "source": "/projects", "destination": "/projects/index.html" },
     { "source": "/projects/assets/(.*)", "destination": "/projects/assets/$1" },
-    { "source": "/projects/(.*)", "destination": "/projects/index.html" },
+    { "source": "/projects/((?!assets/).*)", "destination": "/projects/index.html" },
     { "source": "/proposals", "destination": "/proposals/index.html" },
     { "source": "/proposals/assets/(.*)", "destination": "/proposals/assets/$1" },
-    { "source": "/proposals/(.*)", "destination": "/proposals/index.html" },
+    { "source": "/proposals/((?!assets/).*)", "destination": "/proposals/index.html" },
     { "source": "/green-tariff", "destination": "/green-tariff/index.html" },
     { "source": "/green-tariff/assets/(.*)", "destination": "/green-tariff/assets/$1" },
-    { "source": "/green-tariff/(.*)", "destination": "/green-tariff/index.html" }
+    { "source": "/green-tariff/((?!assets/).*)", "destination": "/green-tariff/index.html" }
   ],
   "functions": {
     "api/**/*.js": {

@@ -12,7 +12,7 @@ let externalCatalogCache = null;
  * Компонент живого пошуку товарів із можливістю швидкого додавання нового.
  * Використовується на формах Приходу, Розходу, Переміщення.
  */
-export default function ProductSearch({ onSelect, products = [], placeholder = 'Пошук товару...' }) {
+export default function ProductSearch({ onSelect, products = [], balances = {}, placeholder = 'Пошук товару...' }) {
   const [query, setQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -191,26 +191,46 @@ export default function ProductSearch({ onSelect, products = [], placeholder = '
           borderRadius: 'var(--radius)', boxShadow: 'var(--shadow-lg)',
           maxHeight: '400px', overflowY: 'auto', marginTop: '4px'
         }}>
-          {filteredLocal.map((p) => (
-            <div
-              key={p.id}
-              onClick={() => toggleSelected(p.id)}
-              style={{
-                padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid var(--border-light)',
-                fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '10px',
-                background: selectedIds.includes(p.id) ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
-                color: 'var(--text)'
-              }}
-            >
-              <input type="checkbox" checked={selectedIds.includes(p.id)} readOnly style={{ pointerEvents: 'none', accentColor: 'var(--primary)' }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, color: 'var(--text)' }}>{p.name}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                  {p.article && `Арт: ${p.article}`} {p.unit && `· ${p.unit}`}
+          {filteredLocal.map((p) => {
+            const balance = balances[p.id] || 0;
+            return (
+              <div
+                key={p.id}
+                onClick={() => toggleSelected(p.id)}
+                style={{
+                  padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid var(--border-light)',
+                  fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '10px',
+                  background: selectedIds.includes(p.id) ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+                  color: 'var(--text)'
+                }}
+              >
+                <input type="checkbox" checked={selectedIds.includes(p.id)} readOnly style={{ pointerEvents: 'none', accentColor: 'var(--primary)' }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ fontWeight: 600, color: 'var(--text)' }}>{p.name}</div>
+                    {balances && balances[p.id] !== undefined && (
+                      <div style={{ 
+                        fontSize: '0.72rem', 
+                        padding: '2px 8px', 
+                        borderRadius: '12px',
+                        background: balance > 0 ? 'rgba(34, 197, 94, 0.1)' : 'var(--bg)',
+                        color: balance > 0 ? 'var(--success)' : 'var(--text-muted)',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                        marginLeft: '12px',
+                        border: balance > 0 ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid var(--border)'
+                      }}>
+                        {balance} {p.unit}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                    {p.article && `Арт: ${p.article}`} {p.unit && `· ${p.unit}`}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {selectedIds.length > 0 && (
             <div style={{ position: 'sticky', bottom: 0, background: 'white', padding: '10px', borderTop: '2px solid var(--primary)' }}>

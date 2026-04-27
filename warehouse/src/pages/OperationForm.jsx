@@ -63,9 +63,9 @@ export default function OperationForm({ type = 'income' }) {
     loadData();
   }, [user]);
 
-  // Завантаження залишків при зміні складу (для розходу)
+  // Завантаження залишків при зміні складу
   useEffect(() => {
-    if (!isIncome && formData.warehouseId) {
+    if (formData.warehouseId) {
       getBalances(formData.warehouseId).then((result) => {
         if (result?.success) {
           const map = {};
@@ -76,7 +76,7 @@ export default function OperationForm({ type = 'income' }) {
         }
       });
     }
-  }, [formData.warehouseId, isIncome]);
+  }, [formData.warehouseId]);
 
   function handleProductSelect(product) {
     // Перевірка на дублікат
@@ -212,6 +212,7 @@ export default function OperationForm({ type = 'income' }) {
                   </label>
                   <ProductSearch
                     products={products}
+                    balances={balances}
                     onSelect={handleProductSelect}
                     placeholder="Назва або артикул..."
                   />
@@ -226,14 +227,16 @@ export default function OperationForm({ type = 'income' }) {
 
         {/* Позиції */}
         <div className="card" style={{ marginBottom: '24px' }}>
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '1rem' }}>Обрані позиції ({formData.items.length})</h3>
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px' }}>
+            <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>📦 Обрані позиції ({formData.items.length})</h3>
           </div>
-          <div className="card-body" style={{ padding: formData.items.length === 0 ? '0' : '20px' }}>
+          <div className="card-body" style={{ padding: '16px 20px' }}>
 
             {formData.items.length === 0 ? (
-              <div className="empty-state" style={{ padding: '40px 20px' }}>
-                <p>Додайте товари через пошук вище</p>
+              <div className="empty-state" style={{ padding: '40px 20px', background: 'var(--bg)', borderRadius: 'var(--radius)', border: '2px dashed var(--border)' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '12px' }}>📦</div>
+                <p style={{ margin: 0, fontWeight: 500 }}>Список порожній</p>
+                <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Скористайтеся пошуком вище, щоб додати товари</p>
               </div>
             ) : (
               <div className="op-items-list">
@@ -250,6 +253,7 @@ export default function OperationForm({ type = 'income' }) {
                         {/* Попередження при розході */}
                         {!isIncome && balances[item.productId] !== undefined && (
                           <div className="stock-warning" style={{
+                            fontSize: '0.72rem',
                             color: parseFloat(item.quantity) > balances[item.productId] ? 'var(--danger)' : 'var(--text-muted)'
                           }}>
                             ⚠️ Залишок: {formatQuantity(balances[item.productId], products.find(p => p.id === item.productId)?.category)} {item.unit}

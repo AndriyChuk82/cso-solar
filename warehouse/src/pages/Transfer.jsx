@@ -210,6 +210,7 @@ export default function Transfer() {
                   </label>
                   <ProductSearch 
                     products={products} 
+                    balances={balances}
                     onSelect={handleProductSelect} 
                     placeholder="Артикул або назва..." 
                   />
