@@ -141,108 +141,140 @@ export default function Transfer() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="card" style={{ marginBottom: '16px' }}>
+        <div className="card" style={{ marginBottom: '20px', borderTop: '4px solid var(--transfer)' }}>
           <div className="card-body">
-            <div className="form-row">
-              <div className="form-group">
-                <label>Склад-відправник *</label>
-                <select
-                  className="form-select"
-                  value={formData.warehouseFrom}
-                  onChange={(e) => setFormData({ ...formData, warehouseFrom: e.target.value })}
-                  required
-                >
-                  <option value="">Звідки</option>
-                  {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>{w.name}</option>
-                  ))}
-                </select>
+            <div className="form-split-2">
+              {/* Ліва частина: Основні дані */}
+              <div>
+                <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                  <div className="form-group">
+                    <label>Склад-відправник *</label>
+                    <select
+                      className="form-select form-control-compact"
+                      value={formData.warehouseFrom}
+                      onChange={(e) => setFormData({ ...formData, warehouseFrom: e.target.value })}
+                      required
+                    >
+                      <option value="">Звідки</option>
+                      {warehouses.map((w) => (
+                        <option key={w.id} value={w.id}>{w.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Склад-отримувач *</label>
+                    <select
+                      className="form-select form-control-compact"
+                      value={formData.warehouseTo}
+                      onChange={(e) => setFormData({ ...formData, warehouseTo: e.target.value })}
+                      required
+                    >
+                      <option value="">Куди</option>
+                      {warehouses.filter((w) => w.id !== formData.warehouseFrom).map((w) => (
+                        <option key={w.id} value={w.id}>{w.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row" style={{ gridTemplateColumns: '140px 1fr' }}>
+                  <div className="form-group">
+                    <label>Дата</label>
+                    <input
+                      type="date"
+                      className="form-input form-control-compact"
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Коментар (причина переміщення)</label>
+                    <input
+                      type="text"
+                      className="form-input form-control-compact"
+                      value={formData.comment}
+                      onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+                      placeholder="Напр.: Перерозподіл залишків..."
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>Склад-отримувач *</label>
-                <select
-                  className="form-select"
-                  value={formData.warehouseTo}
-                  onChange={(e) => setFormData({ ...formData, warehouseTo: e.target.value })}
-                  required
-                >
-                  <option value="">Куди</option>
-                  {warehouses.filter((w) => w.id !== formData.warehouseFrom).map((w) => (
-                    <option key={w.id} value={w.id}>{w.name}</option>
-                  ))}
-                </select>
+              {/* Права частина: Пошук товару */}
+              <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: '32px' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', marginBottom: '8px' }}>
+                    🔍 Швидкий пошук товару
+                  </label>
+                  <ProductSearch 
+                    products={products} 
+                    onSelect={handleProductSelect} 
+                    placeholder="Артикул або назва..." 
+                  />
+                  <div style={{ marginTop: '12px', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                    💡 Знайдіть товар та натисніть на нього, щоб додати до списку переміщення.
+                  </div>
+                </div>
               </div>
-
-              <div className="form-group">
-                <label>Дата</label>
-                <input
-                  type="date"
-                  className="form-input"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Коментар (причина переміщення)</label>
-              <input
-                type="text"
-                className="form-input"
-                value={formData.comment}
-                onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
-                placeholder="Напр.: Перерозподіл залишків"
-              />
             </div>
           </div>
         </div>
 
-        <div className="card" style={{ marginBottom: '16px' }}>
-          <div className="card-header">
-            <h3>Позиції ({formData.items.length})</h3>
+        <div className="card" style={{ marginBottom: '24px' }}>
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px' }}>
+            <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>📦 Позиції для переміщення ({formData.items.length})</h3>
           </div>
-          <div className="card-body">
-            <div style={{ marginBottom: '16px' }}>
-              <ProductSearch products={products} onSelect={handleProductSelect} />
-            </div>
+          <div className="card-body" style={{ padding: '16px 20px' }}>
 
             {formData.items.length === 0 ? (
-              <div className="empty-state" style={{ padding: '24px' }}>
-                <p>Додайте товари через пошук вище</p>
+              <div className="empty-state" style={{ padding: '40px 20px', background: 'var(--bg)', borderRadius: 'var(--radius)', border: '2px dashed var(--border)' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '12px' }}>📦</div>
+                <p style={{ margin: 0, fontWeight: 500 }}>Список порожній</p>
+                <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Скористайтеся пошуком вище, щоб додати товари</p>
               </div>
             ) : (
               <div className="op-items-list">
                 {formData.items.map((item, index) => (
                   <div key={item.productId} className="op-item-row">
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{item.productName}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        {item.productArticle && `Арт: ${item.productArticle}`}
-                      </div>
-                      <div className="stock-warning" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Залишок: {formatQuantity(balances[item.productId] || 0, products.find(p => p.id === item.productId)?.category)} {item.unit}
+                    <div className="product-info">
+                      <div className="product-name" title={item.productName}>{item.productName}</div>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '2px' }}>
+                        {item.productArticle && (
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', background: 'var(--border-light)', padding: '1px 6px', borderRadius: '4px' }}>
+                            {item.productArticle}
+                          </div>
+                        )}
+                        <div className="stock-warning" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          Доступно: <span style={{ fontWeight: 600, color: (balances[item.productId] || 0) < parseFloat(item.quantity) ? 'var(--danger)' : 'var(--text-secondary)' }}>
+                            {formatQuantity(balances[item.productId] || 0, products.find(p => p.id === item.productId)?.category)}
+                          </span> {item.unit}
+                        </div>
                       </div>
                     </div>
-                    <input
-                      type="number"
-                      className="form-input"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-                      min="1"
-                      step="1"
-                      required
-                      style={{ textAlign: 'center' }}
-                    />
-                    <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem', textAlign: 'center' }}>
+                    <div className="qty-input-wrap">
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={item.quantity}
+                        onChange={(e) => updateItem(index, 'quantity', e.target.value)}
+                        min="1"
+                        step="1"
+                        required
+                        style={{ textAlign: 'center', fontWeight: 600 }}
+                      />
+                    </div>
+                    <div className="unit-label">
                       {item.unit}
-                    </span>
+                    </div>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       onClick={() => removeItem(index)}
-                      style={{ color: 'var(--danger)', padding: '4px 8px' }}
+                      style={{ color: 'var(--danger)', width: '32px', height: '32px', padding: 0, borderRadius: '50%' }}
+                      title="Видалити"
                     >✕</Button>
                   </div>
                 ))}

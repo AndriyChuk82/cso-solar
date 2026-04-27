@@ -160,125 +160,125 @@ export default function OperationForm({ type = 'income' }) {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="card" style={{ marginBottom: '16px' }}>
+        <div className="card" style={{ marginBottom: '20px', borderTop: `4px solid var(--${type})` }}>
           <div className="card-body">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', alignItems: 'start' }}>
-              {/* Ліва частина: Склад та Дата */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Склад *</label>
-                  <select
-                    className="form-select"
-                    value={formData.warehouseId}
-                    onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
-                    required
-                  >
-                    <option value="">Оберіть склад</option>
-                    {warehouses.map((w) => (
-                      <option key={w.id} value={w.id}>{w.name}</option>
-                    ))}
-                  </select>
+            <div className="form-split-2">
+              {/* Ліва частина: Склад та Коментар */}
+              <div>
+                <div className="form-row" style={{ gridTemplateColumns: '1fr 140px' }}>
+                  <div className="form-group">
+                    <label>Склад *</label>
+                    <select
+                      className="form-select form-control-compact"
+                      value={formData.warehouseId}
+                      onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
+                      required
+                    >
+                      <option value="">Оберіть склад</option>
+                      {warehouses.map((w) => (
+                        <option key={w.id} value={w.id}>{w.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Дата операції</label>
+                    <input
+                      type="date"
+                      className="form-input form-control-compact"
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    />
+                  </div>
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Дата операції</label>
+                  <label>Загальний коментар</label>
                   <input
-                    type="date"
-                    className="form-input"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    type="text"
+                    className="form-input form-control-compact"
+                    value={formData.comment}
+                    onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+                    placeholder={isIncome ? 'Напр.: Початкові залишки або Поставка від...' : 'Причина списання...'}
                   />
                 </div>
               </div>
 
-              {/* Права частина: Додати товар */}
-              <div>
+              {/* Права частина: Пошук товару */}
+              <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: '32px' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    🔍 Додати товар
-                    <span style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)' }}>
-                      (пошук за назвою або артикулом)
-                    </span>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', marginBottom: '8px' }}>
+                    🔍 Швидкий пошук товару
                   </label>
                   <ProductSearch
                     products={products}
                     onSelect={handleProductSelect}
-                    placeholder="Введіть назву або артикул..."
+                    placeholder="Назва або артикул..."
                   />
-                  <div style={{ marginTop: '8px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    💡 Ви можете додати декілька різних товарів в одну операцію.
+                  <div style={{ marginTop: '12px', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                    💡 Виберіть товар зі списку, щоб додати його до операції.
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div className="form-group" style={{ marginTop: '20px', marginBottom: 0 }}>
-              <label>Загальний коментар</label>
-              <input
-                type="text"
-                className="form-input"
-                value={formData.comment}
-                onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
-                placeholder={isIncome ? 'Напр.: Початкові залишки або Поставка від...' : 'Причина списання...'}
-              />
             </div>
           </div>
         </div>
 
         {/* Позиції */}
-        <div className="card" style={{ marginBottom: '16px' }}>
+        <div className="card" style={{ marginBottom: '24px' }}>
           <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3>Обрані позиції ({formData.items.length})</h3>
-            {formData.items.length > 0 && (
-               <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                 Всього: {formData.items.length} найменувань
-               </div>
-            )}
+            <h3 style={{ margin: 0, fontSize: '1rem' }}>Обрані позиції ({formData.items.length})</h3>
           </div>
           <div className="card-body" style={{ padding: formData.items.length === 0 ? '0' : '20px' }}>
 
             {formData.items.length === 0 ? (
-              <div className="empty-state" style={{ padding: '24px' }}>
+              <div className="empty-state" style={{ padding: '40px 20px' }}>
                 <p>Додайте товари через пошук вище</p>
               </div>
             ) : (
               <div className="op-items-list">
                 {formData.items.map((item, index) => (
                   <div key={item.productId} className="op-item-row">
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{item.productName}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        {item.productArticle && `Арт: ${item.productArticle}`}
+                    <div className="product-info">
+                      <div className="product-name" title={item.productName}>{item.productName}</div>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '2px' }}>
+                        {item.productArticle && (
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', background: 'var(--border-light)', padding: '1px 6px', borderRadius: '4px' }}>
+                            {item.productArticle}
+                          </div>
+                        )}
+                        {/* Попередження при розході */}
+                        {!isIncome && balances[item.productId] !== undefined && (
+                          <div className="stock-warning" style={{
+                            color: parseFloat(item.quantity) > balances[item.productId] ? 'var(--danger)' : 'var(--text-muted)'
+                          }}>
+                            ⚠️ Залишок: {formatQuantity(balances[item.productId], products.find(p => p.id === item.productId)?.category)} {item.unit}
+                          </div>
+                        )}
                       </div>
-                      {/* Попередження при розході */}
-                      {!isIncome && balances[item.productId] !== undefined && (
-                        <div className="stock-warning" style={{
-                          color: parseFloat(item.quantity) > balances[item.productId] ? 'var(--danger)' : 'var(--text-muted)'
-                        }}>
-                          ⚠️ Залишок: {formatQuantity(balances[item.productId], products.find(p => p.id === item.productId)?.category)} {item.unit}
-                        </div>
-                      )}
                     </div>
-                    <input
-                      type="number"
-                      className="form-input"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-                      min="1"
-                      step="1"
-                      required
-                      style={{ textAlign: 'center', maxWidth: '100px', border: '1px solid var(--border)' }}
-                    />
-                    <span style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                    <div className="qty-input-wrap">
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={item.quantity}
+                        onChange={(e) => updateItem(index, 'quantity', e.target.value)}
+                        min="1"
+                        step="1"
+                        required
+                        style={{ textAlign: 'center', fontWeight: 600 }}
+                      />
+                    </div>
+                    <div className="unit-label">
                       {item.unit}
-                    </span>
+                    </div>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       onClick={() => removeItem(index)}
                       title="Видалити"
-                      style={{ color: 'var(--danger)', padding: '4px 8px' }}
+                      style={{ color: 'var(--danger)', width: '32px', height: '32px', padding: 0, borderRadius: '50%' }}
                     >
                       ✕
                     </Button>

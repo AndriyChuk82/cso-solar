@@ -1,0 +1,2 @@
+function g(i,c,u=""){const t=Math.round(parseFloat(i)||0);if(t===0)return 0;const o=(c||"").toLowerCase();if((u||"").toLowerCase(),!(o.includes("сонячні панелі")||o.includes("сонячні батареї")||o==="панелі"))return t.toLocaleString("uk-UA");const e=36,n=Math.abs(t),s=Math.floor(n/e),a=n%e,l=t<0;if(s===0)return t.toLocaleString("uk-UA");let r=`${l?"-":""}${n.toLocaleString("uk-UA")} шт
+(${s.toLocaleString("uk-UA")} пал`;return a>0&&(r+=` + ${a.toLocaleString("uk-UA")} шт`),r+=")",r}export{g as f};

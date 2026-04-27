@@ -236,36 +236,100 @@
 .badge-transfer { background: var(--transfer-bg); color: var(--transfer); border: 1px solid var(--transfer-border); }
 .badge-balance { background: var(--balance-bg); color: var(--balance); border: 1px solid var(--balance-border); }
 
+/* ===== Форми та Поля (Forms) ===== */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-split-2 {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 32px;
+}
+
+@media (max-width: 1024px) {
+  .form-split-2 {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+  transition: color var(--transition);
+}
+
+.form-control-compact {
+  padding: 6px 10px !important;
+  font-size: 0.88rem !important;
+  height: 36px;
+}
+
+.form-group:focus-within label {
+  color: var(--primary);
+}
+
 /* ===== Операційні позиції (Operation Items) ===== */
 .op-items-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .op-item-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: 16px;
+  padding: 12px 20px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   transition: all var(--transition);
 }
 
 .op-item-row:hover {
   border-color: var(--primary-light);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
-.op-item-row > div:first-child {
-  flex: 1;
+.op-item-row .product-info {
   min-width: 0;
 }
 
+.op-item-row .product-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.op-item-row .qty-input-wrap {
+  width: 120px;
+}
+
+.op-item-row .unit-label {
+  min-width: 45px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
 .op-item-row .stock-warning {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   margin-top: 2px;
 }
 

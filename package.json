@@ -14,7 +14,9 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "dev:dashboard": "npm run dev --workspace=dashboard",
+    "dev:warehouse": "npm run dev --workspace=warehouse",
     "dev:proposals": "npm run dev --workspace=proposals",
+    "dev:projects": "npm run dev --workspace=projects",
     "dev:green-tariff": "npm run dev --workspace=green-tariff",
     "dev:all": "concurrently \"npm run dev:dashboard\" \"npm run dev:warehouse\" \"npm run dev:proposals\" \"npm run dev:projects\"",
     "hash-password": "node scripts/hash-password.js",
