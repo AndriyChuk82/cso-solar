@@ -106,7 +106,8 @@ const FIELD_MAPPING: Record<string, string[]> = {
   field40: ['Паспортні дані'],
   field41: ['Аванс, USD'],
   field42: ['Залишок, USD'],
-  field44: ['Коментар', 'Внутрішній коментар'],
+  field44: ['Коментар', 'Внутрішній коментар', 'Нотатки'],
+  field45: ['Винятковий', 'Зірка', 'Важливо', 'Резерв'],
   stationType: ['Тип станції', 'Модель станції'],
 };
 
@@ -176,10 +177,13 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
     try {
       const res = await gtApi.fetchProjects();
       if (res.success) {
-        const projects = (res.projects || []).map((p) => ({
-          ...p,
-          isStarred: p.field45 === '1',
-        }));
+        const projects = (res.projects || []).map((p) => {
+          const isStarredValue = String(p.field45 || getProp(p as any, FIELD_MAPPING.field45));
+          return {
+            ...p,
+            isStarred: isStarredValue === '1' || isStarredValue.toLowerCase() === 'true',
+          };
+        });
         set({ projects, isLoading: false });
       } else {
         set({ error: res.error || 'Unknown error', isLoading: false });
@@ -252,7 +256,8 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
     }
 
     loadedProject.id = getProp(project, ['id', 'ID']);
-    loadedProject.isStarred = loadedProject.field45 === '1';
+    const starVal = String(loadedProject.field45 || getProp(project, FIELD_MAPPING.field45));
+    loadedProject.isStarred = starVal === '1' || starVal.toLowerCase() === 'true';
     set({ currentProject: loadedProject });
   },
 
