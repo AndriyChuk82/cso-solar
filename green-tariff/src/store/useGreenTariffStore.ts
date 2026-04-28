@@ -160,35 +160,29 @@ function generateProjectNumber(projectsCount: number): string {
 /**
  * Перетворює об'єкт проекту з внутрішніми ключами (fieldX) 
  * назад у формат з іменами колонок для Google Sheets.
+ * Відправляє ТІЛЬКИ ті поля, що є в мапінгу, щоб не перевантажувати GAS.
  */
 function mapToGAS(project: GreenTariffProject): any {
   const result: any = {};
-  
-  // Якщо є оригінальні поля (збережені при завантаженні), беремо їх за основу
-  if ((project as any)._raw) {
-    Object.assign(result, (project as any)._raw);
-  }
+  const raw = (project as any)._raw || {};
 
   for (const key in FIELD_MAPPING) {
     const fieldId = key as keyof GreenTariffProject;
     const value = project[fieldId];
+    
+    // Пропускаємо undefined, але залишаємо порожні рядки (якщо користувач стер дані)
     if (value !== undefined) {
       const headers = FIELD_MAPPING[fieldId];
-      // Записуємо значення у першу ж назву колонки, яку знайдемо
-      // (найкраще — у ту, що була в оригіналі)
-      let targetHeader = headers[0];
-      if ((project as any)._raw) {
-        const found = headers.find(h => h in (project as any)._raw);
-        if (found) targetHeader = found;
-      }
+      
+      // Визначаємо заголовок: або той, що був в оригіналі, або перший зі списку
+      let targetHeader = headers.find(h => h in raw) || headers[0];
       result[targetHeader] = value;
     }
   }
 
-  // Спеціальна обробка для ID, щоб GAS знав, який рядок оновлювати
+  // Додаємо ID для ідентифікації рядка
   if (project.id) {
     result.id = project.id;
-    result.ID = project.id;
   }
 
   return result;
