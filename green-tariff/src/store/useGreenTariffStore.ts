@@ -106,8 +106,8 @@ const FIELD_MAPPING: Record<string, string[]> = {
   field40: ['Паспортні дані'],
   field41: ['Аванс, USD'],
   field42: ['Залишок, USD'],
-  field44: ['Коментар', 'Внутрішній коментар', 'Нотатки'],
-  field45: ['Винятковий', 'Зірка', 'Важливо', 'Резерв'],
+  field44: ['Коментар', 'Внутрішній коментар', 'Нотатки', 'Field 44'],
+  field45: ['Винятковий', 'Зірка', 'Важливо', 'Резерв', 'Field 45'],
   stationType: ['Тип станції', 'Модель станції'],
 };
 
@@ -157,6 +157,43 @@ function generateProjectNumber(projectsCount: number): string {
   return `${count}/${mm}-${yyyy}-ЦСО`;
 }
 
+/**
+ * Перетворює об'єкт проекту з внутрішніми ключами (fieldX) 
+ * назад у формат з іменами колонок для Google Sheets.
+ */
+function mapToGAS(project: GreenTariffProject): any {
+  const result: any = {};
+  
+  // Якщо є оригінальні поля (збережені при завантаженні), беремо їх за основу
+  if ((project as any)._raw) {
+    Object.assign(result, (project as any)._raw);
+  }
+
+  for (const key in FIELD_MAPPING) {
+    const fieldId = key as keyof GreenTariffProject;
+    const value = project[fieldId];
+    if (value !== undefined) {
+      const headers = FIELD_MAPPING[fieldId];
+      // Записуємо значення у першу ж назву колонки, яку знайдемо
+      // (найкраще — у ту, що була в оригіналі)
+      let targetHeader = headers[0];
+      if ((project as any)._raw) {
+        const found = headers.find(h => h in (project as any)._raw);
+        if (found) targetHeader = found;
+      }
+      result[targetHeader] = value;
+    }
+  }
+
+  // Спеціальна обробка для ID, щоб GAS знав, який рядок оновлювати
+  if (project.id) {
+    result.id = project.id;
+    result.ID = project.id;
+  }
+
+  return result;
+}
+
 export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
   projects: [],
   currentProject: null,
@@ -182,6 +219,7 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
           return {
             ...p,
             isStarred: isStarredValue === '1' || isStarredValue.toLowerCase() === 'true',
+            _raw: p // Зберігаємо оригінал для зворотного мапінгу
           };
         });
         set({ projects, isLoading: false });
@@ -198,7 +236,9 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
     try {
       const { files, currentProject } = get();
       const id = currentProject?.id || null;
-      const res = await gtApi.saveProject(project, files, id);
+      
+      const gasData = mapToGAS(project);
+      const res = await gtApi.saveProject(gasData, files, id);
 
       if (res.success) {
         set({ files: [], isLoading: false });
@@ -258,6 +298,7 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
     loadedProject.id = getProp(project, ['id', 'ID']);
     const starVal = String(loadedProject.field45 || getProp(project, FIELD_MAPPING.field45));
     loadedProject.isStarred = starVal === '1' || starVal.toLowerCase() === 'true';
+    (loadedProject as any)._raw = project; // Зберігаємо оригінал
     set({ currentProject: loadedProject });
   },
 
@@ -429,7 +470,8 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
     }));
 
     try {
-      const res = await gtApi.saveProject(updatedProject, [], id);
+      const gasData = mapToGAS(updatedProject);
+      const res = await gtApi.saveProject(gasData, [], id);
       if (!res.success) {
         console.error('Failed to toggle star in GAS:', res.error);
         // Rollback on failure? Maybe later.
