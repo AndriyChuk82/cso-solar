@@ -402,5 +402,4 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
       console.error('GT: loadEquipment error:', e);
     }
   },
-  },
 }));
