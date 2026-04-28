@@ -38,12 +38,30 @@ function generateId(): string {
   return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-function getNextProposalNumber(): string {
+function getNextProposalNumber(history: Proposal[] = []): string {
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, '0');
   const day = String(today.getDate()).padStart(2, '0');
-  return `КП-${year}${month}${day}-001`;
+  const datePrefix = `${year}${month}${day}`;
+  const prefix = `КП-${datePrefix}`;
+
+  // Шукаємо всі КП за сьогодні в історії
+  const todaysProposals = history.filter(p => p.number && (p.number.startsWith(prefix) || p.number.includes(datePrefix)));
+
+  if (todaysProposals.length === 0) {
+    return `${prefix}-001`;
+  }
+
+  // Знаходимо максимальний порядковий номер
+  const numbers = todaysProposals.map(p => {
+    const parts = p.number.split('-');
+    const lastPart = parts[parts.length - 1];
+    return parseInt(lastPart, 10) || 0;
+  });
+
+  const nextNumber = Math.max(...numbers) + 1;
+  return `${prefix}-${String(nextNumber).padStart(3, '0')}`;
 }
 
 function calculateProposalTotals(proposal: Proposal): Proposal {
@@ -72,10 +90,10 @@ function calculateProposalTotals(proposal: Proposal): Proposal {
   };
 }
 
-function createEmptyProposal(): Proposal {
+function createEmptyProposal(history: Proposal[] = []): Proposal {
   return {
     id: generateId(),
-    number: getNextProposalNumber(),
+    number: getNextProposalNumber(history),
     date: new Date().toISOString().split('T')[0],
     clientName: '',
     clientPhone: '',
@@ -239,7 +257,8 @@ export const createProposalSlice: StateCreator<
   },
 
   clearProposal: () => {
-    set({ proposal: createEmptyProposal() });
+    const { history } = get();
+    set({ proposal: createEmptyProposal(history) });
   },
 
   saveProposal: async () => {
@@ -284,18 +303,31 @@ export const createProposalSlice: StateCreator<
       const sheetProposals = await fetchProposalsHistory();
       if (sheetProposals.length > 0) {
         set((state) => {
-          // Merge with local history (prefer sheet data)
-          const localIds = state.history.map(h => h.id);
+          // Об'єднуємо з локальною історією (пріоритет даним з таблиці)
           const merged = [...sheetProposals];
 
-          // Add local proposals that are not in sheet
+          // Додаємо локальні пропозиції, яких немає в таблиці
           state.history.forEach(lh => {
             if (!merged.find(sh => sh.id === lh.id)) {
               merged.push(lh);
             }
           });
 
-          return { history: merged };
+          // Перераховуємо кожен елемент історії, щоб заповнити можливі нулі
+          const validatedHistory = merged.map(p => calculateProposalTotals(p));
+
+          const newState: any = { history: validatedHistory };
+
+          // Якщо поточна пропозиція пуста (чернетка без товарів і імені клієнта),
+          // оновлюємо її номер на основі отриманої історії
+          if (state.proposal.items.length === 0 && !state.proposal.clientName) {
+            newState.proposal = {
+              ...state.proposal,
+              number: getNextProposalNumber(validatedHistory)
+            };
+          }
+
+          return newState;
         });
       }
     } catch (error) {

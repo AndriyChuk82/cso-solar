@@ -110,17 +110,18 @@ function getNextProposalNumber(history: Proposal[] = []): string {
   const datePrefix = `${year}${month}${day}`;
   const prefix = `КП-${datePrefix}`;
 
-  // Шукаємо всі КП за сьогодні
-  const todaysProposals = history.filter(p => p.number.startsWith(prefix));
+  // Шукаємо всі КП за сьогодні в історії
+  const todaysProposals = history.filter(p => p.number && (p.number.startsWith(prefix) || p.number.includes(datePrefix)));
   
   if (todaysProposals.length === 0) {
     return `${prefix}-001`;
   }
 
-  // Знаходимо максимальний номер
+  // Знаходимо максимальний порядковий номер
   const numbers = todaysProposals.map(p => {
     const parts = p.number.split('-');
-    return parseInt(parts[parts.length - 1], 10) || 0;
+    const lastPart = parts[parts.length - 1];
+    return parseInt(lastPart, 10) || 0;
   });
 
   const nextNumber = Math.max(...numbers) + 1;
