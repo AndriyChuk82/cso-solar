@@ -107,7 +107,6 @@ const FIELD_MAPPING: Record<string, string[]> = {
   field41: ['Аванс, USD'],
   field42: ['Залишок, USD'],
   field44: ['Коментар', 'Внутрішній коментар', 'Нотатки', 'Field 44'],
-  field45: ['Винятковий', 'Зірка', 'Важливо', 'Резерв', 'Field 45'],
   stationType: ['Тип станції', 'Модель станції'],
 };
 
@@ -157,37 +156,6 @@ function generateProjectNumber(projectsCount: number): string {
   return `${count}/${mm}-${yyyy}-ЦСО`;
 }
 
-/**
- * Перетворює об'єкт проекту з внутрішніми ключами (fieldX) 
- * назад у формат з іменами колонок для Google Sheets.
- * Відправляє ТІЛЬКИ ті поля, що є в мапінгу, щоб не перевантажувати GAS.
- */
-function mapToGAS(project: GreenTariffProject): any {
-  const result: any = {};
-  const raw = (project as any)._raw || {};
-
-  for (const key in FIELD_MAPPING) {
-    const fieldId = key as keyof GreenTariffProject;
-    const value = project[fieldId];
-    
-    // Пропускаємо undefined, але залишаємо порожні рядки (якщо користувач стер дані)
-    if (value !== undefined) {
-      const headers = FIELD_MAPPING[fieldId];
-      
-      // Визначаємо заголовок: або той, що був в оригіналі, або перший зі списку
-      let targetHeader = headers.find(h => h in raw) || headers[0];
-      result[targetHeader] = value;
-    }
-  }
-
-  // Додаємо ID для ідентифікації рядка
-  if (project.id) {
-    result.id = project.id;
-  }
-
-  return result;
-}
-
 export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
   projects: [],
   currentProject: null,
@@ -208,15 +176,7 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
     try {
       const res = await gtApi.fetchProjects();
       if (res.success) {
-        const projects = (res.projects || []).map((p) => {
-          const isStarredValue = String(p.field45 || getProp(p as any, FIELD_MAPPING.field45));
-          return {
-            ...p,
-            isStarred: isStarredValue === '1' || isStarredValue.toLowerCase() === 'true',
-            _raw: p // Зберігаємо оригінал для зворотного мапінгу
-          };
-        });
-        set({ projects, isLoading: false });
+        set({ projects: res.projects || [], isLoading: false });
       } else {
         set({ error: res.error || 'Unknown error', isLoading: false });
       }
@@ -231,8 +191,7 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
       const { files, currentProject } = get();
       const id = currentProject?.id || null;
       
-      const gasData = mapToGAS(project);
-      const res = await gtApi.saveProject(gasData, files, id);
+      const res = await gtApi.saveProject(project, files, id);
 
       if (res.success) {
         set({ files: [], isLoading: false });
@@ -290,9 +249,6 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
     }
 
     loadedProject.id = getProp(project, ['id', 'ID']);
-    const starVal = String(loadedProject.field45 || getProp(project, FIELD_MAPPING.field45));
-    loadedProject.isStarred = starVal === '1' || starVal.toLowerCase() === 'true';
-    (loadedProject as any)._raw = project; // Зберігаємо оригінал
     set({ currentProject: loadedProject });
   },
 
@@ -446,32 +402,5 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
       console.error('GT: loadEquipment error:', e);
     }
   },
-  toggleStar: async (id: string) => {
-    const { projects } = get();
-    const project = projects.find(p => p.id === id);
-    if (!project) return;
-
-    const updatedProject = {
-      ...project,
-      isStarred: !project.isStarred,
-      field45: !project.isStarred ? '1' : ''
-    };
-
-    // Optimistically update local state
-    set(state => ({
-      projects: state.projects.map(p => p.id === id ? updatedProject : p),
-      currentProject: state.currentProject?.id === id ? updatedProject : state.currentProject
-    }));
-
-    try {
-      const gasData = mapToGAS(updatedProject);
-      const res = await gtApi.saveProject(gasData, [], id);
-      if (!res.success) {
-        console.error('Failed to toggle star in GAS:', res.error);
-        // Rollback on failure? Maybe later.
-      }
-    } catch (e) {
-      console.error('Error toggling star:', e);
-    }
   },
 }));

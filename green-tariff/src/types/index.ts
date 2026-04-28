@@ -46,9 +46,8 @@ export interface GreenTariffProject {
   field42: string; // Залишок, USD
   field43?: string; // Резерв
   field44?: string; // Внутрішній коментар (не для друку)
-  field45?: string; // Резерв (використовується для позначки "Винятковий")
+  field45?: string; // Резерв
   stationType: string; // Тип станції
-  isStarred?: boolean; // Позначка "Винятковий"
 }
 
 export interface EquipmentItem {
@@ -91,7 +90,6 @@ export interface GreenTariffState {
   addFile: (file: FileAttachment) => void;
   removeFile: (index: number) => void;
   loadEquipment: () => void;
-  toggleStar: (id: string) => Promise<void>;
 }
 
 export interface GASResponse {

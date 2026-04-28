@@ -26,9 +26,7 @@ export function ProjectForm() {
       field30: '', field31: '', field32: '', field33: '', field34: '', field35: '', field36: '',
       field37: '', field38: '', field39: '', field40: '', field41: '', field42: '',
       field44: '',
-      field45: '',
       stationType: '',
-      isStarred: false,
     }
   );
 
@@ -102,9 +100,7 @@ export function ProjectForm() {
       field30: '', field31: '', field32: '', field33: '', field34: '', field35: '', field36: '',
       field37: '', field38: '', field39: '', field40: '', field41: '', field42: '',
       field44: '',
-      field45: '',
       stationType: '',
-      isStarred: false,
     });
   };
 
@@ -112,28 +108,7 @@ export function ProjectForm() {
     <form onSubmit={handleSubmit} className="p-6 space-y-6 relative">
       {/* Minimalistic Sticky Top Actions */}
       <div className="sticky top-0 z-10 -mx-6 -mt-6 px-6 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-gray-200/50 dark:border-slate-800/50 flex items-center justify-end gap-3 shadow-sm transition-all duration-300">
-        <button
-          type="button"
-          onClick={() => {
-            const newState = !formData.isStarred;
-            setFormData(prev => ({ 
-              ...prev, 
-              isStarred: newState,
-              field45: newState ? '1' : '' 
-            }));
-          }}
-          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 flex items-center gap-1.5 ${
-            formData.isStarred 
-              ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800' 
-              : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 border border-transparent'
-          }`}
-          title={formData.isStarred ? 'Видалити з виняткових' : 'Позначити як винятковий'}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className={`h-3.5 w-3.5 ${formData.isStarred ? 'fill-current' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
-          {formData.isStarred ? 'Винятковий' : 'Винятковий?'}
-        </button>
+
         <button
           type="button"
           onClick={handleReset}
