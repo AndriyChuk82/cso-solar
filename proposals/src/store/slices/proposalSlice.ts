@@ -83,7 +83,9 @@ function calculateProposalTotals(proposal: Proposal): Proposal {
   }
 
   // Забезпечуємо наявність продавця
-  const seller = proposal.seller || SELLERS.tov_cso;
+  // Спробуємо знайти ID продавця (може бути як sellerId або в самому об'єкті)
+  const sellerId = (proposal as any).sellerId || proposal.seller?.id || 'tov_cso';
+  const seller = SELLERS[sellerId as SellerId] || proposal.seller || SELLERS.tov_cso;
 
   return {
     ...proposal,

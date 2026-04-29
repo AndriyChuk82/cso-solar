@@ -58,7 +58,9 @@ export function WarrantyModal({ isOpen, onClose, proposal, onPrint, onComplete }
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [buyer, setBuyer] = useState(proposal.clientName || '');
-  const [sealType, setSealType] = useState<'none' | 'cso' | 'fop'>('none');
+  const [sealType, setSealType] = useState<'none' | 'cso' | 'fop'>(
+    proposal.seller?.id === 'fop_pastushok' ? 'fop' : (proposal.seller?.id === 'tov_cso' ? 'cso' : 'none')
+  );
   const [notes, setNotes] = useState('');
 
   if (!isOpen) return null;

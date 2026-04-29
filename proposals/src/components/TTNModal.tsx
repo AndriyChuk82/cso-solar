@@ -62,7 +62,9 @@ export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTN
   const [totalSumWords, setTotalSumWords] = useState('');
   const [vatSum, setVatSum] = useState('');
   const [additionalDocs, setAdditionalDocs] = useState('');
-  const [sealType, setSealType] = useState<'none' | 'cso' | 'fop'>('none');
+  const [sealType, setSealType] = useState<'none' | 'cso' | 'fop'>(
+    proposal.seller?.id === 'fop_pastushok' ? 'fop' : (proposal.seller?.id === 'tov_cso' ? 'cso' : 'none')
+  );
 
   if (!isOpen) return null;
 

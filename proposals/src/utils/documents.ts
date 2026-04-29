@@ -70,7 +70,10 @@ function generateInvoiceHTML(proposal: Proposal): string {
   const currencySymbol = proposal.currency === 'UAH' ? '₴' : (proposal.currency === 'EUR' ? '€' : '$');
   const dateStr = proposal.date ? new Date(proposal.date).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
   const invoiceNumber = (proposal.number || '').replace('КП-', '');
-  const seller = proposal.seller || SELLERS.tov_cso;
+  
+  // Robust seller detection
+  const sellerId = (proposal as any).sellerId || proposal.seller?.id || 'tov_cso';
+  const seller = SELLERS[sellerId as keyof typeof SELLERS] || proposal.seller || SELLERS.tov_cso;
 
   const rates = {
     USD: proposal.rates?.usdToUah || 41.5,
@@ -193,7 +196,10 @@ function generateDeliveryNoteHTML(proposal: Proposal): string {
   const accentColor = '#F59E0B';
   const dateStr = proposal.date ? new Date(proposal.date).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
   const dnNumber = (proposal.number || '').replace('КП-', 'ВН-');
-  const seller = proposal.seller || SELLERS.tov_cso;
+  
+  // Robust seller detection
+  const sellerId = (proposal as any).sellerId || proposal.seller?.id || 'tov_cso';
+  const seller = SELLERS[sellerId as keyof typeof SELLERS] || proposal.seller || SELLERS.tov_cso;
 
   const itemsHTML = (proposal.items || []).map((item, i) => {
     const itemName = item.name || item.product?.name || 'Без назви';
