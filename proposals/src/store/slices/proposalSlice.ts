@@ -1,7 +1,7 @@
 import { StateCreator } from 'zustand';
 import { Proposal, ProposalItem, Product, SellerId } from '../../types';
 import { CONFIG, SELLERS } from '../../config';
-import { saveProposalToSheet, fetchProposalsHistory } from '../../services/api';
+import { saveProposalToSheet, fetchProposalsHistory, deleteProposalFromSheet } from '../../services/api';
 
 /**
  * Proposal Slice - управління пропозиціями та товарами
@@ -24,7 +24,7 @@ export interface ProposalSlice {
   clearProposal: () => void;
   saveProposal: () => Promise<boolean>;
   loadProposal: (id: string) => void;
-  deleteProposal: (id: string) => void;
+  deleteProposal: (id: string) => Promise<void>;
   setSelectedSeller: (sellerId: SellerId) => void;
   applyProposalMarkupToItems: () => void;
   updateProposalField: (field: keyof Proposal, value: any) => void;
@@ -94,7 +94,7 @@ function calculateProposalTotals(proposal: Proposal): Proposal {
     subtotal: Math.round(subtotal * 100) / 100,
     vatAmount: Math.round(vatAmount * 100) / 100,
     total: Math.round(total * 100) / 100,
-    updatedAt: new Date().toISOString(),
+    updatedAt: proposal.updatedAt || new Date().toISOString(),
   };
 }
 
@@ -343,9 +343,17 @@ export const createProposalSlice: StateCreator<
     }
   },
 
-  deleteProposal: (id: string) => {
+  deleteProposal: async (id: string) => {
     const { history } = get();
+    // 1. Оновлюємо локальний стан відразу для швидкості інтерфейсу
     set({ history: history.filter(p => p.id !== id) });
+    
+    // 2. Видаляємо з Google Sheets у фоні
+    try {
+      await deleteProposalFromSheet(id);
+    } catch (error) {
+      console.error('Failed to delete proposal from sheet:', error);
+    }
   },
 
   setSelectedSeller: (sellerId: SellerId) => {

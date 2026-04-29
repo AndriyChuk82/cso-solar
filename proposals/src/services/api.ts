@@ -273,6 +273,10 @@ export async function fetchProposalsHistory() {
   return res.success ? res.proposals : [];
 }
 
+export async function deleteProposalFromSheet(proposalId: string) {
+  return gasRequest('deleteProposal', { proposalId });
+}
+
 export async function addCustomMaterial(material: any) {
   return gasRequest('addCustomMaterial', { material });
 }

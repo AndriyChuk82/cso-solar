@@ -186,21 +186,45 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
   },
 
   saveProject: async (project: GreenTariffProject) => {
-    set({ isLoading: true, error: null });
-    try {
-      const { files, currentProject } = get();
-      const id = currentProject?.id || null;
-      
-      const res = await gtApi.saveProject(project, files, id);
+    const { projects, currentProject, files } = get();
+    const id = currentProject?.id || null;
+    
+    // 1. Оптимістичне оновлення списку (для миттєвого відгуку UI)
+    const optimisticProject = { ...project, id: id || `temp_${Date.now()}` };
+    let updatedProjects = [...projects];
+    
+    if (id) {
+      const idx = projects.findIndex(p => p.id === id);
+      if (idx !== -1) updatedProjects[idx] = optimisticProject;
+    } else {
+      updatedProjects = [optimisticProject, ...projects];
+    }
 
+    // Розблоковуємо UI негайно
+    set({ 
+      projects: updatedProjects, 
+      isLoading: false, 
+      currentProject: null,
+      files: [] // Очищаємо чергу файлів, оскільки вони вже пішли в обробку
+    });
+
+    // 2. Фонове збереження в Google Таблицю
+    try {
+      const res = await gtApi.saveProject(project, files, id);
+      
       if (res.success) {
-        set({ files: [], isLoading: false });
-        await get().fetchProjects();
+        // Оновлюємо дані офіційними з сервера (у фоні)
+        const refreshRes = await gtApi.fetchProjects();
+        if (refreshRes.success) {
+          set({ projects: refreshRes.projects || [] });
+        }
       } else {
-        set({ error: res.error || 'Unknown error', isLoading: false });
+        console.error('GT Background Save Error:', res.error);
+        set({ error: `Помилка фонового збереження: ${res.error}` });
       }
     } catch (e) {
-      set({ error: (e as Error).message, isLoading: false });
+      console.error('GT Background Save Exception:', e);
+      set({ error: 'Критична помилка при фоновому збереженні' });
     }
   },
 

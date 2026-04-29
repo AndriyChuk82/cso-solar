@@ -13,6 +13,7 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
   const { history, loadProposal, deleteProposal, syncHistory } = useProposalStore();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Автоматична синхронізація при відкритті модального вікна
   useEffect(() => {
@@ -36,11 +37,16 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Видалити цю пропозицію?')) {
+    if (deleteConfirmId === id) {
       deleteProposal(id);
+      setDeleteConfirmId(null);
       if (selectedId === id) {
         setSelectedId(null);
       }
+    } else {
+      setDeleteConfirmId(id);
+      // Скидаємо підтвердження через 3 секунди
+      setTimeout(() => setDeleteConfirmId(null), 3000);
     }
   };
 
@@ -230,10 +236,14 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                   </button>
                   <button
                     onClick={() => handleDelete(selectedProposal.id)}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-                    title="Видалити"
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition font-semibold ${
+                      deleteConfirmId === selectedProposal.id
+                        ? 'bg-red-700 text-white animate-pulse'
+                        : 'bg-red-600 text-white hover:bg-red-700'
+                    }`}
                   >
                     <Trash2 className="w-4 h-4" />
+                    {deleteConfirmId === selectedProposal.id ? 'Підтвердити видалення?' : 'Видалити'}
                   </button>
                 </div>
               </div>
