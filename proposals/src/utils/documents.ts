@@ -3,6 +3,7 @@ import { formatCurrency, convertCurrency } from './currency';
 import { formatDate } from './calculations';
 import { TTNData } from '../components/TTNModal';
 import { WarrantyData } from '../components/WarrantyModal';
+import { SELLERS } from '../config';
 
 /**
  * Друк рахунку-фактури
@@ -67,8 +68,9 @@ export function printWarrantyWithData(proposal: Proposal, data: WarrantyData) {
 function generateInvoiceHTML(proposal: Proposal): string {
   const accentColor = '#F59E0B';
   const currencySymbol = proposal.currency === 'UAH' ? '₴' : (proposal.currency === 'EUR' ? '€' : '$');
-  const dateStr = new Date(proposal.date).toLocaleDateString('uk-UA');
-  const invoiceNumber = proposal.number.replace('КП-', '');
+  const dateStr = proposal.date ? new Date(proposal.date).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
+  const invoiceNumber = (proposal.number || '').replace('КП-', '');
+  const seller = proposal.seller || SELLERS.tov_cso;
 
   const rates = {
     USD: proposal.rates?.usdToUah || 41.5,
@@ -81,18 +83,20 @@ function generateInvoiceHTML(proposal: Proposal): string {
     return convertCurrency(amount, 'USD', proposal.currency, rates);
   };
 
-  const itemsHTML = proposal.items.map((item, i) => {
-    const price = convert(item.price);
-    const sum = price * item.quantity;
+  const itemsHTML = (proposal.items || []).map((item, i) => {
+    const price = convert(item.price || 0);
+    const sum = price * (item.quantity || 0);
+    const itemName = item.name || item.product?.name || 'Без назви';
+    const itemUnit = item.unit || item.product?.unit || 'шт.';
     
     return `
       <tr>
         <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
         <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px;">
-          <strong>${item.name || item.product.name}</strong>
+          <strong>${itemName}</strong>
         </td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.unit || item.product.unit || 'шт.'}</td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.quantity}</td>
+        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${itemUnit}</td>
+        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.quantity || 0}</td>
         <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${price.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
         <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap; font-weight: 600;">${sum.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
       </tr>
@@ -125,15 +129,15 @@ function generateInvoiceHTML(proposal: Proposal): string {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px;">
           <div style="font-size: 11px;">
             <div style="text-transform: uppercase; font-size: 9px; color: #9CA3AF; font-weight: 600; margin-bottom: 5px;">Постачальник</div>
-            <strong>${proposal.seller.fullName}</strong><br>
-            ЄДРПОУ: ${proposal.seller.taxId}<br>
-            IBAN: ${proposal.seller.iban}<br>
-            Банк: ${proposal.seller.bank}<br>
-            Адреса: ${proposal.seller.address}
+            <strong>${seller.fullName}</strong><br>
+            ЄДРПОУ: ${seller.taxId}<br>
+            IBAN: ${seller.iban}<br>
+            Банк: ${seller.bank}<br>
+            Адреса: ${seller.address}
           </div>
           <div style="font-size: 11px;">
             <div style="text-transform: uppercase; font-size: 9px; color: #9CA3AF; font-weight: 600; margin-bottom: 5px;">Покупець</div>
-            <strong>${proposal.clientName}</strong><br>
+            <strong>${proposal.clientName || '____________________'}</strong><br>
             Тел: ${proposal.clientPhone || '-'}<br>
             Email: ${proposal.clientEmail || '-'}<br>
             Адреса: ${proposal.clientAddress || '-'}
@@ -190,16 +194,21 @@ function generateDeliveryNoteHTML(proposal: Proposal): string {
   const dateStr = new Date(proposal.date).toLocaleDateString('uk-UA');
   const dnNumber = proposal.number.replace('КП-', 'ВН-');
 
-  const itemsHTML = proposal.items.map((item, i) => `
-    <tr>
-      <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
-      <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px;">
-        <strong>${item.name || item.product.name}</strong>
-      </td>
-      <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.unit || item.product.unit || 'шт.'}</td>
-      <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.quantity}</td>
-    </tr>
-  `).join('');
+  const itemsHTML = (proposal.items || []).map((item, i) => {
+    const itemName = item.name || item.product?.name || 'Без назви';
+    const itemUnit = item.unit || item.product?.unit || 'шт.';
+    
+    return `
+      <tr>
+        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
+        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px;">
+          <strong>${itemName}</strong>
+        </td>
+        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${itemUnit}</td>
+        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.quantity || 0}</td>
+      </tr>
+    `;
+  }).join('');
 
   return `
     <html>
@@ -226,8 +235,8 @@ function generateDeliveryNoteHTML(proposal: Proposal): string {
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px; font-size: 11px;">
-          <div><span style="color: #9CA3AF; text-transform: uppercase; font-size: 9px;">Постачальник:</span><br><strong>${proposal.seller.fullName}</strong></div>
-          <div><span style="color: #9CA3AF; text-transform: uppercase; font-size: 9px;">Покупець:</span><br><strong>${proposal.clientName}</strong></div>
+          <div><span style="color: #9CA3AF; text-transform: uppercase; font-size: 9px;">Постачальник:</span><br><strong>${seller.fullName}</strong></div>
+          <div><span style="color: #9CA3AF; text-transform: uppercase; font-size: 9px;">Покупець:</span><br><strong>${proposal.clientName || '____________________'}</strong></div>
         </div>
 
         <table>
@@ -270,12 +279,12 @@ function generateTTNHTMLWithData(proposal: Proposal, data: TTNData): string {
   const month = ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"][dateStr.getMonth()];
   const year = dateStr.getFullYear().toString().substring(2);
   
-  const itemsHTML = data.selectedItems.map((item, i) => `
+  const itemsHTML = (data.selectedItems || []).map((item, i) => `
     <tr>
       <td>${i + 1}</td>
-      <td style="text-align: left;">${item.editedName || item.name || item.product.name}</td>
-      <td>${item.unit || item.product.unit || 'шт.'}</td>
-      <td>${item.editedQuantity || item.quantity}</td>
+      <td style="text-align: left;">${item.editedName || item.name || item.product?.name || 'Без назви'}</td>
+      <td>${item.unit || item.product?.unit || 'шт.'}</td>
+      <td>${item.editedQuantity || item.quantity || 0}</td>
       <td style="color:#fff">_</td>
       <td style="color:#fff">_</td>
       <td></td>
@@ -537,7 +546,7 @@ function generateTTNHTMLWithData(proposal: Proposal, data: TTNData): string {
 function generateWarrantyHTMLWithData(proposal: Proposal, data: WarrantyData): string {
   const dateStr = data.date ? data.date.split('-').reverse().join('.') : new Date().toLocaleDateString('uk-UA');
   
-  const itemsHTML = data.selectedItems.map((item, i) => {
+  const itemsHTML = (data.selectedItems || []).map((item, i) => {
     const serials = item.serialNumbers && item.serialNumbers.length > 0 
       ? item.serialNumbers.map(sn => sn || '_________________').join('<br>')
       : '';
@@ -545,8 +554,8 @@ function generateWarrantyHTMLWithData(proposal: Proposal, data: WarrantyData): s
     return `
       <tr>
         <td>${i + 1}</td>
-        <td style="text-align: left;">${item.editedName || item.name || item.product.name}</td>
-        <td>${item.editedQuantity || item.quantity}</td>
+        <td style="text-align: left;">${item.editedName || item.name || item.product?.name || 'Без назви'}</td>
+        <td>${item.editedQuantity || item.quantity || 0}</td>
         <td style="word-break: break-all; line-height: 1.6;">${serials}</td>
         <td>${item.warrantyPeriod || ''}</td>
       </tr>

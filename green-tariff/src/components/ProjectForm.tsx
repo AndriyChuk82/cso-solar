@@ -26,7 +26,7 @@ export function ProjectForm() {
       field30: '', field31: '', field32: '', field33: '', field34: '', field35: '', field36: '',
       field37: '', field38: '', field39: '', field40: '', field41: '', field42: '',
       field44: '',
-      stationType: '',
+      field43: '',
     }
   );
 
@@ -100,7 +100,7 @@ export function ProjectForm() {
       field30: '', field31: '', field32: '', field33: '', field34: '', field35: '', field36: '',
       field37: '', field38: '', field39: '', field40: '', field41: '', field42: '',
       field44: '',
-      stationType: '',
+      field43: '',
     });
   };
 
@@ -157,8 +157,8 @@ export function ProjectForm() {
           </FormField>
           <FormField label="Тип станції">
             <SearchableSelect
-              value={formData.stationType}
-              onChange={(v) => handleChange('stationType', v)}
+              value={formData.field43 || ''}
+              onChange={(v) => handleChange('field43', v)}
               options={STATION_TYPE_OPTIONS}
             />
           </FormField>

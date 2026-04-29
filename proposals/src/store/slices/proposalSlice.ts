@@ -65,7 +65,8 @@ function getNextProposalNumber(history: Proposal[] = []): string {
 }
 
 function calculateProposalTotals(proposal: Proposal): Proposal {
-  const subtotal = proposal.items.reduce((sum, item) => sum + item.total, 0);
+  const items = proposal.items || [];
+  const subtotal = items.reduce((sum, item) => sum + (item.total || 0), 0);
 
   let total = subtotal;
   let vatAmount = 0;
@@ -81,9 +82,14 @@ function calculateProposalTotals(proposal: Proposal): Proposal {
     total = subtotal;
   }
 
+  // Забезпечуємо наявність продавця
+  const seller = proposal.seller || SELLERS.tov_cso;
+
   return {
     ...proposal,
-    subtotal,
+    items,
+    seller,
+    subtotal: Math.round(subtotal * 100) / 100,
     vatAmount: Math.round(vatAmount * 100) / 100,
     total: Math.round(total * 100) / 100,
     updatedAt: new Date().toISOString(),

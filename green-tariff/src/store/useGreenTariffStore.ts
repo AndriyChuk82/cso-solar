@@ -47,7 +47,7 @@ const EMPTY_PROJECT: GreenTariffProject = {
   field40: '',
   field41: '',
   field42: '',
-  stationType: '',
+  field43: '',
 };
 
 // Mapping для пошуку полів у відповідях від GAS
@@ -106,8 +106,8 @@ const FIELD_MAPPING: Record<string, string[]> = {
   field40: ['Паспортні дані'],
   field41: ['Аванс, USD'],
   field42: ['Залишок, USD'],
+  field43: ['Тип станції', 'Модель станції'],
   field44: ['Коментар', 'Внутрішній коментар', 'Нотатки', 'Field 44'],
-  stationType: ['Тип станції', 'Модель станції'],
 };
 
 function getProp(obj: Record<string, unknown>, keys: string[]): string {

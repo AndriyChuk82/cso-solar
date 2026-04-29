@@ -972,7 +972,7 @@ const GT_TEMPLATES = {
             <div style="flex: 1; display: flex; align-items: center; justify-content: flex-start; overflow: visible;">
                 
                 <!-- ════ ВЕРСІЯ: МЕРЕЖЕВА СТАНЦІЯ ════ -->
-                <div class="gt-overlay-container" style="display: {{stationType === 'Гібридна' ? 'none' : 'block'}}; margin: 0; position: relative; left: -3%; overflow: visible !important;">
+                <div class="gt-overlay-container" style="display: {{field43 === 'Гібридна станція' ? 'none' : 'block'}}; margin: 0; position: relative; left: -3%; overflow: visible !important;">
                     <img src="doc/shema_merezeva.jpg?v=1.1" class="gt-overlay-img">
                 
                     <!-- Підстанція -->
@@ -1028,7 +1028,7 @@ const GT_TEMPLATES = {
                 </div>
 
                 <!-- ════ ВЕРСІЯ: ГІБРИДНА СТАНЦІЯ ════ -->
-                <div class="gt-overlay-container" style="display: {{stationType === 'Гібридна' ? 'block' : 'none'}}; margin: 0; position: relative; left: -3%; overflow: visible !important;">
+                <div class="gt-overlay-container" style="display: {{field43 === 'Гібридна станція' ? 'block' : 'none'}}; margin: 0; position: relative; left: -3%; overflow: visible !important;">
                     <img src="doc/shema_hibrud.jpg?v=1.1" class="gt-overlay-img">
                 
                     <!-- Підстанція -->

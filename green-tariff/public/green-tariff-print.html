@@ -228,10 +228,10 @@
 
                 // Специфічна логіка для Однолінійної схеми (doc3)
                 if (docId === '3') {
-                    const hasBattery = formData.stationType && formData.stationType.toLowerCase().includes('гібрид');
+                    const hasBattery = formData.field43 && formData.field43.toLowerCase().includes('гібрид');
                     template = template
-                        .split("{{stationType === 'Гібридна' ? 'block' : 'none'}}").join(hasBattery ? 'block' : 'none')
-                        .split("{{stationType === 'Гібридна' ? 'none' : 'block'}}").join(hasBattery ? 'none' : 'block');
+                        .split("{{field43 === 'Гібридна станція' ? 'block' : 'none'}}").join(hasBattery ? 'block' : 'none')
+                        .split("{{field43 === 'Гібридна станція' ? 'none' : 'block'}}").join(hasBattery ? 'none' : 'block');
                 }
 
                 // Перед заміною основних полів, підготуємо "під-поля" для дат та сум

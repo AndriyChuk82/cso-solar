@@ -44,10 +44,9 @@ export interface GreenTariffProject {
   field40: string; // Паспортні дані
   field41: string; // Аванс, USD
   field42: string; // Залишок, USD
-  field43?: string; // Резерв
+  field43?: string; // Тип станції
   field44?: string; // Внутрішній коментар (не для друку)
   field45?: string; // Резерв
-  stationType: string; // Тип станції
 }
 
 export interface EquipmentItem {
