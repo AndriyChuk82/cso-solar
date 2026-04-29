@@ -137,7 +137,7 @@ export function DocumentGenerator({ formData }: { formData: GreenTariffProject }
         mergedData[key] = formData[key] ?? '';
       }
       mergedData.currentDate = new Date().toLocaleDateString('uk-UA');
-      mergedData.stationType = formData.stationType || '';
+      mergedData.stationType = formData.field43 || '';
       mergedData.signMode = signMode;
 
       // Prepare photos
