@@ -191,8 +191,9 @@ function generateInvoiceHTML(proposal: Proposal): string {
 
 function generateDeliveryNoteHTML(proposal: Proposal): string {
   const accentColor = '#F59E0B';
-  const dateStr = new Date(proposal.date).toLocaleDateString('uk-UA');
-  const dnNumber = proposal.number.replace('КП-', 'ВН-');
+  const dateStr = proposal.date ? new Date(proposal.date).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
+  const dnNumber = (proposal.number || '').replace('КП-', 'ВН-');
+  const seller = proposal.seller || SELLERS.tov_cso;
 
   const itemsHTML = (proposal.items || []).map((item, i) => {
     const itemName = item.name || item.product?.name || 'Без назви';
