@@ -100,8 +100,8 @@ function generateInvoiceHTML(proposal: Proposal): string {
         </td>
         <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${itemUnit}</td>
         <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.quantity || 0}</td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${price.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap; font-weight: 600;">${sum.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
+        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${price.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap; font-weight: 600;">${sum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       </tr>
     `;
   }).join('');
@@ -167,7 +167,7 @@ function generateInvoiceHTML(proposal: Proposal): string {
             <tr class="total-row">
               <td colspan="4" style="border: none; background: none;"></td>
               <td style="padding: 10px; text-align: right; text-transform: uppercase; font-size: 11px;">Разом:</td>
-              <td style="padding: 10px; text-align: center; font-size: 13px;">${currencySymbol} ${totalConverted.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
+              <td style="padding: 10px; text-align: center; font-size: 11px; white-space: nowrap;">${totalConverted.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
             </tr>
           </tbody>
         </table>
