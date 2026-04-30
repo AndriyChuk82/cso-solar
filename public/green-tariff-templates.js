@@ -1379,7 +1379,7 @@ const GT_TEMPLATES = {
           <p style="text-align:center; font-weight:bold; font-size:12pt; margin:0 0 10px 0;">про забезпечення виконання технічних вимог відповідно до п.&nbsp;4.12.2 КСР</p>
          
           <p style="text-align:center; font-size:12pt; margin:0 0 14px 0;">
-            {{field10_day}}.{{field10_month}}.{{field10_year}}&nbsp;р.
+            {{field11_day}}.{{field11_month}}.{{field11_year}}&nbsp;р.
             <span style="display:inline-block; width:200px;"></span>
             м.&nbsp;Золочів
           </p>

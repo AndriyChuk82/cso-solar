@@ -153,7 +153,7 @@ export function ProjectForm() {
             <Input value={formData.field3} onChange={(v) => handleChange('field3', v)} placeholder="Автоматично" />
           </FormField>
           <FormField label="Час тестування">
-            <Input value={formData.field11} onChange={(v) => handleChange('field11', v)} placeholder="напр. 10:00 - 12:00" />
+            <Input type="date" value={formData.field11} onChange={(v) => handleChange('field11', v)} />
           </FormField>
           <FormField label="Тип станції">
             <SearchableSelect

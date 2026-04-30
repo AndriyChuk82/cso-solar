@@ -176,6 +176,18 @@
                 }
             }
 
+            formData.field11_day = '___';
+            formData.field11_month = '___';
+            formData.field11_year = '20___';
+            if (formData.field11) {
+                const d = formData.field11.split('-');
+                if (d.length === 3) {
+                    formData.field11_day = d[2];
+                    formData.field11_month = d[1];
+                    formData.field11_year = d[0];
+                }
+            }
+
             formData.field38_int = '_________';
             formData.field38_kop = '00';
             if (formData.field38) {
