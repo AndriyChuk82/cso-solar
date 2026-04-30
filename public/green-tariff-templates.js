@@ -972,8 +972,8 @@ const GT_TEMPLATES = {
             <div style="flex: 1; display: flex; align-items: center; justify-content: flex-start; overflow: visible;">
                 
                 <!-- ════ ВЕРСІЯ: МЕРЕЖЕВА СТАНЦІЯ ════ -->
-                <div class="gt-overlay-container" style="display: {{stationType === 'Гібридна' ? 'none' : 'block'}}; margin: 0; position: relative; left: -3%; overflow: visible !important;">
-                    <img src="/doc/shema_merezeva.jpg?v=1.1" class="gt-overlay-img">
+                <div class="gt-overlay-container" style="display: {{field43 === 'Гібридна станція' ? 'none' : 'block'}}; margin: 0; position: relative; left: -3%; overflow: visible !important;">
+                    <img src="doc/shema_merezeva.jpg?v=1.1" class="gt-overlay-img">
                 
                     <!-- Підстанція -->
                     <div class="gt-overlay-label" style="top: -2%; left: 2%;">
@@ -1028,8 +1028,8 @@ const GT_TEMPLATES = {
                 </div>
 
                 <!-- ════ ВЕРСІЯ: ГІБРИДНА СТАНЦІЯ ════ -->
-                <div class="gt-overlay-container" style="display: {{stationType === 'Гібридна' ? 'block' : 'none'}}; margin: 0; position: relative; left: -3%; overflow: visible !important;">
-                    <img src="/doc/shema_hibrud.jpg?v=1.1" class="gt-overlay-img">
+                <div class="gt-overlay-container" style="display: {{field43 === 'Гібридна станція' ? 'block' : 'none'}}; margin: 0; position: relative; left: -3%; overflow: visible !important;">
+                    <img src="doc/shema_hibrud.jpg?v=1.1" class="gt-overlay-img">
                 
                     <!-- Підстанція -->
                     <div class="gt-overlay-label" style="top: -2.5%; left: 1%;">
@@ -1364,4 +1364,167 @@ const GT_TEMPLATES = {
             </div>
         </div>
     `
+    ,
+    // ─── 6. АКТ про забезпечення виконання технічних вимог (п. 4.12.2 КСР) ──────
+    // Змінні: {{field4}} — ПІБ Замовника; {{field21}} — адреса об'єкта;
+    //         {{field22}} — потужність кВт; {{field27}} — модель інвертора;
+    //         {{field34}} — модель панелі; {{field20}} — пристрій контролю (ZUBR);
+    //         {{field10_day}}, {{field10_month}}, {{field10_year}} — дата;
+    //         {{signature_app1}} — підпис Виконавця
+    doc6: `
+        {{styles}}
+        <div style="font-family:'Times New Roman',Times,serif; font-size:12pt; line-height:1.4; color:#000; padding:0; margin:0;">
+         
+          <p style="text-align:center; font-weight:bold; font-size:14pt; margin:0 0 4px 0;">АКТ</p>
+          <p style="text-align:center; font-weight:bold; font-size:12pt; margin:0 0 10px 0;">про забезпечення виконання технічних вимог відповідно до п.&nbsp;4.12.2 КСР</p>
+         
+          <p style="text-align:center; font-size:12pt; margin:0 0 14px 0;">
+            {{field10_day}}.{{field10_month}}.{{field10_year}}&nbsp;р.
+            <span style="display:inline-block; width:200px;"></span>
+            м.&nbsp;Золочів
+          </p>
+         
+          <p style="text-align:justify; text-indent:1.5cm; margin:0 0 10px 0; font-size:12pt;">
+            Ми, що нижче підписалися, <strong>Виконавець ТОВ «Центр сервісного обслуговування»</strong>, з одного боку, та <strong>Замовник {{field4}}</strong>, з іншого боку, склали даний Акт на підтвердження того, що Виконавцем за адресою: <strong>{{field21}}</strong>, змонтована сонячна станція потужністю <strong>{{field22}}&nbsp;кВт</strong>, яка знаходиться у справному стані і готова до здійснення генерації електричної енергії.
+          </p>
+         
+          <p style="text-indent:0.8cm; margin:0 0 6px 0; font-size:12pt;">Сонячна станція складається з:</p>
+         
+          <ul style="margin:0 0 10px 1.2cm; padding:0; list-style-type:disc; font-size:12pt;">
+            <li style="margin-bottom:3px;">Інвертора: <strong>{{field27}}</strong></li>
+            <li style="margin-bottom:3px;">Фотоелектричних модулів: <strong>{{field34}}</strong></li>
+            {{zubrListItem}}
+          </ul>
+         
+          <p style="text-align:justify; margin:0 0 10px 0; font-size:12pt;">
+            За допомогою програмного забезпечення проведено налаштування інвертора для забезпечення автоматичного відключення генеруючої електроустановки від електричної мережі ОСП, ОСР та їх користувачів ОМСР у разі раптового зникнення в ній напруги та унеможливлення подачі напруги в електричну мережу у разі відсутності в ній напруги.
+          </p>
+         
+          <table style="width:100%; border-collapse:collapse; font-size:11pt; margin-bottom:10px;">
+            <colgroup>
+              <col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%">
+            </colgroup>
+         
+            <tr>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Модель інвертора</td>
+              <td colspan="3" style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;"><strong>{{field27_with_sn}}</strong></td>
+            </tr>
+         
+            <tr>
+              <td colspan="4" style="border:1px solid #000; padding:4px 6px; text-align:center; font-weight:bold; vertical-align:middle; background:#f0f0f0;">Параметри електромережі</td>
+            </tr>
+         
+            <tr>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Код мережі</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">VDE-AR-N-4105</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Час відновлення з підключенням до електромережі</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">60 сек</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Поступовий запуск після помилки електромережі</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">60 сек</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Автоматичний запуск після відновлення електромережі</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Активний</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Рівень напруги</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">230 В</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Рівень частоти</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">50,0 Гц</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Нижня межа напруги в разі відновлення електромережі</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">207 В</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Нижня межа частоти в разі відновлення електромережі</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">47,5 Гц</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Верхня межа напруги в разі відновлення електромережі</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">253 В</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Верхня межа частоти в разі відновлення електромережі</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">50,1 Гц</td>
+            </tr>
+         
+            <tr>
+              <td colspan="4" style="border:1px solid #000; padding:4px 6px; text-align:center; font-weight:bold; vertical-align:middle; background:#f0f0f0;">Параметри захисту</td>
+            </tr>
+         
+            <tr>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Межа захисту опірності ізоляції</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">0,033</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Активна функція захисту від секціонування</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Активна</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Захист у разі перевищення напруги впродовж 10 хвилин</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">265 В</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Тривалість захисту у разі перевищення напруги впродовж 10 хвилин</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">10 хвилин</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Поріг захисту від перенапруги</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">253 В</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Тривалість захисту від перенапруги</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">≤0,1 секунди</td>
+            </tr>
+          </table>
+          
+        </div>
+        <!-- Split container for page 2: continues the table with proper top margin -->
+        <div class="doc-wrapper" style="padding: 15mm 15mm; min-height: auto; box-shadow: none; page-break-before: always; margin: 0 -15mm;">
+          <table style="width:100%; border-collapse:collapse; font-size:11pt; margin-bottom:10px;">
+            <colgroup>
+              <col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%">
+            </colgroup>
+            <tr>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Поріг захисту від недостатньої напруги</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">207 В</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Тривалість захисту від недостатньої напруги</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">≤0,1 секунди</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Поріг захисту від перевищення частоти</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">51,5 Гц</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Тривалість захисту від перевищення частоти</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">≤0,1 секунди</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Поріг захисту від недостатньої частоти</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">47,5</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Тривалість захисту від недостатньої частоти</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">≤0,1 секунди</td>
+            </tr>
+          </table>
+
+          <div style="font-family:'Times New Roman',Times,serif; font-size:12pt; line-height:1.4; color:#000;">
+          
+            <p style="text-align:justify; text-indent:1.5cm; margin:0 0 8px 0; font-size:12pt;">
+              Для недопущення відпуску в електричну мережу ОСП, ОСР та їх користувачів, ОМСР електричної енергії, параметри напруги якої не відповідають визначеним державними стандартами, в інверторі встановлений захист від надструмів DC Type II / AC Type II.
+            </p>
+           
+            {{zubrParagraph}}
+           
+            <p style="text-align:justify; text-indent:1.5cm; margin:0 0 20px 0; font-size:12pt;">
+              Роботи виконані згідно нормам ПУЕ і ПТЕЕС з дотриманням технічних вимог п.&nbsp;4.12.2 КСР.
+            </p>
+           
+            <table style="width:100%; border-collapse:collapse; font-size:12pt; border:none; margin-top:30px;">
+              <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+              <tr>
+                <td style="border:none; text-align:center; font-weight:bold; padding-bottom:10px;">Виконавець</td>
+                <td style="border:none; text-align:center; font-weight:bold; padding-bottom:10px;">Замовник</td>
+              </tr>
+              <tr>
+                <td style="border:none; text-align:center; padding:0 10px 0 0; vertical-align:bottom; position:relative; height:80px;">
+                  <div style="position:relative; min-height:40px;">{{signature_app1}}</div>
+                  <div style="border-top:1px solid #000; margin-top:4px; width:80%; margin-left:auto; margin-right:auto;">&nbsp;</div>
+                </td>
+                <td style="border:none; text-align:center; padding:0 0 0 10px; vertical-align:bottom; height:80px;">
+                  <div style="min-height:30px; font-weight:normal; margin-bottom:10px;">&nbsp;</div>
+                  <div style="border-top:1px solid #000; margin-top:4px; width:80%; margin-left:auto; margin-right:auto;">&nbsp;</div>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>`
 };

@@ -163,7 +163,32 @@
                 document.head.appendChild(styleTag);
             }
 
-            // Рендеримо документи
+            // 1. ПІДГОТОВКА ДОДАТКОВИХ ПОЛІВ (дати, суми прописом тощо)
+            formData.field10_day = '___';
+            formData.field10_month = '___';
+            formData.field10_year = '20___';
+            if (formData.field10) {
+                const d = formData.field10.split('-');
+                if (d.length === 3) {
+                    formData.field10_day = d[2];
+                    formData.field10_month = d[1];
+                    formData.field10_year = d[0];
+                }
+            }
+
+            formData.field38_int = '_________';
+            formData.field38_words = '____________________________________________________________';
+            if (formData.field38) {
+                const val = parseFloat(formData.field38);
+                if (!isNaN(val)) {
+                    formData.field38_int = Math.floor(val).toString();
+                    if (typeof numberToWordsUA !== 'undefined') {
+                        formData.field38_words = numberToWordsUA(val);
+                    }
+                }
+            }
+
+            // 2. Рендеримо документи
             let renderedCount = 0;
 
             selected.forEach((docId) => {
@@ -234,29 +259,7 @@
                         .split("{{stationType === 'Гібридна' ? 'none' : 'block'}}").join(hasBattery ? 'none' : 'block');
                 }
 
-                // Перед заміною основних полів, підготуємо "під-поля" для дат та сум
-                formData.field10_day = '___';
-                formData.field10_month = '____________';
-                formData.field10_year = '20___';
-                if (formData.field10) {
-                    const d = formData.field10.split('-');
-                    if (d.length === 3) {
-                        formData.field10_day = d[2];
-                        formData.field10_month = d[1];
-                        formData.field10_year = d[0];
-                    }
-                }
-
-                formData.field38_int = '_________';
-                formData.field38_kop = '00';
-                if (formData.field38) {
-                    const cleanVal = formData.field38.toString().replace(/\s/g, '').replace(',', '.');
-                    const val = parseFloat(cleanVal) || 0;
-                    if (val > 0) {
-                        formData.field38_int = Math.floor(val).toLocaleString('uk-UA');
-                        formData.field38_kop = '00';
-                    }
-                }
+                // ─── Додавання документа в контейнер ───
 
                 // Специфічна логіка для Акту (doc4)
                 if (docId === '4') {
@@ -264,6 +267,26 @@
                         ? `<li>Акумуляторна батарея: ${formData.field36} (${formData.field37} кВт*год)</li>`
                         : '';
                     template = template.split('{{batteryListItem}}').join(batteryInfo);
+                }
+
+                // Специфічна логіка для Акту тех. вимог (doc6)
+                if (docId === '6') {
+                    // Форматуємо інвертор: Модель (с/н Номер)
+                    const inverterFull = formData.field27 + (formData.field29 ? ` (с/н ${formData.field29})` : '');
+                    template = template.split('{{field27_with_sn}}').join(inverterFull);
+
+                    // Умовне відображення пристрою контролю (ZUBR)
+                    if (formData.field20 && formData.field20.trim() !== '') {
+                        template = template.split('{{zubrListItem}}').join(`<li style="margin-bottom:3px;">Пристрою контролю якості напруги: <strong>${formData.field20}</strong></li>`);
+                        template = template.split('{{zubrParagraph}}').join(`
+                            <p style="text-align:justify; text-indent:1.5cm; margin:0 0 8px 0; font-size:12pt;">
+                                Улаштовано технічний засіб <strong>${formData.field20}</strong> для недопущення відпуску в електричну мережу ОСП, ОСР, та їх користувачів, ОМСР електричної енергії, параметри напруги якої не відповідають визначеним державними стандартами.
+                            </p>
+                        `);
+                    } else {
+                        template = template.split('{{zubrListItem}}').join('');
+                        template = template.split('{{zubrParagraph}}').join('');
+                    }
                 }
 
                 const wrapper = document.createElement('div');
