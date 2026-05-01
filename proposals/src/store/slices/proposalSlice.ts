@@ -265,8 +265,11 @@ export const createProposalSlice: StateCreator<
   },
 
   clearProposal: () => {
-    const { history } = get();
-    set({ proposal: createEmptyProposal(history) });
+    const { history, selectedSeller } = get();
+    const newProposal = createEmptyProposal(history);
+    // Зберігаємо обраного продавця при очищенні, якщо він був змінений
+    newProposal.seller = SELLERS[selectedSeller] || SELLERS.tov_cso;
+    set({ proposal: newProposal });
   },
 
   saveProposal: async () => {
@@ -279,7 +282,11 @@ export const createProposalSlice: StateCreator<
 
     // Зберігаємо локально
     const updatedHistory = [updatedProposal, ...history.filter(p => p.id !== proposal.id)];
-    set({ history: updatedHistory, proposal: updatedProposal });
+    set({ 
+      history: updatedHistory, 
+      proposal: updatedProposal,
+      selectedSeller: (updatedProposal.seller?.id as SellerId) || get().selectedSeller 
+    });
 
     // Зберігаємо на Google Sheets
     try {
@@ -301,7 +308,8 @@ export const createProposalSlice: StateCreator<
         proposal: { 
           ...proposalCopy, 
           updatedAt: new Date().toISOString() 
-        } 
+        },
+        selectedSeller: (proposalCopy.seller?.id as SellerId) || 'tov_cso'
       });
     }
   },
@@ -358,9 +366,13 @@ export const createProposalSlice: StateCreator<
 
   setSelectedSeller: (sellerId: SellerId) => {
     const { proposal } = get();
+    const updatedProposal = calculateProposalTotals({
+      ...proposal,
+      seller: SELLERS[sellerId]
+    });
     set({
       selectedSeller: sellerId,
-      proposal: { ...proposal, seller: SELLERS[sellerId] },
+      proposal: updatedProposal,
     });
   },
 

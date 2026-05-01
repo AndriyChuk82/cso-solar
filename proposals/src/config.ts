@@ -48,12 +48,13 @@ export const SELLERS: Record<SellerId, SellerInfo> = {
     bank: 'Філія Львiвське обласне управління АТ "ОЩАДБАНК"',
     mfo: '325796',
     phone: '(067) 374-08-12',
-    logo: 'https://i.ibb.co/32JD4dc/logo.png'
+    logo: 'https://i.ibb.co/32JD4dc/logo.png',
+    stamp: '/proposals/doc/fop_past.jpg'
   },
   tov_cso: {
     id: 'tov_cso',
     shortName: 'ТОВ "ЦСО"',
-    fullName: 'ТОВ "Центр сервісного обслуговування"',
+    fullName: 'ТОВ «Центр сервісного обслуговування»',
     taxId: '31758743',
     taxIdType: 'ЄДРПОУ',
     address: 'Україна, 80700, Львівська обл., м. Золочів, вул. І. Труша 1Б',
@@ -62,7 +63,8 @@ export const SELLERS: Record<SellerId, SellerInfo> = {
     bank: 'АТ «РАЙФФАЙЗЕН БАНК»',
     mfo: '300335',
     phone: '067-370-32-36, 073-370-32-36',
-    logo: 'https://i.ibb.co/32JD4dc/logo.png'
+    logo: 'https://i.ibb.co/32JD4dc/logo.png',
+    stamp: '/proposals/doc/sign_cso.png'
   }
 };
 

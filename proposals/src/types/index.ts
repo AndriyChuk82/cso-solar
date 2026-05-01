@@ -81,6 +81,7 @@ export interface SellerInfo {
   mfo: string;
   phone: string;
   logo: string;
+  stamp?: string;
 }
 
 // ===== Settings Types =====

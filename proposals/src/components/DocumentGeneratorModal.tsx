@@ -28,6 +28,7 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, proposal }
   const [selectedDoc, setSelectedDoc] = useState<DocumentType>('proposal');
   const [showTTNModal, setShowTTNModal] = useState(false);
   const [showWarrantyModal, setShowWarrantyModal] = useState(false);
+  const [includeStamp, setIncludeStamp] = useState(true);
 
   const handleGenerate = async () => {
     try {
@@ -54,7 +55,7 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, proposal }
           printDeliveryNote(proposal);
           break;
         case 'contract':
-          printContract(proposal);
+          printContract(proposal, includeStamp);
           break;
       }
       
@@ -115,6 +116,22 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, proposal }
               </div>
             </div>
 
+            {/* Seal Toggle for Contract */}
+            {selectedDoc === 'contract' && (
+              <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="includeStamp"
+                  checked={includeStamp}
+                  onChange={(e) => setIncludeStamp(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                />
+                <label htmlFor="includeStamp" className="text-sm font-medium text-blue-900 cursor-pointer">
+                  Додати печатку та підпис продавця
+                </label>
+              </div>
+            )}
+
             {/* Info */}
             <div className="bg-amber-50 border border-amber-100 rounded-lg p-2 text-center">
               <p className="text-[10px] text-amber-800">
@@ -124,7 +141,7 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, proposal }
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-100 bg-gray-50/50">
+          <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-100 bg-gray-50/50 rounded-b-xl">
             <button
               onClick={onClose}
               className="px-4 py-1.5 text-xs text-gray-600 hover:text-gray-900 transition font-medium"

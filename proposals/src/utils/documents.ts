@@ -66,17 +66,14 @@ export function printWarrantyWithData(proposal: Proposal, data: WarrantyData) {
   printWindow.document.close();
 }
 
-/**
- * Друк договору купівлі-продажу
- */
-export function printContract(proposal: Proposal) {
+export function printContract(proposal: Proposal, withStamp: boolean = true) {
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
     alert('Будь ласка, дозвольте спливаючі вікна для друку');
     return;
   }
 
-  const html = generateContractHTML(proposal);
+  const html = generateContractHTML(proposal, withStamp);
   printWindow.document.write(html);
   printWindow.document.close();
 }
@@ -706,14 +703,15 @@ function generateWarrantyHTMLWithData(proposal: Proposal, data: WarrantyData): s
   `;
 }
 
-function generateContractHTML(proposal: Proposal): string {
+function generateContractHTML(proposal: Proposal, withStamp: boolean = true): string {
   const dateStr = proposal.date ? new Date(proposal.date).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
   const contractNumber = (proposal.number || '').replace('КП-', 'Д-');
   
-  const sellerId = (proposal as any).sellerId || proposal.seller?.id || 'fop_pastushok';
-  const seller = SELLERS[sellerId as keyof typeof SELLERS] || proposal.seller || SELLERS.fop_pastushok;
+  // Визначаємо продавця безпосередньо з об'єкта пропозиції
+  const seller = proposal.seller || SELLERS.tov_cso;
+  const sellerId = seller.id;
   
-  const isVAT = sellerId === 'tov_cso';
+  const isVAT = sellerId === 'tov_cso' || seller.taxId === '31758743';
   
   const rates = {
     USD: proposal.rates?.usdToUah || 41.5,
@@ -757,13 +755,13 @@ function generateContractHTML(proposal: Proposal): string {
     <style>
       @page { size: A4; margin: 20mm 15mm 20mm 25mm; }
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: "Times New Roman", Times, serif; font-size: 11pt; line-height: 1.3; color: #000; background: #fff; }
+      body { font-family: "Times New Roman", Times, serif; font-size: 11pt; line-height: 1.15; color: #000; background: #fff; }
       .page { max-width: 210mm; margin: 0 auto; padding: 5mm; background: #fff; }
       h1 { font-size: 13pt; font-weight: bold; text-align: center; margin-bottom: 5pt; }
       h2 { font-size: 11pt; font-weight: bold; text-align: center; margin: 8pt 0 4pt; }
       .subtitle { font-size: 11pt; text-align: center; margin-bottom: 4pt; }
       .date-row { display: flex; justify-content: space-between; margin: 8pt 0 6pt; }
-      p { text-align: justify; margin-bottom: 5pt; text-indent: 1.25cm; }
+      p { text-align: justify; margin-bottom: 3pt; text-indent: 1.25cm; }
       p.no-indent { text-indent: 0; }
       p.bold { font-weight: bold; }
       table { border-collapse: collapse; width: 100%; margin: 6pt 0; font-size: 10pt; }
@@ -791,7 +789,7 @@ function generateContractHTML(proposal: Proposal): string {
         <span>«${dateStr.split('.')[0]}» ${["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"][parseInt(dateStr.split('.')[1])-1]} ${dateStr.split('.')[2]} р.</span>
       </div>
 
-      <p>${sellerId === 'tov_cso' ? 'Товариство з обмеженою відповідальністю «ЦЕНТР СОНЯЧНОГО ОБЛАДНАННЯ»' : seller.fullName} (надалі — <strong>«Продавець»</strong>), в особі ${sellerId === 'tov_cso' ? 'директора Пастушка Петра Петровича' : 'Пастушок Марії Володимирівни'}, що діє на підставі ${sellerId === 'tov_cso' ? 'Статуту' : 'Виписки з ЄДР'}, з однієї сторони, та</p>
+      <p>${seller.fullName} (надалі — <strong>«Продавець»</strong>), в особі ${sellerId === 'tov_cso' ? 'директора Пастушка Петра Петровича' : 'Пастушок Марії Володимирівни'}, що діє на підставі ${sellerId === 'tov_cso' ? 'Статуту' : 'Виписки з ЄДР'}, з однієї сторони, та</p>
 
       <p><strong>${proposal.clientName || '_____________________________________'}</strong> (надалі — <strong>«Покупець»</strong>), ${proposal.clientAddress ? 'що проживає за адресою: ' + proposal.clientAddress + ',' : ''} з іншої сторони,</p>
 
@@ -875,7 +873,10 @@ function generateContractHTML(proposal: Proposal): string {
           <td></td>
         </tr>
         <tr>
-          <td style="padding-top: 20pt;">____________ /________________/</td>
+          <td style="padding-top: 20pt; position: relative;">
+            ____________ /________________/
+            ${(withStamp && seller.stamp) ? `<img src="${seller.stamp}" style="position: absolute; top: -35px; left: 40px; width: 150px; height: auto; opacity: 0.95; pointer-events: none; z-index: 1; mix-blend-mode: multiply; filter: contrast(1.5) brightness(1.2);">` : ''}
+          </td>
           <td style="padding-top: 20pt;">____________ /________________/</td>
         </tr>
         <tr>
@@ -921,7 +922,10 @@ function generateContractHTML(proposal: Proposal): string {
           <td><strong>Від Покупця:</strong></td>
         </tr>
         <tr>
-          <td style="padding-top: 20pt;">____________ /________________/</td>
+          <td style="padding-top: 20pt; position: relative;">
+            ____________ /________________/
+            ${(withStamp && seller.stamp) ? `<img src="${seller.stamp}" style="position: absolute; top: -35px; left: 40px; width: 150px; height: auto; opacity: 0.95; pointer-events: none; z-index: 1; mix-blend-mode: multiply; filter: contrast(1.5) brightness(1.2);">` : ''}
+          </td>
           <td style="padding-top: 20pt;">____________ /________________/</td>
         </tr>
       </table>
