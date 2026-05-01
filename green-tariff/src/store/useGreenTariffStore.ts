@@ -187,44 +187,73 @@ export const useGreenTariffStore = create<GreenTariffState>((set, get) => ({
 
   saveProject: async (project: GreenTariffProject) => {
     const { projects, currentProject, files } = get();
-    const id = currentProject?.id || null;
+    // Prioritize ID from the project object itself (form data)
+    const id = project.id || currentProject?.id || null;
     
-    // 1. Оптимістичне оновлення списку (для миттєвого відгуку UI)
-    const optimisticProject = { ...project, id: id || `temp_${Date.now()}` };
+    // Check if it's a new project (no ID or temporary ID)
+    const isNew = !id || id.startsWith('temp_');
+    const actualId = isNew ? (id || `temp_${Date.now()}`) : id;
+    
+    // 1. Optimistic update
+    const optimisticProject = { ...project, id: actualId };
     let updatedProjects = [...projects];
     
-    if (id) {
+    if (!isNew) {
       const idx = projects.findIndex(p => p.id === id);
-      if (idx !== -1) updatedProjects[idx] = optimisticProject;
+      if (idx !== -1) {
+        updatedProjects[idx] = optimisticProject;
+      }
     } else {
-      updatedProjects = [optimisticProject, ...projects];
+      // Check if we already have this temp project in the list
+      const existingIdx = projects.findIndex(p => p.id === actualId);
+      if (existingIdx !== -1) {
+        updatedProjects[existingIdx] = optimisticProject;
+      } else {
+        updatedProjects = [optimisticProject, ...projects];
+      }
     }
 
-    // Розблоковуємо UI негайно
     set({ 
-      projects: updatedProjects, 
-      isLoading: false, 
-      currentProject: null,
-      files: [] // Очищаємо чергу файлів, оскільки вони вже пішли в обробку
+      projects: updatedProjects,
+      isLoading: true, // Keep loading until server responds
+      error: null 
     });
 
-    // 2. Фонове збереження в Google Таблицю
+    // 2. Background save to Google Sheets
     try {
-      const res = await gtApi.saveProject(project, files, id);
+      // For API, if it's a new project we pass null to trigger UUID generation on server
+      const apiId = isNew ? null : id;
+      const res = await gtApi.saveProject(project, files, apiId);
       
       if (res.success) {
-        // Оновлюємо дані офіційними з сервера (у фоні)
+        // Update current project with the real ID from server (or keep existing)
+        const savedProject = { ...project, id: res.id || actualId };
+        
+        set({ 
+          currentProject: savedProject,
+          files: [] 
+        });
+        
+        // Refresh official data from server
         const refreshRes = await gtApi.fetchProjects();
         if (refreshRes.success) {
-          set({ projects: refreshRes.projects || [] });
+          set({ projects: refreshRes.projects || [], isLoading: false });
+        } else {
+          set({ isLoading: false });
         }
       } else {
-        console.error('GT Background Save Error:', res.error);
-        set({ error: `Помилка фонового збереження: ${res.error}` });
+        console.error('GT Save Error:', res.error);
+        set({ 
+          error: `Помилка збереження: ${res.error}`, 
+          isLoading: false 
+        });
       }
     } catch (e) {
-      console.error('GT Background Save Exception:', e);
-      set({ error: 'Критична помилка при фоновому збереженні' });
+      console.error('GT Save Exception:', e);
+      set({ 
+        error: 'Критична помилка при збереженні', 
+        isLoading: false 
+      });
     }
   },
 
