@@ -4,6 +4,7 @@ import { formatDate } from './calculations';
 import { TTNData } from '../components/TTNModal';
 import { WarrantyData } from '../components/WarrantyModal';
 import { SELLERS } from '../config';
+import { numberToWords } from './numberToWords';
 
 /**
  * Друк рахунку-фактури
@@ -61,6 +62,21 @@ export function printWarrantyWithData(proposal: Proposal, data: WarrantyData) {
   }
 
   const html = generateWarrantyHTMLWithData(proposal, data);
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
+
+/**
+ * Друк договору купівлі-продажу
+ */
+export function printContract(proposal: Proposal) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Будь ласка, дозвольте спливаючі вікна для друку');
+    return;
+  }
+
+  const html = generateContractHTML(proposal);
   printWindow.document.write(html);
   printWindow.document.close();
 }
@@ -686,6 +702,235 @@ function generateWarrantyHTMLWithData(proposal: Proposal, data: WarrantyData): s
           window.onafterprint = () => window.close();
         </script>
       </body>
+    </html>
+  `;
+}
+
+function generateContractHTML(proposal: Proposal): string {
+  const dateStr = proposal.date ? new Date(proposal.date).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
+  const contractNumber = (proposal.number || '').replace('КП-', 'Д-');
+  
+  const sellerId = (proposal as any).sellerId || proposal.seller?.id || 'fop_pastushok';
+  const seller = SELLERS[sellerId as keyof typeof SELLERS] || proposal.seller || SELLERS.fop_pastushok;
+  
+  const isVAT = sellerId === 'tov_cso';
+  
+  const rates = {
+    USD: proposal.rates?.usdToUah || 41.5,
+    EUR: proposal.rates?.eurToUah || 51.0,
+    UAH: 1
+  };
+
+  const convert = (amount: number) => {
+    return convertCurrency(amount, 'USD', proposal.currency, rates);
+  };
+
+  const totalAmount = convert(proposal.total);
+  const vatAmount = isVAT ? (totalAmount / 1.2) * 0.2 : 0;
+  
+  const itemsHTML = (proposal.items || []).map((item, i) => {
+    const price = convert(item.price || 0);
+    const sum = price * (item.quantity || 0);
+    const itemName = item.name || item.product?.name || 'Без назви';
+    const itemUnit = item.unit || item.product?.unit || 'шт.';
+    
+    return `
+      <tr>
+        <td class="center">${i + 1}</td>
+        <td>${itemName}</td>
+        <td class="center">${itemUnit}</td>
+        <td class="center">${item.quantity || 0}</td>
+        <td class="right">${price.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td class="right">${sum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const totalWords = numberToWords(totalAmount);
+
+  return `
+    <!DOCTYPE html>
+    <html lang="uk">
+    <head>
+    <meta charset="UTF-8">
+    <title>Договір ${contractNumber}</title>
+    <style>
+      @page { size: A4; margin: 20mm 15mm 20mm 25mm; }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: "Times New Roman", Times, serif; font-size: 11pt; line-height: 1.3; color: #000; background: #fff; }
+      .page { max-width: 210mm; margin: 0 auto; padding: 5mm; background: #fff; }
+      h1 { font-size: 13pt; font-weight: bold; text-align: center; margin-bottom: 5pt; }
+      h2 { font-size: 11pt; font-weight: bold; text-align: center; margin: 8pt 0 4pt; }
+      .subtitle { font-size: 11pt; text-align: center; margin-bottom: 4pt; }
+      .date-row { display: flex; justify-content: space-between; margin: 8pt 0 6pt; }
+      p { text-align: justify; margin-bottom: 5pt; text-indent: 1.25cm; }
+      p.no-indent { text-indent: 0; }
+      p.bold { font-weight: bold; }
+      table { border-collapse: collapse; width: 100%; margin: 6pt 0; font-size: 10pt; }
+      table.req td { padding: 2pt 3pt; vertical-align: top; border: none; width: 50%; }
+      table.items th, table.items td { border: 0.5pt solid #000; padding: 3pt 4pt; vertical-align: middle; }
+      table.items th { background: #f2f2f2; font-weight: bold; text-align: center; }
+      table.items td.center { text-align: center; }
+      table.items td.right { text-align: right; }
+      table.items tr.total td { font-weight: bold; }
+      .stamp { margin-top: 4pt; font-size: 9pt; color: #666; }
+      .page-break { page-break-before: always; }
+      .total-text { margin-top: 8pt; text-indent: 0; font-weight: bold; }
+      @media print {
+        .no-print { display: none; }
+      }
+    </style>
+    </head>
+    <body>
+    <div class="page">
+      <h1>ДОГОВІР КУПІВЛІ-ПРОДАЖУ ОБЛАДНАННЯ</h1>
+      <div class="subtitle">№ ${contractNumber}</div>
+
+      <div class="date-row">
+        <span>м. Золочів</span>
+        <span>«${dateStr.split('.')[0]}» ${["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"][parseInt(dateStr.split('.')[1])-1]} ${dateStr.split('.')[2]} р.</span>
+      </div>
+
+      <p>${sellerId === 'tov_cso' ? 'Товариство з обмеженою відповідальністю «ЦЕНТР СОНЯЧНОГО ОБЛАДНАННЯ»' : seller.fullName} (надалі — <strong>«Продавець»</strong>), в особі ${sellerId === 'tov_cso' ? 'директора Пастушка Петра Петровича' : 'Пастушок Марії Володимирівни'}, що діє на підставі ${sellerId === 'tov_cso' ? 'Статуту' : 'Виписки з ЄДР'}, з однієї сторони, та</p>
+
+      <p><strong>${proposal.clientName || '_____________________________________'}</strong> (надалі — <strong>«Покупець»</strong>), ${proposal.clientAddress ? 'що проживає за адресою: ' + proposal.clientAddress + ',' : ''} з іншої сторони,</p>
+
+      <p>разом іменовані «Сторони», уклали цей Договір купівлі-продажу обладнання (надалі — «Договір») про наступне:</p>
+
+      <h2>1. ПРЕДМЕТ ДОГОВОРУ</h2>
+      <p>1.1. Продавець зобов'язується передати у власність Покупцеві обладнання (надалі — «Товар»), а Покупець зобов'язується прийняти та оплатити Товар на умовах, визначених цим Договором.</p>
+      <p>1.2. Найменування, технічні характеристики, кількість та ціна Товару визначаються у Додатку № 1 до цього Договору, який є його невід'ємною частиною.</p>
+      <p>1.3. Товар є новим, не був у використанні, відповідає технічним вимогам і стандартам якості.</p>
+
+      <h2>2. ЦІНА ДОГОВОРУ ТА ПОРЯДОК РОЗРАХУНКІВ</h2>
+      <p>2.1. Загальна вартість Товару відповідно до Додатку № 1 становить <strong>${totalAmount.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} грн</strong> (${totalWords})${isVAT ? ', у тому числі ПДВ 20% — ' + vatAmount.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' грн.' : ' (без ПДВ).'}</p>
+      <p>2.2. Розрахунки між Сторонами здійснюються у безготівковій формі шляхом перерахування грошових коштів на поточний рахунок Продавця.</p>
+      <p>2.3. Покупець сплачує 100% вартості Товару протягом 3 банківських днів з дати виставлення рахунку-фактури.</p>
+      <p>2.4. Датою оплати вважається дата зарахування коштів на рахунок Продавця.</p>
+
+      <h2>3. ПОРЯДОК ПОСТАВКИ ТА ПЕРЕДАЧІ ТОВАРУ</h2>
+      <p>3.1. Поставка Товару здійснюється протягом 30 календарних днів з дати отримання оплати від Покупця.</p>
+      <p>3.2. Місце передачі Товару: за домовленістю Сторін.</p>
+      <p>3.3. Передача Товару оформлюється Актом приймання-передачі або видатковою накладною.</p>
+      <p>3.4. Право власності на Товар переходить до Покупця з моменту підписання документів про передачу.</p>
+      <p>3.5. Ризик випадкового знищення або пошкодження Товару переходить до Покупця одночасно з переходом права власності.</p>
+
+      <h2>4. ЯКІСТЬ ТОВАРУ ТА ГАРАНТІЙНІ ЗОБОВ'ЯЗАННЯ</h2>
+      <p>4.1. Якість Товару повинна відповідати технічним характеристикам виробника.</p>
+      <p>4.2. Продавець надає гарантію на Товар згідно з гарантійними термінами виробника, вказаними у гарантійному талоні.</p>
+      <p>4.3. Гарантія не поширюється на пошкодження, що виникли внаслідок неналежного використання, механічних пошкоджень або несанкціонованого втручання у конструкцію Товару.</p>
+
+      <h2>5. ПРАВА ТА ОБОВ'ЯЗКИ СТОРІН</h2>
+      <p class="bold no-indent">5.1. Продавець зобов'язується:</p>
+      <p>5.1.1. передати Покупцеві Товар у строки та на умовах, визначених цим Договором;</p>
+      <p>5.1.2. забезпечити передачу Покупцеві технічної документації та гарантійних талонів.</p>
+      <p class="bold no-indent">5.2. Покупець зобов'язується:</p>
+      <p>5.2.1. прийняти Товар відповідно до умов цього Договору;</p>
+      <p>5.2.2. здійснити оплату у строки та в порядку, визначених розділом 2 цього Договору.</p>
+
+      <h2>6. ВІДПОВІДАЛЬНІСТЬ СТОРІН</h2>
+      <p>6.1. За порушення строків оплати Покупець сплачує Продавцеві пеню у розмірі подвійної облікової ставки НБУ від суми заборгованості за кожен день прострочення.</p>
+      <p>6.2. Сплата штрафних санкцій не звільняє Сторони від виконання своїх зобов'язань за цим Договором.</p>
+
+      <h2>7. ФОРС-МАЖОР</h2>
+      <p>7.1. Сторони звільняються від відповідальності за невиконання зобов'язань у разі настання обставин непереборної сили (форс-мажор), які безпосередньо впливають на виконання цього Договору.</p>
+
+      <h2>8. КОНФІДЕНЦІЙНІСТЬ</h2>
+      <p>8.1. Сторони зобов'язуються не розголошувати конфіденційну інформацію, отриману в процесі виконання цього Договору.</p>
+
+      <h2>9. ВИРІШЕННЯ СПОРІВ</h2>
+      <p>9.1. Всі спори між Сторонами вирішуються шляхом переговорів. У разі неможливості вирішення спору — у судовому порядку згідно з законодавством України.</p>
+
+      <h2>10. СТРОК ДІЇ ДОГОВОРУ</h2>
+      <p>10.1. Цей Договір набирає чинності з моменту підписання і діє до повного виконання Сторонами своїх зобов'язань.</p>
+
+      <h2>11. ПРИКІНЦЕВІ ПОЛОЖЕННЯ</h2>
+      <p>11.1. Цей Договір укладений у 2 примірниках, що мають однакову юридичну силу.</p>
+      <p>11.2. Будь-які зміни до цього Договору оформлюються у письмовій формі.</p>
+
+      <h2>12. РЕКВІЗИТИ ТА ПІДПИСИ СТОРІН</h2>
+      <table class="req">
+        <tr>
+          <td><strong>ПРОДАВЕЦЬ</strong></td>
+          <td><strong>ПОКУПЕЦЬ</strong></td>
+        </tr>
+        <tr>
+          <td><strong>${seller.fullName}</strong></td>
+          <td><strong>${proposal.clientName || '___________________________'}</strong></td>
+        </tr>
+        <tr>
+          <td>Код: ${seller.taxId}</td>
+          <td>Тел.: ${proposal.clientPhone || '_____________________'}</td>
+        </tr>
+        <tr>
+          <td>Адреса: ${seller.address}</td>
+          <td>Адреса: ${proposal.clientAddress || '___________________'}</td>
+        </tr>
+        <tr>
+          <td>IBAN: ${seller.iban}</td>
+          <td>Email: ${proposal.clientEmail || '____________________'}</td>
+        </tr>
+        <tr>
+          <td>Банк: ${seller.bank}</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="padding-top: 20pt;">____________ /________________/</td>
+          <td style="padding-top: 20pt;">____________ /________________/</td>
+        </tr>
+        <tr>
+          <td class="stamp">М.П.</td>
+          <td class="stamp">М.П.</td>
+        </tr>
+      </table>
+
+      <div class="page-break"></div>
+      <h1>ДОДАТОК № 1</h1>
+      <div class="subtitle">до Договору № ${contractNumber} від ${dateStr}</div>
+      <br>
+      <h2>ПЕРЕЛІК ОБЛАДНАННЯ (СПЕЦИФІКАЦІЯ)</h2>
+      <table class="items">
+        <thead>
+          <tr>
+            <th style="width:5%;">№</th>
+            <th style="width:45%;">Найменування</th>
+            <th style="width:10%;">Од.</th>
+            <th style="width:10%;">К-сть</th>
+            <th style="width:15%;">Ціна, грн</th>
+            <th style="width:15%;">Сума, грн</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHTML}
+          <tr class="total">
+            <td colspan="5" class="right">РАЗОМ:</td>
+            <td class="right">${totalAmount.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>
+          ${isVAT ? `
+          <tr>
+            <td colspan="5" class="right">У тому числі ПДВ (20%):</td>
+            <td class="right">${vatAmount.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>` : ''}
+        </tbody>
+      </table>
+      <p class="no-indent total-text">Загальна вартість: ${totalWords}</p>
+
+      <table class="req" style="margin-top: 30pt;">
+        <tr>
+          <td><strong>Від Продавця:</strong></td>
+          <td><strong>Від Покупця:</strong></td>
+        </tr>
+        <tr>
+          <td style="padding-top: 20pt;">____________ /________________/</td>
+          <td style="padding-top: 20pt;">____________ /________________/</td>
+        </tr>
+      </table>
+    </div>
+    <script>
+      window.onload = () => setTimeout(() => window.print(), 800);
+      window.onafterprint = () => window.close();
+    </script>
+    </body>
     </html>
   `;
 }

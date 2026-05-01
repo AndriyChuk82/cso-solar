@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, FileText, Receipt, Package, Truck, Shield, Download, Printer } from 'lucide-react';
 import { Proposal } from '../types';
-import { printInvoice, printDeliveryNote } from '../utils/documents';
+import { printInvoice, printDeliveryNote, printContract } from '../utils/documents';
 import { TTNModal } from './TTNModal';
 import { WarrantyModal } from './WarrantyModal';
 import { printTTNWithData, printWarrantyWithData } from '../utils/documents';
@@ -13,12 +13,13 @@ interface DocumentGeneratorModalProps {
   proposal: Proposal;
 }
 
-type DocumentType = 'proposal' | 'invoice' | 'expense' | 'waybill' | 'ttn' | 'warranty';
+type DocumentType = 'proposal' | 'invoice' | 'expense' | 'waybill' | 'ttn' | 'warranty' | 'contract';
 
 const documentTypes: { type: DocumentType; label: string; icon: any; description: string }[] = [
   { type: 'proposal', label: 'Комерційна пропозиція', icon: FileText, description: 'Офіційний бланк з логотипом' },
   { type: 'invoice', label: 'Рахунок', icon: Receipt, description: 'Рахунок на оплату' },
   { type: 'expense', label: 'Видаткова накладна', icon: Package, description: 'Документ видачі товару' },
+  { type: 'contract', label: 'Договір', icon: FileText, description: 'Договір купівлі-продажу' },
   { type: 'ttn', label: 'ТТН', icon: Truck, description: 'Товарно-транспортна накладна' },
   { type: 'warranty', label: 'Гарантійний талон', icon: Shield, description: 'Гарантія на обладнання' },
 ];
@@ -51,6 +52,9 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, proposal }
           break;
         case 'expense':
           printDeliveryNote(proposal);
+          break;
+        case 'contract':
+          printContract(proposal);
           break;
       }
       
