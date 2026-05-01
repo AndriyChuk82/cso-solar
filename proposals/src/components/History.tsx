@@ -177,9 +177,11 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                         className="flex justify-between text-sm p-2 bg-gray-50 dark:bg-slate-800/50 rounded border border-transparent dark:border-slate-800"
                       >
                         <div className="flex-1">
-                          <div className="font-medium text-gray-900 dark:text-slate-200">{item.product.name}</div>
+                          <div className="font-medium text-gray-900 dark:text-slate-200">
+                            {item.name || item.product?.name || 'Без назви'}
+                          </div>
                           <div className="text-gray-500 dark:text-slate-500 text-xs">
-                            {item.quantity} {item.product.unit} ×{' '}
+                            {item.quantity} {item.unit || item.product?.unit || 'шт.'} ×{' '}
                             {formatCurrency(item.price, selectedProposal.currency)}
                           </div>
                         </div>

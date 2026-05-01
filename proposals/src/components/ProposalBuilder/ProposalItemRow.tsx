@@ -83,7 +83,7 @@ export const ProposalItemRow = memo(function ProposalItemRow({
       <td className="px-2 py-2">
         <div className="flex flex-col gap-0 transition-all">
           <textarea
-            value={item.name ?? item.product.name}
+            value={item.name ?? item.product?.name ?? ''}
             onChange={(e) => onUpdateField(item.id, 'name', e.target.value)}
             onInput={(e) => {
               const target = e.currentTarget;

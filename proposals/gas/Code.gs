@@ -1320,10 +1320,11 @@ function handleGetProposals() {
 
         proposals.push({
           id: row[0],
-          project_number: row[1],
+          number: row[1],
           date: row[2],
-          client_name: row[3],
-          client_phone: row[4],
+          clientName: row[3],
+          clientPhone: row[4],
+          clientEmail: itemsData.clientEmail || '',
           rates: {
             usdToUah: usdRate,
             eurToUah: eurRate
@@ -1340,9 +1341,9 @@ function handleGetProposals() {
           vatMode: itemsData.vatMode || 'none',
           vatAmount: itemsData.vatAmount || 0,
           notes: row[10] || itemsData.notes || '',
-          user_email: row[11] || '',
-          updated_at: updatedAt,
-          created_at: row[2] || updatedAt
+          userEmail: row[11] || '',
+          updatedAt: updatedAt,
+          createdAt: row[2] || updatedAt
         });
       } catch (parseErr) {
         console.warn('Помилка рядка ' + (i + 1) + ':', parseErr);
