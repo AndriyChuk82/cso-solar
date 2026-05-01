@@ -3,13 +3,14 @@ import {
   ChevronLeft, Save, User, MapPin, Phone,
   Plus, Wallet, X, FileText, Package,
   Trash2, Edit3, AlertTriangle, Check,
-  RefreshCw, DollarSign, Lock
+  RefreshCw, DollarSign, Lock, Clipboard
 } from 'lucide-react';
 import { projectService } from '../services/api';
 import { formatAmount, formatDate } from '../lib/utils';
 import { hapticLight, hapticMedium, hapticSuccess, hapticError } from '../lib/haptic';
 import { AddPaymentSheet } from '../components/AddPaymentSheet';
 import { MaterialCard } from '../components/MaterialCard';
+import { KPSelectionModal } from '../components/KPSelectionModal';
 
 /* ---------- helpers ---------- */
 function FL({ icon: Icon, children }) {
@@ -33,6 +34,7 @@ function itemsModified(a, b) {
       String(ai.name).trim() !== String(bi.name).trim() ||
       parseFloat(ai.quantity) !== parseFloat(bi.quantity) ||
       parseFloat(ai.price)    !== parseFloat(bi.price) ||
+      parseFloat(ai.issued_qty || 0) !== parseFloat(bi.issued_qty || 0) ||
       String(ai.note || '').trim() !== String(bi.note || '').trim()
     );
   });
@@ -56,12 +58,8 @@ function ItemRow({ item, onUpdate, onDelete, currency, rate }) {
         <input type="text" value={item.name || ''}
           onChange={e => onUpdate({ ...item, name: e.target.value })}
           className="form-input"
+          placeholder="Назва товару..."
           style={{ padding: '4px 8px', fontSize: '0.82rem', fontWeight: 500 }} />
-        <input type="text" value={item.note || ''}
-          onChange={e => onUpdate({ ...item, note: e.target.value })}
-          className="form-input"
-          style={{ padding: '3px 8px', fontSize: '0.7rem', marginTop: 3, color: 'var(--text-muted)' }}
-          placeholder="Примітка..." />
       </td>
       <td style={{ padding: '7px 6px', width: 70 }}>
         <input type="number" min="0" value={item.quantity || ''}
@@ -73,7 +71,14 @@ function ItemRow({ item, onUpdate, onDelete, currency, rate }) {
           className="form-input"
           style={{ padding: '4px 6px', fontSize: '0.82rem', textAlign: 'center', width: '100%' }} />
       </td>
-      <td style={{ padding: '7px 6px', width: 100 }}>
+      <td style={{ padding: '7px 6px', width: 70 }}>
+        <input type="number" min="0" value={item.issued_qty || ''}
+          onChange={e => onUpdate({ ...item, issued_qty: e.target.value })}
+          className="form-input"
+          placeholder="0"
+          style={{ padding: '4px 6px', fontSize: '0.82rem', textAlign: 'center', width: '100%', background: 'var(--success-bg)' }} />
+      </td>
+      <td style={{ padding: '7px 6px', width: 90 }}>
         <input type="number" min="0" value={item.price || ''}
           onChange={e => {
             const p = parseFloat(e.target.value) || 0;
@@ -83,8 +88,12 @@ function ItemRow({ item, onUpdate, onDelete, currency, rate }) {
           className="form-input"
           style={{ padding: '4px 6px', fontSize: '0.82rem', textAlign: 'right', width: '100%' }} />
       </td>
-      <td style={{ padding: '7px 10px', textAlign: 'right', fontWeight: 700, fontSize: '0.88rem', color: 'var(--text)', whiteSpace: 'nowrap' }}>
-        {parseFloat(item.sum) > 0 ? formatAmount(item.sum, currency, rate) : '—'}
+      <td style={{ padding: '7px 6px' }}>
+        <input type="text" value={item.note || ''}
+          onChange={e => onUpdate({ ...item, note: e.target.value })}
+          className="form-input"
+          style={{ padding: '4px 8px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}
+          placeholder="Примітка..." />
       </td>
       <td style={{ padding: '7px 6px', textAlign: 'center' }}>
         <button onClick={() => onDelete(item)} className="btn btn-ghost btn-sm"
@@ -113,6 +122,7 @@ export function ProjectDetail({
   const [editingItems, setEditingItems] = useState(false);
   const [pendingItems, setPendingItems] = useState([]);
   const [showRateInput, setShowRateInput] = useState(false);
+  const [showKPModal, setShowKPModal] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
   /* fetch */
@@ -259,8 +269,28 @@ export function ProjectDetail({
   const handleAddItem = () => {
     setPendingItems(p => [...p, {
       id: `new_${Date.now()}`, project_id: projectId,
-      name: '', quantity: 1, price: 0, sum: 0, note: ''
+      name: '', quantity: 1, price: 0, sum: 0, issued_qty: 0, note: ''
     }]);
+  };
+
+  const handleSelectKP = async (proposalId) => {
+    setShowKPModal(false);
+    hapticMedium();
+    setIsSavingItems(true);
+    try {
+      const res = await projectService.importFromProposal(projectId, proposalId);
+      if (res.success) {
+        hapticSuccess();
+        load(); // Refresh items
+      } else {
+        alert('Помилка імпорту: ' + res.error);
+      }
+    } catch (err) {
+      hapticError();
+      alert('Помилка підключення');
+    } finally {
+      setIsSavingItems(false);
+    }
   };
 
   const handleUpdateItem = (upd) => {
@@ -271,6 +301,25 @@ export function ProjectDetail({
 
   const handleDeletePending = (item) =>
     setPendingItems(prev => prev.filter(i => i.id !== item.id));
+
+  const handleDeleteItemDirect = async (itemId) => {
+    if (!confirm('Видалити цю позицію назавжди?')) return;
+    hapticMedium();
+    setIsSavingItems(true);
+    try {
+      const res = await projectService.deleteProjectItem(itemId);
+      if (res.success) {
+        hapticSuccess();
+        load();
+      } else {
+        alert('Помилка видалення: ' + res.error);
+      }
+    } catch (err) {
+      hapticError();
+    } finally {
+      setIsSavingItems(false);
+    }
+  };
 
   /* cancel payment */
   const handleCancelPayment = async (paymentId) => {
@@ -648,27 +697,40 @@ export function ProjectDetail({
 
         {/* ════ MATERIALS ════ */}
         <div className="card" style={{ marginBottom: isMobile ? 80 : 24 }}>
-          <div className="card-header" style={{ padding:'10px 14px' }}>
-            <span className="section-label" style={{ gap:6 }}>
-              <Package size={13} />
-              Матеріали по КП
-              {displayItems.length > 0 && (
-                <span style={{ marginLeft:4, background:'var(--border-light)', color:'var(--text-secondary)', fontSize:'0.65rem', padding:'1px 7px', borderRadius:10, fontWeight:700 }}>
-                  {displayItems.length}
-                </span>
-              )}
+          <div className="card-header" style={{ padding:'10px 14px', justifyContent:'space-between' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <span className="section-label" style={{ gap:6 }}>
+                <Package size={13} />
+                Матеріали по КП
+                {displayItems.length > 0 && (
+                  <span style={{ marginLeft:4, background:'var(--border-light)', color:'var(--text-secondary)', fontSize:'0.65rem', padding:'1px 7px', borderRadius:10, fontWeight:700 }}>
+                    {displayItems.length}
+                  </span>
+                )}
+              </span>
               {isModified && !editingItems && (
                 <span style={{
-                  marginLeft:6, display:'inline-flex', alignItems:'center', gap:3,
+                  display:'inline-flex', alignItems:'center', gap:3,
                   background:'#FFF3CD', color:'#856404', border:'1px solid #FFE069',
                   fontSize:'0.62rem', padding:'2px 8px', borderRadius:10, fontWeight:700
                 }}>
                   <AlertTriangle size={9} /> Змінено відносно КП
                 </span>
               )}
-            </span>
-            <div style={{ display:'flex', gap:6, alignItems:'center' }}>
-              {editingItems ? (
+            </div>
+            <div style={{ display:'flex', gap:6 }}>
+              {!editingItems ? (
+                <>
+                  <button onClick={() => setShowKPModal(true)} className="btn btn-ghost btn-sm"
+                    style={{ fontSize:'0.7rem', height:28, gap:4, background:'var(--primary-light)', color:'var(--primary)' }}>
+                    <Clipboard size={14} /> Імпорт КП
+                  </button>
+                  <button onClick={handleEditItems} className="btn btn-primary btn-sm"
+                    style={{ fontSize:'0.7rem', height:28, gap:4 }}>
+                    <Edit3 size={14} /> Редагувати
+                  </button>
+                </>
+              ) : (
                 <>
                   <button className="btn btn-ghost btn-sm" onClick={() => setEditingItems(false)} style={{ fontSize:'0.78rem' }}>
                     Скасувати
@@ -680,11 +742,6 @@ export function ProjectDetail({
                     {isSavingItems ? ' Збереження...' : ' Зберегти'}
                   </button>
                 </>
-              ) : (
-                <button className="btn btn-ghost btn-sm" onClick={handleEditItems}
-                  style={{ fontSize:'0.78rem', color:'var(--primary)', display:'flex', alignItems:'center', gap:4 }}>
-                  <Edit3 size={12} /> Редагувати
-                </button>
               )}
             </div>
           </div>
@@ -706,10 +763,11 @@ export function ProjectDetail({
                   <thead>
                     <tr style={{ background:'var(--border-light)' }}>
                       <th style={{ ...thStyle('left','14px'), minWidth: '200px' }}>Назва</th>
-                      <th style={thStyle('center','6px',70)}>К-сть</th>
-                      <th style={thStyle('right','6px',100)}>Ціна ({currency})</th>
-                      <th style={thStyle('right','14px',100)}>Сума</th>
-                      {editingItems && <th style={{ width:36 }} />}
+                      <th style={thStyle('center','6px',60)}>К-сть</th>
+                      <th style={thStyle('center','6px',60)}>Видано</th>
+                      <th style={thStyle('right','6px',90)}>Ціна ({currency})</th>
+                      <th style={thStyle('left','14px')}>Коментар</th>
+                      <th style={{ width:36, borderBottom: '1px solid var(--border)' }} />
                     </tr>
                   </thead>
                   <tbody>
@@ -724,16 +782,24 @@ export function ProjectDetail({
                         <tr key={item.id || i} style={{ borderBottom:'1px solid var(--border-light)' }}>
                           <td style={{ padding:'9px 14px', fontSize:'0.85rem', color:'var(--text)', fontWeight:500 }}>
                             {item.name}
-                            {item.note && <div style={{ fontSize:'0.7rem', color:'var(--text-muted)', marginTop:1 }}>{item.note}</div>}
                           </td>
                           <td style={{ padding:'9px 6px', textAlign:'center', fontSize:'0.82rem', color:'var(--text-secondary)' }}>
-                            {parseFloat(item.quantity) || 1}
+                            {parseFloat(item.quantity) || 0}
+                          </td>
+                          <td style={{ padding:'9px 6px', textAlign:'center', fontSize:'0.82rem', fontWeight: 700, color: (parseFloat(item.issued_qty) || 0) > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
+                            {parseFloat(item.issued_qty) || 0}
                           </td>
                           <td style={{ padding:'9px 6px', textAlign:'right', fontSize:'0.82rem', color:'var(--text-secondary)' }}>
                             {parseFloat(item.price) > 0 ? formatAmount(item.price, currency, rate) : '—'}
                           </td>
-                          <td style={{ padding:'9px 14px', textAlign:'right', fontWeight:700, fontSize:'0.88rem', color:'var(--text)' }}>
-                            {parseFloat(item.sum) > 0 ? formatAmount(item.sum, currency, rate) : '—'}
+                          <td style={{ padding:'9px 14px', fontSize:'0.75rem', color:'var(--text-muted)', fontStyle: 'italic' }}>
+                            {item.note || ''}
+                          </td>
+                          <td style={{ padding:'0 10px', textAlign:'center' }}>
+                            <button onClick={() => handleDeleteItemDirect(item.id)} className="btn btn-ghost btn-sm"
+                              style={{ padding:4, color:'var(--danger)', opacity: 0.4 }} title="Видалити">
+                              <Trash2 size={13} />
+                            </button>
                           </td>
                         </tr>
                       ))
@@ -771,7 +837,7 @@ export function ProjectDetail({
                     key={item.id || i}
                     item={item}
                     onUpdate={handleUpdateItem}
-                    onDelete={handleDeletePending}
+                    onDelete={editingItems ? handleDeletePending : (it) => handleDeleteItemDirect(it.id)}
                     isEditing={editingItems}
                     currency={currency}
                     rate={rate}

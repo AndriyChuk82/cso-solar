@@ -43,10 +43,10 @@ export function MaterialCard({ item, onUpdate, onDelete, isEditing, currency, ra
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '8px' }}>
           <div>
             <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-              Кількість
+              К-сть
             </label>
             <input
               type="number"
@@ -58,7 +58,22 @@ export function MaterialCard({ item, onUpdate, onDelete, isEditing, currency, ra
                 onUpdate({ ...item, quantity: e.target.value, sum: q * p });
               }}
               className="form-input"
-              style={{ padding: '8px 10px', fontSize: '0.9rem', textAlign: 'center' }}
+              style={{ padding: '8px 6px', fontSize: '0.85rem', textAlign: 'center' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+              Видано
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={item.issued_qty || ''}
+              onChange={e => onUpdate({ ...item, issued_qty: e.target.value })}
+              className="form-input"
+              placeholder="0"
+              style={{ padding: '8px 6px', fontSize: '0.85rem', textAlign: 'center', background: 'var(--success-bg)' }}
             />
           </div>
 
@@ -76,7 +91,7 @@ export function MaterialCard({ item, onUpdate, onDelete, isEditing, currency, ra
                 onUpdate({ ...item, price: e.target.value, sum: q * p });
               }}
               className="form-input"
-              style={{ padding: '8px 10px', fontSize: '0.9rem', textAlign: 'right' }}
+              style={{ padding: '8px 6px', fontSize: '0.85rem', textAlign: 'right' }}
             />
           </div>
         </div>
@@ -108,8 +123,9 @@ export function MaterialCard({ item, onUpdate, onDelete, isEditing, currency, ra
       borderRadius: 'var(--radius-md)',
       padding: '12px',
       marginBottom: '8px',
+      position: 'relative'
     }}>
-      <div style={{ marginBottom: '6px' }}>
+      <div style={{ marginBottom: '6px', paddingRight: '30px' }}>
         <div style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>
           {item.name}
         </div>
@@ -120,14 +136,37 @@ export function MaterialCard({ item, onUpdate, onDelete, isEditing, currency, ra
         )}
       </div>
 
+      <button 
+        onClick={() => {
+          if (confirm('Видалити цю позицію?')) {
+            onDelete && onDelete(item);
+          }
+        }}
+        style={{ 
+          position: 'absolute', top: 8, right: 8, 
+          padding: 8, color: 'var(--danger)', opacity: 0.3,
+          background: 'none', border: 'none'
+        }}
+      >
+        <Trash2 size={14} />
+      </button>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid var(--border-light)' }}>
         <div style={{ display: 'flex', gap: '16px' }}>
           <div>
             <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              К-сть
+              План
             </div>
             <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-              {parseFloat(item.quantity) || 1}
+              {parseFloat(item.quantity) || 0}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Видано
+            </div>
+            <div style={{ fontSize: '0.88rem', fontWeight: 800, color: (parseFloat(item.issued_qty) || 0) > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
+              {parseFloat(item.issued_qty) || 0}
             </div>
           </div>
           <div>

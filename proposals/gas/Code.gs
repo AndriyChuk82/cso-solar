@@ -252,6 +252,9 @@ function doPost(e) {
       case 'syncProjectItems':
         result = handleSyncProjectItems(data.projectId);
         break;
+      case 'importFromProposal':
+        result = handleImportFromProposal(data.projectId, data.proposalId);
+        break;
       case 'getAllProducts':
         result = getAllProducts();
         break;
@@ -349,6 +352,11 @@ const HEADER_MAP = {
   'проєкт id': 'project_id',
   'ціна': 'price',
   'сума': 'sum',
+  'видано': 'issued_qty',
+  'кількість виданого': 'issued_qty',
+  'коментар': 'note',
+  'примітка': 'note',
+  'примітки': 'note',
   'оновлено': 'updated_at',
   'updated_at': 'updated_at',
   'погоджена сума': 'agreed_sum',
@@ -1802,7 +1810,7 @@ function handleSaveProject(projectData, userEmail) {
     if (projectData.items_from_cp && projectData.items_from_cp.length > 0) {
       const itemsSheet = getSheet('project_items', ss.getId());
       
-      const itemHeaders = ['ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Примітка'];
+      const itemHeaders = ['ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Видано', 'Примітка'];
       let iLastCol = itemsSheet.getLastColumn();
       if (iLastCol === 0) {
         itemsSheet.appendRow(itemHeaders);
@@ -1823,6 +1831,7 @@ function handleSaveProject(projectData, userEmail) {
           'quantity': qty,
           'price': price,
           'sum': (qty * price),
+          'issued_qty': 0,
           'note': note
         };
 
@@ -1854,7 +1863,7 @@ function handleSaveProject(projectData, userEmail) {
 function handleSaveProjectItem(itemData) {
   const ss = getSpreadsheet();
   const sheet = getSheet('project_items', ss.getId());
-  const headers = ['ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Примітка'];
+  const headers = ['ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Видано', 'Примітка'];
   
   let currentLastCol = sheet.getLastColumn();
   if (currentLastCol === 0) {
@@ -1874,6 +1883,7 @@ function handleSaveProjectItem(itemData) {
     'quantity': itemData.quantity,
     'price': itemData.price,
     'sum': sum,
+    'issued_qty': itemData.issued_qty || 0,
     'note': itemData.note || itemData.notes || '',
     'notes': itemData.note || itemData.notes || '',
   };
@@ -2055,6 +2065,7 @@ function handleSyncProjectItems(projectId) {
       'quantity': qty,
       'price': price,
       'sum': (qty * price),
+      'issued_qty': 0,
       'note': note
     };
 

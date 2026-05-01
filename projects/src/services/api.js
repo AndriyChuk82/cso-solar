@@ -54,4 +54,5 @@ export const projectService = {
   // Proposals (for linking to projects)
   getProposals: () => gasRequest('getProposals', {}, 'POST'),
   syncProjectItems: (projectId) => gasRequest('syncProjectItems', { projectId }, 'POST'),
+  importFromProposal: (projectId, proposalId) => gasRequest('importFromProposal', { projectId, proposalId }, 'POST'),
 };
