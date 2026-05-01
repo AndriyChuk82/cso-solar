@@ -1797,7 +1797,106 @@ function handleSaveProject(projectData, userEmail) {
       const s = String(h).trim().toLowerCase();
       const mapped = HEADER_MAP[s] || s;
       if (mapped === 'created_at' || s === 'створено') return ts;
-          items = parsed.items;
+      if (mapped === 'updated_at' || s === 'оновлено') return ts;
+      return fullData[mapped] !== undefined ? fullData[mapped] : "";
+    });
+
+    sheet.appendRow(rowData);
+    return { success: true, id: newId };
+  } else {
+    headerRow.forEach((h, idx) => {
+      const s = String(h).trim().toLowerCase();
+      const mapped = HEADER_MAP[s] || s;
+      if (projectData[mapped] !== undefined && mapped !== 'id') {
+        sheet.getRange(row, idx + 1).setValue(projectData[mapped]);
+      } else if (mapped === 'updated_at' || s === 'оновлено') {
+        sheet.getRange(row, idx + 1).setValue(ts);
+      }
+    });
+    return { success: true, id: projectData.id };
+  }
+}
+
+function handleSaveProjectItem(itemData) {
+  const ss = getSpreadsheet();
+  const sheet = getSheet('project_items', ss.getId());
+  const headers = ['ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Видано', 'Примітка'];
+  
+  let currentLastCol = sheet.getLastColumn();
+  if (currentLastCol === 0) {
+    sheet.appendRow(headers);
+    currentLastCol = headers.length;
+  }
+  let headerRow = sheet.getRange(1, 1, 1, currentLastCol).getValues()[0];
+  
+  let row = findRowByValue(sheet, 'id', itemData.id);
+  if (row === -1) row = findRowByValue(sheet, 'ID', itemData.id);
+
+  const sum = (parseFloat(itemData.quantity) * parseFloat(itemData.price)) || 0;
+  const valueMap = {
+    'id': itemData.id || generateUUID(),
+    'project_id': itemData.project_id,
+    'name': itemData.name,
+    'quantity': itemData.quantity,
+    'price': itemData.price,
+    'sum': sum,
+    'issued_qty': itemData.issued_qty || 0,
+    'note': itemData.note || itemData.notes || '',
+    'notes': itemData.note || itemData.notes || '',
+  };
+
+  if (row === -1) {
+    const appendData = headerRow.map(h => {
+      const s = String(h).trim().toLowerCase();
+      const mapped = HEADER_MAP[s] || s;
+      return valueMap[mapped] !== undefined ? valueMap[mapped] : '';
+    });
+    sheet.appendRow(appendData);
+  } else {
+    headerRow.forEach((h, idx) => {
+      const s = String(h).trim().toLowerCase();
+      const mapped = HEADER_MAP[s] || s;
+      if (valueMap[mapped] !== undefined && mapped !== 'id' && mapped !== 'project_id') {
+        sheet.getRange(row, idx + 1).setValue(valueMap[mapped]);
+      }
+    });
+  }
+  return { success: true };
+}
+
+function handleDeleteProjectItem(itemId) {
+  const ss = getSpreadsheet();
+  const sheet = getSheet('project_items', ss.getId());
+  const row = findRowByValue(sheet, 'ID', itemId);
+  if (row !== -1) {
+    sheet.deleteRow(row);
+    return { success: true };
+  }
+  return { success: false, error: 'Товар не знайдено' };
+}
+
+function handleImportFromProposal(projectId, proposalId) {
+  if (!projectId || !proposalId) return { success: false, error: 'ID проекту або КП не вказано' };
+  
+  const ss = getSpreadsheet();
+  const projectsSheet = getSheet('projects', ss.getId());
+  
+  const proposalsSs = getProposalsSpreadsheet();
+  const proposalsSheet = proposalsSs.getSheetByName('proposals');
+  if (!proposalsSheet) return { success: false, error: 'Аркуш КП не знайдено' };
+  
+  const proposalRow = findRowByValue(proposalsSheet, 'ID', proposalId);
+  if (proposalRow === -1) return { success: false, error: 'КП не знайдено в базі' };
+  
+  const proposalData = proposalsSheet.getRange(proposalRow, 1, 1, proposalsSheet.getLastColumn()).getValues()[0];
+  let items = [];
+  try {
+    const jsonStr = String(proposalData[9] || '[]');
+    const parsed = JSON.parse(jsonStr);
+    if (Array.isArray(parsed)) {
+      items = parsed;
+    } else if (parsed && Array.isArray(parsed.items)) {
+      items = parsed.items;
     }
   } catch (e) {
     return { success: false, error: 'Помилка читання товарів з КП' };
@@ -1944,114 +2043,6 @@ function handleSyncProjectItems(projectId) {
   }
   
   return handleImportFromProposal(projectId, project.proposal_id);
-}
-
-function handleCancelPayment(paymentId, userEmail) {
-  const ss = getSpreadsheet();
-  const sheet = getSheet('project_payments', ss.getId());
-  const row = findRowByValue(sheet, 'id', paymentId);
-  if (row === -1) return { success: false, error: 'Платіж не знайдено' };
-  
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  headers.forEach((h, idx) => {
-    const s = String(h).trim().toLowerCase();
-    const mapped = HEADER_MAP[s] || s;
-    if (mapped === 'status') {
-      sheet.getRange(row, idx + 1).setValue('❌ Скасовано');
-    }
-  });
-  return { success: true };
-}
-
-function handleDeletePayment(paymentId) {
-  const ss = getSpreadsheet();
-  const sheet = getSheet('project_payments', ss.getId());
-  const row = findRowByValue(sheet, 'id', paymentId);
-  if (row !== -1) {
-    sheet.deleteRow(row);
-    return { success: true };
-  }
-  return { success: false, error: 'Платіж не знайдено' };
-}
-
-function handleSyncProjectItems(projectId) {
-  if (!projectId) return { success: false, error: 'ID проекту не вказано' };
-  
-  const ss = getSpreadsheet();
-  const projectsSheet = getSheet('projects', ss.getId());
-  const projects = sheetToObjects(projectsSheet);
-  const project = projects.find(p => String(p.id) === String(projectId));
-  
-  if (!project || !project.proposal_id) {
-    return { success: false, error: 'Проект не знайдено або в нього не вказано ID КП' };
-  }
-  
-  // Отримуємо КП
-  const proposalsSs = getProposalsSpreadsheet();
-  const proposalsSheet = proposalsSs.getSheetByName('proposals');
-  if (!proposalsSheet) return { success: false, error: 'Аркуш КП не знайдено' };
-  
-  const proposalRow = findRowByValue(proposalsSheet, 'ID', project.proposal_id);
-  if (proposalRow === -1) return { success: false, error: 'КП не знайдено в базі' };
-  
-  const proposalData = proposalsSheet.getRange(proposalRow, 1, 1, proposalsSheet.getLastColumn()).getValues()[0];
-  let items = [];
-  try {
-    const parsed = JSON.parse(proposalData[9] || '[]');
-    // Підтримуємо обидва формати: масив або об'єкт {items: [...]}
-    if (Array.isArray(parsed)) {
-      items = parsed;
-    } else if (parsed && Array.isArray(parsed.items)) {
-      items = parsed.items;
-    }
-  } catch (e) {
-    return { success: false, error: 'Помилка читання товарів з КП' };
-  }
-  
-  if (items.length === 0) return { success: false, error: 'У вибраній КП немає товарів' };
-  
-  const itemsSheet = getSheet('project_items', ss.getId());
-  // Видаляємо старі товари проекту і записуємо заново (оновлення)
-  const existingItems = sheetToObjects(itemsSheet);
-  for (let i = existingItems.length - 1; i >= 0; i--) {
-     const iPid = String(existingItems[i].project_id || '').trim();
-     const pId = String(projectId || '').trim();
-     if (iPid && iPid === pId) {
-        const rowToDelete = i + 2; // +1 за хедер, +1 за 0-індекс
-        itemsSheet.deleteRow(rowToDelete);
-     }
-  }
-  
-  const iHeaderRow = itemsSheet.getRange(1, 1, 1, itemsSheet.getLastColumn()).getValues()[0];
-
-  // Додаємо нові товари
-  items.forEach(item => {
-    const qty = parseFloat(item.quantity) || 1;
-    const price = parseFloat(item.price || item.unitPrice || item.total || 0);
-    const name = item.name || item.productName || 'Товар';
-    const note = item.note || item.productArticle || item.article || '';
-    
-    const iValueMap = {
-      'id': generateUUID(),
-      'project_id': projectId,
-      'name': name,
-      'quantity': qty,
-      'price': price,
-      'sum': (qty * price),
-      'issued_qty': 0,
-      'note': note
-    };
-
-    const iAppendData = iHeaderRow.map(h => {
-      const s = String(h).trim().toLowerCase();
-      const mapped = HEADER_MAP[s] || s;
-      return iValueMap[mapped] !== undefined ? iValueMap[mapped] : '';
-    });
-    
-    itemsSheet.appendRow(iAppendData);
-  });
-  
-  return { success: true, count: items.length };
 }
 
 // ===== PROPOSALS MODULE - ДОДАТКОВІ ФУНКЦІЇ =====
