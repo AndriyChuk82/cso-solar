@@ -336,7 +336,8 @@ const HEADER_MAP = {
   'клієнт': 'client_name',
   'телефон': 'client_phone',
   'адреса': 'address',
-  'примітки': 'notes',
+  'примітки': 'note',
+  'примітка': 'note',
   'id кп': 'proposal_id',
   'id проекту': 'project_id',
   'id проєкту': 'project_id',
@@ -345,13 +346,14 @@ const HEADER_MAP = {
   'проєкт id': 'project_id',
   'ціна': 'price',
   'сума': 'sum',
-  'примітка': 'note',
   'оновлено': 'updated_at',
   'updated_at': 'updated_at',
   'погоджена сума': 'agreed_sum',
   'тип платежу': 'payment_type',
   'дата закриття': 'closed_date',
   'номер': 'project_number',
+  'валюта': 'currency',
+  'currency': 'currency',
   'проєкти': 'project_access',
   'проекти': 'project_access',
   'доступні проєкти': 'project_access',
@@ -369,8 +371,8 @@ const HEADER_MAP = {
   'phone': 'client_phone',
   'contact': 'client_phone',
   'address': 'address',
-  'notes': 'notes',
-  'note': 'notes',
+  'notes': 'note',
+  'note': 'note',
   'proposal_id': 'proposal_id',
   'project_number': 'project_number',
   'agreed_sum': 'agreed_sum',
@@ -1628,7 +1630,7 @@ function handleGetProjects(userEmail) {
   const ss = getSpreadsheet();
   const projectsSheet = getSheetWithInit('projects', [
     'ID', 'Назва', 'Клієнт', 'Телефон', 'Адреса', 'Статус', 'Примітки', 'ID КП',
-    'Погоджена сума', 'Номер', 'Дата закриття', 'Створено', 'Оновлено'
+    'Погоджена сума', 'Валюта', 'Номер', 'Дата закриття', 'Створено', 'Оновлено'
   ], [], ss);
   
   // Отримуємо проєкти
@@ -1833,7 +1835,8 @@ function handleSaveProjectItem(itemData) {
     'quantity': itemData.quantity,
     'price': itemData.price,
     'sum': sum,
-    'note': itemData.note || ''
+    'note': itemData.note || itemData.notes || '',
+    'notes': itemData.note || itemData.notes || '',
   };
 
   if (row === -1) {
@@ -1895,7 +1898,8 @@ function handleSavePayment(paymentData, userEmail) {
     'date': paymentData.date || dateStr(),
     'sum': paymentData.sum,
     'status': paymentData.status || 'Оплачено',
-    'note': paymentData.note || '',
+    'note': paymentData.note || paymentData.notes || '',
+    'notes': paymentData.note || paymentData.notes || '',
     'payment_type': paymentData.payment_type || 'Повна оплата',
     'user': userEmail || 'Система',
     'created_at': now()

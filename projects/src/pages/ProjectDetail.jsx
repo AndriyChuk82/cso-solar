@@ -32,7 +32,8 @@ function itemsModified(a, b) {
     return (
       String(ai.name).trim() !== String(bi.name).trim() ||
       parseFloat(ai.quantity) !== parseFloat(bi.quantity) ||
-      parseFloat(ai.price)    !== parseFloat(bi.price)
+      parseFloat(ai.price)    !== parseFloat(bi.price) ||
+      String(ai.note || '').trim() !== String(bi.note || '').trim()
     );
   });
 }
@@ -121,6 +122,10 @@ export function ProjectDetail({
       const data = await projectService.getProjectDetails(projectId);
       if (data.success) {
         setProject(data.project);
+        if (data.project.currency && setCurrency) {
+          setCurrency(data.project.currency);
+          if (data.project.currency === 'UAH') setShowRateInput(true);
+        }
         const loaded = data.items || [];
         setItems(loaded);
         setOrigItems(loaded.map(i => ({ ...i })));
@@ -360,11 +365,19 @@ export function ProjectDetail({
           <div style={{ display: 'flex', gap: 4 }}>
             <button
               className={`currency-btn ${currency === 'USD' ? 'active' : ''}`}
-              onClick={() => { setCurrency('USD'); setShowRateInput(false); }}
+              onClick={() => { 
+                setCurrency('USD'); 
+                setShowRateInput(false); 
+                if (project) setProject({ ...project, currency: 'USD' });
+              }}
             >$</button>
             <button
               className={`currency-btn ${currency === 'UAH' ? 'active' : ''}`}
-              onClick={() => { setCurrency('UAH'); setShowRateInput(true); }}
+              onClick={() => { 
+                setCurrency('UAH'); 
+                setShowRateInput(true); 
+                if (project) setProject({ ...project, currency: 'UAH' });
+              }}
             >₴</button>
           </div>
           {currency === 'UAH' && showRateInput && (
@@ -454,12 +467,13 @@ export function ProjectDetail({
                   placeholder="Вулиця, будинок, місто" />
               </div>
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-                <FL>Примітка</FL>
-                <textarea className="form-input"
-                  value={project.notes || ''}
-                  onChange={e => setProject({ ...project, notes: e.target.value })}
-                  placeholder="Коментар..."
-                  rows={2} style={{ resize:'none', minHeight: '60px' }} />
+                <div className="card-body">
+                  <FL icon={FileText}>Примітки</FL>
+                  <textarea className="form-input" style={{ minHeight:80, fontSize:'0.85rem' }}
+                    value={project.note || ''}
+                    onChange={e => setProject({ ...project, note: e.target.value })}
+                    placeholder="Додайте опис або важливі деталі..." />
+                </div>
               </div>
             </div>
           </div>
@@ -486,8 +500,16 @@ export function ProjectDetail({
               <div>
                 <FL>Погоджена сума з клієнтом ({currency})</FL>
                 <input type="number" inputMode="numeric" className="form-input"
-                  value={project.agreed_sum !== undefined && project.agreed_sum !== '' ? Number(project.agreed_sum).toFixed(2).replace(/\.00$/, '') : (kpSum > 0 ? Number(kpSum).toFixed(2).replace(/\.00$/, '') : '')}
-                  onChange={e => setProject({ ...project, agreed_sum: e.target.value })}
+                  value={
+                    project.agreed_sum !== undefined && project.agreed_sum !== '' 
+                      ? (currency === 'UAH' ? (Number(project.agreed_sum) * rate).toFixed(0) : Number(project.agreed_sum).toFixed(2).replace(/\.00$/, ''))
+                      : (kpSum > 0 ? (currency === 'UAH' ? (kpSum * rate).toFixed(0) : kpSum.toFixed(2).replace(/\.00$/, '')) : '')
+                  }
+                  onChange={e => {
+                    const val = parseFloat(e.target.value) || 0;
+                    const baseVal = currency === 'UAH' ? (val / rate) : val;
+                    setProject({ ...project, agreed_sum: baseVal });
+                  }}
                   placeholder="0"
                   style={{ fontSize:'1.1rem', fontWeight:700 }} />
               </div>

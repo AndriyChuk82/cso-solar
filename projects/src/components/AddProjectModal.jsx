@@ -9,7 +9,7 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
     client_name: '',
     client_phone: '',
     address: '',
-    notes: '',
+    note: '',
   });
   
   const [isSaving, setIsSaving] = useState(false);
@@ -21,7 +21,7 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
         client_name: '',
         client_phone: '',
         address: '',
-        notes: '',
+        note: '',
       });
     }
   }, [isOpen]);
@@ -128,8 +128,8 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
                    <textarea
                       className="form-input min-h-[100px]"
                       placeholder="Будь-які додаткові деталі по проєкту..."
-                      value={formData.notes}
-                      onChange={e => setFormData({...formData, notes: e.target.value})}
+                      value={formData.note}
+                      onChange={e => setFormData({...formData, note: e.target.value})}
                       style={{ padding: '12px', fontSize: '0.9rem', lineHeight: 1.5 }}
                    />
                 </div>
