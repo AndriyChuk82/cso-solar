@@ -23,14 +23,31 @@ export function formatUSD(amount) {
 
 /**
  * Format amount according to selected currency and exchange rate.
- * @param {number} amount   - Amount in USD (base)
- * @param {'USD'|'UAH'} currency
+ * @param {number} amount   - Amount
+ * @param {'USD'|'UAH'} targetCurrency - Currency to display in
  * @param {number} rate     - UAH per 1 USD
+ * @param {'USD'|'UAH'} sourceCurrency - Currency the amount is currently in
  */
-export function formatAmount(amount, currency = 'USD', rate = 41) {
+export function formatAmount(amount, targetCurrency = 'USD', rate = 41, sourceCurrency = 'USD') {
   const num = parseFloat(amount) || 0;
-  if (currency === 'UAH') return formatCurrency(num * rate);
-  return formatUSD(num);
+  
+  // If target matches source, just format without conversion
+  if (targetCurrency === sourceCurrency) {
+    return targetCurrency === 'UAH' ? formatCurrency(num) : formatUSD(num);
+  }
+  
+  // Convert USD to UAH
+  if (targetCurrency === 'UAH' && sourceCurrency === 'USD') {
+    return formatCurrency(num * rate);
+  }
+  
+  // Convert UAH to USD
+  if (targetCurrency === 'USD' && sourceCurrency === 'UAH') {
+    return formatUSD(num / rate);
+  }
+
+  // Fallback
+  return targetCurrency === 'UAH' ? formatCurrency(num * rate) : formatUSD(num);
 }
 
 export function formatDate(dateString) {

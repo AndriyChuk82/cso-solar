@@ -243,6 +243,9 @@ function doPost(e) {
       case 'cancelPayment':
         result = handleCancelPayment(data.paymentId, data.user);
         break;
+      case 'deletePayment':
+        result = handleDeletePayment(data.paymentId);
+        break;
       case 'deleteProposal':
         result = handleDeleteProposal(data.proposalId);
         break;
@@ -443,7 +446,7 @@ function findRowByValue(sheet, column, value) {
     }
     return mapped;
   });
-  const colIndex = headers.indexOf(column);
+  const colIndex = headers.indexOf(String(column).toLowerCase());
   if (colIndex === -1) return -1;
   const searchVal = String(value || '').trim().toLowerCase();
   for (let i = 1; i < data.length; i++) {
@@ -1664,7 +1667,14 @@ function handleGetProjects(userEmail) {
     });
     const totalPaid = projectPayments.reduce((acc, pay) => acc + (parseFloat(pay.sum) || 0), 0);
     
-    const agreedSum = parseFloat(p['погоджена сума'] || p.agreed_sum || 0) || totalCost;
+    let agreedSum = parseFloat(p['погоджена сума'] || p.agreed_sum || 0);
+    if (!agreedSum) {
+      // Якщо погоджена сума не вказана, беремо суму по КП
+      // Враховуємо валюту проекту (якщо проект в грн, то конвертуємо КП в грн по курсу 41)
+      const rate = 41; // Можна було б брати динамічно, але поки що так
+      agreedSum = (p.currency === 'UAH' ? totalCost * rate : totalCost);
+    }
+
     return {
       ...p,
       agreed_sum: agreedSum,
@@ -1927,9 +1937,26 @@ function handleSavePayment(paymentData, userEmail) {
 function handleCancelPayment(paymentId, userEmail) {
   const ss = getSpreadsheet();
   const sheet = getSheet('project_payments', ss.getId());
-  const row = findRowByValue(sheet, 'ID', paymentId);
+  const row = findRowByValue(sheet, 'id', paymentId);
+  if (row === -1) return { success: false, error: 'Платіж не знайдено' };
+  
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  headers.forEach((h, idx) => {
+    const s = String(h).trim().toLowerCase();
+    const mapped = HEADER_MAP[s] || s;
+    if (mapped === 'status') {
+      sheet.getRange(row, idx + 1).setValue('❌ Скасовано');
+    }
+  });
+  return { success: true };
+}
+
+function handleDeletePayment(paymentId) {
+  const ss = getSpreadsheet();
+  const sheet = getSheet('project_payments', ss.getId());
+  const row = findRowByValue(sheet, 'id', paymentId);
   if (row !== -1) {
-    sheet.getRange(row, 5).setValue('❌ Скасовано');
+    sheet.deleteRow(row);
     return { success: true };
   }
   return { success: false, error: 'Платіж не знайдено' };

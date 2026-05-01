@@ -134,9 +134,16 @@ export function ProjectDetail({
 
         // Calculate finance fields for the list (ProjectList expects these)
         const itemsTotal = loaded.reduce((a, i) => a + (parseFloat(i.sum) || 0), 0);
-        const kpSum = parseFloat(data.project.total_cost) || itemsTotal || 0;
-        const agreedSum = parseFloat(data.project.agreed_sum) || kpSum;
+        const kpSum = parseFloat(data.project.total_cost) || itemsTotal || 0; // Items are always USD base
+        
+        let agreedSum = parseFloat(data.project.agreed_sum);
+        if (isNaN(agreedSum) || agreedSum <= 0) {
+           // Fallback to kpSum, but must convert if project is UAH
+           agreedSum = (data.project.currency === 'UAH' ? kpSum * rate : kpSum);
+        }
+        
         const validPay = loadedPayments.filter(p => !p.status?.toLowerCase().includes('скасовано'));
+        // Sum payments as-is (assuming they match the project's native currency)
         const totalPaid = validPay.reduce((a, p) => a + (parseFloat(p.sum) || 0), 0);
         const balance = agreedSum - totalPaid;
 
@@ -167,9 +174,7 @@ export function ProjectDetail({
     setIsSaved(false);
     try {
       const pToSave = { ...project };
-      if ((!pToSave.agreed_sum || pToSave.agreed_sum === '') && kpSum > 0) {
-        pToSave.agreed_sum = kpSum;
-      }
+      // Note: No automatic conversion here. We save exactly what the user entered.
       const res = await projectService.saveProject(pToSave);
       if (!res.success) {
         hapticError();
@@ -262,6 +267,19 @@ export function ProjectDetail({
     if (!confirm('Скасувати цей платіж?')) return;
     hapticMedium();
     const res = await projectService.cancelPayment(paymentId);
+    if (res.success) {
+      hapticSuccess();
+      const fresh = await load();
+      if (onUpdate && fresh) onUpdate(fresh);
+    } else {
+      hapticError();
+    }
+  };
+
+  const handleDeletePayment = async (paymentId) => {
+    if (!confirm('Видалити цей платіж назавжди?')) return;
+    hapticMedium();
+    const res = await projectService.deletePayment(paymentId);
     if (res.success) {
       hapticSuccess();
       const fresh = await load();
@@ -502,13 +520,12 @@ export function ProjectDetail({
                 <input type="number" inputMode="numeric" className="form-input"
                   value={
                     project.agreed_sum !== undefined && project.agreed_sum !== '' 
-                      ? (currency === 'UAH' ? (Number(project.agreed_sum) * rate).toFixed(0) : Number(project.agreed_sum).toFixed(2).replace(/\.00$/, ''))
+                      ? (currency === project.currency ? Number(project.agreed_sum).toFixed(2).replace(/\.00$/, '') : (currency === 'UAH' ? (Number(project.agreed_sum) * rate).toFixed(0) : (Number(project.agreed_sum) / rate).toFixed(2)))
                       : (kpSum > 0 ? (currency === 'UAH' ? (kpSum * rate).toFixed(0) : kpSum.toFixed(2).replace(/\.00$/, '')) : '')
                   }
                   onChange={e => {
                     const val = parseFloat(e.target.value) || 0;
-                    const baseVal = currency === 'UAH' ? (val / rate) : val;
-                    setProject({ ...project, agreed_sum: baseVal });
+                    setProject({ ...project, agreed_sum: val, currency: currency });
                   }}
                   placeholder="0"
                   style={{ fontSize:'1.1rem', fontWeight:700 }} />
@@ -528,13 +545,13 @@ export function ProjectDetail({
                 <div className="stat-block">
                   <div className="stat-label">Оплачено</div>
                   <div className="stat-value" style={{ color:'var(--success)' }}>
-                    {formatAmount(totalPaid, currency, rate)}
+                    {formatAmount(totalPaid, currency, rate, project.currency)}
                   </div>
                 </div>
                 <div className="stat-block">
                   <div className="stat-label">Залишок (борг)</div>
                   <div className="stat-value" style={{ color: balance > 0 ? 'var(--danger)' : 'var(--success)' }}>
-                    {balance > 0 ? formatAmount(balance, currency, rate) : '✓ Оплачено'}
+                    {balance > 0 ? formatAmount(balance, currency, rate, project.currency) : '✓ Оплачено'}
                   </div>
                 </div>
               </div>
@@ -570,7 +587,7 @@ export function ProjectDetail({
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                       <div>
                         <div style={{ fontSize:'1.1rem', fontWeight:800, color: cancelled ? 'var(--text-muted)' : 'var(--text)' }}>
-                          {formatAmount(p.sum, currency, rate)}
+                          {formatAmount(p.sum, currency, rate, project.currency)}
                         </div>
                         <div style={{ fontSize:'0.7rem', color:'var(--text-muted)', fontWeight:600, marginTop:2 }}>
                           {formatDate(p.date)}
@@ -579,10 +596,14 @@ export function ProjectDetail({
                       <div style={{ display:'flex', gap:4 }}>
                         {!cancelled && (
                           <button onClick={() => handleCancelPayment(p.id)} className="btn btn-ghost btn-sm"
-                            style={{ padding:4, color:'var(--text-muted)', borderRadius:'50%' }}>
+                            style={{ padding:4, color:'var(--text-muted)', borderRadius:'50%' }} title="Скасувати">
                             <X size={14} />
                           </button>
                         )}
+                        <button onClick={() => handleDeletePayment(p.id)} className="btn btn-ghost btn-sm"
+                          style={{ padding:4, color:'var(--danger)', borderRadius:'50%' }} title="Видалити">
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
                     

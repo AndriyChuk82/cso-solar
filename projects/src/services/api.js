@@ -45,6 +45,7 @@ export const projectService = {
   // Payments (payment_type: 'Аванс' | 'Повна оплата')
   savePayment: (payment) => gasRequest('savePayment', { payment }, 'POST'),
   cancelPayment: (paymentId) => gasRequest('cancelPayment', { paymentId }, 'POST'),
+  deletePayment: (paymentId) => gasRequest('deletePayment', { paymentId }, 'POST'),
 
   // Items
   saveProjectItem: (item) => gasRequest('saveProjectItem', { item }, 'POST'),

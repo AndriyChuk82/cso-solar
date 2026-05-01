@@ -32,13 +32,12 @@ export function AddPaymentSheet({ projectId, balance = 0, currency = 'USD', rate
     setError('');
     setIsSaving(true);
     try {
-      // Calculate base sum (all saved logic expects USD base)
+      // Save sum exactly as entered (respecting the project's native currency)
       const inputSum = parseFloat(sum);
-      const baseSum = currency === 'UAH' ? (inputSum / rate) : inputSum;
 
       const res = await projectService.savePayment({
         project_id: projectId,
-        sum: Number(baseSum.toFixed(2)),
+        sum: Number(inputSum.toFixed(2)),
         payment_type: type,
         date,
         note,
