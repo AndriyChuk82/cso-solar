@@ -545,137 +545,127 @@ export function ProjectDetail({
             </div>
           </div>
 
-          {/* FINANCE */}
-          <div className="card">
-            <div className="card-header" style={{ padding:'10px 14px', justifyContent: 'space-between' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                <span className="section-label">💰 Фінанси</span>
-                <span className="badge" style={{ background:'rgba(59, 130, 246, 0.1)', color:'var(--primary)', fontSize:'0.7rem', padding:'2px 8px', fontWeight: 700 }}>
-                  Проєкт у {project.currency === 'UAH' ? 'ГРИВНІ (₴)' : 'ДОЛАРАХ ($)'}
+          {/* ════ FINANCE & PAYMENTS ════ */}
+          <div className="card" style={{ marginBottom: 12 }}>
+            <div className="card-header" style={{ padding: '8px 14px', justifyContent: 'space-between', background: 'rgba(240, 148, 51, 0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span className="section-label" style={{ fontSize: '0.85rem' }}>💰 Фінанси та Платежі</span>
+                <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)', fontSize: '0.65rem', padding: '1px 6px', fontWeight: 700 }}>
+                  {project.currency === 'UAH' ? '₴ UAH' : '$ USD'}
                 </span>
               </div>
-              {project.proposal_id && (
-                <span style={{ fontSize:'0.68rem', color:'var(--text-muted)', fontWeight:500, display:'flex', alignItems:'center', gap:4 }}>
-                  <FileText size={10} /> {proposalDisplay}
-                </span>
-              )}
+              <button
+                className="btn btn-sm"
+                style={{ 
+                  background: 'var(--primary)', color: 'white', border: 'none', 
+                  padding: '4px 10px', fontSize: '0.7rem', height: 26 
+                }}
+                onClick={() => setShowPaymentSheet(true)}
+              >
+                <Plus size={12} /> Додати платіж
+              </button>
             </div>
-            <div style={{ padding:'12px 14px', display:'flex', flexDirection:'column', gap:12 }}>
-
-              <div>
-                <FL>Погоджена сума з клієнтом ({currency})</FL>
-                <input type="number" inputMode="numeric" className="form-input"
-                  value={
-                    project.agreed_sum !== undefined && project.agreed_sum !== '' 
-                      ? (currency === project.currency ? Number(project.agreed_sum).toFixed(2).replace(/\.00$/, '') : (currency === 'UAH' ? (Number(project.agreed_sum) * rate).toFixed(0) : (Number(project.agreed_sum) / rate).toFixed(2)))
-                      : (kpSum > 0 ? (currency === 'UAH' ? (kpSum * rate).toFixed(0) : kpSum.toFixed(2).replace(/\.00$/, '')) : '')
-                  }
-                  onChange={e => {
-                    const val = parseFloat(e.target.value) || 0;
-                    setProject({ ...project, agreed_sum: val, currency: currency });
-                  }}
-                  placeholder="0"
-                  style={{ fontSize:'1.1rem', fontWeight:700 }} />
-              </div>
-              <div>
-                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
-                  <span style={{ fontSize:'0.72rem', color:'var(--text-muted)', fontWeight:600 }}>Прогрес оплати</span>
-                  <span style={{ fontSize:'0.72rem', fontWeight:700, color: paidPct >= 100 ? 'var(--success)' : 'var(--primary)' }}>
-                    {Math.round(paidPct)}%
-                  </span>
+            
+            <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* Summary Row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'flex-end' }}>
+                <div>
+                  <FL style={{ fontSize: '0.65rem', marginBottom: 2 }}>Погоджена сума ({currency})</FL>
+                  <input type="number" inputMode="numeric" className="form-input"
+                    value={
+                      project.agreed_sum !== undefined && project.agreed_sum !== '' 
+                        ? (currency === project.currency ? Number(project.agreed_sum).toFixed(2).replace(/\.00$/, '') : (currency === 'UAH' ? (Number(project.agreed_sum) * rate).toFixed(0) : (Number(project.agreed_sum) / rate).toFixed(2)))
+                        : (kpSum > 0 ? (currency === 'UAH' ? (kpSum * rate).toFixed(0) : kpSum.toFixed(2).replace(/\.00$/, '')) : '')
+                    }
+                    onChange={e => {
+                      const val = parseFloat(e.target.value) || 0;
+                      setProject({ ...project, agreed_sum: val, currency: currency });
+                    }}
+                    placeholder="0"
+                    style={{ fontSize: '0.95rem', fontWeight: 700, padding: '6px 10px' }} />
                 </div>
-                <div className="progress-bar">
-                  <div className="progress-bar-fill" style={{ width:`${paidPct}%` }} />
-                </div>
-              </div>
-              <div className="stat-grid">
-                <div className="stat-block">
-                  <div className="stat-label">Оплачено</div>
-                  <div className="stat-value" style={{ color:'var(--success)' }}>
-                    {formatAmount(totalPaid, currency, rate, project.currency)}
-                  </div>
-                </div>
-                <div className="stat-block">
-                  <div className="stat-label">Залишок (борг)</div>
-                  <div className="stat-value" style={{ color: balance > 0 ? 'var(--danger)' : 'var(--success)' }}>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 2, textTransform: 'uppercase' }}>Залишок (борг)</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 800, color: balance > 0 ? 'var(--danger)' : 'var(--success)' }}>
                     {balance > 0 ? formatAmount(balance, currency, rate, project.currency) : '✓ Оплачено'}
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* ════ PAYMENTS ════ */}
-        <div className="card" style={{ marginBottom:12 }}>
-          <div className="card-header" style={{ padding:'10px 14px' }}>
-            <span className="section-label">📋 Платежі ({validPay.length})</span>
-            <button
-              className="btn btn-sm"
-              style={{ background:'var(--primary)', color:'white', border:'none' }}
-              onClick={() => setShowPaymentSheet(true)}
-            >
-              <Plus size={14} /> Додати
-            </button>
-          </div>
-          {payments.length === 0 ? (
-            <div style={{ padding:'32px 20px', textAlign:'center', color:'var(--text-muted)' }}>
-              <Wallet size={28} style={{ marginBottom:10, opacity:0.3 }} />
-              <p style={{ fontSize:'0.82rem', fontWeight:600 }}>Платежів ще немає</p>
-              <p style={{ fontSize:'0.75rem', marginTop:4 }}>Натисніть "Додати" щоб внести перший платіж</p>
-            </div>
-          ) : (
-            <div className="payments-grid">
-              {payments.map(p => {
-                const cancelled = p.status?.toLowerCase().includes('скасовано');
-                const isAdv     = p.payment_type === 'Аванс' || p.type === 'Аванс';
-                return (
-                  <div key={p.id} className={`payment-item ${cancelled ? 'cancelled' : ''}`}>
-                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-                      <div>
-                        <div style={{ fontSize:'1.1rem', fontWeight:800, color: cancelled ? 'var(--text-muted)' : 'var(--text)' }}>
-                          {formatAmount(p.sum, currency, rate, project.currency)}
-                        </div>
-                        <div style={{ fontSize:'0.7rem', color:'var(--text-muted)', fontWeight:600, marginTop:2 }}>
-                          {formatDate(p.date)}
-                        </div>
-                      </div>
-                      <div style={{ display:'flex', gap:4 }}>
-                        {!cancelled && (
-                          <button onClick={() => handleCancelPayment(p.id)} className="btn btn-ghost btn-sm"
-                            style={{ padding:4, color:'var(--text-muted)', borderRadius:'50%' }} title="Скасувати">
-                            <X size={14} />
-                          </button>
-                        )}
-                        <button onClick={() => handleDeletePayment(p.id)} className="btn btn-ghost btn-sm"
-                          style={{ padding:4, color:'var(--danger)', borderRadius:'50%' }} title="Видалити">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:2 }}>
-                      <span className={`badge ${isAdv ? 'badge-info' : 'badge-success'}`} style={{ fontSize:'0.6rem', padding: '1px 6px', borderRadius:4 }}>
-                        {p.payment_type || p.type || (isAdv ? 'Аванс' : 'Повна оплата')}
-                      </span>
-                      {cancelled && <span className="badge" style={{ background:'var(--border-light)', color:'var(--text-muted)', fontSize:'0.6rem' }}>Скасовано</span>}
-                    </div>
+              {/* Progress Bar (Slim) */}
+              <div style={{ marginTop: 2 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600 }}>Оплачено {formatAmount(totalPaid, currency, rate, project.currency)}</span>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: paidPct >= 100 ? 'var(--success)' : 'var(--primary)' }}>
+                    {Math.round(paidPct)}%
+                  </span>
+                </div>
+                <div className="progress-bar" style={{ height: 6 }}>
+                  <div className="progress-bar-fill" style={{ width: `${paidPct}%` }} />
+                </div>
+              </div>
 
-                    {p.note && (
-                      <div style={{ 
-                        marginTop:4, padding:8, background:'var(--bg)', borderRadius:6, 
-                        fontSize:'0.72rem', color:'var(--text-secondary)', display:'flex', gap:6,
-                        border:'1px solid var(--border-light)'
-                      }}>
-                        <FileText size={12} style={{ opacity: 0.5, flexShrink:0, marginTop:1 }} />
-                        <span style={{ lineHeight:1.3 }}>{p.note}</span>
-                      </div>
-                    )}
+              {/* Payments List (Compact Rows) */}
+              <div style={{ borderTop: '1px solid var(--border-light)', marginTop: 4, paddingTop: 10 }}>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Історія оплат ({validPay.length})
+                </div>
+                
+                {payments.length === 0 ? (
+                  <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem', background: 'var(--bg)', borderRadius: 8 }}>
+                    Платежів ще немає
                   </div>
-                );
-              })}
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {payments.map(p => {
+                      const cancelled = p.status?.toLowerCase().includes('скасовано');
+                      const isAdv     = p.payment_type === 'Аванс' || p.type === 'Аванс';
+                      return (
+                        <div key={p.id} style={{ 
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '8px 10px', background: cancelled ? 'transparent' : 'white',
+                          border: '1px solid var(--border-light)', borderRadius: 8,
+                          opacity: cancelled ? 0.5 : 1,
+                          position: 'relative'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ 
+                              width: 32, height: 32, borderRadius: '50%', 
+                              background: cancelled ? 'var(--border-light)' : (isAdv ? 'rgba(59, 130, 246, 0.1)' : 'rgba(34, 197, 94, 0.1)'),
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', color: isAdv ? 'var(--info)' : 'var(--success)',
+                              fontSize: '0.8rem', fontWeight: 800
+                            }}>
+                              {isAdv ? 'A' : 'P'}
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>
+                                {formatAmount(p.sum, currency, rate, project.currency)}
+                              </div>
+                              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                                {formatDate(p.date)} {p.note && `• ${p.note}`}
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            {!cancelled && (
+                              <button onClick={() => handleCancelPayment(p.id)} className="btn btn-ghost btn-sm"
+                                style={{ padding: 4, color: 'var(--text-muted)' }} title="Скасувати">
+                                <X size={14} />
+                              </button>
+                            )}
+                            <button onClick={() => handleDeletePayment(p.id)} className="btn btn-ghost btn-sm"
+                              style={{ padding: 4, color: 'var(--danger)' }} title="Видалити">
+                                <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* ════ MATERIALS ════ */}
