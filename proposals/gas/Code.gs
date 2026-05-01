@@ -1807,6 +1807,13 @@ function handleSaveProjectItem(itemData) {
   ], [], ss);
   
   let headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  
+  if (!headerRow.includes('Видано')) {
+    const lastCol = sheet.getLastColumn();
+    sheet.getRange(1, lastCol + 1).setValue('Видано');
+    headerRow.push('Видано');
+  }
+  
   let row = findRowByValue(sheet, 'id', itemData.id);
 
   const q = parseFloat(itemData.quantity) || 0;
@@ -1883,7 +1890,13 @@ function handleImportFromProposal(projectId, proposalId) {
   const itemsSheet = getSheetWithInit('project_items', headers, [], ss);
   
   // Explicitly find the project_id column to ensure correct deletion
-  const currentHeaders = itemsSheet.getRange(1, 1, 1, itemsSheet.getLastColumn()).getValues()[0];
+  let currentHeaders = itemsSheet.getRange(1, 1, 1, itemsSheet.getLastColumn()).getValues()[0];
+  
+  if (!currentHeaders.includes('Видано')) {
+    const lastCol = itemsSheet.getLastColumn();
+    itemsSheet.getRange(1, lastCol + 1).setValue('Видано');
+    currentHeaders.push('Видано');
+  }
   const pidColIdx = currentHeaders.map(h => {
     const s = String(h).trim().toLowerCase();
     return HEADER_MAP[s] || s;

@@ -571,14 +571,7 @@ export function ProjectDetail({
               )}
             </div>
             <div style={{ padding:'12px 14px', display:'flex', flexDirection:'column', gap:12 }}>
-              {kpSum > 0 && (
-                <div style={{ paddingBottom:10, borderBottom:'1px solid var(--border-light)' }}>
-                  <div className="stat-label">Сума по КП</div>
-                  <div style={{ fontSize:'0.9rem', fontWeight:600, color:'var(--text-secondary)' }}>
-                    {formatAmount(kpSum, currency, rate)}
-                  </div>
-                </div>
-              )}
+
               <div>
                 <FL>Погоджена сума з клієнтом ({currency})</FL>
                 <input type="number" inputMode="numeric" className="form-input"
