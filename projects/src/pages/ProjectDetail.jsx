@@ -498,8 +498,13 @@ export function ProjectDetail({
 
           {/* FINANCE */}
           <div className="card">
-            <div className="card-header" style={{ padding:'10px 14px' }}>
-              <span className="section-label">💰 Фінанси</span>
+            <div className="card-header" style={{ padding:'10px 14px', justifyContent: 'space-between' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <span className="section-label">💰 Фінанси</span>
+                <span className="badge" style={{ background:'rgba(59, 130, 246, 0.1)', color:'var(--primary)', fontSize:'0.7rem', padding:'2px 8px', fontWeight: 700 }}>
+                  Проєкт у {project.currency === 'UAH' ? 'ГРИВНІ (₴)' : 'ДОЛАРАХ ($)'}
+                </span>
+              </div>
               {project.proposal_id && (
                 <span style={{ fontSize:'0.68rem', color:'var(--text-muted)', fontWeight:500, display:'flex', alignItems:'center', gap:4 }}>
                   <FileText size={10} /> {proposalDisplay}

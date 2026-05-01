@@ -21,6 +21,14 @@ export function formatUSD(amount) {
   }).format(amount || 0);
 }
 
+/** Format as plain number with group separators */
+export function formatNumber(amount) {
+  return new Intl.NumberFormat('uk-UA', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount || 0);
+}
+
 /**
  * Format amount according to selected currency and exchange rate.
  * @param {number} amount   - Amount
@@ -31,23 +39,19 @@ export function formatUSD(amount) {
 export function formatAmount(amount, targetCurrency = 'USD', rate = 41, sourceCurrency = 'USD') {
   const num = parseFloat(amount) || 0;
   
-  // If target matches source, just format without conversion
-  if (targetCurrency === sourceCurrency) {
-    return targetCurrency === 'UAH' ? formatCurrency(num) : formatUSD(num);
-  }
-  
+  let finalNum = num;
+
   // Convert USD to UAH
   if (targetCurrency === 'UAH' && sourceCurrency === 'USD') {
-    return formatCurrency(num * rate);
+    finalNum = num * rate;
   }
   
   // Convert UAH to USD
   if (targetCurrency === 'USD' && sourceCurrency === 'UAH') {
-    return formatUSD(num / rate);
+    finalNum = num / rate;
   }
 
-  // Fallback
-  return targetCurrency === 'UAH' ? formatCurrency(num * rate) : formatUSD(num);
+  return formatNumber(finalNum);
 }
 
 export function formatDate(dateString) {
