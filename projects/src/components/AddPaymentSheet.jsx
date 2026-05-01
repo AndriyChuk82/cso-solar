@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, Check } from 'lucide-react';
 import { projectService } from '../services/api';
 
-export function AddPaymentSheet({ projectId, balance = 0, currency = 'USD', rate = 41, onClose, onSaved }) {
+export function AddPaymentSheet({ isOpen, projectId, balance = 0, currency = 'USD', rate = 41, onClose, onSaved }) {
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -55,6 +55,8 @@ export function AddPaymentSheet({ projectId, balance = 0, currency = 'USD', rate
       setIsSaving(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return createPortal(
     <div className="sheet-overlay" onClick={e => e.target === e.currentTarget && onClose()}>

@@ -98,7 +98,7 @@ export function KPSelectionModal({ isOpen, onClose, onSelect }) {
                         #{p.project_number || '---'}
                       </span>
                       <span className="text-[0.75rem] text-gray-500">
-                        {p.date}
+                        {p.date ? new Date(p.date).toLocaleDateString('uk-UA') : '---'}
                       </span>
                     </div>
                   </div>
