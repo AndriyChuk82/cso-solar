@@ -93,6 +93,7 @@ export interface GreenTariffState {
 
 export interface GASResponse {
   success: boolean;
+  id?: string;
   error?: string;
   warning?: string;
   stack?: string;
