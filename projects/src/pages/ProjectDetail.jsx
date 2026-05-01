@@ -122,9 +122,10 @@ export function ProjectDetail({
       const data = await projectService.getProjectDetails(projectId);
       if (data.success) {
         setProject(data.project);
-        if (data.project.currency && setCurrency) {
-          setCurrency(data.project.currency);
-          if (data.project.currency === 'UAH') setShowRateInput(true);
+        if (setCurrency) {
+          const projectCurr = data.project.currency || 'USD';
+          setCurrency(projectCurr);
+          setShowRateInput(projectCurr === 'UAH');
         }
         const loaded = data.items || [];
         setItems(loaded);
@@ -157,7 +158,16 @@ export function ProjectDetail({
     return null;
   }, [projectId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (projectId) load();
+  }, [projectId, load]);
+
+  // Sync global currency toggle changes to project state
+  useEffect(() => {
+    if (project && currency && currency !== project.currency) {
+      setProject(prev => ({ ...prev, currency }));
+    }
+  }, [currency]);
 
   useEffect(() => {
     if (project && project.name) {

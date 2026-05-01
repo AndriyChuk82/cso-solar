@@ -1652,7 +1652,11 @@ function handleGetProjects(userEmail) {
 
   // Додаємо агреговані дані
   let enrichedProjects = projects.map(p => {
-    const projectItems = items.filter(i => String(i.project_id) === String(p.id));
+    const projectItems = items.filter(i => {
+      const iPid = String(i.project_id || '').trim();
+      const pId = String(p.id || '').trim();
+      return iPid && iPid === pId;
+    });
     const totalCost = projectItems.reduce((acc, i) => acc + (parseFloat(i.sum) || 0), 0);
     
     const projectPayments = payments.filter(pay => {
@@ -1739,7 +1743,7 @@ function handleSaveProject(projectData, userEmail) {
   const ss = getSpreadsheet();
   const sheet = getSheet('projects', ss.getId());
   const headersList = ['ID', 'Назва', 'Клієнт', 'Телефон', 'Адреса', 'Статус', 'Примітки', 'ID КП',
-                   'Погоджена сума', 'Номер', 'Дата закриття', 'Створено', 'Оновлено'];
+                   'Погоджена сума', 'Валюта', 'Номер', 'Дата закриття', 'Створено', 'Оновлено'];
   
   // Переконуємось, що аркуш має заголовки
   let currentLastCol = sheet.getLastColumn();
@@ -1797,12 +1801,37 @@ function handleSaveProject(projectData, userEmail) {
     // ... (копіювання товарів)
     if (projectData.items_from_cp && projectData.items_from_cp.length > 0) {
       const itemsSheet = getSheet('project_items', ss.getId());
+      
+      const itemHeaders = ['ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Примітка'];
+      let iLastCol = itemsSheet.getLastColumn();
+      if (iLastCol === 0) {
+        itemsSheet.appendRow(itemHeaders);
+        iLastCol = itemHeaders.length;
+      }
+      const iHeaderRow = itemsSheet.getRange(1, 1, 1, iLastCol).getValues()[0];
+
       projectData.items_from_cp.forEach(item => {
         const qty = parseFloat(item.quantity) || 1;
-        const price = parseFloat(item.price) || 0;
+        const price = parseFloat(item.price || item.unitPrice || item.total || 0);
         const name = item.name || item.productName || 'Товар';
-        const note = item.note || item.productArticle || '';
-        itemsSheet.appendRow([generateUUID(), newId, name, qty, price, (qty * price), note]);
+        const note = item.note || item.productArticle || item.article || '';
+        
+        const iValueMap = {
+          'id': generateUUID(),
+          'project_id': newId,
+          'name': name,
+          'quantity': qty,
+          'price': price,
+          'sum': (qty * price),
+          'note': note
+        };
+
+        const iAppendData = iHeaderRow.map(h => {
+          const s = String(h).trim().toLowerCase();
+          const mapped = HEADER_MAP[s] || s;
+          return iValueMap[mapped] !== undefined ? iValueMap[mapped] : '';
+        });
+        itemsSheet.appendRow(iAppendData);
       });
     }
     
@@ -2002,12 +2031,16 @@ function handleSyncProjectItems(projectId) {
   // Видаляємо старі товари проекту і записуємо заново (оновлення)
   const existingItems = sheetToObjects(itemsSheet);
   for (let i = existingItems.length - 1; i >= 0; i--) {
-     if (String(existingItems[i].project_id) === String(projectId)) {
+     const iPid = String(existingItems[i].project_id || '').trim();
+     const pId = String(projectId || '').trim();
+     if (iPid && iPid === pId) {
         const rowToDelete = i + 2; // +1 за хедер, +1 за 0-індекс
         itemsSheet.deleteRow(rowToDelete);
      }
   }
   
+  const iHeaderRow = itemsSheet.getRange(1, 1, 1, itemsSheet.getLastColumn()).getValues()[0];
+
   // Додаємо нові товари
   items.forEach(item => {
     const qty = parseFloat(item.quantity) || 1;
@@ -2015,15 +2048,23 @@ function handleSyncProjectItems(projectId) {
     const name = item.name || item.productName || 'Товар';
     const note = item.note || item.productArticle || item.article || '';
     
-    itemsSheet.appendRow([
-      generateUUID(),
-      projectId,
-      name,
-      qty,
-      price,
-      (qty * price),
-      note
-    ]);
+    const iValueMap = {
+      'id': generateUUID(),
+      'project_id': projectId,
+      'name': name,
+      'quantity': qty,
+      'price': price,
+      'sum': (qty * price),
+      'note': note
+    };
+
+    const iAppendData = iHeaderRow.map(h => {
+      const s = String(h).trim().toLowerCase();
+      const mapped = HEADER_MAP[s] || s;
+      return iValueMap[mapped] !== undefined ? iValueMap[mapped] : '';
+    });
+    
+    itemsSheet.appendRow(iAppendData);
   });
   
   return { success: true, count: items.length };
