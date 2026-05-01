@@ -1657,25 +1657,37 @@ function handleGetProjects(userEmail) {
   const payments = sheetToObjects(paymentsSheet);
   const items = sheetToObjects(itemsSheet);
 
+  const itemsByProject = {};
+  items.forEach(i => {
+    const pid = String(i.project_id || '').trim();
+    if (pid) {
+      if (!itemsByProject[pid]) itemsByProject[pid] = [];
+      itemsByProject[pid].push(i);
+    }
+  });
+
+  const paymentsByProject = {};
+  payments.forEach(pay => {
+    const pid = String(pay.project_id || '').trim();
+    if (pid) {
+      if (!paymentsByProject[pid]) paymentsByProject[pid] = [];
+      paymentsByProject[pid].push(pay);
+    }
+  });
+
   let enrichedProjects = projects.map(p => {
     const pId = String(p.id || '').trim();
     if (!pId) return { ...p, total_cost: 0, total_paid: 0, balance: 0 };
 
-    const projectItems = items.filter(i => {
-      const iPid = String(i.project_id || '').trim();
-      return iPid && iPid === pId;
-    });
+    const projectItems = itemsByProject[pId] || [];
     const totalCost = projectItems.reduce((acc, i) => acc + (parseFloat(i.sum) || 0), 0);
     
-    const projectPayments = payments.filter(pay => {
-      const payPid = String(pay.project_id || '').trim();
-      if (payPid !== pId) return false;
-      
+    const projectPayments = paymentsByProject[pId] || [];
+    const validPayments = projectPayments.filter(pay => {
       const statusValue = String(pay.status || '').toLowerCase();
-      const isPaid = statusValue.includes('оплачено') && !statusValue.includes('скасовано');
-      return isPaid;
+      return statusValue.includes('оплачено') && !statusValue.includes('скасовано');
     });
-    const totalPaid = projectPayments.reduce((acc, pay) => acc + (parseFloat(pay.sum) || 0), 0);
+    const totalPaid = validPayments.reduce((acc, pay) => acc + (parseFloat(pay.sum) || 0), 0);
     
     let agreedSum = parseFloat(p.agreed_sum || p['погоджена сума'] || 0);
     if (!agreedSum) {
