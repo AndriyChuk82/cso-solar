@@ -1753,14 +1753,12 @@ function handleSaveProject(projectData, userEmail) {
   const headersList = ['ID', 'Назва', 'Клієнт', 'Телефон', 'Адреса', 'Статус', 'Примітки', 'ID КП',
                    'Погоджена сума', 'Валюта', 'Номер', 'Дата закриття', 'Створено', 'Оновлено'];
   
-  // Переконуємось, що аркуш має заголовки
   let currentLastCol = sheet.getLastColumn();
   if (currentLastCol === 0) {
     sheet.appendRow(headersList);
     currentLastCol = headersList.length;
   }
   
-  // Додаємо відсутні заголовки
   let headerRow = sheet.getRange(1, 1, 1, currentLastCol).getValues()[0];
   let headersChanged = false;
   headersList.forEach(eh => {
@@ -1780,7 +1778,6 @@ function handleSaveProject(projectData, userEmail) {
   const ts = now();
 
   if (row === -1) {
-    // Створення
     const newId = projectData.id || generateUUID();
     const projectNum = projectData.proposal_id
       ? (projectData.project_number || '')
@@ -1800,135 +1797,68 @@ function handleSaveProject(projectData, userEmail) {
       const s = String(h).trim().toLowerCase();
       const mapped = HEADER_MAP[s] || s;
       if (mapped === 'created_at' || s === 'створено') return ts;
-      if (mapped === 'updated_at' || s === 'оновлено') return ts;
-      return fullData[mapped] !== undefined ? fullData[mapped] : "";
-    });
-
-    sheet.appendRow(rowData);
-    
-    // ... (копіювання товарів)
-    if (projectData.items_from_cp && projectData.items_from_cp.length > 0) {
-      const itemsSheet = getSheet('project_items', ss.getId());
-      
-      const itemHeaders = ['ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Видано', 'Примітка'];
-      let iLastCol = itemsSheet.getLastColumn();
-      if (iLastCol === 0) {
-        itemsSheet.appendRow(itemHeaders);
-        iLastCol = itemHeaders.length;
-      }
-      const iHeaderRow = itemsSheet.getRange(1, 1, 1, iLastCol).getValues()[0];
-
-      projectData.items_from_cp.forEach(item => {
-        const qty = parseFloat(item.quantity) || 1;
-        const price = parseFloat(item.price || item.unitPrice || item.total || 0);
-        const name = item.name || item.productName || 'Товар';
-        const note = item.note || item.productArticle || item.article || '';
-        
-        const iValueMap = {
-          'id': generateUUID(),
-          'project_id': newId,
-          'name': name,
-          'quantity': qty,
-          'price': price,
-          'sum': (qty * price),
-          'issued_qty': 0,
-          'note': note
-        };
-
-        const iAppendData = iHeaderRow.map(h => {
-          const s = String(h).trim().toLowerCase();
-          const mapped = HEADER_MAP[s] || s;
-          return iValueMap[mapped] !== undefined ? iValueMap[mapped] : '';
-        });
-        itemsSheet.appendRow(iAppendData);
-      });
+          items = parsed.items;
     }
+  } catch (e) {
+    return { success: false, error: 'Помилка читання товарів з КП' };
+  }
+  
+  if (items.length === 0) return { success: false, error: 'У вибраній КП немає товарів' };
+  
+  const itemsSheet = getSheet('project_items', ss.getId());
+  const existingItems = sheetToObjects(itemsSheet);
+  
+  for (let i = existingItems.length - 1; i >= 0; i--) {
+     if (String(existingItems[i].project_id) === String(projectId)) {
+        itemsSheet.deleteRow(i + 2);
+     }
+  }
+  
+  const iHeaderRow = itemsSheet.getRange(1, 1, 1, itemsSheet.getLastColumn()).getValues()[0];
+  items.forEach(item => {
+    const qty = parseFloat(item.quantity || item.qty || 0);
+    const price = parseFloat(item.price || item.unitPrice || 0);
+    const name = item.name || item.productName || 'Товар';
     
-    return { success: true, id: newId };
-  } else {
-    // Оновлення
-    headerRow.forEach((h, idx) => {
+    const iValueMap = {
+      'id': generateUUID(),
+      'project_id': projectId,
+      'name': name,
+      'quantity': qty,
+      'price': price,
+      'sum': (qty * price),
+      'issued_qty': 0,
+      'note': item.note || item.article || ''
+    };
+
+    const iAppendData = iHeaderRow.map(h => {
       const s = String(h).trim().toLowerCase();
       const mapped = HEADER_MAP[s] || s;
-      if (projectData[mapped] !== undefined && mapped !== 'id') {
-        sheet.getRange(row, idx + 1).setValue(projectData[mapped]);
-      } else if (mapped === 'updated_at' || s === 'оновлено') {
-        sheet.getRange(row, idx + 1).setValue(ts);
-      }
+      return iValueMap[mapped] !== undefined ? iValueMap[mapped] : '';
     });
-    return { success: true, id: projectData.id };
-  }
-}
-
-function handleSaveProjectItem(itemData) {
-  const ss = getSpreadsheet();
-  const sheet = getSheet('project_items', ss.getId());
-  const headers = ['ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Видано', 'Примітка'];
+    itemsSheet.appendRow(iAppendData);
+  });
   
-  let currentLastCol = sheet.getLastColumn();
-  if (currentLastCol === 0) {
-    sheet.appendRow(headers);
-    currentLastCol = headers.length;
+  const pRow = findRowByValue(projectsSheet, 'ID', projectId);
+  if (pRow > 0) {
+    const pHeaderRow = projectsSheet.getRange(1, 1, 1, projectsSheet.getLastColumn()).getValues()[0];
+    const kpColIdx = pHeaderRow.map(h => String(h).trim().toLowerCase()).indexOf('id кп');
+    if (kpColIdx >= 0) {
+      projectsSheet.getRange(pRow, kpColIdx + 1).setValue(proposalId);
+    }
   }
-  let headerRow = sheet.getRange(1, 1, 1, currentLastCol).getValues()[0];
-  
-  let row = findRowByValue(sheet, 'id', itemData.id);
-  if (row === -1) row = findRowByValue(sheet, 'ID', itemData.id);
 
-  const sum = (parseFloat(itemData.quantity) * parseFloat(itemData.price)) || 0;
-  const valueMap = {
-    'id': itemData.id || generateUUID(),
-    'project_id': itemData.project_id,
-    'name': itemData.name,
-    'quantity': itemData.quantity,
-    'price': itemData.price,
-    'sum': sum,
-    'issued_qty': itemData.issued_qty || 0,
-    'note': itemData.note || itemData.notes || '',
-    'notes': itemData.note || itemData.notes || '',
-  };
-
-  if (row === -1) {
-    const appendData = headerRow.map(h => {
-      const s = String(h).trim().toLowerCase();
-      const mapped = HEADER_MAP[s] || s;
-      return valueMap[mapped] !== undefined ? valueMap[mapped] : '';
-    });
-    sheet.appendRow(appendData);
-  } else {
-    headerRow.forEach((h, idx) => {
-      const s = String(h).trim().toLowerCase();
-      const mapped = HEADER_MAP[s] || s;
-      if (valueMap[mapped] !== undefined && mapped !== 'id' && mapped !== 'project_id') {
-        sheet.getRange(row, idx + 1).setValue(valueMap[mapped]);
-      }
-    });
-  }
-  return { success: true };
-}
-
-function handleDeleteProjectItem(itemId) {
-  const ss = getSpreadsheet();
-  const sheet = getSheet('project_items', ss.getId());
-  const row = findRowByValue(sheet, 'ID', itemId);
-  if (row !== -1) {
-    sheet.deleteRow(row);
-    return { success: true };
-  }
-  return { success: false, error: 'Товар не знайдено' };
+  return { success: true, count: items.length };
 }
 
 function handleSavePayment(paymentData, userEmail) {
   const ss = getSpreadsheet();
   const sheet = getSheet('project_payments', ss.getId());
-  
   const headers = ['ID', 'ID Проекту', 'Дата', 'Сума', 'Статус', 'Примітка', 'Тип платежу', 'Автор', 'Створено'];
   let currentLastCol = sheet.getLastColumn();
-  // Safe fallback if sheet is completely empty
   if (currentLastCol === 0) currentLastCol = 1; 
   let headerRow = sheet.getRange(1, 1, 1, currentLastCol).getValues()[0] || [];
   
-  // Auto-append missing headers if schema changed
   let addedCols = 0;
   headers.forEach(eh => {
     const lowerEH = eh.toLowerCase();
@@ -1937,10 +1867,10 @@ function handleSavePayment(paymentData, userEmail) {
       sheet.getRange(1, currentLastCol + addedCols + 1).setValue(eh);
       addedCols++;
     }
-  });
+  });  
 
-  let row = findRowByValue(sheet, 'ID', paymentData.id);
-  
+  let row = findRowByValue(sheet, 'id', paymentData.id);
+
   const valueMap = {
     'id': paymentData.id || generateUUID(),
     'project_id': paymentData.projectId || paymentData.project_id,
@@ -1971,6 +1901,49 @@ function handleSavePayment(paymentData, userEmail) {
     });
   }
   return { success: true };
+}
+
+function handleCancelPayment(paymentId, userEmail) {
+  const ss = getSpreadsheet();
+  const sheet = getSheet('project_payments', ss.getId());
+  const row = findRowByValue(sheet, 'id', paymentId);
+  if (row === -1) return { success: false, error: 'Платіж не знайдено' };
+  
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  headers.forEach((h, idx) => {
+    const s = String(h).trim().toLowerCase();
+    const mapped = HEADER_MAP[s] || s;
+    if (mapped === 'status') {
+      sheet.getRange(row, idx + 1).setValue('❌ Скасовано');
+    }
+  });
+  return { success: true };
+}
+
+function handleDeletePayment(paymentId) {
+  const ss = getSpreadsheet();
+  const sheet = getSheet('project_payments', ss.getId());
+  const row = findRowByValue(sheet, 'id', paymentId);
+  if (row !== -1) {
+    sheet.deleteRow(row);
+    return { success: true };
+  }
+  return { success: false, error: 'Платіж не знайдено' };
+}
+
+function handleSyncProjectItems(projectId) {
+  if (!projectId) return { success: false, error: 'ID проекту не вказано' };
+  
+  const ss = getSpreadsheet();
+  const projectsSheet = getSheet('projects', ss.getId());
+  const projects = sheetToObjects(projectsSheet);
+  const project = projects.find(p => String(p.id) === String(projectId));
+  
+  if (!project || !project.proposal_id) {
+    return { success: false, error: 'Проект не знайдено або в нього не вказано ID КП' };
+  }
+  
+  return handleImportFromProposal(projectId, project.proposal_id);
 }
 
 function handleCancelPayment(paymentId, userEmail) {
