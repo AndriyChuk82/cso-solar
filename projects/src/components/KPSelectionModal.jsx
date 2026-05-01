@@ -35,9 +35,8 @@ export function KPSelectionModal({ isOpen, onClose, onSelect }) {
   const filtered = proposals.filter(p => {
     const q = searchQuery.toLowerCase();
     return (
-      (p.client_name || '').toLowerCase().includes(q) ||
-      (p.project_number || '').toLowerCase().includes(q) ||
-      (p.address || '').toLowerCase().includes(q)
+      (p.clientName || '').toLowerCase().includes(q) ||
+      (p.number || '').toLowerCase().includes(q)
     );
   });
 
@@ -91,11 +90,11 @@ export function KPSelectionModal({ isOpen, onClose, onSelect }) {
                 >
                   <div className="flex flex-col gap-1">
                     <span className="font-bold text-[0.95rem] group-hover:text-primary transition-colors">
-                      {p.client_name || 'Без імені'}
+                      {p.clientName || 'Без імені'}
                     </span>
                     <div className="flex items-center gap-3">
                       <span className="text-[0.7rem] font-bold text-gray-400 uppercase tracking-tighter bg-gray-200/50 dark:bg-neutral-700 px-1.5 py-0.5 rounded">
-                        #{p.project_number || '---'}
+                        #{p.number || '---'}
                       </span>
                       <span className="text-[0.75rem] text-gray-500">
                         {p.date ? new Date(p.date).toLocaleDateString('uk-UA') : '---'}

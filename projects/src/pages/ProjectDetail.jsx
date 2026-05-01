@@ -816,16 +816,7 @@ export function ProjectDetail({
                         </td>
                       </tr>
                     )}
-                    <tr style={{ background:'var(--primary-bg)' }}>
-                      <td colSpan={editingItems ? 4 : 3}
-                        style={{ padding:'9px 14px', fontSize:'0.78rem', fontWeight:700, color:'var(--primary)', textTransform:'uppercase', letterSpacing:'0.6px' }}>
-                        Разом по КП
-                      </td>
-                      <td style={{ padding:'9px 14px', textAlign:'right', fontSize:'0.95rem', fontWeight:800, color:'var(--primary)' }}>
-                        {formatAmount(itemsTotal, currency, rate)}
-                      </td>
-                      {editingItems && <td />}
-                    </tr>
+
                   </tfoot>
                 </table>
               </div>
@@ -859,18 +850,6 @@ export function ProjectDetail({
                   </button>
                 )}
 
-                {/* Total for mobile */}
-                <div style={{
-                  marginTop:'12px', padding:'14px', background:'var(--primary-bg)',
-                  borderRadius:'var(--radius-md)', display:'flex', justifyContent:'space-between', alignItems:'center'
-                }}>
-                  <span style={{ fontSize:'0.82rem', fontWeight:700, color:'var(--primary)', textTransform:'uppercase', letterSpacing:'0.6px' }}>
-                    Разом по КП
-                  </span>
-                  <span style={{ fontSize:'1.1rem', fontWeight:800, color:'var(--primary)' }}>
-                    {formatAmount(itemsTotal, currency, rate)}
-                  </span>
-                </div>
               </div>
             </>
           )}
