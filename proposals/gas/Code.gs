@@ -339,10 +339,15 @@ const HEADER_MAP = {
   'примітки': 'notes',
   'id кп': 'proposal_id',
   'id проекту': 'project_id',
+  'id проєкту': 'project_id',
+  'project_id': 'project_id',
+  'проект id': 'project_id',
+  'проєкт id': 'project_id',
   'ціна': 'price',
   'сума': 'sum',
   'примітка': 'note',
   'оновлено': 'updated_at',
+  'updated_at': 'updated_at',
   'погоджена сума': 'agreed_sum',
   'тип платежу': 'payment_type',
   'дата закриття': 'closed_date',
@@ -355,6 +360,9 @@ const HEADER_MAP = {
   'розділи': 'module_access',
   'доступ до розділів': 'module_access',
   'стан': 'active',
+  'id': 'id',
+  'ід': 'id',
+  '№': 'id',
   // Англійські версії для надійності
   'client': 'client_name',
   'customer': 'client_name',
@@ -364,7 +372,6 @@ const HEADER_MAP = {
   'notes': 'notes',
   'note': 'notes',
   'proposal_id': 'proposal_id',
-  'project_id': 'project_id',
   'project_number': 'project_number',
   'agreed_sum': 'agreed_sum',
   'closed_date': 'closed_date'
@@ -1644,7 +1651,11 @@ function handleGetProjects(userEmail) {
     const totalCost = projectItems.reduce((acc, i) => acc + (parseFloat(i.sum) || 0), 0);
     
     const projectPayments = payments.filter(pay => {
-      const isCorrectProject = String(pay.project_id) === String(p.id);
+      const pid = String(p.id || '').trim();
+      const payPid = String(pay.project_id || '').trim();
+      if (!pid || !payPid) return false;
+      
+      const isCorrectProject = payPid === pid;
       const statusValue = String(pay.status || pay.active || '').toLowerCase();
       const isPaid = (statusValue.includes('оплачено') || statusValue === 'active') && !statusValue.includes('скасовано');
       return isCorrectProject && isPaid;
@@ -1692,8 +1703,10 @@ function handleGetProjectDetails(projectId) {
 
   const itemsSheet    = getSheet('project_items',    ss.getId());
   const paymentsSheet = getSheet('project_payments', ss.getId());
-  const projectItems    = sheetToObjects(itemsSheet).filter(i => String(i.project_id) === String(projectId));
-  const projectPayments = sheetToObjects(paymentsSheet).filter(p => String(p.project_id) === String(projectId));
+  
+  const pidStr = String(projectId || '').trim();
+  const projectItems    = sheetToObjects(itemsSheet).filter(i => i.project_id && String(i.project_id).trim() === pidStr);
+  const projectPayments = sheetToObjects(paymentsSheet).filter(p => p.project_id && String(p.project_id).trim() === pidStr);
 
   // Map fields correctly, especially agreed_sum
   const enrichedProject = {
@@ -1800,27 +1813,44 @@ function handleSaveProject(projectData, userEmail) {
 function handleSaveProjectItem(itemData) {
   const ss = getSpreadsheet();
   const sheet = getSheet('project_items', ss.getId());
-  let row = findRowByValue(sheet, 'ID', itemData.id);
+  const headers = ['ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Примітка'];
+  
+  let currentLastCol = sheet.getLastColumn();
+  if (currentLastCol === 0) {
+    sheet.appendRow(headers);
+    currentLastCol = headers.length;
+  }
+  let headerRow = sheet.getRange(1, 1, 1, currentLastCol).getValues()[0];
+  
+  let row = findRowByValue(sheet, 'id', itemData.id);
+  if (row === -1) row = findRowByValue(sheet, 'ID', itemData.id);
 
   const sum = (parseFloat(itemData.quantity) * parseFloat(itemData.price)) || 0;
+  const valueMap = {
+    'id': itemData.id || generateUUID(),
+    'project_id': itemData.project_id,
+    'name': itemData.name,
+    'quantity': itemData.quantity,
+    'price': itemData.price,
+    'sum': sum,
+    'note': itemData.note || ''
+  };
 
   if (row === -1) {
-    sheet.appendRow([
-      itemData.id || generateUUID(),
-      itemData.project_id,
-      itemData.name,
-      itemData.quantity,
-      itemData.price,
-      sum,
-      itemData.note || ''
-    ]);
+    const appendData = headerRow.map(h => {
+      const s = String(h).trim().toLowerCase();
+      const mapped = HEADER_MAP[s] || s;
+      return valueMap[mapped] !== undefined ? valueMap[mapped] : '';
+    });
+    sheet.appendRow(appendData);
   } else {
-    // ID, ID Проекту, Назва, Кількість, Ціна, Сума, Примітка
-    sheet.getRange(row, 3).setValue(itemData.name);
-    sheet.getRange(row, 4).setValue(itemData.quantity);
-    sheet.getRange(row, 5).setValue(itemData.price);
-    sheet.getRange(row, 6).setValue(sum);
-    sheet.getRange(row, 7).setValue(itemData.note || '');
+    headerRow.forEach((h, idx) => {
+      const s = String(h).trim().toLowerCase();
+      const mapped = HEADER_MAP[s] || s;
+      if (valueMap[mapped] !== undefined && mapped !== 'id' && mapped !== 'project_id') {
+        sheet.getRange(row, idx + 1).setValue(valueMap[mapped]);
+      }
+    });
   }
   return { success: true };
 }
@@ -1861,31 +1891,30 @@ function handleSavePayment(paymentData, userEmail) {
   
   const valueMap = {
     'id': paymentData.id || generateUUID(),
-    'id проекту': paymentData.projectId || paymentData.project_id,
-    'дата': paymentData.date || dateStr(),
-    'сума': paymentData.sum,
-    'статус': paymentData.status || 'Оплачено',
-    'примітка': paymentData.note || '',
-    'тип платежу': paymentData.payment_type || 'Повна оплата',
-    'автор': userEmail || 'Система',
-    'створено': now()
+    'project_id': paymentData.projectId || paymentData.project_id,
+    'date': paymentData.date || dateStr(),
+    'sum': paymentData.sum,
+    'status': paymentData.status || 'Оплачено',
+    'note': paymentData.note || '',
+    'payment_type': paymentData.payment_type || 'Повна оплата',
+    'user': userEmail || 'Система',
+    'created_at': now()
   };
 
   if (row === -1) {
     const appendData = headerRow.map(h => {
-      const key = String(h).trim().toLowerCase();
-      return valueMap[key] !== undefined ? valueMap[key] : '';
+      const s = String(h).trim().toLowerCase();
+      const mapped = HEADER_MAP[s] || s;
+      return valueMap[mapped] !== undefined ? valueMap[mapped] : '';
     });
     sheet.appendRow(appendData);
   } else {
-    // update
     headerRow.forEach((h, idx) => {
-      const key = String(h).trim().toLowerCase();
-      if (key === 'дата') sheet.getRange(row, idx + 1).setValue(paymentData.date);
-      if (key === 'сума') sheet.getRange(row, idx + 1).setValue(paymentData.sum);
-      if (key === 'статус') sheet.getRange(row, idx + 1).setValue(paymentData.status);
-      if (key === 'примітка') sheet.getRange(row, idx + 1).setValue(paymentData.note || '');
-      if (key === 'тип платежу') sheet.getRange(row, idx + 1).setValue(paymentData.payment_type || '');
+      const s = String(h).trim().toLowerCase();
+      const mapped = HEADER_MAP[s] || s;
+      if (valueMap[mapped] !== undefined && mapped !== 'id' && mapped !== 'project_id' && mapped !== 'created_at') {
+        sheet.getRange(row, idx + 1).setValue(valueMap[mapped]);
+      }
     });
   }
   return { success: true };
