@@ -922,6 +922,25 @@ export function ProjectDetail({
           </button>
         </div>
       )}
+
+      <KPSelectionModal 
+        isOpen={showKPModal} 
+        onClose={() => setShowKPModal(false)} 
+        onSelect={handleSelectKP} 
+      />
+
+      <AddPaymentSheet
+        isOpen={showPaymentSheet}
+        onClose={() => setShowPaymentSheet(false)}
+        onAdd={async (p) => {
+          const res = await projectService.savePayment({ ...p, project_id: projectId });
+          if (res.success) {
+            const fresh = await load();
+            if (onUpdate && fresh) onUpdate(fresh);
+          }
+        }}
+        currency={currency}
+      />
     </>
   );
 }
