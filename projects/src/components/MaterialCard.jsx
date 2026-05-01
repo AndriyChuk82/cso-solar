@@ -43,7 +43,7 @@ export function MaterialCard({ item, onUpdate, onDelete, isEditing, currency, ra
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
           <div>
             <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
               К-сть
@@ -59,24 +59,6 @@ export function MaterialCard({ item, onUpdate, onDelete, isEditing, currency, ra
               }}
               className="form-input"
               style={{ padding: '8px 6px', fontSize: '0.85rem', textAlign: 'center' }}
-            />
-          </div>
-
-          <div>
-            <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-              Ціна ({currency})
-            </label>
-            <input
-              type="number"
-              min="0"
-              value={item.price || ''}
-              onChange={e => {
-                const p = parseFloat(e.target.value) || 0;
-                const q = parseFloat(item.quantity) || 0;
-                onUpdate({ ...item, price: e.target.value, sum: q * p });
-              }}
-              className="form-input"
-              style={{ padding: '8px 6px', fontSize: '0.85rem', textAlign: 'right' }}
             />
           </div>
 
@@ -163,27 +145,11 @@ export function MaterialCard({ item, onUpdate, onDelete, isEditing, currency, ra
           </div>
           <div>
             <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Ціна
-            </div>
-            <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-              {parseFloat(item.price) > 0 ? formatAmount(item.price, currency, rate) : '—'}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Видано
             </div>
             <div style={{ fontSize: '0.88rem', fontWeight: 800, color: (parseFloat(item.issued_qty) || 0) > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
               {parseFloat(item.issued_qty) || 0}
             </div>
-          </div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Сума
-          </div>
-          <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text)' }}>
-            {parseFloat(item.sum) > 0 ? formatAmount(item.sum, currency, rate) : '—'}
           </div>
         </div>
       </div>

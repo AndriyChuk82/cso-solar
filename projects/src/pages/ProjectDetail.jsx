@@ -71,16 +71,6 @@ function ItemRow({ item, onUpdate, onDelete, currency, rate }) {
           className="form-input"
           style={{ padding: '4px 6px', fontSize: '0.82rem', textAlign: 'center', width: '100%' }} />
       </td>
-      <td style={{ padding: '7px 6px', width: 90 }}>
-        <input type="number" min="0" value={item.price || ''}
-          onChange={e => {
-            const p = parseFloat(e.target.value) || 0;
-            const q = parseFloat(item.quantity) || 0;
-            onUpdate({ ...item, price: e.target.value, sum: q * p });
-          }}
-          className="form-input"
-          style={{ padding: '4px 6px', fontSize: '0.82rem', textAlign: 'right', width: '100%' }} />
-      </td>
       <td style={{ padding: '7px 6px', width: 70 }}>
         <input type="number" min="0" value={item.issued_qty || ''}
           onChange={e => onUpdate({ ...item, issued_qty: e.target.value })}
@@ -757,7 +747,6 @@ export function ProjectDetail({
                     <tr style={{ background:'var(--border-light)' }}>
                       <th style={{ ...thStyle('left','14px'), minWidth: '200px' }}>Назва</th>
                       <th style={thStyle('center','6px',60)}>К-сть</th>
-                      <th style={thStyle('right','6px',90)}>Ціна ({currency})</th>
                       <th style={thStyle('center','6px',60)}>Видано</th>
                       <th style={thStyle('left','14px')}>Коментар</th>
                       <th style={{ width:36, borderBottom: '1px solid var(--border)' }} />
@@ -779,9 +768,6 @@ export function ProjectDetail({
                           <td style={{ padding:'9px 6px', textAlign:'center', fontSize:'0.82rem', color:'var(--text-secondary)' }}>
                             {parseFloat(item.quantity) || 0}
                           </td>
-                          <td style={{ padding:'9px 6px', textAlign:'right', fontSize:'0.82rem', color:'var(--text-secondary)' }}>
-                            {parseFloat(item.price) > 0 ? formatAmount(item.price, currency, rate) : '—'}
-                          </td>
                           <td style={{ padding:'9px 6px', textAlign:'center', fontSize:'0.82rem', fontWeight: 700, color: (parseFloat(item.issued_qty) || 0) > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
                             {parseFloat(item.issued_qty) || 0}
                           </td>
@@ -801,7 +787,7 @@ export function ProjectDetail({
                   <tfoot>
                     {editingItems && (
                       <tr>
-                        <td colSpan={5} style={{ padding:'8px 10px' }}>
+                        <td colSpan={4} style={{ padding:'8px 10px' }}>
                           <button onClick={handleAddItem} className="btn btn-ghost btn-sm"
                             style={{ color:'var(--primary)', fontSize:'0.78rem', display:'flex', alignItems:'center', gap:4, width:'100%', justifyContent:'center', borderTop:'1px dashed var(--border)' }}>
                             <Plus size={13} /> Додати позицію
