@@ -64,21 +64,6 @@ export function MaterialCard({ item, onUpdate, onDelete, isEditing, currency, ra
 
           <div>
             <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-              Видано
-            </label>
-            <input
-              type="number"
-              min="0"
-              value={item.issued_qty || ''}
-              onChange={e => onUpdate({ ...item, issued_qty: e.target.value })}
-              className="form-input"
-              placeholder="0"
-              style={{ padding: '8px 6px', fontSize: '0.85rem', textAlign: 'center', background: 'var(--success-bg)' }}
-            />
-          </div>
-
-          <div>
-            <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
               Ціна ({currency})
             </label>
             <input
@@ -92,6 +77,21 @@ export function MaterialCard({ item, onUpdate, onDelete, isEditing, currency, ra
               }}
               className="form-input"
               style={{ padding: '8px 6px', fontSize: '0.85rem', textAlign: 'right' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+              Видано
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={item.issued_qty || ''}
+              onChange={e => onUpdate({ ...item, issued_qty: e.target.value })}
+              className="form-input"
+              placeholder="0"
+              style={{ padding: '8px 6px', fontSize: '0.85rem', textAlign: 'center', background: 'var(--success-bg)' }}
             />
           </div>
         </div>
@@ -163,18 +163,18 @@ export function MaterialCard({ item, onUpdate, onDelete, isEditing, currency, ra
           </div>
           <div>
             <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Видано
-            </div>
-            <div style={{ fontSize: '0.88rem', fontWeight: 800, color: (parseFloat(item.issued_qty) || 0) > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
-              {parseFloat(item.issued_qty) || 0}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Ціна
             </div>
             <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
               {parseFloat(item.price) > 0 ? formatAmount(item.price, currency, rate) : '—'}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Видано
+            </div>
+            <div style={{ fontSize: '0.88rem', fontWeight: 800, color: (parseFloat(item.issued_qty) || 0) > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
+              {parseFloat(item.issued_qty) || 0}
             </div>
           </div>
         </div>

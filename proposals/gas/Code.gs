@@ -1645,46 +1645,41 @@ function handleGetProjects(userEmail) {
     'Погоджена сума', 'Валюта', 'Номер', 'Дата закриття', 'Створено', 'Оновлено'
   ], [], ss);
   
-  // Отримуємо проєкти
   const projects = sheetToObjects(projectsSheet);
-
   const paymentsSheet = getSheetWithInit('project_payments', [
     'ID', 'ID Проекту', 'Дата', 'Сума', 'Статус', 'Примітка', 'Тип платежу', 'Автор', 'Створено'
   ], [], ss);
   
   const itemsSheet = getSheetWithInit('project_items', [
-    'ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Примітка'
+    'ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Видано', 'Примітка'
   ], [], ss);
 
   const payments = sheetToObjects(paymentsSheet);
   const items = sheetToObjects(itemsSheet);
 
-  // Додаємо агреговані дані
   let enrichedProjects = projects.map(p => {
+    const pId = String(p.id || '').trim();
+    if (!pId) return { ...p, total_cost: 0, total_paid: 0, balance: 0 };
+
     const projectItems = items.filter(i => {
       const iPid = String(i.project_id || '').trim();
-      const pId = String(p.id || '').trim();
       return iPid && iPid === pId;
     });
     const totalCost = projectItems.reduce((acc, i) => acc + (parseFloat(i.sum) || 0), 0);
     
     const projectPayments = payments.filter(pay => {
-      const pid = String(p.id || '').trim();
       const payPid = String(pay.project_id || '').trim();
-      if (!pid || !payPid) return false;
+      if (payPid !== pId) return false;
       
-      const isCorrectProject = payPid === pid;
-      const statusValue = String(pay.status || pay.active || '').toLowerCase();
-      const isPaid = (statusValue.includes('оплачено') || statusValue === 'active') && !statusValue.includes('скасовано');
-      return isCorrectProject && isPaid;
+      const statusValue = String(pay.status || '').toLowerCase();
+      const isPaid = statusValue.includes('оплачено') && !statusValue.includes('скасовано');
+      return isPaid;
     });
     const totalPaid = projectPayments.reduce((acc, pay) => acc + (parseFloat(pay.sum) || 0), 0);
     
-    let agreedSum = parseFloat(p['погоджена сума'] || p.agreed_sum || 0);
+    let agreedSum = parseFloat(p.agreed_sum || p['погоджена сума'] || 0);
     if (!agreedSum) {
-      // Якщо погоджена сума не вказана, беремо суму по КП
-      // Враховуємо валюту проекту (якщо проект в грн, то конвертуємо КП в грн по курсу 41)
-      const rate = 41; // Можна було б брати динамічно, але поки що так
+      const rate = 41; 
       agreedSum = (p.currency === 'UAH' ? totalCost * rate : totalCost);
     }
 
@@ -1710,7 +1705,6 @@ function handleGetProjectDetails(projectId) {
   
   if (!project) return { success: false, error: 'Проект не знайдено' };
 
-  // Lookup linked proposal number from КП spreadsheet
   let proposalNumber = null;
   if (project.proposal_id) {
     try {
@@ -1719,21 +1713,30 @@ function handleGetProjectDetails(projectId) {
       if (propSheet) {
         const proposals = sheetToObjects(propSheet);
         const prop = proposals.find(p => String(p.id) === String(project.proposal_id));
-        if (prop) proposalNumber = prop.project_number || prop['номер'] || prop.number || null;
+        if (prop) proposalNumber = prop.number || prop.project_number || null;
       }
     } catch(e) {
       console.warn('Could not fetch proposal number: ' + e.message);
     }
   }
 
-  const itemsSheet    = getSheet('project_items',    ss.getId());
-  const paymentsSheet = getSheet('project_payments', ss.getId());
+  const itemsSheet    = getSheetWithInit('project_items', [
+    'ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Видано', 'Примітка'
+  ], [], ss);
+  const paymentsSheet = getSheetWithInit('project_payments', [
+    'ID', 'ID Проекту', 'Дата', 'Сума', 'Статус', 'Примітка', 'Тип платежу', 'Автор', 'Створено'
+  ], [], ss);
   
-  const pidStr = String(projectId || '').trim();
-  const projectItems    = sheetToObjects(itemsSheet).filter(i => i.project_id && String(i.project_id).trim() === pidStr);
-  const projectPayments = sheetToObjects(paymentsSheet).filter(p => p.project_id && String(p.project_id).trim() === pidStr);
+  const pidStr = String(projectId).trim();
+  const projectItems    = sheetToObjects(itemsSheet).filter(i => {
+    const iPid = String(i.project_id || '').trim();
+    return iPid && iPid === pidStr;
+  });
+  const projectPayments = sheetToObjects(paymentsSheet).filter(p => {
+    const payPid = String(p.project_id || '').trim();
+    return payPid && payPid === pidStr;
+  });
 
-  // Map fields correctly, especially agreed_sum
   const enrichedProject = {
     ...project,
     proposal_number: proposalNumber,
@@ -1750,39 +1753,18 @@ function handleGetProjectDetails(projectId) {
 
 function handleSaveProject(projectData, userEmail) {
   const ss = getSpreadsheet();
-  const sheet = getSheet('projects', ss.getId());
-  const headersList = ['ID', 'Назва', 'Клієнт', 'Телефон', 'Адреса', 'Статус', 'Примітки', 'ID КП',
-                   'Погоджена сума', 'Валюта', 'Номер', 'Дата закриття', 'Створено', 'Оновлено'];
+  const sheet = getSheetWithInit('projects', [
+    'ID', 'Назва', 'Клієнт', 'Телефон', 'Адреса', 'Статус', 'Примітки', 'ID КП',
+    'Погоджена сума', 'Валюта', 'Номер', 'Дата закриття', 'Створено', 'Оновлено'
+  ], [], ss);
   
-  let currentLastCol = sheet.getLastColumn();
-  if (currentLastCol === 0) {
-    sheet.appendRow(headersList);
-    currentLastCol = headersList.length;
-  }
-  
-  let headerRow = sheet.getRange(1, 1, 1, currentLastCol).getValues()[0];
-  let headersChanged = false;
-  headersList.forEach(eh => {
-    const lowerEH = eh.toLowerCase();
-    if (!headerRow.some(h => String(h).trim().toLowerCase() === lowerEH)) {
-      sheet.getRange(1, sheet.getLastColumn() + 1).setValue(eh);
-      headersChanged = true;
-    }
-  });
-  
-  if (headersChanged) {
-    headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  }
-  
+  let headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   let row = findRowByValue(sheet, 'id', projectData.id);
-  if (row === -1) row = findRowByValue(sheet, 'ID', projectData.id);
   const ts = now();
 
   if (row === -1) {
     const newId = projectData.id || generateUUID();
-    const projectNum = projectData.proposal_id
-      ? (projectData.project_number || '')
-      : (projectData.project_number || dateStr());
+    const projectNum = projectData.project_number || dateStr();
     
     const fullData = {
       ...projectData,
@@ -1797,8 +1779,8 @@ function handleSaveProject(projectData, userEmail) {
     const rowData = headerRow.map(h => {
       const s = String(h).trim().toLowerCase();
       const mapped = HEADER_MAP[s] || s;
-      if (mapped === 'created_at' || s === 'створено') return ts;
-      if (mapped === 'updated_at' || s === 'оновлено') return ts;
+      if (mapped === 'created_at') return ts;
+      if (mapped === 'updated_at') return ts;
       return fullData[mapped] !== undefined ? fullData[mapped] : "";
     });
 
@@ -1810,7 +1792,7 @@ function handleSaveProject(projectData, userEmail) {
       const mapped = HEADER_MAP[s] || s;
       if (projectData[mapped] !== undefined && mapped !== 'id') {
         sheet.getRange(row, idx + 1).setValue(projectData[mapped]);
-      } else if (mapped === 'updated_at' || s === 'оновлено') {
+      } else if (mapped === 'updated_at') {
         sheet.getRange(row, idx + 1).setValue(ts);
       }
     });
@@ -1820,30 +1802,26 @@ function handleSaveProject(projectData, userEmail) {
 
 function handleSaveProjectItem(itemData) {
   const ss = getSpreadsheet();
-  const sheet = getSheet('project_items', ss.getId());
-  const headers = ['ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Видано', 'Примітка'];
+  const sheet = getSheetWithInit('project_items', [
+    'ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Видано', 'Примітка'
+  ], [], ss);
   
-  let currentLastCol = sheet.getLastColumn();
-  if (currentLastCol === 0) {
-    sheet.appendRow(headers);
-    currentLastCol = headers.length;
-  }
-  let headerRow = sheet.getRange(1, 1, 1, currentLastCol).getValues()[0];
-  
+  let headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   let row = findRowByValue(sheet, 'id', itemData.id);
-  if (row === -1) row = findRowByValue(sheet, 'ID', itemData.id);
 
-  const sum = (parseFloat(itemData.quantity) * parseFloat(itemData.price)) || 0;
+  const q = parseFloat(itemData.quantity) || 0;
+  const p = parseFloat(itemData.price) || 0;
+  const sum = q * p;
+  
   const valueMap = {
     'id': itemData.id || generateUUID(),
     'project_id': itemData.project_id,
     'name': itemData.name,
-    'quantity': itemData.quantity,
-    'price': itemData.price,
+    'quantity': q,
+    'price': p,
     'sum': sum,
     'issued_qty': itemData.issued_qty || 0,
-    'note': itemData.note || itemData.notes || '',
-    'notes': itemData.note || itemData.notes || '',
+    'note': itemData.note || itemData.notes || ''
   };
 
   if (row === -1) {
@@ -1868,7 +1846,7 @@ function handleSaveProjectItem(itemData) {
 function handleDeleteProjectItem(itemId) {
   const ss = getSpreadsheet();
   const sheet = getSheet('project_items', ss.getId());
-  const row = findRowByValue(sheet, 'ID', itemId);
+  const row = findRowByValue(sheet, 'id', itemId);
   if (row !== -1) {
     sheet.deleteRow(row);
     return { success: true };
@@ -1894,27 +1872,34 @@ function handleImportFromProposal(projectId, proposalId) {
   try {
     const jsonStr = String(proposalData[9] || '[]');
     const parsed = JSON.parse(jsonStr);
-    if (Array.isArray(parsed)) {
-      items = parsed;
-    } else if (parsed && Array.isArray(parsed.items)) {
-      items = parsed.items;
-    }
+    items = Array.isArray(parsed) ? parsed : (parsed.items || []);
   } catch (e) {
     return { success: false, error: 'Помилка читання товарів з КП' };
   }
   
   if (items.length === 0) return { success: false, error: 'У вибраній КП немає товарів' };
   
-  const itemsSheet = getSheet('project_items', ss.getId());
-  const existingItems = sheetToObjects(itemsSheet);
+  const headers = ['ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Видано', 'Примітка'];
+  const itemsSheet = getSheetWithInit('project_items', headers, [], ss);
   
-  for (let i = existingItems.length - 1; i >= 0; i--) {
-     if (String(existingItems[i].project_id) === String(projectId)) {
-        itemsSheet.deleteRow(i + 2);
-     }
+  // Explicitly find the project_id column to ensure correct deletion
+  const currentHeaders = itemsSheet.getRange(1, 1, 1, itemsSheet.getLastColumn()).getValues()[0];
+  const pidColIdx = currentHeaders.map(h => {
+    const s = String(h).trim().toLowerCase();
+    return HEADER_MAP[s] || s;
+  }).indexOf('project_id');
+  
+  if (pidColIdx !== -1) {
+    const allItemsData = itemsSheet.getDataRange().getValues();
+    const pidStr = String(projectId).trim();
+    for (let i = allItemsData.length - 1; i >= 1; i--) {
+       if (String(allItemsData[i][pidColIdx] || '').trim() === pidStr) {
+          itemsSheet.deleteRow(i + 1);
+       }
+    }
   }
   
-  const iHeaderRow = itemsSheet.getRange(1, 1, 1, itemsSheet.getLastColumn()).getValues()[0];
+  // Add new items
   items.forEach(item => {
     const qty = parseFloat(item.quantity || item.qty || 0);
     const price = parseFloat(item.price || item.unitPrice || 0);
@@ -1931,18 +1916,22 @@ function handleImportFromProposal(projectId, proposalId) {
       'note': item.note || item.article || ''
     };
 
-    const iAppendData = iHeaderRow.map(h => {
+    const rowData = currentHeaders.map(h => {
       const s = String(h).trim().toLowerCase();
       const mapped = HEADER_MAP[s] || s;
       return iValueMap[mapped] !== undefined ? iValueMap[mapped] : '';
     });
-    itemsSheet.appendRow(iAppendData);
+    itemsSheet.appendRow(rowData);
   });
   
-  const pRow = findRowByValue(projectsSheet, 'ID', projectId);
+  // Link proposal to project
+  const pRow = findRowByValue(projectsSheet, 'id', projectId);
   if (pRow > 0) {
-    const pHeaderRow = projectsSheet.getRange(1, 1, 1, projectsSheet.getLastColumn()).getValues()[0];
-    const kpColIdx = pHeaderRow.map(h => String(h).trim().toLowerCase()).indexOf('id кп');
+    const pHeaders = projectsSheet.getRange(1, 1, 1, projectsSheet.getLastColumn()).getValues()[0];
+    const kpColIdx = pHeaders.map(h => {
+       const s = String(h).trim().toLowerCase();
+       return HEADER_MAP[s] || s;
+    }).indexOf('proposal_id');
     if (kpColIdx >= 0) {
       projectsSheet.getRange(pRow, kpColIdx + 1).setValue(proposalId);
     }
@@ -1953,22 +1942,11 @@ function handleImportFromProposal(projectId, proposalId) {
 
 function handleSavePayment(paymentData, userEmail) {
   const ss = getSpreadsheet();
-  const sheet = getSheet('project_payments', ss.getId());
-  const headers = ['ID', 'ID Проекту', 'Дата', 'Сума', 'Статус', 'Примітка', 'Тип платежу', 'Автор', 'Створено'];
-  let currentLastCol = sheet.getLastColumn();
-  if (currentLastCol === 0) currentLastCol = 1; 
-  let headerRow = sheet.getRange(1, 1, 1, currentLastCol).getValues()[0] || [];
+  const sheet = getSheetWithInit('project_payments', [
+    'ID', 'ID Проекту', 'Дата', 'Сума', 'Статус', 'Примітка', 'Тип платежу', 'Автор', 'Створено'
+  ], [], ss);
   
-  let addedCols = 0;
-  headers.forEach(eh => {
-    const lowerEH = eh.toLowerCase();
-    if (!headerRow.some(h => String(h).trim().toLowerCase() === lowerEH)) {
-      headerRow.push(eh);
-      sheet.getRange(1, currentLastCol + addedCols + 1).setValue(eh);
-      addedCols++;
-    }
-  });  
-
+  let headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   let row = findRowByValue(sheet, 'id', paymentData.id);
 
   const valueMap = {
@@ -1978,7 +1956,6 @@ function handleSavePayment(paymentData, userEmail) {
     'sum': paymentData.sum,
     'status': paymentData.status || 'Оплачено',
     'note': paymentData.note || paymentData.notes || '',
-    'notes': paymentData.note || paymentData.notes || '',
     'payment_type': paymentData.payment_type || 'Повна оплата',
     'user': userEmail || 'Система',
     'created_at': now()
