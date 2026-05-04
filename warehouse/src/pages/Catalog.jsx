@@ -158,20 +158,25 @@ export default function Catalog() {
     try {
       // Перевірка залишків перед архівацією
       const opsResult = await getOperations({ productId });
-      if (opsResult.success) {
-        const totalBalance = (opsResult.operations || []).reduce((sum, op) => {
-          const qty = parseFloat(op.quantity) || 0;
-          if (op.type === 'income' || op.type === 'balance') return sum + qty;
-          if (op.type === 'expense') return sum - qty;
-          return sum;
-        }, 0);
+      if (!opsResult.success) {
+        return showToast('Не вдалося завантажити дані для перевірки залишків', 'error');
+      }
 
-        if (totalBalance > 0) {
-          return showToast(`Неможливо архівувати товар з позитивним залишком (${totalBalance}). Спочатку спишіть товар або перенесіть залишки.`, 'error');
-        }
-        if (totalBalance < 0) {
-          return showToast(`Неможливо архівувати товар з від'ємним залишком (${totalBalance}). Перевірте історію операцій.`, 'error');
-        }
+      const totalBalance = (opsResult.operations || []).reduce((sum, op) => {
+        const qty = parseFloat(op.quantity) || 0;
+        if (op.type === 'income' || op.type === 'balance') return sum + qty;
+        if (op.type === 'expense') return sum - qty;
+        return sum;
+      }, 0);
+
+      // Округлюємо для запобігання помилок плаваючої коми
+      const roundedBalance = Math.round(totalBalance * 10000) / 10000;
+
+      if (roundedBalance > 0) {
+        return showToast(`Неможливо архівувати товар з позитивним залишком (${roundedBalance}). Спочатку спишіть товар або перенесіть залишки.`, 'error');
+      }
+      if (roundedBalance < 0) {
+        return showToast(`Неможливо архівувати товар з від'ємним залишком (${roundedBalance}). Перевірте історію операцій.`, 'error');
       }
 
       if (!confirm('Архівувати цей товар? Він зникне зі списку, але історія операцій збережеться.')) return;
