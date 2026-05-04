@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { getCatalog, addProduct, getCategories } from '../api/gasApi';
 import { fetchCPCatalog } from '../api/externalApi';
-import { normalizeForSearch, matchesSearch } from '../utils/searchUtils';
+import { normalizeForSearch, matchesSearch, normalizeForComparison } from '../utils/searchUtils';
 import CONFIG from '../config';
 import { Button } from '@cso/design-system';
 
@@ -148,12 +148,21 @@ export default function ProductSearch({ onSelect, products = [], balances = {}, 
     e.preventDefault();
     if (!newProduct.name.trim()) return;
 
-    // Перевірка на дублікат
-    const isDuplicate = products.some(p => 
-      normalizeForSearch(p.name) === normalizeForSearch(newProduct.name)
+    // Перевірка на дублікат (більш жорстка)
+    const normalizedNewName = normalizeForComparison(newProduct.name);
+    const normalizedNewArticle = newProduct.article ? normalizeForComparison(newProduct.article) : '';
+
+    const duplicate = products.find(p => 
+      normalizeForComparison(p.name) === normalizedNewName || 
+      (normalizedNewArticle && normalizeForComparison(p.article) === normalizedNewArticle)
     );
-    if (isDuplicate) {
-      alert('Товар з такою назвою вже існує в каталозі!');
+
+    if (duplicate) {
+      const isNameDup = normalizeForComparison(duplicate.name) === normalizedNewName;
+      alert(isNameDup 
+        ? `Товар з такою назвою вже існує в каталозі: ${duplicate.name}` 
+        : `Товар з таким артикулом вже існує в каталозі: ${duplicate.article}`
+      );
       return;
     }
 

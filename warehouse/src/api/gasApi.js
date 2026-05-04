@@ -107,6 +107,13 @@ export async function archiveProduct(productId) {
   return { success: true };
 }
 
+export async function restoreProduct(productId) {
+  if (!supabase) throw new Error('База даних не підключена');
+  const { error } = await supabase.from('products').update({ active: true }).eq('id', productId);
+  if (error) throw error;
+  return { success: true };
+}
+
 // --- СКЛАДИ ---
 
 export async function getWarehouses() {
@@ -193,6 +200,7 @@ export async function getOperations(filters = {}) {
   }).filter(Boolean);
 
   if (filters.warehouseId) operations = operations.filter(op => String(op.warehouse_id).trim() === String(filters.warehouseId).trim());
+  if (filters.productId) operations = operations.filter(op => String(op.product_id).trim() === String(filters.productId).trim());
   if (filters.type) operations = operations.filter(op => op.type === filters.type);
   if (filters.dateFrom) operations = operations.filter(op => op.date >= filters.dateFrom);
   if (filters.dateTo) operations = operations.filter(op => op.date <= filters.dateTo);

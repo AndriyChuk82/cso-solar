@@ -17,6 +17,14 @@ export function normalizeForSearch(str) {
 }
 
 /**
+ * Більш жорстка нормалізація для перевірки на дублікати (видаляє пробіли та спецсимволи)
+ */
+export function normalizeForComparison(str) {
+  if (!str) return '';
+  return normalizeForSearch(str).replace(/[\s\W_]/g, '');
+}
+
+/**
  * Перевіряє, чи містить рядок пошуковий запит.
  * @param {string} content — текст, в якому шукаємо
  * @param {string} query — пошуковий запит

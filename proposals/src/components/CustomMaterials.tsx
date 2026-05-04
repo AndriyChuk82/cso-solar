@@ -3,7 +3,7 @@ import { Plus, X, Save, Trash2, Edit2, Package } from 'lucide-react';
 import { useProposalStore, clearProductsCache } from '../store';
 import { Product, Currency } from '../types';
 import { formatCurrency } from '../utils/currency';
-import { addCustomMaterial as addCustomMaterialAPI, deleteCustomMaterial as deleteCustomMaterialAPI } from '../services/api';
+import { addCustomMaterial as addCustomMaterialAPI, deleteCustomMaterial as deleteCustomMaterialAPI, normalizeForComparison } from '../services/api';
 
 interface CustomMaterialsModalProps {
   isOpen: boolean;
@@ -105,13 +105,35 @@ export function CustomMaterialsModal({ isOpen, onClose, initialProductId }: Cust
         isCustom: true,
       };
 
+      const normalizedNewName = normalizeForComparison(formData.name);
+      
       if (editingId) {
-        // Редагування існуючого - оновлюємо локально
+        // Редагування існуючого - перевірка на конфлікт назв
+        const duplicate = [...customMaterials, ...products].find(m => 
+          m.id !== editingId && normalizeForComparison(m.name) === normalizedNewName
+        );
+        if (duplicate) {
+          setIsSaving(false);
+          alert(`⚠️ Товар з такою назвою вже існує: ${duplicate.name}`);
+          return;
+        }
+
+        // Оновлюємо локально
         removeCustomMaterial(editingId);
         addCustomMaterial(materialData);
         alert('✅ Товар оновлено локально');
       } else {
-        // Додавання нового - зберігаємо в Google Sheets
+        // Додавання нового - перевірка на дублікат
+        const duplicate = [...customMaterials, ...products].find(m => 
+          normalizeForComparison(m.name) === normalizedNewName
+        );
+        if (duplicate) {
+          setIsSaving(false);
+          alert(`⚠️ Товар з такою назвою вже існує: ${duplicate.name}`);
+          return;
+        }
+
+        // Зберігаємо в Google Sheets
         const result = await addCustomMaterialAPI(materialData);
 
         if (result.success && result.product) {

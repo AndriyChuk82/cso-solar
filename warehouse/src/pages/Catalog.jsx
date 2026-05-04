@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { getCatalog, addProduct, updateProduct, archiveProduct, getCategories } from '../api/gasApi';
+import { getCatalog, addProduct, updateProduct, archiveProduct, restoreProduct, getCategories, getOperations } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { matchesSearch, normalizeForSearch } from '../utils/searchUtils';
+import { matchesSearch, normalizeForSearch, normalizeForComparison } from '../utils/searchUtils';
 import CONFIG from '../config';
 import { Button } from '@cso/design-system';
 
@@ -100,28 +100,41 @@ export default function Catalog() {
         active: true
       };
 
-      const normalizedNewName = normalizeForSearch(productData.name);
+      const normalizedNewName = normalizeForComparison(productData.name);
+      const normalizedNewArticle = productData.article ? normalizeForComparison(productData.article) : '';
 
       if (editProduct) {
         productData.id = editProduct.id;
-        // При редагуванні перевіряємо чи не конфліктує нова назва з іншими існуючими товарами
-        const isDuplicate = products.some(p => 
+        // При редагуванні перевіряємо чи не конфліктує нова назва або артикул з іншими існуючими товарами
+        const duplicate = products.find(p => 
           p.id !== editProduct.id && 
-          normalizeForSearch(p.name) === normalizedNewName
+          (normalizeForComparison(p.name) === normalizedNewName || 
+           (normalizedNewArticle && normalizeForComparison(p.article) === normalizedNewArticle))
         );
-        if (isDuplicate) {
+        
+        if (duplicate) {
           setSaving(false);
-          return showToast('Товар з такою назвою вже існує', 'error');
+          const isNameDup = normalizeForComparison(duplicate.name) === normalizedNewName;
+          return showToast(
+            isNameDup ? `Товар з такою назвою вже існує: ${duplicate.name}` : `Товар з таким артикулом вже існує: ${duplicate.article}`, 
+            'error'
+          );
         }
         await updateProduct(productData);
       } else {
         // При додаванні нового
-        const isDuplicate = products.some(p => 
-          normalizeForSearch(p.name) === normalizedNewName
+        const duplicate = products.find(p => 
+          normalizeForComparison(p.name) === normalizedNewName || 
+          (normalizedNewArticle && normalizeForComparison(p.article) === normalizedNewArticle)
         );
-        if (isDuplicate) {
+
+        if (duplicate) {
           setSaving(false);
-          return showToast('Товар з такою назвою вже існує', 'error');
+          const isNameDup = normalizeForComparison(duplicate.name) === normalizedNewName;
+          return showToast(
+            isNameDup ? `Товар з такою назвою вже існує: ${duplicate.name}` : `Товар з таким артикулом вже існує: ${duplicate.article}`, 
+            'error'
+          );
         }
         const result = await addProduct(productData);
         if (!result.success) {
@@ -142,14 +155,43 @@ export default function Catalog() {
   }
 
   async function handleArchive(productId) {
-    if (!confirm('Архівувати цей товар? Він зникне зі списку, але історія операцій збережеться.')) return;
     try {
+      // Перевірка залишків перед архівацією
+      const opsResult = await getOperations({ productId });
+      if (opsResult.success) {
+        const totalBalance = (opsResult.operations || []).reduce((sum, op) => {
+          const qty = parseFloat(op.quantity) || 0;
+          if (op.type === 'income' || op.type === 'balance') return sum + qty;
+          if (op.type === 'expense') return sum - qty;
+          return sum;
+        }, 0);
+
+        if (totalBalance > 0) {
+          return showToast(`Неможливо архівувати товар з позитивним залишком (${totalBalance}). Спочатку спишіть товар або перенесіть залишки.`, 'error');
+        }
+        if (totalBalance < 0) {
+          return showToast(`Неможливо архівувати товар з від'ємним залишком (${totalBalance}). Перевірте історію операцій.`, 'error');
+        }
+      }
+
+      if (!confirm('Архівувати цей товар? Він зникне зі списку, але історія операцій збережеться.')) return;
       await archiveProduct(productId);
       showToast('Товар перенесено в архів', 'success');
       loadProducts();
     } catch (err) {
       console.error('Помилка:', err);
       showToast('Помилка архівації', 'error');
+    }
+  }
+
+  async function handleRestore(productId) {
+    try {
+      await restoreProduct(productId);
+      showToast('Товар відновлено з архіву', 'success');
+      loadProducts();
+    } catch (err) {
+      console.error('Помилка:', err);
+      showToast('Помилка відновлення', 'error');
     }
   }
 
@@ -241,13 +283,22 @@ export default function Catalog() {
                       <td>
                         <div style={{ display: 'flex', gap: '4px' }}>
                           <Button variant="ghost" size="sm" onClick={() => openEditModal(p)}>✏️</Button>
-                          {p.active && (
+                          {p.active ? (
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleArchive(p.id)}
                               style={{ color: 'var(--danger)' }}
+                              title="В архів"
                             >🗄️</Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRestore(p.id)}
+                              style={{ color: 'var(--success)' }}
+                              title="Відновити з архіву"
+                            >♻️</Button>
                           )}
                         </div>
                       </td>

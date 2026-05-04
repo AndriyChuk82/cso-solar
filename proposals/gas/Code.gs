@@ -303,6 +303,25 @@ function dateStr(date) {
   return date;
 }
 
+/**
+ * Нормалізація рядка для порівняння (запобігання дублікатам)
+ * Враховує схожість кириличних та латинських символів та видаляє пробіли
+ */
+function normalizeForComparison(str) {
+  if (!str) return '';
+  return str.toString().toLowerCase().trim()
+      .replace(/р/g, 'p')
+      .replace(/с/g, 'c')
+      .replace(/о/g, 'o')
+      .replace(/а/g, 'a')
+      .replace(/х/g, 'x')
+      .replace(/у/g, 'y')
+      .replace(/е/g, 'e')
+      .replace(/і/g, 'i')
+      .replace(/в/g, 'b')
+      .replace(/[\s\W_]/g, '');
+}
+
 const HEADER_MAP = {
   'назва': 'name',
   'артикул': 'article',
@@ -669,10 +688,21 @@ function handleAddProduct(product) {
   const sheet = getSheet('catalog');
   const products = sheetToObjects(sheet);
   
-  // Перевірка на дублікат за назвою
-  const exists = products.find(p => String(p.name).trim().toLowerCase() === String(product.name).trim().toLowerCase());
+  // Перевірка на дублікат за назвою та артикулом (більш жорстка)
+  const normalizedNewName = normalizeForComparison(product.name);
+  const normalizedNewArticle = product.article ? normalizeForComparison(product.article) : '';
+
+  const exists = products.find(p => {
+    return normalizeForComparison(p.name) === normalizedNewName || 
+           (normalizedNewArticle && normalizeForComparison(p.article) === normalizedNewArticle);
+  });
+
   if (exists) {
-    return { success: false, error: 'Товар з такою назвою вже існує в каталозі' };
+    const isNameDup = normalizeForComparison(exists.name) === normalizedNewName;
+    return { 
+      success: false, 
+      error: isNameDup ? 'Товар з такою назвою вже існує: ' + exists.name : 'Товар з таким артикулом вже існує: ' + exists.article
+    };
   }
 
   const id = generateUUID();
@@ -2349,9 +2379,26 @@ function addCustomMaterial(product) {
 
     const productId = product.id || 'custom_' + Date.now();
     const idIdx = headers.indexOf('id');
+    const nameIdx = headers.indexOf('name');
+    const articleIdx = headers.indexOf('article');
+
+    const normalizedNewName = normalizeForComparison(product.name);
+    const normalizedNewArticle = product.article ? normalizeForComparison(product.article) : '';
+
     for (let i = 1; i < data.length; i++) {
       if (data[i][idIdx] === productId) {
-        return { success: false, error: 'Product with this ID already exists' };
+        return { success: false, error: 'Товар з таким ID вже існує' };
+      }
+      
+      // Додаткова перевірка на дублікат за назвою/артикулом
+      const existingName = normalizeForComparison(data[i][nameIdx]);
+      const existingArticle = articleIdx >= 0 ? normalizeForComparison(data[i][articleIdx]) : '';
+      
+      if (existingName === normalizedNewName) {
+        return { success: false, error: 'Товар з такою назвою вже існує: ' + data[i][nameIdx] };
+      }
+      if (normalizedNewArticle && existingArticle === normalizedNewArticle) {
+        return { success: false, error: 'Товар з таким артикулом вже існує: ' + data[i][articleIdx] };
       }
     }
 

@@ -302,6 +302,11 @@ function normalizeForSearch(str: string): string {
     .replace(/і/g, 'i');
 }
 
+export function normalizeForComparison(str: string): string {
+  if (!str) return '';
+  return normalizeForSearch(str).trim().replace(/[\s\W_]/g, '');
+}
+
 export function searchProducts(products: Product[], query: string): Product[] {
   const words = query.trim().split(/\s+/).map(w => normalizeForSearch(w)).filter(w => w.length > 0);
   
