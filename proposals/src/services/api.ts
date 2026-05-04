@@ -278,15 +278,15 @@ export async function deleteProposalFromSheet(proposalId: string) {
 }
 
 export async function addCustomMaterial(material: any) {
-  return gasRequest('addCustomMaterial', { material });
+  return gasRequest('addCustomMaterial', { product: material });
 }
 
 export async function deleteCustomMaterial(id: string) {
-  return gasRequest('deleteCustomMaterial', { id });
+  return gasRequest('deleteCustomMaterial', { productId: id });
 }
 
 export async function updateMaterialPrice(id: string, price: number) {
-  return gasRequest('updateMaterialPrice', { id, price });
+  return gasRequest('updateMaterialPrice', { id, priceUsd: price });
 }
 
 function normalizeForSearch(str: string): string {
