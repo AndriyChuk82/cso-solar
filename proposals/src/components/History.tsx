@@ -61,9 +61,9 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter(p => 
-        p.clientName?.toLowerCase().includes(q) || 
-        p.clientPhone?.toLowerCase().includes(q) ||
-        p.number?.toLowerCase().includes(q)
+        String(p.clientName || '').toLowerCase().includes(q) || 
+        String(p.clientPhone || '').toLowerCase().includes(q) ||
+        String(p.number || '').toLowerCase().includes(q)
       );
     }
 
