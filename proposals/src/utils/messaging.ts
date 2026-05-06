@@ -258,6 +258,23 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
     node.style.fontFamily = "'Inter', -apple-system, sans-serif";
   });
 
+  // 1. СТИЛІЗАЦІЯ БЛОКУ КЛІЄНТА (БЕЖЕВИЙ)
+  const clientBlock = el.querySelector('.client-info-block') as HTMLElement;
+  if (clientBlock) {
+    clientBlock.style.background = '#fcf8f1';
+    clientBlock.style.borderRadius = '8px';
+    clientBlock.style.border = 'none';
+    clientBlock.style.padding = '15px 20px';
+    clientBlock.style.marginBottom = '25px';
+    
+    const h3 = clientBlock.querySelector('h3');
+    if (h3) {
+      h3.style.color = '#1e293b';
+      h3.style.fontSize = '12px';
+      h3.style.marginBottom = '10px';
+    }
+  }
+
   const inputs = el.querySelectorAll('input, select, textarea');
   inputs.forEach((input: any) => {
     const span = clonedDoc.createElement('span');
@@ -293,6 +310,9 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
     header.style.setProperty('display', 'flex', 'important');
     header.style.removeProperty('display'); // Remove inline 'display: none' from React
     header.classList.remove('no-print');
+    header.style.borderBottom = '2px solid #f59e0b';
+    header.style.marginBottom = '20px';
+    header.style.paddingBottom = '10px';
     
     const inner = header.querySelector('.print-logo-row') as HTMLElement;
     if (inner) {
@@ -346,7 +366,7 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
     if (showCost) {
       htmlNode.style.setProperty('display', 'table-row', 'important');
       htmlNode.classList.remove('no-print');
-      htmlNode.style.background = '#f8fafc';
+      htmlNode.style.background = '#fcf8f1'; // Beige for profit too
     } else {
       htmlNode.style.setProperty('display', 'none', 'important');
     }
@@ -357,13 +377,14 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
     table.style.width = '100%';
     table.style.borderCollapse = 'collapse';
     table.style.fontSize = '11.5px';
+    table.style.marginBottom = '20px';
     
     const allCells = el.querySelectorAll('td, th');
     allCells.forEach((cell: any) => {
       cell.style.fontSize = '11.5px';
-      cell.style.padding = '8px 10px';
+      cell.style.padding = '10px 12px';
       cell.style.color = '#1e293b';
-      cell.style.borderColor = '#e2e8f0';
+      cell.style.borderBottom = '1px solid #f1f5f9';
 
       if (cell.cellIndex === 1) {
         const spans = cell.querySelectorAll('span');
@@ -391,12 +412,35 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
 
     const tableHeaders = el.querySelectorAll('th');
     tableHeaders.forEach((th: any) => {
-      th.style.backgroundColor = '#f8fafc';
-      th.style.color = '#64748b';
+      th.style.backgroundColor = '#fcf8f1'; // BEIGE HEADERS
+      th.style.color = '#1e293b';
+      th.style.fontWeight = '700';
       th.style.textTransform = 'uppercase';
       th.style.fontSize = '10px';
       th.style.letterSpacing = '0.05em';
+      th.style.padding = '12px 10px';
+      th.style.border = 'none';
     });
+
+    // Special treatment for tfoot (Summary)
+    const tfoot = table.querySelector('tfoot');
+    if (tfoot) {
+      const rows = tfoot.querySelectorAll('tr');
+      rows.forEach((row, idx) => {
+        const cells = row.querySelectorAll('td');
+        
+        // Final total row (usually the last or penultimate)
+        if (row.classList.contains('font-bold') || idx === rows.length - 2) {
+          row.style.background = '#fcf8f1'; // BEIGE TOTAL
+          cells.forEach(c => {
+            c.style.padding = '15px 12px';
+            c.style.border = 'none';
+          });
+        } else {
+          row.style.background = '#ffffff';
+        }
+      });
+    }
 
     const headersArray = Array.from(tableHeaders);
     if (headersArray.length >= 8) {
@@ -411,7 +455,6 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
         headersArray[6].style.width = '110px'; // Sale Price
         headersArray[7].style.width = '130px'; // Total Sale
         
-        // Переконаємось що для собівартості встановлена ширина
         [4, 5].forEach(idx => {
           if (headersArray[idx]) {
             headersArray[idx].style.setProperty('display', 'table-cell', 'important');
@@ -422,7 +465,6 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
         headersArray[6].style.width = '110px';
         headersArray[7].style.width = '130px';
         
-        // Примусово приховуємо якщо не потрібно
         [4, 5].forEach(idx => {
           if (headersArray[idx]) {
             headersArray[idx].style.setProperty('display', 'none', 'important');
@@ -431,6 +473,17 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
       }
     }
   }
+
+  // Notes area (Beige)
+  const allContainers = el.querySelectorAll('div');
+  allContainers.forEach((div: any) => {
+    if (div.textContent?.includes('Примітки') && div.querySelector('span')) {
+      div.style.background = '#fcf8f1';
+      div.style.padding = '15px 20px';
+      div.style.borderRadius = '8px';
+      div.style.marginTop = '20px';
+    }
+  });
 
   const summaryLabels = el.querySelectorAll('span[class*="uppercase"]');
   summaryLabels.forEach((label: any) => {
