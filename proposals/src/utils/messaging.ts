@@ -261,7 +261,7 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
   // 1. СТИЛІЗАЦІЯ БЛОКУ КЛІЄНТА (БЕЖЕВИЙ)
   const clientBlock = el.querySelector('.client-info-block') as HTMLElement;
   if (clientBlock) {
-    clientBlock.style.background = '#fcf8f1';
+    clientBlock.style.background = '#faf5ec';
     clientBlock.style.borderRadius = '8px';
     clientBlock.style.border = 'none';
     clientBlock.style.padding = '15px 20px';
@@ -366,7 +366,7 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
     if (showCost) {
       htmlNode.style.setProperty('display', 'table-row', 'important');
       htmlNode.classList.remove('no-print');
-      htmlNode.style.background = '#fcf8f1'; // Beige for profit too
+      htmlNode.style.background = '#faf5ec'; // Beige for profit too
     } else {
       htmlNode.style.setProperty('display', 'none', 'important');
     }
@@ -412,7 +412,7 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
 
     const tableHeaders = el.querySelectorAll('th');
     tableHeaders.forEach((th: any) => {
-      th.style.backgroundColor = '#fcf8f1'; // BEIGE HEADERS
+      th.style.backgroundColor = '#faf5ec'; // BEIGE HEADERS
       th.style.color = '#1e293b';
       th.style.fontWeight = '700';
       th.style.textTransform = 'uppercase';
@@ -431,7 +431,7 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
         
         // Final total row (usually the last or penultimate)
         if (row.classList.contains('font-bold') || idx === rows.length - 2) {
-          row.style.background = '#fcf8f1'; // BEIGE TOTAL
+          row.style.background = '#faf5ec'; // BEIGE TOTAL
           cells.forEach(c => {
             c.style.padding = '15px 12px';
             c.style.border = 'none';
@@ -478,7 +478,7 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
   const allContainers = el.querySelectorAll('div');
   allContainers.forEach((div: any) => {
     if (div.textContent?.includes('Примітки') && div.querySelector('span')) {
-      div.style.background = '#fcf8f1';
+      div.style.background = '#faf5ec';
       div.style.padding = '15px 20px';
       div.style.borderRadius = '8px';
       div.style.marginTop = '20px';

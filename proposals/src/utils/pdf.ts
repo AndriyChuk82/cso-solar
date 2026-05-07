@@ -34,30 +34,32 @@ export async function exportToPDF(proposal: Proposal, returnBlob = false, showCo
 
       <hr style="height: 3px; background-color: ${accentColor}; margin: 20px 0; border: none;">
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
-        <div style="display: flex; gap: 40px;">
-          <div style="flex: 1;"><label style="display: block; font-size: 9px; color: #9CA3AF; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Номер</label><span style="display: block; font-size: 13px; font-weight: 600; color: #111827;">${proposal.number}</span></div>
-          <div style="flex: 1;"><label style="display: block; font-size: 9px; color: #9CA3AF; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Дата</label><span style="display: block; font-size: 13px; font-weight: 600; color: #111827;">${dateStr}</span></div>
-        </div>
-        <div style="display: flex; gap: 40px;">
-          <div style="flex: 1;"><label style="display: block; font-size: 9px; color: #9CA3AF; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Клієнт</label><span style="display: block; font-size: 13px; font-weight: 600; color: #111827;">${proposal.clientName || 'Не вказано'}</span></div>
-          <div style="flex: 1;"><label style="display: block; font-size: 9px; color: #9CA3AF; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Контакт</label><span style="display: block; font-size: 13px; font-weight: 600; color: #111827;">${proposal.clientPhone || '-'}</span></div>
+      <div style="background: #faf5ec; padding: 15px 25px; border-radius: 4px; margin-bottom: 30px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+          <div style="display: flex; gap: 40px;">
+            <div style="flex: 1;"><label style="display: block; font-size: 9px; color: #9CA3AF; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Номер</label><span style="display: block; font-size: 13px; font-weight: 600; color: #111827;">${proposal.number}</span></div>
+            <div style="flex: 1;"><label style="display: block; font-size: 9px; color: #9CA3AF; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Дата</label><span style="display: block; font-size: 13px; font-weight: 600; color: #111827;">${dateStr}</span></div>
+          </div>
+          <div style="display: flex; gap: 40px;">
+            <div style="flex: 1;"><label style="display: block; font-size: 9px; color: #9CA3AF; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Клієнт</label><span style="display: block; font-size: 13px; font-weight: 600; color: #111827;">${proposal.clientName || 'Не вказано'}</span></div>
+            <div style="flex: 1;"><label style="display: block; font-size: 9px; color: #9CA3AF; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Контакт</label><span style="display: block; font-size: 13px; font-weight: 600; color: #111827;">${proposal.clientPhone || '-'}</span></div>
+          </div>
         </div>
       </div>
 
       <table style="width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid #E5E7EB;">
         <thead>
-          <tr style="background: #fcf8f1;">
-            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #1e293b; text-transform: uppercase;">№</th>
-            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #1e293b; text-transform: uppercase; text-align: left;">Найменування</th>
-            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #1e293b; text-transform: uppercase;">Од.</th>
-            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #1e293b; text-transform: uppercase;">К-сть</th>
+          <tr style="background: #faf5ec;">
+            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase;">№</th>
+            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase; text-align: left;">Найменування</th>
+            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase;">Од.</th>
+            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase;">К-сть</th>
             ${showCost ? `
-              <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #1e293b; text-transform: uppercase; background: #EFF6FF;">Собівартість</th>
-              <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #1e293b; text-transform: uppercase; background: #DBEAFE;">Сума соб.</th>
+              <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase; background: #EFF6FF;">Собівартість</th>
+              <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase; background: #DBEAFE;">Сума соб.</th>
             ` : ''}
-            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #1e293b; text-transform: uppercase;">Ціна (${currencySymbol})</th>
-            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #1e293b; text-transform: uppercase;">Сума (${currencySymbol})</th>
+            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase;">Ціна (${currencySymbol})</th>
+            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase;">Сума (${currencySymbol})</th>
           </tr>
         </thead>
         <tbody>
@@ -82,13 +84,13 @@ export async function exportToPDF(proposal: Proposal, returnBlob = false, showCo
       </table>
 
       <div style="margin-top: 20px; display: flex; flex-direction: column; align-items: flex-end;">
-        <div style="background: #fcf8f1; border: 1px solid #fcf8f1; padding: 15px 25px; border-radius: 4px; text-align: right; min-width: 300px;">
+        <div style="background: #faf5ec; border: 1px solid #E5E7EB; padding: 15px 25px; border-radius: 4px; text-align: right; min-width: 300px;">
           ${showCost ? `
             <div style="font-size: 12px; color: #15803d; margin-bottom: 8px; font-weight: 600;">
               ПРИБУТОК: ${currencySymbol} ${((proposal.subtotal || 0) - proposal.items.reduce((sum, item) => sum + (item.costPrice * item.quantity), 0)).toLocaleString('uk-UA', { minimumFractionDigits: 2 })} (${(((proposal.subtotal - proposal.items.reduce((sum, item) => sum + (item.costPrice * item.quantity), 0)) / proposal.subtotal) * 100).toFixed(1)}%)
             </div>
           ` : ''}
-          <div style="font-size: 18px; font-weight: 800; color: #1e293b;">
+          <div style="font-size: 18px; font-weight: 800; color: #B45309;">
             <span>ЗАГАЛОМ:</span> <span style="margin-left: 5px;">${currencySymbol} ${proposal.total.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</span>
           </div>
         </div>
@@ -97,7 +99,7 @@ export async function exportToPDF(proposal: Proposal, returnBlob = false, showCo
         </div>
       </div>
 
-      ${proposal.notes ? `<div style="margin-top: 40px; padding: 15px; border-left: 3px solid #f59e0b; background: #fcf8f1; font-size: 11px; color: #1e293b;"><strong>ПРИМІТКИ:</strong><br>${proposal.notes.replace(/\n/g, '<br>')}</div>` : ''}
+      ${proposal.notes ? `<div style="margin-top: 40px; padding: 15px; border-left: 3px solid #E5E7EB; background: #faf5ec; font-size: 11px; color: #4B5563;"><strong>ПРИМІТКИ:</strong><br>${proposal.notes.replace(/\n/g, '<br>')}</div>` : ''}
     </div>
   `;
 
@@ -130,4 +132,3 @@ export async function exportToPDF(proposal: Proposal, returnBlob = false, showCo
     throw error;
   }
 }
-

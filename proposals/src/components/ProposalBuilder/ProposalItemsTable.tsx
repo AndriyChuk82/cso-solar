@@ -31,17 +31,17 @@ export function ProposalItemsTable({
     <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200/60 dark:border-slate-800 overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.04)] transition-colors">
       <div className="overflow-x-auto">
         <table className="w-full text-base">
-          <thead className="bg-gray-50/50 dark:bg-slate-800/30 border-b border-gray-100 dark:border-slate-700">
+          <thead className="dark:bg-slate-800/30 border-b border-[#f59e0b]/20" style={{ backgroundColor: '#faf5ec', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as any}>
             <tr>
-              <th className="px-1 py-3 text-left font-semibold text-gray-500 dark:text-slate-400 w-8">#</th>
-              <th className="px-2 py-3 text-left font-semibold text-gray-700 dark:text-slate-300">Назва / Опис товару</th>
-              <th className="px-1 py-3 text-center font-semibold text-gray-500 dark:text-slate-400 w-14">Од.</th>
-              <th className="px-2 py-3 text-center font-semibold text-gray-500 dark:text-slate-400 w-20">Кіл.</th>
-              <th className="px-2 py-3 text-center font-semibold text-gray-500 dark:text-slate-400 w-28 bg-blue-50/20 dark:bg-blue-900/5 cost-column">Собів. ({activeCurrency})</th>
-              <th className="px-2 py-3 text-center font-semibold text-gray-500 dark:text-slate-400 w-28 bg-blue-50/30 dark:bg-blue-900/10 cost-column">Сума соб.</th>
-              <th className="px-2 py-3 text-center font-semibold text-gray-500 dark:text-slate-400 w-28 bg-green-50/20 dark:bg-green-900/5">Ціна ({activeCurrency})</th>
-              <th className="px-2 py-3 text-center font-semibold text-gray-800 dark:text-slate-200 w-28 bg-green-50/30 dark:bg-green-900/10 font-bold">Сума</th>
-              <th className="px-1 py-3 w-10 no-print"></th>
+              <th className="px-1 py-3 text-left font-semibold text-gray-800 dark:text-slate-400 w-8" style={{ backgroundColor: '#faf5ec' }}>#</th>
+              <th className="px-2 py-3 text-left font-semibold text-gray-800 dark:text-slate-300" style={{ backgroundColor: '#faf5ec' }}>Назва / Опис товару</th>
+              <th className="px-1 py-3 text-center font-semibold text-gray-800 dark:text-slate-400 w-14" style={{ backgroundColor: '#faf5ec' }}>Од.</th>
+              <th className="px-2 py-3 text-center font-semibold text-gray-800 dark:text-slate-400 w-20" style={{ backgroundColor: '#faf5ec' }}>Кіл.</th>
+              <th className="px-2 py-3 text-center font-semibold text-gray-800 dark:text-slate-400 w-28 cost-column" style={{ backgroundColor: '#faf5ec' }}>Собів. ({activeCurrency})</th>
+              <th className="px-2 py-3 text-center font-semibold text-gray-800 dark:text-slate-400 w-28 cost-column" style={{ backgroundColor: '#faf5ec' }}>Сума соб.</th>
+              <th className="px-2 py-3 text-center font-semibold text-gray-800 dark:text-slate-400 w-28" style={{ backgroundColor: '#faf5ec' }}>Ціна ({activeCurrency})</th>
+              <th className="px-2 py-3 text-center font-semibold text-gray-900 dark:text-slate-200 w-28 font-bold" style={{ backgroundColor: '#faf5ec' }}>Сума</th>
+              <th className="px-1 py-3 w-10 no-print" style={{ backgroundColor: '#faf5ec' }}></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100/80 dark:divide-slate-800/50">

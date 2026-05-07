@@ -77,18 +77,18 @@ export function ProposalSummary({
       {/* Summary Footer */}
       <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 overflow-hidden shadow-sm">
         <table className="w-full text-sm">
-          <tfoot className="bg-gray-50 dark:bg-slate-900/50 border-t-2 border-gray-300 dark:border-slate-700">
+          <tfoot className="dark:bg-slate-900/50 border-t-2 border-[#f59e0b]" style={{ backgroundColor: '#faf5ec' }}>
             {/* Subtotal row - hide on print if no VAT */}
-            <tr className={`bg-gray-50/30 dark:bg-slate-800/10 ${vatMode === 'none' ? 'print:hidden' : ''}`}>
+            <tr className={`bg-gray-50/30 dark:bg-slate-800/10 print:bg-transparent ${vatMode === 'none' ? 'print:hidden' : ''}`}>
               <td colSpan={3} className="px-3 py-2 text-right text-xs text-gray-500 dark:text-slate-400">
                 Разом (без ПДВ):
               </td>
-              <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-600 dark:text-slate-400"></td>
-              <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-500 dark:text-slate-400 underline decoration-gray-300 dark:decoration-slate-700">
+              <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-600 dark:text-slate-400 print:bg-transparent"></td>
+              <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-500 dark:text-slate-400 underline decoration-gray-300 dark:decoration-slate-700 print:bg-transparent">
                 {formatCurrency(convert(costSubtotal, 'USD', activeCurrency), activeCurrency)}
               </td>
               <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 no-print"></td>
-              <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 text-gray-600 dark:text-slate-400">
+              <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 text-gray-600 dark:text-slate-400 print:bg-transparent">
                 {formatCurrency(convert(total - vatAmount, 'USD', activeCurrency), activeCurrency)}
               </td>
               <td className="no-print"></td>
@@ -96,7 +96,7 @@ export function ProposalSummary({
 
             {/* VAT row */}
             {vatMode !== 'none' && (
-              <tr className="bg-gray-50/30 dark:bg-slate-800/10">
+              <tr className="bg-gray-50/30 dark:bg-slate-800/10 print:bg-transparent">
                 <td colSpan={3} className="px-3 py-2 text-right text-xs text-gray-500 dark:text-slate-400 italic">
                   {vatMode === 'add' ? 'ПДВ (20%):' : 'в т.ч. ПДВ (20%):'}
                 </td>
@@ -111,16 +111,16 @@ export function ProposalSummary({
             )}
 
             {/* GRAND TOTAL ROW */}
-            <tr className="font-bold bg-gray-100/50 dark:bg-slate-800/30">
-              <td colSpan={3} className="px-3 py-2 print:py-1.5 text-right uppercase tracking-wider text-xs text-gray-700 dark:text-slate-300">
+            <tr className="font-bold dark:bg-slate-800/30" style={{ backgroundColor: '#faf5ec', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as any}>
+              <td colSpan={3} className="px-3 py-2 print:py-1.5 text-right uppercase tracking-wider text-xs text-gray-700 dark:text-slate-300" style={{ backgroundColor: '#faf5ec' }}>
                 {vatMode === 'none' ? 'Загальний підсумок:' : 'Всього до сплати (з ПДВ):'}
               </td>
-              <td className="px-1 py-4 text-center bg-blue-50/50 dark:bg-blue-900/20 cost-column"></td>
-              <td className="px-1 py-4 text-center bg-blue-50/50 dark:bg-blue-900/20 cost-column text-gray-700 dark:text-slate-300 font-black">
+              <td className="px-1 py-4 text-center cost-column" style={{ backgroundColor: '#faf5ec' }}></td>
+              <td className="px-1 py-4 text-center cost-column text-gray-700 dark:text-slate-300 font-black" style={{ backgroundColor: '#faf5ec' }}>
                 {formatCurrency(convert(costSubtotal, 'USD', activeCurrency), activeCurrency)}
               </td>
-              <td className="px-1 py-4 text-center bg-green-50/50 dark:bg-green-900/20 no-print"></td>
-              <td className="px-1 py-4 text-center bg-green-50/50 dark:bg-green-900/20 text-primary dark:text-blue-400 text-lg print:text-base font-black">
+              <td className="px-1 py-4 text-center no-print" style={{ backgroundColor: '#faf5ec' }}></td>
+              <td className="px-1 py-4 text-center text-primary dark:text-blue-400 text-lg print:text-base font-black" style={{ backgroundColor: '#faf5ec' }}>
                 {formatCurrency(convert(total, 'USD', activeCurrency), activeCurrency)}
               </td>
               <td className="no-print"></td>
@@ -148,7 +148,7 @@ export function ProposalSummary({
       </div>
 
       {/* Notes */}
-      <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-2">
+      <div className="dark:bg-slate-900 rounded-lg border border-[#f59e0b]/20 p-2" style={{ backgroundColor: '#faf5ec', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as any}>
         <label className="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">
           Примітки
         </label>
