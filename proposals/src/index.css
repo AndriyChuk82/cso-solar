@@ -484,7 +484,6 @@ header nav a[class*="text-primary"] {
   body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    color-adjust: exact !important;
   }
 
   /* Table styles for print */
