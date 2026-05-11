@@ -22,7 +22,7 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
   const [power, setPower] = useState<number>(10);
   const [stationType, setStationType] = useState<StationType>('hybrid');
   const [backup, setBackup] = useState<number>(10);
-  const [panelReserve, setPanelReserve] = useState<number>(0);
+  const [panelPower, setPanelPower] = useState<number>(10);
   const [mountingType, setMountingType] = useState<MountingType>('roof');
 
   const [selectedInverterId, setSelectedInverterId] = useState<string>('');
@@ -300,7 +300,7 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
       if (panel) {
         let panelPwr = parsePowerFromTitle(panel.name) || 615;
         if (panelPwr > 100) panelPwr = panelPwr / 1000; // Watts to kW
-        const targetPanelPower = power * (1 + panelReserve / 100);
+        const targetPanelPower = panelPower;
         panelCount = Math.ceil(targetPanelPower / panelPwr);
         actualPanelPower = panelCount * panelPwr;
         items.push(createItem(panel, panelCount));
@@ -344,8 +344,24 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
         }
       }
 
-      // Rack for batteries (if 2+)
-      if (batCount >= 2) {
+      // Rack for batteries (if 2+ and HV system)
+      // Check if inverter is HV for racks
+      let isInverterHVForRacks = false;
+      const invForRacks = allAvailableProducts.find(p => p.id === selectedInverterId);
+      if (invForRacks) {
+        const titleLower = invForRacks.name.toLowerCase();
+        const descLower = (invForRacks.description || '').toLowerCase();
+        if (titleLower.includes('hv') || descLower.includes('hv')) {
+          isInverterHVForRacks = true;
+        } else if (titleLower.includes('lv') || descLower.includes('lv')) {
+          isInverterHVForRacks = false;
+        } else {
+          const invPower = parsePowerFromTitle(invForRacks.name) || 0;
+          isInverterHVForRacks = invPower > 20;
+        }
+      }
+
+      if (batCount >= 2 && isInverterHVForRacks) {
         const racks = allAvailableProducts.filter(p => {
           const t = p.name.toLowerCase();
           if (t.includes('комплект') || t.includes('cluster')) return false;
@@ -517,12 +533,16 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
               {/* Power */}
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-tighter">
-                  Потужність (кВт)
+                  Потужність інвертора (кВт)
                 </label>
                 <input
                   type="number"
                   value={power}
-                  onChange={(e) => setPower(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value) || 0;
+                    setPower(val);
+                    setPanelPower(val);
+                  }}
                   className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none shadow-sm"
                 />
               </div>
@@ -560,12 +580,12 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
               {/* Panel Reserve */}
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-tighter">
-                  Запас панелей (%)
+                  Потужність панелей (кВт)
                 </label>
                 <input
                   type="number"
-                  value={panelReserve}
-                  onChange={(e) => setPanelReserve(parseFloat(e.target.value) || 0)}
+                  value={panelPower}
+                  onChange={(e) => setPanelPower(parseFloat(e.target.value) || 0)}
                   className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary outline-none shadow-sm"
                 />
               </div>
