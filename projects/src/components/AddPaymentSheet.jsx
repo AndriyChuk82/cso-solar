@@ -44,12 +44,13 @@ export function AddPaymentSheet({ isOpen, projectId, balance = 0, currency = 'US
         status: 'Оплачено',
       });
       if (res.success) {
-        onSaved();
+        if (typeof onSaved === 'function') onSaved();
         onClose();
       } else {
         setError(res.error || 'Не вдалося зберегти платіж');
       }
-    } catch {
+    } catch (err) {
+      console.error('Save payment error:', err);
       setError('Помилка підключення до сервера');
     } finally {
       setIsSaving(false);

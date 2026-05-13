@@ -373,19 +373,7 @@ export function ProjectDetail({
   /* ================================================================ */
   return (
     <>
-      {showPaymentSheet && (
-        <AddPaymentSheet
-          projectId={projectId}
-          balance={balance}
-          currency={currency}
-          rate={rate}
-          onSaved={async () => { 
-            const fresh = await load(); 
-            if (onUpdate && fresh) onUpdate(fresh); 
-          }}
-          onClose={() => setShowPaymentSheet(false)}
-        />
-      )}
+
 
       {/* ---- HEADER ---- */}
       <div className="panel-detail-header">
@@ -880,14 +868,14 @@ export function ProjectDetail({
       <AddPaymentSheet
         isOpen={showPaymentSheet}
         onClose={() => setShowPaymentSheet(false)}
-        onAdd={async (p) => {
-          const res = await projectService.savePayment({ ...p, project_id: projectId });
-          if (res.success) {
-            const fresh = await load();
-            if (onUpdate && fresh) onUpdate(fresh);
-          }
-        }}
+        projectId={projectId}
+        balance={balance}
         currency={currency}
+        rate={rate}
+        onSaved={async () => {
+          const fresh = await load();
+          if (onUpdate && fresh) onUpdate(fresh);
+        }}
       />
     </>
   );

@@ -2009,12 +2009,14 @@ function handleSavePayment(paymentData, userEmail) {
     'project_id': paymentData.projectId || paymentData.project_id,
     'date': paymentData.date || dateStr(),
     'sum': paymentData.sum,
-    'status': paymentData.status || 'Оплачено',
+    'active': paymentData.status || 'Оплачено',
     'note': paymentData.note || paymentData.notes || '',
     'payment_type': paymentData.payment_type || 'Повна оплата',
     'user': userEmail || 'Система',
     'created_at': now()
   };
+
+  console.log('handleSavePayment valueMap:', JSON.stringify(valueMap));
 
   if (row === -1) {
     const appendData = headerRow.map(h => {
@@ -2022,6 +2024,7 @@ function handleSavePayment(paymentData, userEmail) {
       const mapped = HEADER_MAP[s] || s;
       return valueMap[mapped] !== undefined ? valueMap[mapped] : '';
     });
+    console.log('Appending row:', JSON.stringify(appendData));
     sheet.appendRow(appendData);
   } else {
     headerRow.forEach((h, idx) => {
