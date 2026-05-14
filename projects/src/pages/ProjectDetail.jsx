@@ -133,26 +133,7 @@ export function ProjectDetail({
         const loadedPayments = data.payments || [];
         setPayments(loadedPayments);
 
-        // Calculate finance fields for the list (ProjectList expects these)
-        const itemsTotal = loaded.reduce((a, i) => a + (parseFloat(i.sum) || 0), 0);
-        const kpSum = parseFloat(data.project.total_cost) || itemsTotal || 0; // Items are always USD base
-        
-        let agreedSum = parseFloat(data.project.agreed_sum);
-        if (isNaN(agreedSum) || agreedSum <= 0) {
-           // Fallback to kpSum, but must convert if project is UAH
-           agreedSum = (data.project.currency === 'UAH' ? kpSum * rate : kpSum);
-        }
-        
-        const validPay = loadedPayments.filter(p => !p.status?.toLowerCase().includes('скасовано'));
-        // Sum payments as-is (assuming they match the project's native currency)
-        const totalPaid = validPay.reduce((a, p) => a + (parseFloat(p.sum) || 0), 0);
-        const balance = agreedSum - totalPaid;
-
-        return {
-          ...data.project,
-          total_paid: totalPaid,
-          balance: balance
-        };
+        return data;
       }
     } finally { setIsLoading(false); }
     return null;
@@ -161,13 +142,6 @@ export function ProjectDetail({
   useEffect(() => {
     if (projectId) load();
   }, [projectId, load]);
-
-  // Sync global currency toggle changes to project state
-  useEffect(() => {
-    if (project && currency && currency !== project.currency) {
-      setProject(prev => ({ ...prev, currency }));
-    }
-  }, [currency]);
 
   useEffect(() => {
     if (project && project.name) {
@@ -184,7 +158,6 @@ export function ProjectDetail({
     setIsSaved(false);
     try {
       const pToSave = { ...project };
-      // Note: No automatic conversion here. We save exactly what the user entered.
       const res = await projectService.saveProject(pToSave);
       if (!res.success) {
         hapticError();
@@ -198,12 +171,7 @@ export function ProjectDetail({
         }
         setIsSaved(true);
         if (onUpdate) {
-          // Add current local finance data to the updated project
-          onUpdate({
-            ...savedProject,
-            total_paid: totalPaid,
-            balance: agreedSum - totalPaid
-          });
+          onUpdate(savedProject);
         }
         setTimeout(() => setIsSaved(false), 2500);
       }
@@ -355,16 +323,26 @@ export function ProjectDetail({
   const displayItems  = editingItems ? pendingItems : items;
   const itemsTotal    = displayItems.reduce((a, i) => a + (parseFloat(i.sum) || 0), 0);
   const kpSum         = parseFloat(project.total_cost) || itemsTotal || 0;
-  const agreedSum     = parseFloat(project.agreed_sum) || kpSum;
+  
+  // Independent Agreed Sums
+  const agreedUSD     = parseFloat(project.agreed_sum_usd) || 0;
+  const agreedUAH     = parseFloat(project.agreed_sum_uah) || 0;
+  
   const validPay      = payments.filter(p => !p.status?.toLowerCase().includes('скасовано'));
-  const totalPaid     = validPay.reduce((a, p) => a + (parseFloat(p.sum) || 0), 0);
-  const balance       = agreedSum - totalPaid;
-  const paidPct       = agreedSum > 0 ? Math.min(100, (totalPaid / agreedSum) * 100) : 0;
+  
+  // Calculate paid amounts separately
+  const paidUSD       = validPay.filter(p => p.currency === 'USD').reduce((a, p) => a + (parseFloat(p.sum) || 0), 0);
+  const paidUAH       = validPay.filter(p => p.currency === 'UAH').reduce((a, p) => a + (parseFloat(p.sum) || 0), 0);
+  
+  const balances = {
+    USD: agreedUSD - paidUSD,
+    UAH: agreedUAH - paidUAH
+  };
+
   const isModified    = !editingItems && project.proposal_id && items.length > 0 && itemsModified(items, origItems);
   const isClosed      = project.status === 'Виконано';
 
   // Project subtitle for display
-  // Prefer: project name → created_at date → id
   const proposalDisplay = project.name
     ? project.name
     : project.created_at
@@ -396,7 +374,7 @@ export function ProjectDetail({
           </div>
         </div>
 
-        {/* Action buttons (Currency + Close) */}
+        {/* Action buttons (Close) */}
         <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink: 0 }}>
           {!isClosed && (
             <button
@@ -416,34 +394,6 @@ export function ProjectDetail({
             >
               {isClosing ? '...' : 'Завершити проєкт'}
             </button>
-          )}
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button
-              className={`currency-btn ${currency === 'USD' ? 'active' : ''}`}
-              onClick={() => { 
-                setCurrency('USD'); 
-                setShowRateInput(false); 
-                if (project) setProject({ ...project, currency: 'USD' });
-              }}
-            >$</button>
-            <button
-              className={`currency-btn ${currency === 'UAH' ? 'active' : ''}`}
-              onClick={() => { 
-                setCurrency('UAH'); 
-                setShowRateInput(true); 
-                if (project) setProject({ ...project, currency: 'UAH' });
-              }}
-            >₴</button>
-          </div>
-          {currency === 'UAH' && showRateInput && (
-            <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-              <input
-                type="number" min="1" value={rate}
-                onChange={e => setRate(parseFloat(e.target.value) || 41)}
-                className="form-input"
-                style={{ width:60, padding:'4px 6px', fontSize:'0.78rem', textAlign:'center' }}
-              />
-            </div>
           )}
           <button 
             className="btn btn-sm btn-primary" 
@@ -538,9 +488,6 @@ export function ProjectDetail({
             <div className="card-header" style={{ padding: '8px 14px', justifyContent: 'space-between', background: 'rgba(240, 148, 51, 0.05)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span className="section-label" style={{ fontSize: '0.85rem' }}>💰 Фінанси та Платежі</span>
-                <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)', fontSize: '0.65rem', padding: '1px 6px', fontWeight: 700 }}>
-                  {project.currency === 'UAH' ? '₴ UAH' : '$ USD'}
-                </span>
               </div>
               <button
                 className="btn btn-sm"
@@ -554,42 +501,51 @@ export function ProjectDetail({
               </button>
             </div>
             
-            <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {/* Summary Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'flex-end' }}>
+            <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              
+              {/* USD ACCOUNT */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 12, alignItems: 'flex-start' }}>
                 <div>
-                  <FL style={{ fontSize: '0.65rem', marginBottom: 2 }}>Погоджена сума ({currency})</FL>
-                  <input type="number" inputMode="numeric" className="form-input"
-                    value={
-                      project.agreed_sum !== undefined && project.agreed_sum !== '' 
-                        ? (currency === project.currency ? Number(project.agreed_sum).toFixed(2).replace(/\.00$/, '') : (currency === 'UAH' ? (Number(project.agreed_sum) * rate).toFixed(0) : (Number(project.agreed_sum) / rate).toFixed(2)))
-                        : (kpSum > 0 ? (currency === 'UAH' ? (kpSum * rate).toFixed(0) : kpSum.toFixed(2).replace(/\.00$/, '')) : '')
-                    }
-                    onChange={e => {
-                      const val = parseFloat(e.target.value) || 0;
-                      setProject({ ...project, agreed_sum: val, currency: currency });
-                    }}
-                    placeholder="0"
-                    style={{ fontSize: '0.95rem', fontWeight: 700, padding: '6px 10px' }} />
+                  <FL style={{ fontSize: '0.62rem', marginBottom: 2 }}>Погоджено в USD ($)</FL>
+                  <div style={{ position: 'relative' }}>
+                    <input type="number" inputMode="numeric" className="form-input"
+                      value={project.agreed_sum_usd || ''}
+                      onChange={e => setProject({ ...project, agreed_sum_usd: e.target.value })}
+                      placeholder="0"
+                      style={{ fontSize: '0.9rem', fontWeight: 700, padding: '6px 10px', borderLeft: '3px solid #3b82f6' }} />
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                      Оплачено: <b>${paidUSD.toLocaleString()}</b>
+                    </div>
+                  </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 2, textTransform: 'uppercase' }}>Залишок (борг)</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 800, color: balance > 0 ? 'var(--danger)' : 'var(--success)' }}>
-                    {balance > 0 ? formatAmount(balance, currency, rate, project.currency) : '✓ Оплачено'}
+                <div style={{ textAlign: 'right', paddingTop: 18 }}>
+                  <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 2, textTransform: 'uppercase' }}>Борг USD</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 800, color: balances.USD > 1 ? 'var(--danger)' : 'var(--success)' }}>
+                    {balances.USD > 1 ? `$${Math.round(balances.USD).toLocaleString()}` : '✓'}
                   </div>
                 </div>
               </div>
 
-              {/* Progress Bar (Slim) */}
-              <div style={{ marginTop: 2 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600 }}>Оплачено {formatAmount(totalPaid, currency, rate, project.currency)}</span>
-                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: paidPct >= 100 ? 'var(--success)' : 'var(--primary)' }}>
-                    {Math.round(paidPct)}%
-                  </span>
+              {/* UAH ACCOUNT */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 12, alignItems: 'flex-start', borderTop: '1px dashed var(--border-light)', paddingTop: 10 }}>
+                <div>
+                  <FL style={{ fontSize: '0.62rem', marginBottom: 2 }}>Погоджено в UAH (₴)</FL>
+                  <div style={{ position: 'relative' }}>
+                    <input type="number" inputMode="numeric" className="form-input"
+                      value={project.agreed_sum_uah || ''}
+                      onChange={e => setProject({ ...project, agreed_sum_uah: e.target.value })}
+                      placeholder="0"
+                      style={{ fontSize: '0.9rem', fontWeight: 700, padding: '6px 10px', borderLeft: '3px solid #f09433' }} />
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                      Оплачено: <b>{paidUAH.toLocaleString()} ₴</b>
+                    </div>
+                  </div>
                 </div>
-                <div className="progress-bar" style={{ height: 6 }}>
-                  <div className="progress-bar-fill" style={{ width: `${paidPct}%` }} />
+                <div style={{ textAlign: 'right', paddingTop: 18 }}>
+                  <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 2, textTransform: 'uppercase' }}>Борг UAH</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 800, color: balances.UAH > 1 ? 'var(--danger)' : 'var(--success)' }}>
+                    {balances.UAH > 1 ? `${Math.round(balances.UAH).toLocaleString()} ₴` : '✓'}
+                  </div>
                 </div>
               </div>
 
@@ -627,7 +583,7 @@ export function ProjectDetail({
                             </div>
                             <div>
                               <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>
-                                {formatAmount(p.sum, currency, rate, project.currency)}
+                                {p.currency === 'UAH' ? `${Number(p.sum).toLocaleString()} ₴` : `$${Number(p.sum).toLocaleString()}`}
                               </div>
                               <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
                                 {formatDate(p.date)} {p.note && `• ${p.note}`}
@@ -832,7 +788,7 @@ export function ProjectDetail({
               width: 52, height: 52, borderRadius: '50%',
               background: isSaved ? 'var(--success, #22c55e)' : 'var(--primary, #f09433)',
               color: '#fff', border: 'none',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+              boxShadow: '0 4px 166px rgba(0,0,0,0.25)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', transition: 'background 0.3s ease',
               opacity: isSaving ? 0.7 : 1,
@@ -869,9 +825,8 @@ export function ProjectDetail({
         isOpen={showPaymentSheet}
         onClose={() => setShowPaymentSheet(false)}
         projectId={projectId}
-        balance={balance}
+        balances={balances}
         currency={currency}
-        rate={rate}
         onSaved={async () => {
           const fresh = await load();
           if (onUpdate && fresh) onUpdate(fresh);

@@ -379,6 +379,8 @@ const HEADER_MAP = {
   'оновлено': 'updated_at',
   'updated_at': 'updated_at',
   'погоджена сума': 'agreed_sum',
+  'погоджена сума usd': 'agreed_sum_usd',
+  'погоджена сума uah': 'agreed_sum_uah',
   'тип платежу': 'payment_type',
   'дата закриття': 'closed_date',
   'номер': 'project_number',
@@ -1672,7 +1674,7 @@ function handleGetProjects(userEmail) {
   const ss = getSpreadsheet();
   const projectsSheet = getSheetWithInit('projects', [
     'ID', 'Назва', 'Клієнт', 'Телефон', 'Адреса', 'Статус', 'Примітки', 'ID КП',
-    'Погоджена сума', 'Валюта', 'Номер', 'Дата закриття', 'Створено', 'Оновлено'
+    'Погоджена сума', 'Валюта', 'Номер', 'Дата закриття', 'Погоджена сума USD', 'Погоджена сума UAH', 'Створено', 'Оновлено'
   ], [], ss);
   
   const projects = sheetToObjects(projectsSheet);
@@ -1686,6 +1688,8 @@ function handleGetProjects(userEmail) {
     return {
       ...p,
       agreed_sum: parseFloat(p.agreed_sum || p['погоджена сума'] || 0),
+      agreed_sum_usd: parseFloat(p.agreed_sum_usd || 0),
+      agreed_sum_uah: parseFloat(p.agreed_sum_uah || 0),
       total_cost: 0,
       total_paid: 0,
       balance: 0
@@ -1700,10 +1704,21 @@ function handleGetProjectDetails(projectId) {
   
   const ss = getSpreadsheet();
   const projectsSheet = getSheet('projects', ss.getId());
-  const projects = sheetToObjects(projectsSheet);
-  const project = projects.find(p => String(p.id) === String(projectId));
   
-  if (!project) return { success: false, error: 'Проект не знайдено' };
+  // OPTIMIZATION: Find only the specific row instead of reading all projects
+  const row = findRowByValue(projectsSheet, 'id', projectId);
+  if (row === -1) return { success: false, error: 'Проект не знайдено' };
+  
+  const headers = projectsSheet.getRange(1, 1, 1, projectsSheet.getLastColumn()).getValues()[0];
+  const rowData = projectsSheet.getRange(row, 1, 1, projectsSheet.getLastColumn()).getValues()[0];
+  
+  // Map row to object
+  const project = {};
+  headers.forEach((h, i) => {
+    const s = String(h).trim().toLowerCase();
+    const mapped = HEADER_MAP[s] || s;
+    project[mapped] = rowData[i];
+  });
 
   let proposalNumber = null;
   if (project.proposal_id) {
@@ -1740,7 +1755,9 @@ function handleGetProjectDetails(projectId) {
   const enrichedProject = {
     ...project,
     proposal_number: proposalNumber,
-    agreed_sum: project.agreed_sum !== undefined ? project.agreed_sum : parseFloat(project['погоджена сума']) || 0
+    agreed_sum: project.agreed_sum !== undefined ? project.agreed_sum : parseFloat(project['погоджена сума']) || 0,
+    agreed_sum_usd: parseFloat(project.agreed_sum_usd || 0),
+    agreed_sum_uah: parseFloat(project.agreed_sum_uah || 0)
   };
 
   return { 
@@ -1755,10 +1772,18 @@ function handleSaveProject(projectData, userEmail) {
   const ss = getSpreadsheet();
   const sheet = getSheetWithInit('projects', [
     'ID', 'Назва', 'Клієнт', 'Телефон', 'Адреса', 'Статус', 'Примітки', 'ID КП',
-    'Погоджена сума', 'Валюта', 'Номер', 'Дата закриття', 'Створено', 'Оновлено'
+    'Погоджена сума', 'Валюта', 'Номер', 'Дата закриття', 'Погоджена сума USD', 'Погоджена сума UAH', 'Створено', 'Оновлено'
   ], [], ss);
   
   let headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+  // Ensure new columns exist if it was an old sheet
+  if (!headerRow.includes('Погоджена сума USD')) {
+    sheet.getRange(1, headerRow.length + 1).setValue('Погоджена сума USD');
+    sheet.getRange(1, headerRow.length + 2).setValue('Погоджена сума UAH');
+    headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  }
+
   let row = findRowByValue(sheet, 'id', projectData.id);
   const ts = now();
 
@@ -1955,10 +1980,14 @@ function handleImportFromProposal(projectId, proposalId) {
 function handleSavePayment(paymentData, userEmail) {
   const ss = getSpreadsheet();
   const sheet = getSheetWithInit('project_payments', [
-    'ID', 'ID Проекту', 'Дата', 'Сума', 'Статус', 'Примітка', 'Тип платежу', 'Автор', 'Створено'
+    'ID', 'ID Проекту', 'Дата', 'Сума', 'Статус', 'Примітка', 'Тип платежу', 'Автор', 'Валюта', 'Створено'
   ], [], ss);
   
   let headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  if (!headerRow.includes('Валюта')) {
+    sheet.getRange(1, headerRow.length + 1).setValue('Валюта');
+    headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  }
   let row = findRowByValue(sheet, 'id', paymentData.id);
 
   const valueMap = {
@@ -1966,6 +1995,7 @@ function handleSavePayment(paymentData, userEmail) {
     'project_id': paymentData.projectId || paymentData.project_id,
     'date': paymentData.date || dateStr(),
     'sum': paymentData.sum,
+    'currency': paymentData.currency || 'USD',
     'active': paymentData.status || 'Оплачено',
     'note': paymentData.note || paymentData.notes || '',
     'payment_type': paymentData.payment_type || 'Повна оплата',

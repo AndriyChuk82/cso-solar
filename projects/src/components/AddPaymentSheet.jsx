@@ -3,12 +3,13 @@ import { createPortal } from 'react-dom';
 import { X, Check } from 'lucide-react';
 import { projectService } from '../services/api';
 
-export function AddPaymentSheet({ isOpen, projectId, balance = 0, currency = 'USD', rate = 41, onClose, onSaved }) {
+export function AddPaymentSheet({ isOpen, projectId, balances = { USD: 0, UAH: 0 }, currency = 'USD', onClose, onSaved }) {
 
   const today = new Date().toISOString().split('T')[0];
 
   const [type, setType] = useState('Аванс');
   const [sum, setSum] = useState('');
+  const [paymentCurrency, setPaymentCurrency] = useState(currency || 'USD');
   const [date, setDate] = useState(today);
   const [note, setNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -17,12 +18,19 @@ export function AddPaymentSheet({ isOpen, projectId, balance = 0, currency = 'US
   const handleTypeSelect = (newType) => {
     setType(newType);
     if (newType === 'Повна оплата') {
-      const remaining = balance * (currency === 'UAH' ? rate : 1);
-      setSum(remaining > 0 ? Number(remaining.toFixed(2)) : '');
+      const currentBalance = balances?.[paymentCurrency] || 0;
+      setSum(currentBalance > 0 ? Number(currentBalance.toFixed(2)) : '');
     } else {
       setSum('');
     }
   };
+
+  useEffect(() => {
+    if (type === 'Повна оплата') {
+      const currentBalance = balances?.[paymentCurrency] || 0;
+      setSum(currentBalance > 0 ? Number(currentBalance.toFixed(2)) : '');
+    }
+  }, [paymentCurrency, balances, type]);
 
   const handleSave = async () => {
     if (!sum || parseFloat(sum) <= 0) {
@@ -32,12 +40,12 @@ export function AddPaymentSheet({ isOpen, projectId, balance = 0, currency = 'US
     setError('');
     setIsSaving(true);
     try {
-      // Save sum exactly as entered (respecting the project's native currency)
       const inputSum = parseFloat(sum);
 
       const res = await projectService.savePayment({
         project_id: projectId,
         sum: Number(inputSum.toFixed(2)),
+        currency: paymentCurrency,
         payment_type: type,
         date,
         note,
@@ -100,7 +108,29 @@ export function AddPaymentSheet({ isOpen, projectId, balance = 0, currency = 'US
         <div className="payment-form-grid" style={{ marginBottom: 16 }}>
           {/* Сума */}
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4, display: 'block' }}>Сума ({currency === 'UAH' ? '₴' : '$'})</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 4 }}>
+              <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', margin: 0 }}>Сума ({paymentCurrency})</label>
+              <div style={{ display: 'flex', gap: 2, background: 'var(--bg-sidebar)', padding: 2, borderRadius: 4 }}>
+                <button 
+                  onClick={() => setPaymentCurrency('USD')}
+                  style={{ 
+                    padding: '2px 8px', fontSize: '0.65rem', fontWeight: 800, border: 'none', borderRadius: 3,
+                    background: paymentCurrency === 'USD' ? 'var(--primary)' : 'transparent',
+                    color: paymentCurrency === 'USD' ? 'white' : 'var(--text-muted)',
+                    cursor: 'pointer'
+                  }}
+                >$</button>
+                <button 
+                  onClick={() => setPaymentCurrency('UAH')}
+                  style={{ 
+                    padding: '2px 8px', fontSize: '0.65rem', fontWeight: 800, border: 'none', borderRadius: 3,
+                    background: paymentCurrency === 'UAH' ? 'var(--primary)' : 'transparent',
+                    color: paymentCurrency === 'UAH' ? 'white' : 'var(--text-muted)',
+                    cursor: 'pointer'
+                  }}
+                >₴</button>
+              </div>
+            </div>
             <div style={{ position: 'relative' }}>
               <input
                 type="number"
