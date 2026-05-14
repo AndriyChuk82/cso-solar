@@ -325,14 +325,26 @@ export function ProjectDetail({
   const kpSum         = parseFloat(project.total_cost) || itemsTotal || 0;
   
   // Independent Agreed Sums
-  const agreedUSD     = parseFloat(project.agreed_sum_usd) || 0;
-  const agreedUAH     = parseFloat(project.agreed_sum_uah) || 0;
+  let agreedUSD = parseFloat(project.agreed_sum_usd) || 0;
+  let agreedUAH = parseFloat(project.agreed_sum_uah) || 0;
+  
+  // Backwards compatibility: If both new sums are 0, use the old agreed_sum field
+  if (agreedUSD === 0 && agreedUAH === 0) {
+    const oldAgreed = parseFloat(project.agreed_sum) || kpSum;
+    if (project.currency === 'UAH') {
+      agreedUAH = oldAgreed;
+    } else {
+      agreedUSD = oldAgreed;
+    }
+  }
   
   const validPay      = payments.filter(p => !p.status?.toLowerCase().includes('скасовано'));
   
-  // Calculate paid amounts separately
-  const paidUSD       = validPay.filter(p => p.currency === 'USD').reduce((a, p) => a + (parseFloat(p.sum) || 0), 0);
-  const paidUAH       = validPay.filter(p => p.currency === 'UAH').reduce((a, p) => a + (parseFloat(p.sum) || 0), 0);
+  // Calculate paid amounts separately. Default old payments to project's main currency.
+  const paidUSD       = validPay.filter(p => p.currency === 'USD' || (!p.currency && project.currency !== 'UAH'))
+                                .reduce((a, p) => a + (parseFloat(p.sum) || 0), 0);
+  const paidUAH       = validPay.filter(p => p.currency === 'UAH' || (!p.currency && project.currency === 'UAH'))
+                                .reduce((a, p) => a + (parseFloat(p.sum) || 0), 0);
   
   const balances = {
     USD: agreedUSD - paidUSD,
