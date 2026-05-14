@@ -239,11 +239,12 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
 
     const items: Partial<ProposalItem>[] = [];
     const markupTarget = proposal.markup || settings.defaultMarkup || 15;
+    const adjustmentTarget = proposal.adjustment || 0;
 
     // Helper to create proposal item
     const createItem = (product: Product, qty: number): Partial<ProposalItem> => {
       const costPrice = product.price;
-      const salePrice = Math.round(costPrice * (1 + markupTarget / 100) * 10) / 10;
+      const salePrice = Math.round(costPrice * (1 + markupTarget / 100) * (1 + adjustmentTarget / 100) * 10) / 10;
 
       return {
         id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -261,7 +262,7 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
 
     // Helper to create custom item
     const createCustomItem = (name: string, description: string, unit: string, costUSD: number, qty: number): Partial<ProposalItem> => {
-      const salePrice = Math.round(costUSD * (1 + markupTarget / 100) * 10) / 10;
+      const salePrice = Math.round(costUSD * (1 + markupTarget / 100) * (1 + adjustmentTarget / 100) * 10) / 10;
 
       return {
         id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

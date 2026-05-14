@@ -110,6 +110,7 @@ function createEmptyProposal(history: Proposal[] = []): Proposal {
     items: [],
     subtotal: 0,
     markup: CONFIG.DEFAULT_MARKUP,
+    adjustment: 0,
     total: 0,
     currency: 'USD',
     notes: '',
@@ -150,7 +151,7 @@ export const createProposalSlice: StateCreator<
     } else {
       // Додаємо новий товар
       const costPrice = product.price;
-      const salePrice = costPrice * (1 + proposal.markup / 100);
+      const salePrice = costPrice * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
 
       const newItem: ProposalItem = {
         id: generateId(),
@@ -204,7 +205,7 @@ export const createProposalSlice: StateCreator<
       ...proposal,
       items: proposal.items.map(item => {
         if (item.id === itemId) {
-          const salePrice = Math.round(roundedCost * (1 + proposal.markup / 100) * 10000) / 10000;
+          const salePrice = Math.round(roundedCost * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100) * 10000) / 10000;
           return {
             ...item,
             costPrice: roundedCost,
@@ -381,7 +382,7 @@ export const createProposalSlice: StateCreator<
     const updatedProposal = calculateProposalTotals({
       ...proposal,
       items: proposal.items.map(item => {
-        const salePrice = item.costPrice * (1 + proposal.markup / 100);
+        const salePrice = item.costPrice * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
         const roundedPrice = Math.round(salePrice * 10000) / 10000;
         return {
           ...item,

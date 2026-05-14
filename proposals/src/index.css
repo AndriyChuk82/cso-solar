@@ -26,6 +26,16 @@
   --primary: var(--accent);
 }
 
+::selection {
+  background-color: #f59e0b !important;
+  color: #ffffff !important;
+}
+
+::-moz-selection {
+  background-color: #f59e0b !important;
+  color: #ffffff !important;
+}
+
 .dark {
   --bg-primary: #0f172a;
   --bg-secondary: #0f172a;

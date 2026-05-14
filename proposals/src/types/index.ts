@@ -49,6 +49,7 @@ export interface Proposal {
   items: ProposalItem[];
   subtotal: number;
   markup: number;
+  adjustment: number;
   total: number;
   currency: 'USD' | 'EUR' | 'UAH';
   notes?: string;

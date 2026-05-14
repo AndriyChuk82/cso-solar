@@ -164,10 +164,12 @@ export function ProposalBuilderTable() {
         rates={proposal.rates || { usdToUah: settings.usdRate, eurToUah: settings.eurRate }}
         activeCurrency={activeCurrency}
         markup={proposal.markup}
+        adjustment={proposal.adjustment || 0}
         isRefreshingRates={isRefreshingRates}
         onUpdateRates={(newRates) => updateProposalField('rates', newRates)}
         onSetActiveCurrency={setActiveCurrency}
         onUpdateMarkup={(markup) => updateProposalField('markup', markup)}
+        onUpdateAdjustment={(adjustment) => updateProposalField('adjustment', adjustment)}
         onRefreshRates={handleRefreshRates}
         onApplyMarkup={applyProposalMarkupToItems}
       />

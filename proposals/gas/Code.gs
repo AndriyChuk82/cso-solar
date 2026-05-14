@@ -1362,6 +1362,7 @@ function handleGetProposals() {
             eurToUah: eurRate
           },
           markup: markup,
+          adjustment: itemsData.adjustment || 0,
           total: total,
           status: status,
           items: items,
