@@ -123,7 +123,7 @@ export function ProjectList({ selectedId, onSelect, onAddNew, currency = 'USD', 
                     {p.client_name || p.client || p.name || 'Без імені'}
                   </div>
                   <div className="project-card-address">
-                    {p.address || <span style={{ fontStyle: 'italic' }}>Адреса не вказана</span>}
+                    {p.address || <span style={{ opacity: 0.5 }}>Адреса не вказана</span>}
                   </div>
                 </div>
               </div>

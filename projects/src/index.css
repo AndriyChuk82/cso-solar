@@ -222,12 +222,13 @@
 /* ===== Картки Проектів ===== */
 .project-card {
   position: relative;
-  padding: 16px;
+  padding: 10px 16px 10px 14px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: all var(--transition);
   background: var(--bg-sidebar);
   display: flex;
+  align-items: center;
   gap: 12px;
 }
 
@@ -236,7 +237,15 @@
 }
 
 .project-card.active {
-  background: rgba(232, 137, 10, 0.1);
+  background: rgba(232, 137, 10, 0.08);
+}
+
+.project-card.paid {
+  background: rgba(34, 197, 94, 0.02);
+}
+
+.project-card.has-debt {
+  background: rgba(239, 68, 68, 0.02);
 }
 
 .project-card-indicator {
@@ -252,17 +261,30 @@
   background: var(--primary);
 }
 
+.project-card.paid .project-card-indicator {
+  background: var(--success);
+}
+
+.project-card.has-debt .project-card-indicator {
+  background: var(--danger);
+}
+
 .project-card-name {
-  font-size: 15px;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--text);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  line-height: 1.2;
 }
 
 .project-card-address {
-  font-size: 13px;
+  font-size: 0.72rem;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
 }
 
 /* ===== Деталі Проекту (Project Detail) ===== */

@@ -1679,58 +1679,16 @@ function handleGetProjects(userEmail) {
   const paymentsSheet = getSheetWithInit('project_payments', [
     'ID', 'ID Проекту', 'Дата', 'Сума', 'Статус', 'Примітка', 'Тип платежу', 'Автор', 'Створено'
   ], [], ss);
-  
-  const itemsSheet = getSheetWithInit('project_items', [
-    'ID', 'ID Проекту', 'Назва', 'Кількість', 'Ціна', 'Сума', 'Видано', 'Примітка'
-  ], [], ss);
-
-  const payments = sheetToObjects(paymentsSheet);
-  const items = sheetToObjects(itemsSheet);
-
-  const itemsByProject = {};
-  items.forEach(i => {
-    const pid = String(i.project_id || '').trim();
-    if (pid) {
-      if (!itemsByProject[pid]) itemsByProject[pid] = [];
-      itemsByProject[pid].push(i);
-    }
-  });
-
-  const paymentsByProject = {};
-  payments.forEach(pay => {
-    const pid = String(pay.project_id || '').trim();
-    if (pid) {
-      if (!paymentsByProject[pid]) paymentsByProject[pid] = [];
-      paymentsByProject[pid].push(pay);
-    }
-  });
-
+    // OPTIMIZATION: We no longer calculate all totals for the entire list
+  // This makes the project list load almost instantly.
+  // Full details are fetched only when a project is selected.
   let enrichedProjects = projects.map(p => {
-    const pId = String(p.id || '').trim();
-    if (!pId) return { ...p, total_cost: 0, total_paid: 0, balance: 0 };
-
-    const projectItems = itemsByProject[pId] || [];
-    const totalCost = projectItems.reduce((acc, i) => acc + (parseFloat(i.sum) || 0), 0);
-    
-    const projectPayments = paymentsByProject[pId] || [];
-    const validPayments = projectPayments.filter(pay => {
-      const statusValue = String(pay.status || '').toLowerCase();
-      return statusValue.includes('оплачено') && !statusValue.includes('скасовано');
-    });
-    const totalPaid = validPayments.reduce((acc, pay) => acc + (parseFloat(pay.sum) || 0), 0);
-    
-    let agreedSum = parseFloat(p.agreed_sum || p['погоджена сума'] || 0);
-    if (!agreedSum) {
-      const rate = 41; 
-      agreedSum = (p.currency === 'UAH' ? totalCost * rate : totalCost);
-    }
-
     return {
       ...p,
-      agreed_sum: agreedSum,
-      total_cost: totalCost,
-      total_paid: totalPaid,
-      balance: agreedSum - totalPaid
+      agreed_sum: parseFloat(p.agreed_sum || p['погоджена сума'] || 0),
+      total_cost: 0,
+      total_paid: 0,
+      balance: 0
     };
   });
 
@@ -1804,26 +1762,27 @@ function handleSaveProject(projectData, userEmail) {
   let row = findRowByValue(sheet, 'id', projectData.id);
   const ts = now();
 
+  // Create a normalized value map to handle key differences (e.g. status vs active)
+  const valueMap = {
+    ...projectData,
+    'active': projectData.status || projectData.active,
+    'updated_at': ts
+  };
+
   if (row === -1) {
     const newId = projectData.id || generateUUID();
     const projectNum = projectData.project_number || dateStr();
     
-    const fullData = {
-      ...projectData,
-      id: newId,
-      name: projectData.name || 'Новий проєкт',
-      status: projectData.status || 'В роботі',
-      project_number: projectNum,
-      created_at: ts,
-      updated_at: ts
-    };
+    valueMap.id = newId;
+    valueMap.name = projectData.name || 'Новий проєкт';
+    valueMap.active = projectData.status || 'В роботі';
+    valueMap.project_number = projectNum;
+    valueMap.created_at = ts;
 
     const rowData = headerRow.map(h => {
       const s = String(h).trim().toLowerCase();
       const mapped = HEADER_MAP[s] || s;
-      if (mapped === 'created_at') return ts;
-      if (mapped === 'updated_at') return ts;
-      return fullData[mapped] !== undefined ? fullData[mapped] : "";
+      return valueMap[mapped] !== undefined ? valueMap[mapped] : "";
     });
 
     sheet.appendRow(rowData);
@@ -1832,10 +1791,8 @@ function handleSaveProject(projectData, userEmail) {
     headerRow.forEach((h, idx) => {
       const s = String(h).trim().toLowerCase();
       const mapped = HEADER_MAP[s] || s;
-      if (projectData[mapped] !== undefined && mapped !== 'id') {
-        sheet.getRange(row, idx + 1).setValue(projectData[mapped]);
-      } else if (mapped === 'updated_at') {
-        sheet.getRange(row, idx + 1).setValue(ts);
+      if (valueMap[mapped] !== undefined && mapped !== 'id') {
+        sheet.getRange(row, idx + 1).setValue(valueMap[mapped]);
       }
     });
     return { success: true, id: projectData.id };
