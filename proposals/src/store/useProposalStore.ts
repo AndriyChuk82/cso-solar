@@ -83,6 +83,7 @@ const createEmptyProposal = (settings?: Settings, history: Proposal[] = []): Pro
   items: [],
   subtotal: 0,
   markup: settings?.defaultMarkup ?? CONFIG.DEFAULT_MARKUP,
+  adjustment: 0,
   total: 0,
   currency: 'USD',
   notes: '',
@@ -141,7 +142,9 @@ function calculateProposalTotals(proposal: Proposal): Proposal {
 
   const subtotal = validatedItems.reduce((sum, item) => sum + (item.total || 0), 0);
   
-  let total = subtotal;
+  // Коригування застосовується до суми, якщо воно не 0
+  const adjustmentMultiplier = 1 + (proposal.adjustment || 0) / 100;
+  let total = subtotal * adjustmentMultiplier;
   let vatAmount = 0;
 
   if (proposal.vatMode === 'add') {
@@ -615,7 +618,7 @@ export const useProposalStore = create<ProposalStore>()(
         const updatedProposal = calculateProposalTotals({
           ...proposal,
           items: proposal.items.map(item => {
-            const salePrice = item.costPrice * (1 + proposal.markup / 100);
+            const salePrice = item.costPrice * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
             const roundedPrice = Math.round(salePrice * 10) / 10;
             return {
               ...item,
