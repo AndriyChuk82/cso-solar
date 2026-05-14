@@ -527,7 +527,17 @@ export function ProjectDetail({
               {/* USD ACCOUNT */}
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 12, alignItems: 'flex-start' }}>
                 <div>
-                  <FL style={{ fontSize: '0.62rem', marginBottom: 2 }}>Погоджено в USD ($)</FL>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <FL style={{ fontSize: '0.62rem', margin: 0 }}>Погоджено в USD ($)</FL>
+                    {balances.USD < -1 && (
+                      <span style={{ 
+                        background: '#ede9fe', color: '#6d28d9', fontSize: '0.55rem', 
+                        padding: '1px 5px', borderRadius: 4, fontWeight: 800, textTransform: 'uppercase' 
+                      }}>
+                        Переплата
+                      </span>
+                    )}
+                  </div>
                   <div style={{ position: 'relative' }}>
                     <input type="number" inputMode="numeric" className="form-input"
                       value={project.agreed_sum_usd || ''}
@@ -540,9 +550,14 @@ export function ProjectDetail({
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', paddingTop: 18 }}>
-                  <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 2, textTransform: 'uppercase' }}>Борг USD</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 800, color: balances.USD > 1 ? 'var(--danger)' : 'var(--success)' }}>
-                    {balances.USD > 1 ? `$${Math.round(balances.USD).toLocaleString()}` : '✓'}
+                  <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 2, textTransform: 'uppercase' }}>
+                    {balances.USD < -1 ? 'Наш борг USD' : 'Борг USD'}
+                  </div>
+                  <div style={{ 
+                    fontSize: '1rem', fontWeight: 800, 
+                    color: balances.USD < -1 ? '#8b5cf6' : (balances.USD > 1 ? 'var(--danger)' : 'var(--success)') 
+                  }}>
+                    {balances.USD < -1 ? `$${Math.abs(Math.round(balances.USD)).toLocaleString()}` : (balances.USD > 1 ? `$${Math.round(balances.USD).toLocaleString()}` : '✓')}
                   </div>
                 </div>
               </div>
@@ -550,7 +565,17 @@ export function ProjectDetail({
               {/* UAH ACCOUNT */}
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 12, alignItems: 'flex-start', borderTop: '1px dashed var(--border-light)', paddingTop: 10 }}>
                 <div>
-                  <FL style={{ fontSize: '0.62rem', marginBottom: 2 }}>Погоджено в UAH (₴)</FL>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <FL style={{ fontSize: '0.62rem', margin: 0 }}>Погоджено в UAH (₴)</FL>
+                    {balances.UAH < -1 && (
+                      <span style={{ 
+                        background: '#ede9fe', color: '#6d28d9', fontSize: '0.55rem', 
+                        padding: '1px 5px', borderRadius: 4, fontWeight: 800, textTransform: 'uppercase' 
+                      }}>
+                        Переплата
+                      </span>
+                    )}
+                  </div>
                   <div style={{ position: 'relative' }}>
                     <input type="number" inputMode="numeric" className="form-input"
                       value={project.agreed_sum_uah || ''}
@@ -563,9 +588,14 @@ export function ProjectDetail({
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', paddingTop: 18 }}>
-                  <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 2, textTransform: 'uppercase' }}>Борг UAH</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 800, color: balances.UAH > 1 ? 'var(--danger)' : 'var(--success)' }}>
-                    {balances.UAH > 1 ? `${Math.round(balances.UAH).toLocaleString()} ₴` : '✓'}
+                  <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 2, textTransform: 'uppercase' }}>
+                    {balances.UAH < -1 ? 'Наш борг UAH' : 'Борг UAH'}
+                  </div>
+                  <div style={{ 
+                    fontSize: '1rem', fontWeight: 800, 
+                    color: balances.UAH < -1 ? '#8b5cf6' : (balances.UAH > 1 ? 'var(--danger)' : 'var(--success)') 
+                  }}>
+                    {balances.UAH < -1 ? `${Math.abs(Math.round(balances.UAH)).toLocaleString()} ₴` : (balances.UAH > 1 ? `${Math.round(balances.UAH).toLocaleString()} ₴` : '✓')}
                   </div>
                 </div>
               </div>
