@@ -121,9 +121,18 @@ export function ProjectDetail({
     try {
       const data = await projectService.getProjectDetails(projectId);
       if (data.success) {
-        setProject(data.project);
+        const p = data.project;
+        
+        // MIGRATION: If new fields are empty but old one has data, populate them in state
+        if (!p.agreed_sum_usd && !p.agreed_sum_uah) {
+          const oldSum = parseFloat(p.agreed_sum || p['погоджена сума']) || 0;
+          if (p.currency === 'UAH') p.agreed_sum_uah = oldSum;
+          else p.agreed_sum_usd = oldSum;
+        }
+
+        setProject(p);
         if (setCurrency) {
-          const projectCurr = data.project.currency || 'USD';
+          const projectCurr = p.currency || 'USD';
           setCurrency(projectCurr);
           setShowRateInput(projectCurr === 'UAH');
         }
