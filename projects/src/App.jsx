@@ -1,9 +1,9 @@
-import React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { Routes, Route, BrowserRouter as Router } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { SplitLayout } from './components/SplitLayout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useTheme } from '@cso/design-system';
+import Migration from './pages/Migration';
 
 function App() {
   useTheme(); // Initialize theme and font scale
@@ -11,7 +11,10 @@ function App() {
     <ErrorBoundary>
       <Router basename="/projects">
         <Layout>
-          <SplitLayout />
+          <Routes>
+            <Route path="/" element={<SplitLayout />} />
+            <Route path="/migration" element={<Migration />} />
+          </Routes>
         </Layout>
       </Router>
     </ErrorBoundary>

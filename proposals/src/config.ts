@@ -28,6 +28,9 @@ export const CONFIG = {
 
   GAS_URL: import.meta.env.VITE_GAS_URL || 'https://script.google.com/macros/s/AKfycbyvYNoyGINAtWlbExzONJWoReE8OC3_-FhOase5pHkCZ_PdCLXuMQqXqMYBWLzaNX-s/exec',
 
+  SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || '',
+  SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+
   UNITS: ['шт', 'компл', 'м', 'кг', 'л'],
 
   CURRENCIES: ['USD', 'EUR', 'UAH'] as const,
