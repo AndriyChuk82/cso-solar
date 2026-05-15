@@ -36,6 +36,7 @@ export default function Sidebar({ isOpen, onClose }) {
         { path: '/categories', label: 'Категорії', icon: '🏷️' },
         { path: '/warehouses', label: 'Склади', icon: '🏭' },
         { path: '/users', label: 'Користувачі', icon: '👥' },
+        { path: '/backups', label: 'Резервні копії', icon: '💾' },
       ]
     }
   ];
