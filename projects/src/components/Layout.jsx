@@ -96,15 +96,6 @@ export function Layout({ children }) {
                   </a>
                 )}
                 
-                {(user?.isAdmin || user?.role === 'admin' || user?.role === 'адмін') && (
-                  <Link
-                    to="/migration"
-                    className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
-                  >
-                    🚀 Міграція
-                  </Link>
-                )}
-
                 {(user?.isAdmin || user?.module_access?.includes('gt') || user?.module_access?.includes('зелений тариф') || user?.module_access?.includes('зт')) && (
                   <a
                     href="/green-tariff/"

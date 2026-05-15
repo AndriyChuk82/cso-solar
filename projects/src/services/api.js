@@ -1,3 +1,5 @@
+import { supabase } from './supabaseClient';
+
 const GAS_URL = import.meta.env.VITE_GAS_URL || 'https://script.google.com/macros/s/AKfycbyvYNoyGINAtWlbExzONJWoReE8OC3_-FhOase5pHkCZ_PdCLXuMQqXqMYBWLzaNX-s/exec';
 
 async function gasRequest(action, params = {}, method = 'GET') {
@@ -36,23 +38,102 @@ async function gasRequest(action, params = {}, method = 'GET') {
 
 export const projectService = {
   // Projects
-  getProjects: (userEmail) => gasRequest('getProjects', { userEmail }, 'POST'),
-  getProjectDetails: (projectId) => gasRequest('getProjectDetails', { projectId }, 'POST'),
+  getProjects: async () => {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return { success: true, projects: data };
+  },
 
-  // Save project (supports agreed_sum field)
-  saveProject: (project) => gasRequest('saveProject', { project }, 'POST'),
+  getProjectDetails: async (projectId) => {
+    // Отримуємо проект, товари та платежі паралельно
+    const [pRes, iRes, payRes] = await Promise.all([
+      supabase.from('projects').select('*').eq('id', projectId).single(),
+      supabase.from('project_items').select('*').eq('project_id', projectId),
+      supabase.from('project_payments').select('*').eq('project_id', projectId).order('date', { ascending: false })
+    ]);
 
-  // Payments (payment_type: 'Аванс' | 'Повна оплата')
-  savePayment: (payment) => gasRequest('savePayment', { payment }, 'POST'),
-  cancelPayment: (paymentId) => gasRequest('cancelPayment', { paymentId }, 'POST'),
-  deletePayment: (paymentId) => gasRequest('deletePayment', { paymentId }, 'POST'),
+    if (pRes.error) throw pRes.error;
+
+    return {
+      success: true,
+      project: pRes.data,
+      items: iRes.data || [],
+      payments: payRes.data || []
+    };
+  },
+
+  // Save project
+  saveProject: async (project) => {
+    const { data, error } = await supabase
+      .from('projects')
+      .upsert({
+        ...project,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return { success: true, project: data };
+  },
+
+  // Payments
+  savePayment: async (payment) => {
+    const { data, error } = await supabase
+      .from('project_payments')
+      .upsert({
+        ...payment,
+        id: payment.id || `pay_${Date.now()}`
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return { success: true, payment: data };
+  },
+
+  deletePayment: async (paymentId) => {
+    const { error } = await supabase
+      .from('project_payments')
+      .delete()
+      .eq('id', paymentId);
+    
+    if (error) throw error;
+    return { success: true };
+  },
 
   // Items
-  saveProjectItem: (item) => gasRequest('saveProjectItem', { item }, 'POST'),
-  deleteProjectItem: (itemId) => gasRequest('deleteProjectItem', { itemId }, 'POST'),
+  saveProjectItem: async (item) => {
+    const { data, error } = await supabase
+      .from('project_items')
+      .upsert({
+        ...item,
+        id: item.id || `item_${Date.now()}`
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return { success: true, item: data };
+  },
 
-  // Proposals (for linking to projects)
-  getProposals: () => gasRequest('getProposals', {}, 'POST'),
-  syncProjectItems: (projectId) => gasRequest('syncProjectItems', { projectId }, 'POST'),
-  importFromProposal: (projectId, proposalId) => gasRequest('importFromProposal', { projectId, proposalId }, 'POST'),
+  deleteProjectItem: async (itemId) => {
+    const { error } = await supabase
+      .from('project_items')
+      .delete()
+      .eq('id', itemId);
+    
+    if (error) throw error;
+    return { success: true };
+  },
+
+  // Решта функцій (якщо потрібні для сумісності)
+  getProposals: async () => {
+    // КП поки залишаємо в Google Sheets або можемо теж перенести пізніше
+    return { success: true, proposals: [] }; 
+  }
 };
