@@ -3,6 +3,7 @@ import { createBackup } from '../api/gasApi';
 import { runMigration } from '../api/migration';
 import { useToast } from '../context/ToastContext';
 import { Button } from '@cso/design-system';
+import { supabase } from '../api/supabaseClient';
 
 /**
  * Управління резервними копіями. Лише для адміністратора.
@@ -52,6 +53,57 @@ export default function Backups() {
     }
   }
 
+  async function handleDownloadLocal() {
+    setCreating(true);
+    try {
+      showToast('Збір даних з бази...', 'info');
+      
+      // Завантажуємо всі основні таблиці паралельно
+      const [
+        { data: products },
+        { data: warehouses },
+        { data: operations },
+        { data: categories }
+      ] = await Promise.all([
+        supabase.from('products').select('*'),
+        supabase.from('warehouses').select('*'),
+        supabase.from('operations').select('*'),
+        supabase.from('categories').select('*')
+      ]);
+
+      const backupData = {
+        timestamp: new Date().toISOString(),
+        tables: {
+          products: products || [],
+          warehouses: warehouses || [],
+          operations: operations || [],
+          categories: categories || []
+        }
+      };
+
+      // Створюємо Blob і посилання для завантаження
+      const jsonString = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      
+      const dateStr = new Date().toISOString().split('T')[0];
+      link.href = url;
+      link.download = `warehouse_full_backup_${dateStr}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast('Файл успішно завантажено на ваш ПК', 'success');
+    } catch (err) {
+      console.error('Download error:', err);
+      showToast('Помилка при зборі даних', 'error');
+    } finally {
+      setCreating(false);
+    }
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -93,6 +145,25 @@ export default function Backups() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: '16px', border: '1px solid #10b981' }}>
+        <div className="card-header" style={{ background: '#ecfdf5' }}>
+          <h3>💻 Локальна копія (Пряме завантаження)</h3>
+        </div>
+        <div className="card-body">
+          <p style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
+            Це завантажить ВСІ дані з Supabase (Товари, Склади, Операції) у один JSON-файл прямо на ваш комп'ютер. 
+            Це найшвидший спосіб зробити бекап без використання Google Drive.
+          </p>
+          <Button
+            variant="secondary"
+            onClick={handleDownloadLocal}
+            disabled={creating}
+          >
+            📥 Завантажити повну копію на ПК (.json)
+          </Button>
         </div>
       </div>
 
