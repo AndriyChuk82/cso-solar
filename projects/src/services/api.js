@@ -135,5 +135,49 @@ export const projectService = {
   getProposals: async () => {
     // КП поки залишаємо в Google Sheets
     return gasRequest('getProposals', {}, 'POST');
+  },
+
+  importFromProposal: async (projectId, proposalId) => {
+    try {
+      // 1. Fetch proposal details from Google Sheets
+      const propRes = await gasRequest('getProposals', {}, 'POST');
+      if (!propRes.success) throw new Error(propRes.error);
+      
+      const proposal = propRes.proposals.find(p => p.id === proposalId);
+      if (!proposal) throw new Error('КП не знайдено');
+      
+      const items = proposal.items || [];
+      if (items.length === 0) throw new Error('В обраному КП немає товарів');
+
+      // 2. Delete old project items in Supabase
+      const delRes = await supabase.from('project_items').delete().eq('project_id', projectId);
+      if (delRes.error) throw delRes.error;
+
+      // 3. Insert new items into Supabase
+      if (items.length > 0) {
+        const newItems = items.map((item, index) => ({
+          id: `item_${Date.now()}_${index}`,
+          project_id: projectId,
+          name: item.name || item.productName || 'Товар',
+          quantity: parseFloat(item.quantity || item.qty || 0),
+          price: parseFloat(item.price || item.unitPrice || 0),
+          sum: parseFloat(item.quantity || item.qty || 0) * parseFloat(item.price || item.unitPrice || 0),
+          issued_qty: 0,
+          note: ''
+        }));
+        
+        const insRes = await supabase.from('project_items').insert(newItems);
+        if (insRes.error) throw insRes.error;
+      }
+
+      // 4. Link proposal_id to project in Supabase
+      const updRes = await supabase.from('projects').update({ proposal_id: proposalId }).eq('id', projectId);
+      if (updRes.error) throw updRes.error;
+
+      return { success: true };
+    } catch (err) {
+      console.error('importFromProposal error:', err);
+      return { success: false, error: err.message || 'Помилка імпорту' };
+    }
   }
 };
