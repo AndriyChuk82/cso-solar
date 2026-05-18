@@ -133,7 +133,7 @@ export const projectService = {
 
   // Решта функцій (якщо потрібні для сумісності)
   getProposals: async () => {
-    // КП поки залишаємо в Google Sheets або можемо теж перенести пізніше
-    return { success: true, proposals: [] }; 
+    // КП поки залишаємо в Google Sheets
+    return gasRequest('getProposals', {}, 'POST');
   }
 };
