@@ -146,8 +146,8 @@ export function AddProjectModal({ isOpen, onClose, onProjectCreated }) {
                 <button 
                    type="submit"
                    disabled={isSaving || !formData.client_name.trim()}
-                   className="btn btn-primary !px-10 !py-3 shadow-lg shadow-primary/20"
-                   style={{ height: 48, minWidth: 160 }}
+                   className="btn !px-10 !py-3 shadow-lg"
+                   style={{ height: 48, minWidth: 160, background: '#3b82f6', color: '#ffffff', border: 'none' }}
                 >
                    {isSaving ? (
                      <RefreshCw className="h-5 w-5 animate-spin mr-2" />

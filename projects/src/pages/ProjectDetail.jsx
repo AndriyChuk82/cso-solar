@@ -228,6 +228,7 @@ export function ProjectDetail({
       const fresh = await load();
       if (onUpdate && fresh) onUpdate(fresh);
       hapticSuccess();
+      setEditingItems(false);
     } catch (err) {
       hapticError();
     } finally { setIsSavingItems(false); }
@@ -693,8 +694,8 @@ export function ProjectDetail({
                     style={{ fontSize:'0.7rem', height:28, gap:4, background:'var(--primary-light)', color:'var(--primary)' }}>
                     <Clipboard size={14} /> Імпорт КП
                   </button>
-                  <button onClick={handleEditItems} className="btn btn-primary btn-sm"
-                    style={{ fontSize:'0.7rem', height:28, gap:4 }}>
+                  <button onClick={handleEditItems} className="btn btn-sm"
+                    style={{ background: '#3b82f6', color: '#ffffff', border: 'none', fontSize:'0.7rem', height:28, gap:4 }}>
                     <Edit3 size={14} /> Редагувати
                   </button>
                 </>
