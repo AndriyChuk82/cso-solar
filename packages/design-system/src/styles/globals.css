@@ -139,6 +139,11 @@ p, .text-base {
 
 /* Selection */
 ::selection {
-  background: hsl(var(--primary) / 0.2);
-  color: hsl(var(--neutral-900));
+  background-color: #f59e0b !important;
+  color: #ffffff !important;
+}
+
+::-moz-selection {
+  background-color: #f59e0b !important;
+  color: #ffffff !important;
 }

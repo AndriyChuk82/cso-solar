@@ -85,7 +85,7 @@ function generateInvoiceHTML(proposal: Proposal): string {
   const invoiceNumber = (proposal.number || '').replace('КП-', '');
   
   // Robust seller detection
-  const sellerId = (proposal as any).sellerId || proposal.seller?.id || 'tov_cso';
+  const sellerId = proposal.seller?.id || (proposal as any).sellerId || 'tov_cso';
   const seller = SELLERS[sellerId as keyof typeof SELLERS] || proposal.seller || SELLERS.tov_cso;
 
   const rates = {
@@ -211,7 +211,7 @@ function generateDeliveryNoteHTML(proposal: Proposal): string {
   const dnNumber = (proposal.number || '').replace('КП-', 'ВН-');
   
   // Robust seller detection
-  const sellerId = (proposal as any).sellerId || proposal.seller?.id || 'tov_cso';
+  const sellerId = proposal.seller?.id || (proposal as any).sellerId || 'tov_cso';
   const seller = SELLERS[sellerId as keyof typeof SELLERS] || proposal.seller || SELLERS.tov_cso;
 
   const itemsHTML = (proposal.items || []).map((item, i) => {

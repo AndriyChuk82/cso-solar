@@ -57,3 +57,13 @@ body {
   box-shadow: 0 10px 30px rgba(212, 163, 115, 0.1) !important;
   transform: translateY(-4px) !important;
 }
+
+::selection {
+  background-color: #f59e0b !important;
+  color: #ffffff !important;
+}
+
+::-moz-selection {
+  background-color: #f59e0b !important;
+  color: #ffffff !important;
+}

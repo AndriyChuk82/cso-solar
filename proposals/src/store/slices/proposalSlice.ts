@@ -83,14 +83,15 @@ function calculateProposalTotals(proposal: Proposal): Proposal {
   }
 
   // Забезпечуємо наявність продавця
-  // Спробуємо знайти ID продавця (може бути як sellerId або в самому об'єкті)
-  const sellerId = (proposal as any).sellerId || proposal.seller?.id || 'tov_cso';
+  // Спробуємо знайти ID продавця (може бути в самому об'єкті або як sellerId)
+  const sellerId = proposal.seller?.id || (proposal as any).sellerId || 'tov_cso';
   const seller = SELLERS[sellerId as SellerId] || proposal.seller || SELLERS.tov_cso;
 
   return {
     ...proposal,
     items,
     seller,
+    sellerId,
     subtotal: Math.round(subtotal * 100) / 100,
     vatAmount: Math.round(vatAmount * 100) / 100,
     total: Math.round(total * 100) / 100,
@@ -369,6 +370,7 @@ export const createProposalSlice: StateCreator<
     const { proposal } = get();
     const updatedProposal = calculateProposalTotals({
       ...proposal,
+      sellerId: sellerId,
       seller: SELLERS[sellerId]
     });
     set({

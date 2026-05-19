@@ -58,6 +58,7 @@ export interface Proposal {
     eurToUah: number;
   };
   seller: SellerInfo;
+  sellerId?: SellerId;
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
   vatMode: 'none' | 'add' | 'extract';
   vatAmount: number;
