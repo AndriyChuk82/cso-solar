@@ -58,10 +58,24 @@ export default function ProductSearch({ onSelect, products = [], balances = {}, 
   }, []);
 
   // Фільтрація локальних товарів
-  const filteredLocal = products.filter((p) => {
+  const filteredLocalRaw = products.filter((p) => {
     if (!query.trim()) return false;
     return matchesSearch(`${p.name} ${p.article || ''}`, query);
   });
+
+  // Дедуплікація локальних товарів (щоб не виводити дублі, залишаємо той, де є залишок)
+  const filteredLocal = [];
+  const seenLocal = new Set();
+  
+  [...filteredLocalRaw]
+    .sort((a, b) => (balances[b.id] || 0) - (balances[a.id] || 0))
+    .forEach((p) => {
+      const key = `${normalizeForComparison(p.name)}_${normalizeForComparison(p.article || '')}`;
+      if (!seenLocal.has(key)) {
+        seenLocal.add(key);
+        filteredLocal.push(p);
+      }
+    });
 
   // Фільтрація зовнішніх (КП)
   const filteredExternal = externalProducts.filter((ext) => {
