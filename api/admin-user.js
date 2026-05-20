@@ -25,9 +25,12 @@ export default async function handler(req, res) {
         if (action === 'addUser' || action === 'updateUser') {
             const finalData = { ...userData };
             
-            // Якщо є пароль — хешуємо його перед відправкою в GAS
+            // Якщо є пароль — хешуємо його перед відправкою в GAS.
+            // Якщо немає — видаляємо його з об'єкта, щоб не перезаписати існуючий зашифрований пароль у GAS!
             if (userData.password) {
                 finalData.password = await bcrypt.hash(userData.password, 10);
+            } else {
+                delete finalData.password;
             }
 
             const response = await fetch(gasUrl, {

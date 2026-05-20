@@ -18,7 +18,11 @@ export function SplitLayout() {
 
   const { user, loading } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'адмін' || user?.role === 'адміністратор';
-  const hasAccess = isAdmin || (user?.module_access || '').includes('projects');
+  const moduleAccess = (user?.module_access || '').toLowerCase();
+  const hasAccess = isAdmin || 
+    moduleAccess.includes('projects') || 
+    moduleAccess.includes('проєкти') || 
+    moduleAccess.includes('проекти');
 
   useEffect(() => {
     if (user?.email && hasAccess) {

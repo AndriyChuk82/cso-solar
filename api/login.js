@@ -147,11 +147,23 @@ export default async function handler(req, res) {
         const isAdmin = ['admin', 'адмін', 'адміністратор', 'administrator'].includes(userRole.trim().toLowerCase());
         
         if (!isAdmin && moduleAccess) {
-            const hasProposals = moduleAccess.includes('proposals');
+            const lowerAccess = moduleAccess.toLowerCase();
+            const hasAccess = (mod) => {
+                const mapping = {
+                    'proposals': ['proposals', 'кп', 'комперційні'],
+                    'warehouse': ['warehouse', 'склад'],
+                    'projects': ['projects', 'проєкти', 'проекти'],
+                    'gt': ['gt', 'зелений тариф', 'зт']
+                };
+                const allowed = mapping[mod] || [mod];
+                return allowed.some(a => lowerAccess.includes(a));
+            };
+
+            const hasProposals = hasAccess('proposals');
             if (!hasProposals) {
-                if (moduleAccess.includes('warehouse')) redirectUrl = '/warehouse/';
-                else if (moduleAccess.includes('projects')) redirectUrl = '/projects/';
-                else if (moduleAccess.includes('gt')) redirectUrl = '/green-tariff/';
+                if (hasAccess('warehouse')) redirectUrl = '/warehouse/';
+                else if (hasAccess('projects')) redirectUrl = '/projects/';
+                else if (hasAccess('gt')) redirectUrl = '/green-tariff/';
             }
         }
 

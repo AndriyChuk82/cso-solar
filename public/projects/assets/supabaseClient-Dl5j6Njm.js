@@ -1,0 +1,1 @@
+import{t as e}from"./index-Crpvuqfi.js";export{e as supabase};

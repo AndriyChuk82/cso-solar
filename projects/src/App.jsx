@@ -4,6 +4,7 @@ import { SplitLayout } from './components/SplitLayout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useTheme } from '@cso/design-system';
 import Migration from './pages/Migration';
+import CrmDashboard from './pages/crm/CrmDashboard';
 
 function App() {
   useTheme(); // Initialize theme and font scale
@@ -14,6 +15,7 @@ function App() {
           <Routes>
             <Route path="/" element={<SplitLayout />} />
             <Route path="/migration" element={<Migration />} />
+            <Route path="/crm" element={<CrmDashboard />} />
           </Routes>
         </Layout>
       </Router>
