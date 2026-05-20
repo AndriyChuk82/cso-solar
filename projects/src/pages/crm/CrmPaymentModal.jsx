@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, DollarSign, Calendar, FileText, Check } from 'lucide-react';
+import { X, Plus, DollarSign, Calendar, FileText, Check, Pencil, Trash2 } from 'lucide-react';
 import { crmApi } from '../../services/crmApi';
 
 export function CrmPaymentModal({ project, onClose, onUpdate }) {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editingPaymentId, setEditingPaymentId] = useState(null);
 
-  // Форма нового платежу
+  // Форма нового або редагованого платежу
   const [showAdd, setShowAdd] = useState(false);
   const [newPayment, setNewPayment] = useState({
     sum: '',
@@ -33,11 +34,38 @@ export function CrmPaymentModal({ project, onClose, onUpdate }) {
     }
   };
 
+  const handleStartEdit = (p) => {
+    setEditingPaymentId(p.id);
+    setNewPayment({
+      sum: p.sum.toString(),
+      currency: p.currency,
+      date: p.date,
+      payment_type: p.payment_type,
+      note: p.note || ''
+    });
+    setShowAdd(true);
+  };
+
+  const handleCancelPayment = async (paymentId) => {
+    if (!window.confirm('Ви дійсно бажаєте скасувати цей платіж? Ця дія виключить його з балансу.')) {
+      return;
+    }
+    try {
+      await crmApi.cancelPayment(paymentId);
+      await loadPayments();
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      console.error(err);
+      alert('Помилка скасування платежу: ' + err.message);
+    }
+  };
+
   const handleSave = async () => {
     if (!newPayment.sum) return;
     setSaving(true);
     try {
       await crmApi.savePayment({
+        id: editingPaymentId || undefined,
         project_id: project.id,
         sum: parseFloat(newPayment.sum),
         currency: newPayment.currency,
@@ -47,7 +75,14 @@ export function CrmPaymentModal({ project, onClose, onUpdate }) {
         status: 'Оплачено'
       });
       setShowAdd(false);
-      setNewPayment({ ...newPayment, sum: '', note: '' });
+      setEditingPaymentId(null);
+      setNewPayment({
+        sum: '',
+        currency: 'USD',
+        date: new Date().toISOString().split('T')[0],
+        payment_type: 'Оплата',
+        note: ''
+      });
       await loadPayments();
       if (onUpdate) onUpdate();
     } catch (err) {
@@ -87,7 +122,17 @@ export function CrmPaymentModal({ project, onClose, onUpdate }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div style={{ fontSize: '13px', color: '#4B5563', fontWeight: 600 }}>Історія транзакцій ({validPayments.length})</div>
             {!showAdd && (
-              <button onClick={() => setShowAdd(true)} style={{
+              <button onClick={() => {
+                setEditingPaymentId(null);
+                setNewPayment({
+                  sum: '',
+                  currency: 'USD',
+                  date: new Date().toISOString().split('T')[0],
+                  payment_type: 'Оплата',
+                  note: ''
+                });
+                setShowAdd(true);
+              }} style={{
                 background: '#10B981', color: 'white', border: 'none', borderRadius: '4px',
                 padding: '4px 10px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer'
               }}>
@@ -98,6 +143,10 @@ export function CrmPaymentModal({ project, onClose, onUpdate }) {
 
           {showAdd && (
             <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '6px', padding: '12px', marginBottom: '16px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '8px' }}>
+                {editingPaymentId ? '📝 Редагування платежу' : '✨ Новий платіж'}
+              </div>
+              
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: '8px', marginBottom: '8px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '4px' }}>Сума</label>
@@ -156,7 +205,7 @@ export function CrmPaymentModal({ project, onClose, onUpdate }) {
               </div>
 
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                <button onClick={() => setShowAdd(false)} style={{ background: 'transparent', border: '1px solid #D1D5DB', padding: '6px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Скасувати</button>
+                <button onClick={() => { setShowAdd(false); setEditingPaymentId(null); }} style={{ background: 'transparent', border: '1px solid #D1D5DB', padding: '6px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Скасувати</button>
                 <button onClick={handleSave} disabled={saving} style={{ background: '#10B981', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   {saving ? 'Збереження...' : <><Check size={14} /> Зберегти</>}
                 </button>
@@ -197,7 +246,43 @@ export function CrmPaymentModal({ project, onClose, onUpdate }) {
                         )}
                       </div>
                     </div>
-                    {cancelled && <span style={{ fontSize: '10px', background: '#FEE2E2', color: '#991B1B', padding: '2px 6px', borderRadius: '10px', fontWeight: 700 }}>СКАСОВАНО</span>}
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {cancelled ? (
+                        <span style={{ fontSize: '10px', background: '#FEE2E2', color: '#991B1B', padding: '2px 6px', borderRadius: '10px', fontWeight: 700 }}>СКАСОВАНО</span>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => handleStartEdit(p)}
+                            style={{
+                              background: 'transparent', border: 'none', cursor: 'pointer',
+                              color: '#8B7D73', padding: '4px', borderRadius: '4px',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              transition: 'background 0.2s'
+                            }}
+                            title="Редагувати"
+                            onMouseEnter={e => e.currentTarget.style.background = '#FAF6F0'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button 
+                            onClick={() => handleCancelPayment(p.id)}
+                            style={{
+                              background: 'transparent', border: 'none', cursor: 'pointer',
+                              color: '#EF4444', padding: '4px', borderRadius: '4px',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              transition: 'background 0.2s'
+                            }}
+                            title="Скасувати платіж"
+                            onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 );
               })}

@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS public.clients (
   phone text,
   email text,
   type text DEFAULT 'B2C',
+  note text,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -42,3 +43,19 @@ CREATE POLICY "Enable all for anon" ON public.shipment_items FOR ALL USING (true
 
 -- Додавання ознаки послуги до позицій проєкту
 ALTER TABLE public.project_items ADD COLUMN IF NOT EXISTS is_service boolean DEFAULT false;
+
+-- Додавання колонки коментаря до клієнтів
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS note text;
+
+-- Створення таблиці Логів (Audit Trail)
+CREATE TABLE IF NOT EXISTS public.crm_audit_logs (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  project_id text,
+  client_id uuid,
+  action_type text NOT NULL,
+  details text NOT NULL,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.crm_audit_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Enable all for anon" ON public.crm_audit_logs FOR ALL USING (true) WITH CHECK (true);

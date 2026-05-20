@@ -1,6 +1,5 @@
 import { Routes, Route, BrowserRouter as Router } from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { SplitLayout } from './components/SplitLayout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useTheme } from '@cso/design-system';
 import Migration from './pages/Migration';
@@ -13,9 +12,8 @@ function App() {
       <Router basename="/projects">
         <Layout>
           <Routes>
-            <Route path="/" element={<SplitLayout />} />
+            <Route path="/" element={<CrmDashboard />} />
             <Route path="/migration" element={<Migration />} />
-            <Route path="/crm" element={<CrmDashboard />} />
           </Routes>
         </Layout>
       </Router>

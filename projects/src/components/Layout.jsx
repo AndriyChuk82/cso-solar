@@ -123,6 +123,7 @@ export function Layout({ children }) {
         </div>
       </header>
 
+
       <div className="app-layout">
         {/* Main Content */}
         <main className="app-main">
