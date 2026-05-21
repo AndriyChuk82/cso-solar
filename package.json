@@ -13,7 +13,7 @@
     "dashboard"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspace=green-tariff-v2",
     "dev:dashboard": "npm run dev --workspace=dashboard",
     "dev:warehouse": "npm run dev --workspace=warehouse",
     "dev:proposals": "npm run dev --workspace=proposals",
