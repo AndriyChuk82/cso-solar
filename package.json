@@ -9,6 +9,7 @@
     "projects",
     "proposals",
     "green-tariff",
+    "green-tariff-v2",
     "dashboard"
   ],
   "scripts": {
@@ -18,6 +19,7 @@
     "dev:proposals": "npm run dev --workspace=proposals",
     "dev:projects": "npm run dev --workspace=projects",
     "dev:green-tariff": "npm run dev --workspace=green-tariff",
+    "dev:green-tariff-v2": "npm run dev --workspace=green-tariff-v2",
     "dev:all": "concurrently \"npm run dev:dashboard\" \"npm run dev:warehouse\" \"npm run dev:proposals\" \"npm run dev:projects\"",
     "agy": "powershell -NoProfile -Command \"& 'C:\\Users\\Чикайло Андрій\\AppData\\Local\\agy\\bin\\agy.exe'\"",
     "hash-password": "node scripts/hash-password.js",

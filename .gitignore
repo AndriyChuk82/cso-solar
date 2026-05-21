@@ -26,3 +26,8 @@ npm-debug.log*
 
 .vercel
 .env*.local
+
+# Ignore built Green Tariff static outputs
+public/green-tariff/
+public/green-tariff-v2/
+green-tariff-v2/
