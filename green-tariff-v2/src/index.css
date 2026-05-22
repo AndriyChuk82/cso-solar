@@ -1,0 +1,100 @@
+/* ===== CSO Solar — Green Tariff v2 Styles ===== */
+
+@import "../../packages/design-system/src/styles/index.css";
+
+/* Tailwind styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Additional fine-tuning for Green Tariff v2 */
+:root {
+  /* Let's align primary colors to CSO Solar Orange/Amber `#f59e0b` */
+  --primary: #f59e0b;
+  --primary-light: #fbbf24;
+  --primary-dark: #d97706;
+  --primary-bg: #fffbeb;
+  
+  --accent: #374151;
+  --accent-light: #4b5563;
+  --accent-dark: #1f2937;
+  
+  --bg: #fbfaf5;
+  --bg-card: #f4f1e1;
+  --border: #e8e4d1;
+  
+  --text: #1f2937;
+  --text-secondary: #4b5563;
+  --text-muted: #9ca3af;
+}
+
+.dark {
+  --primary: #f59e0b;
+  --primary-light: #fbbf24;
+  --primary-dark: #d97706;
+  --primary-bg: #2a241c;
+  
+  --accent: #e9c46a;
+  --accent-light: #f4d35e;
+  --accent-dark: #d4a373;
+  
+  --bg: #0f172a;
+  --bg-card: #1e293b;
+  --border: #334155;
+  
+  --text: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Toast Animation */
+@keyframes slide-in {
+  from {
+    transform: translateY(1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Micro-animations */
+.transition-all-base {
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
