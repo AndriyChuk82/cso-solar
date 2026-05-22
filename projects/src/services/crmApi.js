@@ -226,13 +226,19 @@ export const crmApi = {
   createProjectItems: async (projectId, items) => {
     if (!items || items.length === 0) return [];
 
-    const payload = items.map(item => ({
-      project_id: projectId,
-      name: item.name || 'Товар',
-      quantity: parseFloat(item.quantity) || 0,
-      is_service: false,
-      note: item.note || ''
-    }));
+    const payload = items.map(item => {
+      const qty = parseFloat(item.quantity) || 0;
+      const price = parseFloat(item.price) || 0;
+      return {
+        project_id: projectId,
+        name: item.name || 'Товар',
+        quantity: qty,
+        price: price,
+        sum: qty * price,
+        is_service: false,
+        note: item.note || ''
+      };
+    });
 
     const { data, error } = await supabase
       .from('project_items')
@@ -279,9 +285,24 @@ export const crmApi = {
   },
 
   updateProjectItemQuantity: async (itemId, quantity) => {
+    const qty = parseFloat(quantity) || 0;
+    // 1. Fetch current price
+    const { data: item, error: fetchError } = await supabase
+      .from('project_items')
+      .select('price')
+      .eq('id', itemId)
+      .single();
+
+    if (fetchError) throw fetchError;
+    const price = parseFloat(item?.price) || 0;
+
+    // 2. Update quantity and sum
     const { data, error } = await supabase
       .from('project_items')
-      .update({ quantity: parseFloat(quantity) || 0 })
+      .update({ 
+        quantity: qty,
+        sum: qty * price
+      })
       .eq('id', itemId)
       .select()
       .single();
@@ -291,15 +312,46 @@ export const crmApi = {
   },
 
   addProjectItem: async (projectId, item) => {
+    const qty = parseFloat(item.quantity) || 0;
+    const price = parseFloat(item.price) || 0;
     const { data, error } = await supabase
       .from('project_items')
       .insert({
         project_id: projectId,
         name: item.name || 'Товар',
-        quantity: parseFloat(item.quantity) || 0,
+        quantity: qty,
+        price: price,
+        sum: qty * price,
         is_service: false,
         note: item.note || ''
       })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  updateProjectItemPrice: async (itemId, price) => {
+    const prc = parseFloat(price) || 0;
+    // 1. Fetch current quantity
+    const { data: item, error: fetchError } = await supabase
+      .from('project_items')
+      .select('quantity')
+      .eq('id', itemId)
+      .single();
+
+    if (fetchError) throw fetchError;
+    const qty = parseFloat(item?.quantity) || 0;
+
+    // 2. Update price and sum
+    const { data, error } = await supabase
+      .from('project_items')
+      .update({ 
+        price: prc,
+        sum: qty * prc
+      })
+      .eq('id', itemId)
       .select()
       .single();
 

@@ -1553,7 +1553,7 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
   
   // Нові стани для додавання позиції матеріалу
   const [showAddNewItem, setShowAddNewItem] = useState(false);
-  const [newItemsList, setNewItemsList] = useState([{ name: '', quantity: '', note: '' }]);
+  const [newItemsList, setNewItemsList] = useState([{ name: '', quantity: '', price: '', note: '' }]);
   
   // Нове відвантаження - За замовчуванням Самовивіз
   const [newShipment, setNewShipment] = useState({ date: new Date().toISOString().split('T')[0], carrier: 'Самовивіз', tracking_number: '', note: '' });
@@ -1575,7 +1575,7 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
     const initialCurrencies = {};
     materialItems.forEach(i => {
       initialQtys[i.id] = 0;
-      initialPrices[i.id] = 0;
+      initialPrices[i.id] = parseFloat(i.price) || 0;
       initialCurrencies[i.id] = 'USD';
     });
     setShipQtys(initialQtys);
@@ -1771,6 +1771,25 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
     }
   };
 
+  const handleUpdateItemPrice = async (item, price) => {
+    try {
+      const oldPrice = item.price || 0;
+      await crmApi.updateProjectItemPrice(item.id, price);
+      
+      await crmApi.saveAuditLog({
+        projectId: project.id,
+        clientId: project.client_id,
+        actionType: 'Редагування товару',
+        details: `Змінено ціну товару "${item.name}" з $${parseFloat(oldPrice).toFixed(2)} на $${parseFloat(price).toFixed(2)}.`
+      });
+
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      console.error(err);
+      alert('Помилка оновлення ціни: ' + err.message);
+    }
+  };
+
   const handleAddNewItem = async () => {
     const validItems = newItemsList.filter(item => item.name.trim() !== '' && (parseFloat(item.quantity) || 0) > 0);
     if (validItems.length === 0) {
@@ -1781,9 +1800,11 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
     try {
       for (const item of validItems) {
         const qty = parseFloat(item.quantity);
+        const price = parseFloat(item.price) || 0;
         await crmApi.addProjectItem(project.id, {
           name: item.name.trim(),
           quantity: qty,
+          price: price,
           note: item.note.trim()
         });
 
@@ -1791,12 +1812,12 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
           projectId: project.id,
           clientId: project.client_id,
           actionType: 'Додавання товару',
-          details: `Додано товар "${item.name.trim()}" у кількості ${qty} шт до видачі.${item.note.trim() ? ` Коментар: "${item.note.trim()}"` : ''}`
+          details: `Додано товар "${item.name.trim()}" у кількості ${qty} шт до видачі (Ціна: $${price.toFixed(2)}, Сума: $${(qty * price).toFixed(2)}).${item.note.trim() ? ` Коментар: "${item.note.trim()}"` : ''}`
         });
       }
 
       setShowAddNewItem(false);
-      setNewItemsList([{ name: '', quantity: '', note: '' }]);
+      setNewItemsList([{ name: '', quantity: '', price: '', note: '' }]);
       if (onUpdate) onUpdate();
     } catch (err) {
       alert('Помилка додавання товару: ' + err.message);
@@ -1937,6 +1958,21 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
                     style={{ width: '100%', padding: '6px 10px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', outline: 'none', background: '#FFFFFF', color: '#2C2520', boxSizing: 'border-box' }}
                   />
                 </div>
+                <div style={{ flex: 1, minWidth: '80px' }}>
+                  <input 
+                    type="number" 
+                    min="0"
+                    step="0.01"
+                    placeholder="Ціна ($)..." 
+                    value={item.price}
+                    onChange={e => {
+                      const next = [...newItemsList];
+                      next[index].price = e.target.value;
+                      setNewItemsList(next);
+                    }}
+                    style={{ width: '100%', padding: '6px 10px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', outline: 'none', background: '#FFFFFF', color: '#2C2520', boxSizing: 'border-box' }}
+                  />
+                </div>
                 <div style={{ flex: 3 }}>
                   <input 
                     type="text" 
@@ -1971,7 +2007,7 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
             <button 
-              onClick={() => setNewItemsList([...newItemsList, { name: '', quantity: '', note: '' }])}
+              onClick={() => setNewItemsList([...newItemsList, { name: '', quantity: '', price: '', note: '' }])}
               style={{ 
                 background: '#FAF6F0', color: '#8B7D73', border: '1px dashed #D4C5B9', borderRadius: '6px', 
                 padding: '4px 10px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer',
@@ -1987,7 +2023,7 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
               <button 
                 onClick={() => {
                   setShowAddNewItem(false);
-                  setNewItemsList([{ name: '', quantity: '', note: '' }]);
+                  setNewItemsList([{ name: '', quantity: '', price: '', note: '' }]);
                 }}
                 style={{ background: '#FFFFFF', color: '#8B7D73', border: '1px solid #D4C5B9', borderRadius: '6px', padding: '4px 12px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
               >
@@ -2008,11 +2044,13 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
       {/* Materials specification table */}
       <div style={{ background: '#FFFFFF', border: '1px solid #D4C5B9', borderRadius: '10px', overflow: 'hidden', marginBottom: '24px', width: '100%', boxSizing: 'border-box' }}>
         <div style={{ overflowX: 'auto', width: '100%', webkitOverflowScrolling: 'touch' }}>
-          <table style={{ width: '100%', minWidth: isMobile ? '450px' : 'auto', borderCollapse: 'collapse', fontSize: '12px' }}>
+          <table style={{ width: '100%', minWidth: isMobile ? '600px' : 'auto', borderCollapse: 'collapse', fontSize: '12px' }}>
           <thead>
             <tr style={{ background: '#FAF6F0', borderBottom: '1px solid #D4C5B9' }}>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 800, color: '#2C2520' }}>Найменування</th>
               <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#2C2520', width: '80px' }}>Замовлено</th>
+              <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#2C2520', width: '80px' }}>Ціна ($)</th>
+              <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#2C2520', width: '90px' }}>Сума ($)</th>
               <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#2C2520', width: '70px' }}>До видачі (шт)</th>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 800, color: '#2C2520', width: '150px' }}>Коментар специфікації</th>
               <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#2C2520', width: '40px' }}></th>
@@ -2020,10 +2058,12 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
           </thead>
           <tbody>
             {materialItems.length === 0 ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '30px', color: '#8B7D73', fontStyle: 'italic' }}>Немає замовлених матеріалів. Імпортуйте КП або відвантажте позиції на льоту.</td></tr>
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '30px', color: '#8B7D73', fontStyle: 'italic' }}>Немає замовлених матеріалів. Імпортуйте КП або відвантажте позиції на льоту.</td></tr>
             ) : materialItems.map(item => {
               const issued = getIssuedQty(item.id);
               const ordered = parseFloat(item.quantity) || 0;
+              const itemPrice = parseFloat(item.price) || 0;
+              const itemSum = parseFloat(item.sum) || (ordered * itemPrice);
               const left = Math.max(0, ordered - issued);
               const canDelete = issued === 0;
               return (
@@ -2048,6 +2088,32 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
                         e.target.style.background = '#FFFFFF';
                       }}
                     />
+                  </td>
+                  <td style={{ padding: '6px 12px', textAlign: 'center' }}>
+                    <input 
+                      type="number" 
+                      min="0"
+                      step="0.01"
+                      defaultValue={itemPrice > 0 ? itemPrice : ''} 
+                      placeholder="0.00"
+                      onBlur={(e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        if (val !== itemPrice) {
+                          handleUpdateItemPrice(item, val);
+                        }
+                      }}
+                      style={{ 
+                        width: '70px', padding: '4px 6px', fontSize: '11px', border: '1px solid transparent', 
+                        borderRadius: '6px', background: '#FAF6F0', color: '#2C2520', outline: 'none', textAlign: 'center' 
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.border = '1px solid #D4C5B9';
+                        e.target.style.background = '#FFFFFF';
+                      }}
+                    />
+                  </td>
+                  <td style={{ padding: '10px 12px', textAlign: 'center', color: '#2C2520', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                    {itemSum > 0 ? `$${itemSum.toFixed(2)}` : '—'}
                   </td>
                   <td style={{ padding: '10px 12px', textAlign: 'center', color: left > 0 ? '#C2410C' : '#15803D', fontWeight: 850 }}>{left}</td>
                   <td style={{ padding: '6px 12px' }}>
@@ -2092,6 +2158,41 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
               );
             })}
           </tbody>
+          {materialItems.length > 0 && (() => {
+            const totalOrdered = materialItems.reduce((acc, i) => acc + (parseFloat(i.quantity) || 0), 0);
+            const totalSum = materialItems.reduce((acc, i) => {
+              const q = parseFloat(i.quantity) || 0;
+              const p = parseFloat(i.price) || 0;
+              return acc + (parseFloat(i.sum) || (q * p));
+            }, 0);
+            const totalLeft = materialItems.reduce((acc, i) => {
+              const ordered = parseFloat(i.quantity) || 0;
+              const issued = getIssuedQty(i.id);
+              return acc + Math.max(0, ordered - issued);
+            }, 0);
+            return (
+              <tfoot>
+                <tr style={{ background: 'linear-gradient(135deg, #FAF6F0 0%, #F5EDE4 100%)', borderTop: '2px solid #D4C5B9' }}>
+                  <td style={{ padding: '10px 12px', fontWeight: 800, color: '#2C2520', fontSize: '12px' }}>
+                    Разом ({materialItems.length} поз.)
+                  </td>
+                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#2C2520' }}>
+                    {totalOrdered}
+                  </td>
+                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#8B7D73' }}>
+                    —
+                  </td>
+                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 900, color: '#2C2520', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>
+                    {totalSum > 0 ? `$${totalSum.toFixed(2)}` : '—'}
+                  </td>
+                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 850, color: totalLeft > 0 ? '#C2410C' : '#15803D' }}>
+                    {totalLeft}
+                  </td>
+                  <td colSpan={2}></td>
+                </tr>
+              </tfoot>
+            );
+          })()}
         </table>
       </div>
     </div>
