@@ -13,7 +13,7 @@
     "dashboard"
   ],
   "scripts": {
-    "build": "npm run build --workspace=green-tariff-v2",
+    "build": "cd green-tariff-v2 && npm ci && npm run build",
     "dev:dashboard": "npm run dev --workspace=dashboard",
     "dev:warehouse": "npm run dev --workspace=warehouse",
     "dev:proposals": "npm run dev --workspace=proposals",
