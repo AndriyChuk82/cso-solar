@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS public.clients (
   email text,
   type text DEFAULT 'B2C',
   note text,
+  updated_at timestamp with time zone,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -44,8 +45,10 @@ CREATE POLICY "Enable all for anon" ON public.shipment_items FOR ALL USING (true
 -- Додавання ознаки послуги до позицій проєкту
 ALTER TABLE public.project_items ADD COLUMN IF NOT EXISTS is_service boolean DEFAULT false;
 
--- Додавання колонки коментаря до клієнтів
+-- Додавання колонки коментаря та оновлення до клієнтів
 ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS note text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS updated_at timestamp with time zone;
+
 
 -- Створення таблиці Логів (Audit Trail)
 CREATE TABLE IF NOT EXISTS public.crm_audit_logs (
