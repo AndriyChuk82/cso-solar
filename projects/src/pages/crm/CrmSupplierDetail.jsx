@@ -12,6 +12,7 @@ export function CrmSupplierDetail({ supplier, onBack, onUpdate }) {
   const [showDealModal, setShowDealModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedDealForReceipt, setSelectedDealForReceipt] = useState(null);
+  const [editingDeal, setEditingDeal] = useState(null);
 
   // New Deal form state
   const [dealTitle, setDealTitle] = useState('');
@@ -68,8 +69,12 @@ export function CrmSupplierDetail({ supplier, onBack, onUpdate }) {
         currency: dealCurrency,
         paid_at: new Date(dealPaidAt).toISOString(),
         note: dealNote,
-        status: 'Активна'
+        status: editingDeal ? editingDeal.status : 'Активна'
       };
+
+      if (editingDeal) {
+        dealData.id = editingDeal.id;
+      }
 
       await crmApi.saveSupplierDeal(dealData, validItems);
       
@@ -77,11 +82,14 @@ export function CrmSupplierDetail({ supplier, onBack, onUpdate }) {
       await crmApi.saveAuditLog({
         clientId: null,
         projectId: null,
-        actionType: 'Угода з постачальником',
-        details: `Створено нову угоду "${finalTitle}" з постачальником "${supplier.name}" на суму ${parseFloat(dealSum).toLocaleString()} ${dealCurrency}.`
+        actionType: editingDeal ? 'Редагування угоди' : 'Угода з постачальником',
+        details: editingDeal 
+          ? `Відредаговано угоду "${finalTitle}" з постачальником "${supplier.name}". Нова сума: ${parseFloat(dealSum).toLocaleString()} ${dealCurrency}.`
+          : `Створено нову угоду "${finalTitle}" з постачальником "${supplier.name}" на суму ${parseFloat(dealSum).toLocaleString()} ${dealCurrency}.`
       });
 
       setShowDealModal(false);
+      setEditingDeal(null);
       
       // Reset form
       setDealTitle('');
@@ -95,8 +103,38 @@ export function CrmSupplierDetail({ supplier, onBack, onUpdate }) {
       if (onUpdate) onUpdate();
     } catch (err) {
       console.error(err);
-      alert('Помилка створення угоди: ' + err.message);
+      alert('Помилка збереження угоди: ' + err.message);
     }
+  };
+
+  const openEditModal = (deal) => {
+    setEditingDeal(deal);
+    setDealTitle(deal.title || '');
+    setDealSum(deal.paid_sum || '');
+    setDealCurrency(deal.currency || 'UAH');
+    
+    let dateStr = new Date().toISOString().substring(0, 16);
+    if (deal.paid_at) {
+      try {
+        dateStr = new Date(deal.paid_at).toISOString().substring(0, 16);
+      } catch (e) {}
+    }
+    setDealPaidAt(dateStr);
+    setDealNote(deal.note || '');
+    
+    if (deal.supplier_deal_items && deal.supplier_deal_items.length > 0) {
+      setDealItems(deal.supplier_deal_items.map(item => ({
+        id: item.id,
+        deal_id: item.deal_id,
+        name: item.name,
+        quantity: item.quantity,
+        received_quantity: item.received_quantity,
+        unit: item.unit || 'шт.'
+      })));
+    } else {
+      setDealItems([{ name: '', quantity: '', unit: 'шт.' }]);
+    }
+    setShowDealModal(true);
   };
 
   const openReceiptModal = (deal) => {
@@ -457,12 +495,26 @@ export function CrmSupplierDetail({ supplier, onBack, onUpdate }) {
                             {deal.status === 'Активна' && (
                               <div style={{ display: 'flex', gap: '6px' }}>
                                 <button 
+                                  onClick={() => openEditModal(deal)}
+                                  style={{
+                                    background: '#FFFFFF', color: '#8B7D73', border: '1px solid #D4C5B9', borderRadius: '6px',
+                                    padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
+                                    transition: 'background 0.2s'
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.background = '#FAF6F0'}
+                                  onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
+                                >
+                                  Редагувати
+                                </button>
+                                <button 
                                   onClick={() => openReceiptModal(deal)}
                                   style={{
                                     background: '#C4B4A6', color: '#FFFFFF', border: 'none', borderRadius: '6px',
                                     padding: '5px 10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer',
-                                    display: 'flex', alignItems: 'center', gap: '4px'
+                                    display: 'flex', alignItems: 'center', gap: '4px', transition: 'background 0.2s'
                                   }}
+                                  onMouseEnter={(e) => e.currentTarget.style.background = '#B3A395'}
+                                  onMouseLeave={(e) => e.currentTarget.style.background = '#C4B4A6'}
                                 >
                                   <Truck size={12} /> Надходження
                                 </button>
@@ -470,8 +522,11 @@ export function CrmSupplierDetail({ supplier, onBack, onUpdate }) {
                                   onClick={() => handleUpdateDealStatus(deal.id, 'Завершена', deal.title)}
                                   style={{
                                     background: '#FFFFFF', color: '#8B7D73', border: '1px solid #D4C5B9', borderRadius: '6px',
-                                    padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer'
+                                    padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
+                                    transition: 'background 0.2s'
                                   }}
+                                  onMouseEnter={(e) => e.currentTarget.style.background = '#FAF6F0'}
+                                  onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
                                 >
                                   Виконано
                                 </button>
@@ -657,7 +712,7 @@ export function CrmSupplierDetail({ supplier, onBack, onUpdate }) {
             {/* Modal Header */}
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #D4C5B9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FAF6F0', borderTopLeftRadius: '11px', borderTopRightRadius: '11px' }}>
               <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#2C2520', margin: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Clipboard size={16} color="#C4B4A6" /> Нова угода з постачальником
+                <Clipboard size={16} color="#C4B4A6" /> {editingDeal ? "Редагування угоди з постачальником" : "Нова угода з постачальником"}
               </h3>
               <button onClick={() => setShowDealModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#8B7D73' }}>
                 <X size={18} />
@@ -812,7 +867,7 @@ export function CrmSupplierDetail({ supplier, onBack, onUpdate }) {
                     padding: '8px 16px', fontSize: '12.5px', fontWeight: 800, cursor: 'pointer'
                   }}
                 >
-                  Створити угоду
+                  {editingDeal ? "Зберегти зміни" : "Створити угоду"}
                 </button>
               </div>
             </form>
