@@ -61,6 +61,14 @@ export function CrmSupplierDetail({ supplier, onBack, onUpdate }) {
       finalTitle = `Нова угода від ${day}.${month}.${year}`;
     }
 
+    const allDelivered = validItems.length > 0 && validItems.every(item => (parseFloat(item.received_quantity) || 0) >= (parseFloat(item.quantity) || 0));
+    let finalStatus = 'Активна';
+    if (allDelivered) {
+      finalStatus = 'Завершена';
+    } else if (editingDeal) {
+      finalStatus = editingDeal.status === 'Завершена' ? 'Активна' : editingDeal.status;
+    }
+
     try {
       const dealData = {
         supplier_id: supplier.id,
@@ -69,7 +77,7 @@ export function CrmSupplierDetail({ supplier, onBack, onUpdate }) {
         currency: dealCurrency,
         paid_at: new Date(dealPaidAt).toISOString(),
         note: dealNote,
-        status: editingDeal ? editingDeal.status : 'Активна'
+        status: finalStatus
       };
 
       if (editingDeal) {
