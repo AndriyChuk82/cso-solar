@@ -610,6 +610,229 @@ export const crmApi = {
       shipment_items: shipmentItemsRes.data || [],
       audit_logs: logsRes.data || []
     };
+  },
+
+  // === ПОСТАЧАЛЬНИКИ ===
+  getSuppliers: async () => {
+    const { data, error } = await supabase
+      .from('suppliers')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  saveSupplier: async (supplier) => {
+    const { data, error } = await supabase
+      .from('suppliers')
+      .upsert({ ...supplier, updated_at: new Date().toISOString() })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  getSupplierDeals: async (supplierId) => {
+    // 1. Fetch supplier deals
+    const { data: deals, error: dError } = await supabase
+      .from('supplier_deals')
+      .select('*')
+      .eq('supplier_id', supplierId)
+      .order('paid_at', { ascending: false });
+    
+    if (dError) throw dError;
+    if (!deals || deals.length === 0) return [];
+
+    const dealIds = deals.map(d => d.id);
+
+    // 2. Fetch deal items and receipts
+    const [itemsRes, receiptsRes] = await Promise.all([
+      supabase.from('supplier_deal_items').select('*').in('deal_id', dealIds),
+      supabase.from('supplier_receipts').select('*').in('deal_id', dealIds).order('received_at', { ascending: false })
+    ]);
+
+    if (itemsRes.error) throw itemsRes.error;
+    if (receiptsRes.error) throw receiptsRes.error;
+
+    const items = itemsRes.data || [];
+    const receipts = receiptsRes.data || [];
+    const receiptIds = receipts.map(r => r.id);
+
+    // 3. Fetch receipt items if there are any receipts
+    let receiptItems = [];
+    if (receiptIds.length > 0) {
+      const { data: riData, error: riError } = await supabase
+        .from('supplier_receipt_items')
+        .select('*')
+        .in('receipt_id', receiptIds);
+      if (riError) throw riError;
+      receiptItems = riData || [];
+    }
+
+    // 4. Assemble
+    return deals.map(d => {
+      const dReceipts = receipts.filter(r => r.deal_id === d.id).map(r => ({
+        ...r,
+        receipt_items: receiptItems.filter(ri => ri.receipt_id === r.id)
+      }));
+
+      return {
+        ...d,
+        supplier_deal_items: items.filter(item => item.deal_id === d.id),
+        supplier_receipts: dReceipts
+      };
+    });
+  },
+
+  saveSupplierDeal: async (deal, items) => {
+    // 1. Save deal header
+    const dealPayload = {
+      supplier_id: deal.supplier_id,
+      title: deal.title || 'Нова угода',
+      paid_sum: parseFloat(deal.paid_sum) || 0,
+      currency: deal.currency || 'USD',
+      paid_at: deal.paid_at || new Date().toISOString(),
+      status: deal.status || 'Активна',
+      note: deal.note || '',
+      updated_at: new Date().toISOString()
+    };
+    if (deal.id) dealPayload.id = deal.id;
+
+    const { data: dealData, error: dealError } = await supabase
+      .from('supplier_deals')
+      .upsert(dealPayload)
+      .select()
+      .single();
+
+    if (dealError) throw dealError;
+
+    // 2. Save items if provided
+    if (items && items.length > 0) {
+      const itemsToInsert = items.map(item => {
+        const payload = {
+          deal_id: dealData.id,
+          name: item.name,
+          quantity: parseFloat(item.quantity) || 0,
+          received_quantity: parseFloat(item.received_quantity) || 0,
+          unit: item.unit || 'шт.'
+        };
+        if (item.id) payload.id = item.id;
+        return payload;
+      });
+
+      const { error: itemsError } = await supabase
+        .from('supplier_deal_items')
+        .upsert(itemsToInsert);
+
+      if (itemsError) throw itemsError;
+    }
+
+    return dealData;
+  },
+
+  updateSupplierDealStatus: async (dealId, status) => {
+    const { data, error } = await supabase
+      .from('supplier_deals')
+      .update({
+        status: status,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', dealId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  saveSupplierReceipt: async (receipt, items) => {
+    // 1. Create supplier receipt header
+    const receiptPayload = {
+      deal_id: receipt.deal_id,
+      received_at: receipt.received_at || new Date().toISOString(),
+      note: receipt.note || ''
+    };
+
+    const { data: receiptData, error: receiptError } = await supabase
+      .from('supplier_receipts')
+      .insert(receiptPayload)
+      .select()
+      .single();
+
+    if (receiptError) throw receiptError;
+
+    // 2. Save receipt items and update received_quantity in supplier_deal_items
+    if (items && items.length > 0) {
+      const receiptItemsToInsert = items.map(item => ({
+        receipt_id: receiptData.id,
+        deal_item_id: item.deal_item_id,
+        quantity: parseFloat(item.quantity) || 0
+      }));
+
+      const { error: riError } = await supabase
+        .from('supplier_receipt_items')
+        .insert(receiptItemsToInsert);
+
+      if (riError) throw riError;
+
+      // Update received_quantity for each deal item
+      for (const item of items) {
+        // Fetch current received_quantity
+        const { data: currentItem, error: fetchErr } = await supabase
+          .from('supplier_deal_items')
+          .select('received_quantity')
+          .eq('id', item.deal_item_id)
+          .single();
+
+        if (fetchErr) throw fetchErr;
+
+        const newReceived = (parseFloat(currentItem.received_quantity) || 0) + (parseFloat(item.quantity) || 0);
+
+        const { error: updateErr } = await supabase
+          .from('supplier_deal_items')
+          .update({ received_quantity: newReceived })
+          .eq('id', item.deal_item_id);
+
+        if (updateErr) throw updateErr;
+      }
+    }
+
+    return receiptData;
+  },
+
+  getAllOwedMaterials: async () => {
+    // Fetch all active deals
+    const { data: activeDeals, error: dError } = await supabase
+      .from('supplier_deals')
+      .select('id, title, supplier_id, paid_at, paid_sum, currency, suppliers(name)')
+      .eq('status', 'Активна');
+
+    if (dError) throw dError;
+    if (!activeDeals || activeDeals.length === 0) return [];
+
+    const dealIds = activeDeals.map(d => d.id);
+
+    // Fetch all items for these active deals
+    const { data: items, error: iError } = await supabase
+      .from('supplier_deal_items')
+      .select('*')
+      .in('deal_id', dealIds);
+
+    if (iError) throw iError;
+    if (!items || items.length === 0) return [];
+
+    // Map and aggregate
+    return items.map(item => {
+      const deal = activeDeals.find(d => d.id === item.deal_id);
+      return {
+        ...item,
+        supplier_name: deal?.suppliers?.name || 'Невідомий постачальник',
+        deal_title: deal?.title || 'Без назви',
+        paid_at: deal?.paid_at,
+        currency: deal?.currency || 'USD',
+        paid_sum: parseFloat(deal?.paid_sum) || 0,
+        supplier_id: deal?.supplier_id
+      };
+    });
   }
 };
 
