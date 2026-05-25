@@ -44,7 +44,6 @@ export function CrmSupplierDetail({ supplier, onBack, onUpdate }) {
 
   const handleCreateDeal = async (e) => {
     e.preventDefault();
-    if (!dealTitle.trim()) return alert('Вкажіть назву угоди');
     if (!dealSum || parseFloat(dealSum) <= 0) return alert('Вкажіть суму оплати');
 
     const validItems = dealItems.filter(i => i.name.trim() && parseFloat(i.quantity) > 0);
@@ -52,10 +51,19 @@ export function CrmSupplierDetail({ supplier, onBack, onUpdate }) {
       return alert('Додайте хоча б один товар або матеріал');
     }
 
+    let finalTitle = dealTitle.trim();
+    if (!finalTitle) {
+      const dateObj = dealPaidAt ? new Date(dealPaidAt) : new Date();
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const year = dateObj.getFullYear();
+      finalTitle = `Нова угода від ${day}.${month}.${year}`;
+    }
+
     try {
       const dealData = {
         supplier_id: supplier.id,
-        title: dealTitle,
+        title: finalTitle,
         paid_sum: parseFloat(dealSum),
         currency: dealCurrency,
         paid_at: new Date(dealPaidAt).toISOString(),
@@ -70,7 +78,7 @@ export function CrmSupplierDetail({ supplier, onBack, onUpdate }) {
         clientId: null,
         projectId: null,
         actionType: 'Угода з постачальником',
-        details: `Створено нову угоду "${dealTitle}" з постачальником "${supplier.name}" на суму ${parseFloat(dealSum).toLocaleString()} ${dealCurrency}.`
+        details: `Створено нову угоду "${finalTitle}" з постачальником "${supplier.name}" на суму ${parseFloat(dealSum).toLocaleString()} ${dealCurrency}.`
       });
 
       setShowDealModal(false);
@@ -662,13 +670,12 @@ export function CrmSupplierDetail({ supplier, onBack, onUpdate }) {
                 
                 {/* Deal Title */}
                 <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#8B7D73', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>Назва або номер угоди *</label>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#8B7D73', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>Назва або номер угоди</label>
                   <input 
                     type="text" 
                     placeholder="Наприклад: Закупка сонячних панелей LONGi" 
                     value={dealTitle}
                     onChange={e => setDealTitle(e.target.value)}
-                    required
                     style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid #D4C5B9', borderRadius: '6px', boxSizing: 'border-box' }}
                   />
                 </div>
