@@ -1,1 +1,0 @@
-import{l as e}from"./index-BDW-gWh-.js";export{e as fetchAllData};
