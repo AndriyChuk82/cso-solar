@@ -298,6 +298,22 @@ export async function fetchHeliusProducts(): Promise<Product[]> {
 }
 
 export function extractModelCode(name: string): string | null {
+  const lowerName = name.toLowerCase();
+  const isRack = (lowerName.includes('стійк') || lowerName.includes('lrack') || lowerName.includes('hrack') || lowerName.includes('rack-11') || lowerName.includes('rack14')) &&
+                 !lowerName.includes('комплект') &&
+                 !lowerName.includes('бмс') &&
+                 !lowerName.includes('акб life') &&
+                 !lowerName.includes('bms');
+  
+  if (isRack) {
+    if (lowerName.includes('lrack') || lowerName.includes(' 8 ') || lowerName.includes('8 акб') || lowerName.includes(' 9 ') || lowerName.includes('9 рівн') || lowerName.includes('8 шт')) {
+      return '3U-LRACK';
+    }
+    if (lowerName.includes('hrack') || lowerName.includes('12') || lowerName.includes('13') || lowerName.includes('14')) {
+      return '3U-HRACK';
+    }
+  }
+
   // 1. Clean up typical prefixes/categories, parentheses and noise words
   let cleanName = name.toUpperCase()
     .replace(/\(.*?\)/g, '') // Remove everything in parentheses first
@@ -416,6 +432,13 @@ export function cleanAndFormatProductName(name: string): string {
 
   // If it's an inverter, battery or solar panel and we found a model code, simplify the name!
   const modelCode = extractModelCode(clean);
+  
+  if (modelCode === '3U-LRACK' || modelCode === '3U-HRACK') {
+    return modelCode === '3U-LRACK'
+      ? 'Deye Стійка 3U-LRack (на 8-9 АКБ)'
+      : 'Deye Стійка 3U-HRack (на 12-13 АКБ)';
+  }
+
   if (modelCode && detectedBrand && (
     clean.toLowerCase().includes('інвертор') || 
     clean.toLowerCase().includes('акб') || 
