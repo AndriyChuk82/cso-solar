@@ -155,7 +155,7 @@ export async function fetchBizSolarProducts(): Promise<Product[]> {
         mainCategory = 'Сонячні батареї';
       } else if (lowName.includes('інвертор')) {
         mainCategory = 'Інвертори';
-      } else if (lowName.includes('акб') || lowName.includes('акумул') || lowName.includes('pylontech') || lowName.includes('dyness')) {
+      } else if (lowName.includes('акб') || lowName.includes('акумул') || lowName.includes('pylontech') || lowName.includes('dyness') || lowName.includes('стійк') || lowName.includes('rack')) {
         mainCategory = 'АКБ та BMS';
       } else if (lowName.includes('кабель')) {
         mainCategory = 'Кабель';
@@ -264,12 +264,14 @@ export async function fetchHeliusProducts(): Promise<Product[]> {
         lowName.includes('dyness') || 
         lowName.includes('bos-g') || 
         lowName.includes('se-f') || 
-        lowName.includes('se-g')
+        lowName.includes('se-g') ||
+        lowName.includes('стійк') ||
+        lowName.includes('rack')
       ) {
         mainCategory = 'АКБ та BMS';
       } else if (currentSection.includes('кабел') || lowName.includes('кабель')) {
         mainCategory = 'Кабель';
-      } else if (currentSection.includes('комплект') || currentSection.includes('стійк') || lowName.includes('стійка') || lowName.includes('rack')) {
+      } else if (currentSection.includes('комплект') || currentSection.includes('стійк') || lowName.includes('стійка')) {
         mainCategory = 'Кріплення';
       } else if (currentSection.includes('захист') || lowName.includes('захист') || lowName.includes('автомат')) {
         mainCategory = 'Захист та Автоматика';
