@@ -301,6 +301,50 @@ export async function fetchHeliusProducts(): Promise<Product[]> {
 
 export function extractModelCode(name: string): string | null {
   const lowerName = name.toLowerCase();
+
+  // ── BATTERY MODEL NORMALIZATION ──────────────────────────────────────────
+  // All name variants of the same physical battery are mapped to one canonical
+  // model code so that mergeSupplierProducts can group them into a single card.
+  // Priority: check most-specific patterns first.
+
+  // Deye SE-F16 family  (314Ah / 51.2V LiFePO4)
+  // Covers: SE-F16, SE-F16-C, SE-F16PLUS-L, SE-F16LIFEPO4LV51.2V314AH,
+  //         RW-F16, 2B314ARW-F16  (БІЗ Солар артикул де Cyrillic В → B дає "2B314ARW-F16")
+  if (
+    lowerName.includes('se-f16') ||
+    lowerName.includes('rw-f16') ||
+    /\b314\s*ah\b/.test(lowerName) ||
+    /2b314ar/i.test(name) ||          // corrupted BIZ Solar article
+    /f16plus/i.test(lowerName) ||
+    /f-16\b/.test(lowerName)
+  ) { return 'SE-F16'; }
+
+  // Deye SE-F10 family  (100Ah / 51.2V)
+  if (lowerName.includes('se-f10') || lowerName.includes('rw-f10') || /f10plus/i.test(lowerName)) {
+    return 'SE-F10';
+  }
+
+  // Deye SE-G5.1 / SE-G5.1PRO family  (5.12kWh / 51.2V)
+  if (lowerName.includes('g5.1') || lowerName.includes('g5.1pro') || lowerName.includes('g5.1-pro')) {
+    return 'SE-G5.1';
+  }
+
+  // Deye SE-G5.3 family  (5.32kWh)
+  if (lowerName.includes('g5.3') || lowerName.includes('se-g5.3')) {
+    return 'SE-G5.3';
+  }
+
+  // Dyness / BOS RW-M6.1 family
+  if (lowerName.includes('rw-m6.1') || lowerName.includes('m6.1')) {
+    return 'RW-M6.1';
+  }
+
+  // Pylontech US5000 family
+  if (/us5000/i.test(lowerName)) { return 'US5000'; }
+  // Pylontech US3000 family
+  if (/us3000/i.test(lowerName)) { return 'US3000'; }
+  // ─────────────────────────────────────────────────────────────────────────
+
   const isRack = (lowerName.includes('стійк') || lowerName.includes('lrack') || lowerName.includes('hrack') || lowerName.includes('rack-11') || lowerName.includes('rack14')) &&
                  !lowerName.includes('комплект') &&
                  !lowerName.includes('бмс') &&
@@ -439,6 +483,12 @@ export function cleanAndFormatProductName(name: string): string {
     return modelCode === '3U-LRACK'
       ? 'Deye Стійка 3U-LRack (на 8-9 АКБ)'
       : 'Deye Стійка 3U-HRack (на 12-13 АКБ)';
+  }
+
+  // Known Deye battery canonical codes — always render as "Deye <model>"
+  const DEYE_BATTERY_CODES = ['SE-F16', 'SE-F10', 'SE-G5.1', 'SE-G5.3', 'RW-M6.1'];
+  if (modelCode && DEYE_BATTERY_CODES.includes(modelCode)) {
+    return `Deye ${modelCode}`;
   }
 
   if (modelCode && detectedBrand && (
