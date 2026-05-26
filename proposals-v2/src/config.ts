@@ -5,6 +5,10 @@ import type { SheetConfig, SellerInfo, SellerId } from './types';
 export const CONFIG = {
   SPREADSHEET_ID: import.meta.env.VITE_SPREADSHEET_ID || '1JzZFwvw6-m5JqP2Nra2azUvoWfuoY6Bsh-3qWtLPZ_k',
   MATERIALS_SPREADSHEET_ID: import.meta.env.VITE_MATERIALS_SPREADSHEET_ID || '1dXuNar4t3aemQSk5LnPOXxcB7DAqqEzraWEFASa2r4g',
+  BIZ_SOLAR_SPREADSHEET_ID: '1Xajw9ZJj-fCdlxbbsj1OqZPvFeyolMKD',
+  BIZ_SOLAR_GID: 461092007,
+  HELIUS_SPREADSHEET_ID: '1ddbl4d574RN5Q4WDMg4WW13heV_hOyYy',
+  HELIUS_GID: 314286327,
 
   SHEETS: [
     { name: 'Сонячні батареї', mainCat: 'Сонячні батареї', gid: 1271219295 },
@@ -24,7 +28,7 @@ export const CONFIG = {
   DEFAULT_USD_UAH: 41.50,
   DEFAULT_EUR_UAH: 51.00,
 
-  CACHE_VERSION: 'v58',
+  CACHE_VERSION: 'v85',
 
   GAS_URL: import.meta.env.VITE_GAS_URL || 'https://script.google.com/macros/s/AKfycbyvYNoyGINAtWlbExzONJWoReE8OC3_-FhOase5pHkCZ_PdCLXuMQqXqMYBWLzaNX-s/exec',
 
