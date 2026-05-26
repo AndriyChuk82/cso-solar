@@ -1,1 +1,0 @@
-import{l as e}from"./index-CVRj4jv1.js";export{e as fetchAllData};
