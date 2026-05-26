@@ -8,6 +8,7 @@
     "warehouse",
     "projects",
     "proposals",
+    "proposals-v2",
     "green-tariff",
     "green-tariff-v2",
     "dashboard"
@@ -17,6 +18,7 @@
     "dev:dashboard": "npm run dev --workspace=dashboard",
     "dev:warehouse": "npm run dev --workspace=warehouse",
     "dev:proposals": "npm run dev --workspace=proposals",
+    "dev:proposals-v2": "npm run dev --workspace=proposals-v2",
     "dev:projects": "npm run dev --workspace=projects",
     "dev:green-tariff": "npm run dev --workspace=green-tariff",
     "dev:green-tariff-v2": "npm run dev --workspace=green-tariff-v2",
