@@ -27,12 +27,16 @@ export const ProposalItemRow = memo(function ProposalItemRow({
   onMoveDown,
   onRemove,
 }: ProposalItemRowProps) {
-  const costTotal = item.displayCost * item.quantity;
-  const saleTotal = item.displayPrice * item.quantity;
+  const displayCostNum = item.displayCost ?? 0;
+  const displayPriceNum = item.displayPrice ?? 0;
+  const quantityNum = item.quantity ?? 1;
 
-  const [localCost, setLocalCost] = useState(item.displayCost.toString());
-  const [localPrice, setLocalPrice] = useState(item.displayPrice.toString());
-  const [localQuantity, setLocalQuantity] = useState(item.quantity.toString());
+  const costTotal = displayCostNum * quantityNum;
+  const saleTotal = displayPriceNum * quantityNum;
+
+  const [localCost, setLocalCost] = useState(displayCostNum.toString());
+  const [localPrice, setLocalPrice] = useState(displayPriceNum.toString());
+  const [localQuantity, setLocalQuantity] = useState(quantityNum.toString());
   const [localUnit, setLocalUnit] = useState(item.unit || 'шт');
   const [isEditingCost, setIsEditingCost] = useState(false);
   const [isEditingPrice, setIsEditingPrice] = useState(false);
@@ -41,21 +45,21 @@ export const ProposalItemRow = memo(function ProposalItemRow({
 
   useEffect(() => {
     if (!isEditingCost) {
-      setLocalCost(Number(item.displayCost.toFixed(2)).toString());
+      setLocalCost(Number(displayCostNum.toFixed(2)).toString());
     }
-  }, [item.displayCost, isEditingCost]);
+  }, [displayCostNum, isEditingCost]);
 
   useEffect(() => {
     if (!isEditingPrice) {
-      setLocalPrice(Number(item.displayPrice.toFixed(2)).toString());
+      setLocalPrice(Number(displayPriceNum.toFixed(2)).toString());
     }
-  }, [item.displayPrice, isEditingPrice]);
+  }, [displayPriceNum, isEditingPrice]);
 
   useEffect(() => {
     if (!isEditingQuantity) {
-      setLocalQuantity(item.quantity.toString());
+      setLocalQuantity(quantityNum.toString());
     }
-  }, [item.quantity, isEditingQuantity]);
+  }, [quantityNum, isEditingQuantity]);
 
   useEffect(() => {
     if (!isEditingUnit) {
@@ -216,7 +220,7 @@ export const ProposalItemRow = memo(function ProposalItemRow({
             onClick={() => setIsEditingCost(true)}
             className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/60 px-1 py-1 rounded text-slate-600 dark:text-slate-300 select-none min-h-[24px] flex items-center justify-center transition-all duration-150"
           >
-            {formatNumber(item.displayCost)}
+            {formatNumber(displayCostNum)}
           </div>
         )}
       </td>
@@ -247,7 +251,7 @@ export const ProposalItemRow = memo(function ProposalItemRow({
             onClick={() => setIsEditingPrice(true)}
             className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/60 px-1 py-1 rounded text-slate-900 dark:text-slate-100 font-bold select-none min-h-[24px] flex items-center justify-center transition-all duration-150"
           >
-            {formatNumber(item.displayPrice)}
+            {formatNumber(displayPriceNum)}
           </div>
         )}
       </td>

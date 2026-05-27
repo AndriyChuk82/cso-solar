@@ -19,7 +19,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
   const favorites = useProposalStore(selectFavorites);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editPrice, setEditPrice] = useState(product.price.toString());
+  const [editPrice, setEditPrice] = useState((product.price ?? 0).toString());
   const [isSaving, setIsSaving] = useState(false);
   const isFavorite = favorites.includes(product.id);
 
@@ -67,7 +67,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsEditing(true);
-    setEditPrice(product.price.toString());
+    setEditPrice((product.price ?? 0).toString());
   };
 
   const handleSavePrice = async (e: React.MouseEvent) => {
@@ -119,7 +119,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
   const handleCancelEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsEditing(false);
-    setEditPrice(product.price.toString());
+    setEditPrice((product.price ?? 0).toString());
   };
 
   return (

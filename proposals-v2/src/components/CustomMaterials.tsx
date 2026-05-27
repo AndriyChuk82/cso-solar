@@ -42,7 +42,7 @@ export function CustomMaterialsModal({ isOpen, onClose, initialProductId }: Cust
       if (material) {
         setFormData({
           name: material.name,
-          price: material.price.toString(),
+          price: (material.price ?? 0).toString(),
           currency: material.currency,
           unit: material.unit,
           description: material.description || '',
@@ -72,7 +72,7 @@ export function CustomMaterialsModal({ isOpen, onClose, initialProductId }: Cust
   const handleEdit = (material: Product) => {
     setFormData({
       name: material.name,
-      price: material.price.toString(),
+      price: (material.price ?? 0).toString(),
       currency: material.currency,
       unit: material.unit,
       description: material.description || '',
