@@ -1,0 +1,1 @@
+import{l as e}from"./index-CpoU52_p.js";export{e as fetchAllData};

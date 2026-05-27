@@ -236,37 +236,51 @@ export async function fetchHeliusProducts(): Promise<Product[]> {
       const lowName = name.toLowerCase();
       const lowDesc = colB.toLowerCase();
       
+      // 1. Check strong model/name identifiers first (highly reliable)
       if (
-        currentSection.includes('інвертор') || 
+        lowName.includes('akb') || 
+        lowName.includes('акб') || 
+        lowName.includes('акумул') || 
+        lowName.includes('pylontech') || 
+        lowName.includes('dyness') || 
+        lowName.includes('lifepo4') || 
+        lowName.includes('se-f') || 
+        lowName.includes('se-g') || 
+        lowName.includes('bos-g')
+      ) {
+        mainCategory = 'АКБ та BMS';
+      } else if (
         lowName.includes('інвертор') || 
-        lowDesc.includes('інвертор') ||
+        lowDesc.includes('інвертор') || 
         lowName.includes('sun-') || 
         lowName.startsWith('s5-') || 
         lowName.startsWith('s6-')
       ) {
         mainCategory = 'Інвертори';
       } else if (
-        currentSection.includes('батаре') || 
-        currentSection.includes('панел') || 
-        currentSection.includes('модул') || 
         lowName.includes('батаре') || 
         lowName.includes('панел') || 
         lowName.includes('модул')
+      ) {
+        mainCategory = 'Сонячні батареї';
+      } 
+      // 2. Fall back to section-based classification if name matches failed
+      else if (
+        currentSection.includes('інвертор')
+      ) {
+        mainCategory = 'Інвертори';
+      } else if (
+        currentSection.includes('батаре') || 
+        currentSection.includes('панел') || 
+        currentSection.includes('модул')
       ) {
         mainCategory = 'Сонячні батареї';
       } else if (
         currentSection.includes('акб') || 
         currentSection.includes('акумул') || 
         currentSection.includes('блокування bos') || 
-        lowName.includes('акб') || 
-        lowName.includes('акумул') || 
-        lowName.includes('pylontech') || 
-        lowName.includes('dyness') || 
-        lowName.includes('bos-g') || 
-        lowName.includes('se-f') || 
-        lowName.includes('se-g') ||
-        lowName.includes('стійк') ||
-        lowName.includes('rack')
+        currentSection.includes('стійк') ||
+        currentSection.includes('rack')
       ) {
         mainCategory = 'АКБ та BMS';
       } else if (currentSection.includes('кабел') || lowName.includes('кабель')) {
@@ -596,6 +610,7 @@ export function mergeSupplierProducts(
           const cleanPModel = pModel ? pModel.replace(/[^A-Z0-9]/gi, '') : '';
           
           if (cleanSupModel === cleanPModel) {
+            console.log(`[PASS 1 MATCH SUCCESS] ${supplier.name} "${supP.name}" (cat: "${supP.mainCategory}") matches "${p.name}" (cat: "${p.mainCategory}")`);
             if (!p.offers) p.offers = [];
             
             if (!p.offers.some(o => o.supplierName === supplier.name)) {
@@ -618,6 +633,10 @@ export function mergeSupplierProducts(
             
             matchedSupplierProductIds.add(`${supplier.name}_${supP.id}`);
             break;
+          } else {
+            if (cleanSupModel && (cleanSupModel.includes('G51') || cleanSupModel.includes('F5'))) {
+              console.log(`[PASS 1 MATCH FAIL] ${supplier.name} "${supP.name}" (model: "${cleanSupModel}", cat: "${supP.mainCategory}") VS "${p.name}" (model: "${cleanPModel}", cat: "${p.mainCategory}")`);
+            }
           }
         }
       }
@@ -685,6 +704,9 @@ export function mergeSupplierProducts(
           matchedProduct.selectedSupplier = supplier.name;
         }
       } else {
+        if (cleanSupModel && (cleanSupModel.includes('G51') || cleanSupModel.includes('F5'))) {
+          console.log(`[PASS 2 MATCH FAIL - NEW CARD CREATED] ${supplier.name} "${supP.name}" (model: "${cleanSupModel}", cat: "${supP.mainCategory}")`);
+        }
         const newProduct: Product = {
           ...supP,
           name: cleanAndFormatProductName(supP.name),
