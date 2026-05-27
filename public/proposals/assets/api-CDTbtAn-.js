@@ -1,1 +1,0 @@
-import{l as e}from"./index-D-dOKQBM.js";export{e as fetchAllData};

@@ -372,6 +372,24 @@ export function extractModelCode(name: string): string | null {
   if (/us5000/i.test(lowerName)) { return 'US5000'; }
   // Pylontech US3000 family
   if (/us3000/i.test(lowerName)) { return 'US3000'; }
+
+  // Huawei SUN2000 family (e.g. SUN2000-30KTL-M3 EU / UA)
+  if (lowerName.includes('sun2000') || lowerName.includes('sun 2000')) {
+    const powerMatch = lowerName.match(/(\d+ktl)/i);
+    const power = powerMatch ? powerMatch[1].toUpperCase() : '';
+    const versionMatch = lowerName.match(/(m\d+)/i);
+    const version = versionMatch ? versionMatch[1].toUpperCase() : '';
+    let region = 'EU'; // Default to EU as per user request
+    if (lowerName.includes('ua') && !lowerName.includes('eua')) {
+      region = 'UA';
+    }
+    
+    if (power && version) {
+      return `SUN2000-${power}-${version}-${region}`;
+    } else if (power) {
+      return `SUN2000-${power}-${region}`;
+    }
+  }
   // ─────────────────────────────────────────────────────────────────────────
 
   const isRack = (lowerName.includes('стійк') || lowerName.includes('lrack') || lowerName.includes('hrack') || lowerName.includes('rack-11') || lowerName.includes('rack14')) &&
@@ -518,6 +536,16 @@ export function cleanAndFormatProductName(name: string): string {
   const DEYE_BATTERY_CODES = ['SE-F16', 'SE-F10', 'SE-G5.1-PRO-B', 'SE-F5-PRO-C', 'SE-F5-PRO-L', 'SE-G5.3', 'RW-M6.1'];
   if (modelCode && DEYE_BATTERY_CODES.includes(modelCode)) {
     return `Deye ${modelCode}`;
+  }
+
+  // Known Huawei inverter canonical codes - always render as "Huawei SUN2000-<Power>-<Version> <Region>"
+  if (modelCode && modelCode.startsWith('SUN2000-')) {
+    const parts = modelCode.split('-');
+    if (parts.length >= 4) {
+      return `Huawei SUN2000-${parts[1]}-${parts[2]} ${parts[3]}`;
+    } else if (parts.length === 3) {
+      return `Huawei SUN2000-${parts[1]} ${parts[2]}`;
+    }
   }
 
   if (modelCode && detectedBrand && (

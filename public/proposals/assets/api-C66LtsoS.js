@@ -1,0 +1,1 @@
+import{l as e}from"./index-DBvTL4xf.js";export{e as fetchAllData};
