@@ -1,1 +1,0 @@
-import{l as e}from"./index-DP3n4SDx.js";export{e as fetchAllData};
