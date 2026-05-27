@@ -1,0 +1,1 @@
+import{t as e}from"./index-BGDHKiqL.js";export default e();

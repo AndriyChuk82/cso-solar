@@ -151,12 +151,25 @@ export async function fetchBizSolarProducts(): Promise<Product[]> {
       
       let mainCategory = 'Інше';
       const lowName = name.toLowerCase();
-      if (lowName.includes('батаре') || lowName.includes('панел') || lowName.includes('модул')) {
-        mainCategory = 'Сонячні батареї';
+      
+      if (
+        lowName.includes('akb') ||
+        lowName.includes('акб') || 
+        lowName.includes('акумул') || 
+        lowName.includes('pylontech') || 
+        lowName.includes('dyness') || 
+        lowName.includes('bos-g') || 
+        lowName.includes('se-f') || 
+        lowName.includes('se-g') ||
+        lowName.includes('lfp') ||
+        lowName.includes('стійк') || 
+        lowName.includes('rack')
+      ) {
+        mainCategory = 'АКБ та BMS';
       } else if (lowName.includes('інвертор')) {
         mainCategory = 'Інвертори';
-      } else if (lowName.includes('акб') || lowName.includes('акумул') || lowName.includes('pylontech') || lowName.includes('dyness') || lowName.includes('стійк') || lowName.includes('rack')) {
-        mainCategory = 'АКБ та BMS';
+      } else if (lowName.includes('батаре') || lowName.includes('панел') || lowName.includes('модул')) {
+        mainCategory = 'Сонячні батареї';
       } else if (lowName.includes('кабель')) {
         mainCategory = 'Кабель';
       } else if (lowName.includes('кріпл')) {
@@ -316,6 +329,18 @@ export async function fetchHeliusProducts(): Promise<Product[]> {
 export function extractModelCode(name: string): string | null {
   const lowerName = name.toLowerCase();
 
+  // ── EXCLUDE KITS / SETS FROM NORMALIZATION ────────────────────────────────
+  // Kits/Sets should never be normalized as individual battery modules or inverters.
+  if (
+    lowerName.includes('комплект') ||
+    lowerName.includes('набір') ||
+    lowerName.includes('набори') ||
+    /\bkit\b/i.test(lowerName) ||
+    /\bset\b/i.test(lowerName)
+  ) {
+    return null;
+  }
+
   // ── BATTERY MODEL NORMALIZATION ──────────────────────────────────────────
   // All name variants of the same physical battery are mapped to one canonical
   // model code so that mergeSupplierProducts can group them into a single card.
@@ -366,6 +391,27 @@ export function extractModelCode(name: string): string | null {
   // Dyness / BOS RW-M6.1 family
   if (lowerName.includes('rw-m6.1') || lowerName.includes('m6.1')) {
     return 'RW-M6.1';
+  }
+
+  // Deye BOS-G BMS / Control Box family
+  if ((lowerName.includes('bos-g') || lowerName.includes('bosg') || /bos\s*-\s*g/i.test(lowerName)) && 
+      (lowerName.includes('bms') || lowerName.includes('control') || lowerName.includes('pdu') || lowerName.includes('контрол') || lowerName.includes('керув') || lowerName.includes('hvb'))) {
+    return 'BOS-G-BMS';
+  }
+
+  // Deye BOS-G PRO / BOS-G family (5.12kWh / 51.2V / 100Ah module)
+  if ((lowerName.includes('bos-g') || lowerName.includes('bosg') || /bos\s*-\s*g/i.test(lowerName)) && 
+      !lowerName.includes('control') && 
+      !lowerName.includes('bms') && 
+      !lowerName.includes('бмс') && 
+      !lowerName.includes('керув') && 
+      !lowerName.includes('контрол') &&
+      !lowerName.includes('rack') &&
+      !lowerName.includes('стійк') &&
+      !lowerName.includes('шаф') &&
+      !lowerName.includes('корпус') &&
+      !lowerName.includes('cabinet')) {
+    return 'BOS-G-PRO';
   }
 
   // Pylontech US5000 family
@@ -532,10 +578,38 @@ export function cleanAndFormatProductName(name: string): string {
       : 'Deye Стійка 3U-HRack (на 12-13 АКБ)';
   }
 
+  if (modelCode === 'BOS-G-PRO') {
+    return splitGluedWords('Deye BOS-G Pro (5.12 kWh)');
+  }
+
+  if (modelCode === 'BOS-G-BMS') {
+    return 'Deye BMS Контролер Bos-G 120-750V (HVB750V/100A-EU)';
+  }
+
+  if (modelCode === 'SE-F16') {
+    return splitGluedWords('Deye SE-F16 LiFePO4 LV 51.2V 314Ah');
+  }
+
+  if (modelCode === 'SE-F10') {
+    return splitGluedWords('Deye SE-F10 LiFePO4 LV 51.2V 100Ah');
+  }
+
+  if (modelCode === 'SE-F5-PRO-C') {
+    return splitGluedWords('Deye SE-F5 Pro-C LiFePO4 LV 51.2V 100Ah');
+  }
+
+  if (modelCode === 'SE-F5-PRO-L') {
+    return splitGluedWords('Deye SE-F5 Pro-L LiFePO4 LV 51.2V 100Ah');
+  }
+
+  if (modelCode === 'SE-G5.1-PRO-B') {
+    return splitGluedWords('Deye SE-G5.1 Pro-B LiFePO4 LV 51.2V 100Ah');
+  }
+
   // Known Deye battery canonical codes — always render as "Deye <model>"
-  const DEYE_BATTERY_CODES = ['SE-F16', 'SE-F10', 'SE-G5.1-PRO-B', 'SE-F5-PRO-C', 'SE-F5-PRO-L', 'SE-G5.3', 'RW-M6.1'];
+  const DEYE_BATTERY_CODES = ['SE-F16', 'SE-F10', 'SE-G5.1-PRO-B', 'SE-F5-PRO-C', 'SE-F5-PRO-L', 'SE-G5.3', 'RW-M6.1', 'BOS-G-PRO'];
   if (modelCode && DEYE_BATTERY_CODES.includes(modelCode)) {
-    return `Deye ${modelCode}`;
+    return splitGluedWords(`Deye ${modelCode}`);
   }
 
   // Known Huawei inverter canonical codes - always render as "Huawei SUN2000-<Power>-<Version> <Region>"
@@ -570,7 +644,8 @@ export function cleanAndFormatProductName(name: string): string {
     let cleanModel = modelCode;
     cleanModel = cleanModel.replace(/-P\d+$/i, '').replace(/-P$/i, '');
     
-    return `${detectedBrand} ${cleanModel}`;
+    const formattedResult = `${detectedBrand} ${cleanModel}`;
+    return splitGluedWords(formattedResult);
   }
   
   // Fallback brand-front realignment
@@ -584,7 +659,70 @@ export function cleanAndFormatProductName(name: string): string {
     }
   }
   
-  return clean;
+  return splitGluedWords(clean);
+}
+
+function splitGluedWords(str: string): string {
+  if (!str) return str;
+  let res = str
+    .replace(/(\d{3}M)BIF(I|A)CIAL/gi, '$1 BIFICIAL')
+    .replace(/(\d{3}M)BIF(I|A)CIAL/gi, '$1 BIFICIAL')
+    .replace(/LIFEPO4/gi, ' LiFePO4')
+    .replace(/LV(\d)/gi, ' LV $1')
+    .replace(/LV/gi, ' LV')
+    .replace(/HV(\d)/gi, ' HV $1')
+    .replace(/HV/gi, ' HV')
+    .replace(/(\d+(?:\.\d+)?V)/gi, ' $1')
+    .replace(/(\d+AH)/gi, ' $1')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const low = res.toLowerCase();
+  
+  // 1. Акумулятори (Акумуляторна батарея)
+  const isBattery = (low.includes('pylontech') || low.includes('dyness') || low.includes('akb') || low.includes('акб') || low.includes('акумул') || low.includes('lifepo4') || low.includes('se-f') || low.includes('se-g') || low.includes('rw-m') || low.includes('bos-g') || low.includes('lfp')) &&
+                    !low.includes('стійк') &&
+                    !low.includes('кабель') &&
+                    !low.includes('bms') &&
+                    !low.includes('pdu') &&
+                    !low.includes('бмс') &&
+                    !low.includes('контрол') &&
+                    !low.includes('шаф') &&
+                    !low.includes(' cabinet') &&
+                    !low.includes('rack');
+
+  if (isBattery && !low.includes('акумуляторна батарея') && !low.includes('акумуляторний модуль') && !low.includes('комплект')) {
+    res = `Акумуляторна батарея ${res}`;
+  }
+
+  // 2. Інвертори (Гібридний інвертор / Мережевий інвертор)
+  const isInverter = (low.includes('growatt') || low.includes('must') || low.includes('victron') || low.includes('solis') || low.includes('huawei') || low.includes('sun-') || low.includes('sun2000') || low.includes('s5-') || low.includes('s6-') || low.includes('ktl')) &&
+                     !low.includes('інвертор') &&
+                     !low.includes('акб') &&
+                     !low.includes('акумул') &&
+                     !low.includes('bms') &&
+                     !low.includes('бмс') &&
+                     !low.includes('панел') &&
+                     !low.includes('батаре') &&
+                     !low.includes('стійк') &&
+                     !low.includes('rack') &&
+                     !low.includes('smart logger') &&
+                     !low.includes('datalogger') &&
+                     !low.includes('stick') &&
+                     !low.includes('монітор') &&
+                     !low.includes('wifi') &&
+                     !low.includes('модуль') &&
+                     !low.includes('кабель');
+
+  if (isInverter) {
+    if (low.includes('sg') || low.includes('hyb') || low.includes('гібрид')) {
+      res = `Гібридний інвертор ${res}`;
+    } else {
+      res = `Мережевий інвертор ${res}`;
+    }
+  }
+
+  return res;
 }
 
 export function mergeSupplierProducts(
@@ -744,6 +882,26 @@ export function mergeSupplierProducts(
         mergedMap.set(supP.id, newProduct);
       }
     });
+  });
+  
+  // 4. Final post-processing pass: select the best supplier offer (prefer in-stock, then lowest price)
+  mergedMap.forEach(p => {
+    if (p.offers && p.offers.length > 0) {
+      const inStockOffers = p.offers.filter(o => o.inStock !== false);
+      let bestOffer = p.offers[0];
+      
+      if (inStockOffers.length > 0) {
+        bestOffer = inStockOffers.reduce((min, o) => o.price < min.price ? o : min, inStockOffers[0]);
+      } else {
+        bestOffer = p.offers.reduce((min, o) => o.price < min.price ? o : min, p.offers![0]);
+      }
+      
+      p.selectedSupplier = bestOffer.supplierName;
+      p.price = bestOffer.price;
+      p.currency = bestOffer.currency;
+      p.inStock = bestOffer.inStock !== false;
+      p.availabilityDate = bestOffer.availabilityDate;
+    }
   });
   
   return Array.from(mergedMap.values()).filter(p => {
@@ -1039,9 +1197,13 @@ export function searchProducts(products: Product[], query: string): Product[] {
 
   const filtered = products.filter(p => {
     const name = normalizeForSearch(p.name);
-    const desc = normalizeForSearch(p.description || '');
-    const combined = `${name} ${desc}`;
-    return words.every(word => combined.includes(word));
+    return words.every(word => {
+      if (/^\d+$/.test(word)) {
+        const numRegex = new RegExp(`\\b${word}\\b|\\b${word}k|\\b${word}кв|-` + word + `k|/` + word + `|\\b${word}w`, 'i');
+        return numRegex.test(name);
+      }
+      return name.includes(word);
+    });
   });
 
   // Score and sort by relevancy
