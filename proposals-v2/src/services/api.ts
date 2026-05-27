@@ -324,9 +324,24 @@ export function extractModelCode(name: string): string | null {
     return 'SE-F10';
   }
 
-  // Deye SE-G5.1 / SE-G5.1PRO family  (5.12kWh / 51.2V)
-  if (lowerName.includes('g5.1') || lowerName.includes('g5.1pro') || lowerName.includes('g5.1-pro')) {
-    return 'SE-G5.1';
+  // Deye SE-G5.1 Pro-B / Pro family (5.12kWh / 51.2V)
+  // Maps g5.1 pro, g5.1 pro-b, g5.1 proв, g5.1-pro etc.
+  if (
+    lowerName.includes('g5.1') || 
+    /g5\.1\s*pro/i.test(lowerName) || 
+    /g5\.1\s*pro\s*[bв]/i.test(lowerName)
+  ) {
+    return 'SE-G5.1-PRO-B';
+  }
+
+  // Deye SE-F5 PRO-C / PRO-L family (5.12kWh / 51.2V)
+  if (lowerName.includes('f5') || /f\s*5/i.test(lowerName)) {
+    if (lowerName.includes('pro-c') || lowerName.includes('proc') || lowerName.includes('pro-с') || lowerName.includes('proс') || /f\s*5\s*-\s*pro\s*-\s*[cс]/i.test(lowerName) || /pro\s*-\s*[cс]/i.test(lowerName)) {
+      return 'SE-F5-PRO-C';
+    }
+    if (lowerName.includes('pro-l') || lowerName.includes('prol') || /f\s*5\s*-\s*pro\s*-\s*l/i.test(lowerName) || /pro\s*-\s*l/i.test(lowerName)) {
+      return 'SE-F5-PRO-L';
+    }
   }
 
   // Deye SE-G5.3 family  (5.32kWh)
@@ -486,7 +501,7 @@ export function cleanAndFormatProductName(name: string): string {
   }
 
   // Known Deye battery canonical codes — always render as "Deye <model>"
-  const DEYE_BATTERY_CODES = ['SE-F16', 'SE-F10', 'SE-G5.1', 'SE-G5.3', 'RW-M6.1'];
+  const DEYE_BATTERY_CODES = ['SE-F16', 'SE-F10', 'SE-G5.1-PRO-B', 'SE-F5-PRO-C', 'SE-F5-PRO-L', 'SE-G5.3', 'RW-M6.1'];
   if (modelCode && DEYE_BATTERY_CODES.includes(modelCode)) {
     return `Deye ${modelCode}`;
   }
