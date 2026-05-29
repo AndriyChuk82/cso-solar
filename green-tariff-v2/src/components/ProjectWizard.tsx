@@ -31,9 +31,9 @@ export const REQUIRED_FIELDS_BY_STEP: Record<number, (keyof SemanticProject)[]> 
   1: ['status', 'projectNumber'],
   2: ['fullName', 'phone', 'taxId'],
   3: ['propertyRegNumber', 'installationLocation'],
-  4: ['eicCode', 'permittedPower'],
-  5: ['inverterModel', 'panelModel', 'panelCount'],
-  6: ['workCost'],
+  4: ['eicCode', 'permittedPower', 'meterModel', 'substation', 'line', 'utilityPole'],
+  5: ['inverterModel', 'panelModel', 'panelCount', 'inverterPower', 'inverterSerialNumber', 'totalPanelPower', 'panelInstallationLocation'],
+  6: [],
 };
 
 export function ProjectWizard() {
@@ -162,58 +162,81 @@ export function ProjectWizard() {
       
       {/* 1. Header Horizontal Stepper Tracker */}
       <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border-b border-gray-200/50 dark:border-slate-800/50 px-6 py-4 flex-shrink-0 transition-all">
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-thin">
-          {STEPS.map((step, idx) => {
-            const Icon = step.icon;
-            const isActive = activeStep === step.id;
-            const isCompleted = isStepComplete(step.id);
-            
-            return (
-              <React.Fragment key={step.id}>
-                <button
-                  type="button"
-                  onClick={() => setActiveStep(step.id)}
-                  className="flex items-center gap-2 group outline-none select-none text-left flex-shrink-0"
-                >
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs transition-all duration-200 ${
-                    isActive
-                      ? isCompleted
-                        ? 'bg-[#f59e0b] text-white shadow-md shadow-[#f59e0b]/20 scale-105'
-                        : 'bg-[#f59e0b] text-white shadow-md shadow-[#f59e0b]/20 scale-105 ring-2 ring-red-500/50 ring-offset-2 dark:ring-offset-slate-900'
-                      : isCompleted
-                        ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/35'
-                        : 'bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400 border border-red-200 dark:border-red-900/40 hover:bg-red-100/50 dark:hover:bg-red-950/50'
-                  }`}>
-                    {isCompleted ? <Check className="w-4 h-4" /> : step.id}
-                  </div>
-                  <div className="hidden sm:block">
-                    <div className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${
-                      isActive 
-                        ? 'text-[#f59e0b]' 
-                        : isCompleted 
-                          ? 'text-gray-400 dark:text-slate-500' 
-                          : 'text-red-500 dark:text-red-400/80'
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin flex-1">
+            {STEPS.map((step, idx) => {
+              const Icon = step.icon;
+              const isActive = activeStep === step.id;
+              const isCompleted = isStepComplete(step.id);
+              
+              return (
+                <React.Fragment key={step.id}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveStep(step.id)}
+                    className="flex items-center gap-2 group outline-none select-none text-left flex-shrink-0"
+                  >
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs transition-all duration-200 ${
+                      isActive
+                        ? isCompleted
+                          ? 'bg-[#f59e0b] text-white shadow-md shadow-[#f59e0b]/20 scale-105'
+                          : 'bg-[#f59e0b] text-white shadow-md shadow-[#f59e0b]/20 scale-105 ring-2 ring-red-500/50 ring-offset-2 dark:ring-offset-slate-900'
+                        : isCompleted
+                          ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/35'
+                          : 'bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400 border border-red-200 dark:border-red-900/40 hover:bg-red-100/50 dark:hover:bg-red-950/50'
                     }`}>
-                      Крок {step.id}
-                      {!isCompleted && <span className="text-[10px] text-red-500 font-extrabold animate-pulse">!</span>}
+                      {isCompleted ? <Check className="w-4 h-4" /> : step.id}
                     </div>
-                    <div className={`text-xs font-bold ${
-                      isActive 
-                        ? 'text-gray-900 dark:text-white' 
-                        : isCompleted 
-                          ? 'text-gray-600 dark:text-slate-400 group-hover:text-[#f59e0b]' 
-                          : 'text-red-700/80 dark:text-red-400/80 group-hover:text-red-600'
-                    }`}>
-                      {step.label}
+                    <div className="hidden sm:block">
+                      <div className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                        isActive 
+                          ? 'text-[#f59e0b]' 
+                          : isCompleted 
+                            ? 'text-gray-400 dark:text-slate-500' 
+                            : 'text-red-500 dark:text-red-400/80'
+                      }`}>
+                        Крок {step.id}
+                        {!isCompleted && <span className="text-[10px] text-red-500 font-extrabold animate-pulse">!</span>}
+                      </div>
+                      <div className={`text-xs font-bold ${
+                        isActive 
+                          ? 'text-gray-900 dark:text-white' 
+                          : isCompleted 
+                            ? 'text-gray-600 dark:text-slate-400 group-hover:text-[#f59e0b]' 
+                            : 'text-red-700/80 dark:text-red-400/80 group-hover:text-red-600'
+                      }`}>
+                        {step.label}
+                      </div>
                     </div>
-                  </div>
-                </button>
-                {idx < STEPS.length - 1 && (
-                  <div className="hidden sm:block flex-1 h-[2px] bg-gray-200 dark:bg-slate-800 max-w-[48px] rounded" />
-                )}
-              </React.Fragment>
-            );
-          })}
+                  </button>
+                  {idx < STEPS.length - 1 && (
+                    <div className="hidden sm:block flex-1 h-[2px] bg-gray-200 dark:bg-slate-800 max-w-[48px] rounded" />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+
+          <div className="flex-shrink-0 flex justify-end">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isLoading}
+              className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-[#f59e0b] hover:bg-[#d97706] rounded-xl shadow-md shadow-[#f59e0b]/15 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Збереження...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Зберегти в Sheets
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -434,7 +457,7 @@ export function ProjectWizard() {
                   />
                 </FormField>
 
-                <FormField label="Модель лічильника метрології">
+                <FormField label="Модель лічильника метрології" required>
                   <SearchableSelect 
                     value={formData.meterModel} 
                     onChange={(v) => handleChange('meterModel', v)} 
@@ -451,7 +474,7 @@ export function ProjectWizard() {
                 </FormField>
 
                 <div className="col-span-1 md:col-span-2 grid grid-cols-3 gap-3">
-                  <FormField label="Назва підстанції (ТП/КТП)">
+                  <FormField label="Назва підстанції (ТП/КТП)" required>
                     <Input 
                       value={formData.substation} 
                       onChange={(v) => handleChange('substation', v)} 
@@ -459,7 +482,7 @@ export function ProjectWizard() {
                     />
                   </FormField>
 
-                  <FormField label="Назва лінії (ЛЕД / ПЛ)">
+                  <FormField label="Назва лінії (ЛЕД / ПЛ)" required>
                     <Input 
                       value={formData.line} 
                       onChange={(v) => handleChange('line', v)} 
@@ -467,7 +490,7 @@ export function ProjectWizard() {
                     />
                   </FormField>
 
-                  <FormField label="Опора №">
+                  <FormField label="Опора №" required>
                     <Input 
                       value={formData.utilityPole} 
                       onChange={(v) => handleChange('utilityPole', v)} 
@@ -509,7 +532,7 @@ export function ProjectWizard() {
                     />
                   </FormField>
 
-                  <FormField label="Потужність інвертора, кВт">
+                  <FormField label="Потужність інвертора, кВт" required>
                     <Input 
                       type="number" 
                       step="0.1" 
@@ -518,7 +541,7 @@ export function ProjectWizard() {
                     />
                   </FormField>
 
-                  <FormField label="Серійний номер інвертора">
+                  <FormField label="Серійний номер інвертора" required>
                     <Input 
                       value={formData.inverterSerialNumber} 
                       onChange={(v) => handleChange('inverterSerialNumber', v)} 
@@ -579,7 +602,7 @@ export function ProjectWizard() {
                     />
                   </FormField>
 
-                  <FormField label="Розрахункова сумарна потужність панелей, кВт">
+                  <FormField label="Розрахункова сумарна потужність панелей, кВт" required>
                     <Input 
                       type="number" 
                       step="any" 
@@ -588,7 +611,7 @@ export function ProjectWizard() {
                     />
                   </FormField>
 
-                  <FormField label="Місце встановлення панелей">
+                  <FormField label="Місце встановлення панелей" required>
                     <Input 
                       value={formData.panelInstallationLocation} 
                       onChange={(v) => handleChange('panelInstallationLocation', v)} 
@@ -721,7 +744,7 @@ export function ProjectWizard() {
             </button>
           )}
 
-          {activeStep < STEPS.length ? (
+          {activeStep < STEPS.length && (
             <button
               type="button"
               onClick={() => setActiveStep(prev => prev + 1)}
@@ -729,25 +752,6 @@ export function ProjectWizard() {
             >
               Далі
               <ArrowRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isLoading}
-              className="inline-flex items-center gap-1.5 px-6 py-2.5 text-xs font-bold text-white bg-[#f59e0b] hover:bg-[#d97706] rounded-xl shadow-md shadow-[#f59e0b]/15 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Збереження...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  Зберегти в Sheets
-                </>
-              )}
             </button>
           )}
         </div>
