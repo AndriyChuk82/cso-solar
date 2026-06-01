@@ -5,6 +5,7 @@ import { formatAmount } from '../../lib/utils';
 import { CrmClientDetail } from './CrmClientDetail';
 import { CrmSupplierDetail } from './CrmSupplierDetail';
 import { NewClientModal } from '../../components/NewClientModal';
+import { QuickShipmentModal } from './QuickShipmentModal';
 
 export default function CrmDashboard() {
   const [clients, setClients] = useState([]);
@@ -12,6 +13,7 @@ export default function CrmDashboard() {
   const [search, setSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showQuickShipment, setShowQuickShipment] = useState(false);
   const [hoveredId, setHoveredId] = useState(null);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -32,7 +34,7 @@ export default function CrmDashboard() {
   // Kanban view states
   const [mobileView, setMobileView] = useState('clients'); // 'clients' or 'kanban'
   const [draggedOverStage, setDraggedOverStage] = useState(null);
-  const [activeStageTab, setActiveStageTab] = useState('Нова угода');
+  const [activeStageTab, setActiveStageTab] = useState('Борг');
 
   useEffect(() => {
     loadClients();
@@ -248,7 +250,17 @@ export default function CrmDashboard() {
   };
 
   if (dashboardTab === 'clients' && selectedClient) {
-    return <CrmClientDetail client={selectedClient} onBack={() => setSelectedClient(null)} onUpdate={loadClients} />;
+    return (
+      <>
+        <CrmClientDetail client={selectedClient} onBack={() => setSelectedClient(null)} onUpdate={loadClients} />
+        {showQuickShipment && (
+          <QuickShipmentModal
+            onClose={() => setShowQuickShipment(false)}
+            onUpdate={loadClients}
+          />
+        )}
+      </>
+    );
   }
 
   if (dashboardTab === 'suppliers' && selectedSupplier) {
@@ -342,18 +354,33 @@ export default function CrmDashboard() {
 
         {/* Action Button */}
         {dashboardTab === 'clients' ? (
-          <button
-            onClick={handleBackupData}
-            style={{
-              background: '#FFFFFF', color: '#8B7D73', border: '1px solid #D4C5B9', borderRadius: '6px',
-              padding: '6px 12px', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#EAE7E2'; e.currentTarget.style.borderColor = '#C4B4A6'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#D4C5B9'; }}
-          >
-            ⚙️ Експорт бекапу
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => setShowQuickShipment(true)}
+              style={{
+                background: '#C4B4A6', color: '#FFFFFF', border: 'none', borderRadius: '6px',
+                padding: '6px 12px', fontSize: '11.5px', fontWeight: 800, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s',
+                boxShadow: '0 2px 4px rgba(139, 125, 112, 0.15)'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#B3A395'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#C4B4A6'; }}
+            >
+              🚛 Швидка видача
+            </button>
+            <button
+              onClick={handleBackupData}
+              style={{
+                background: '#FFFFFF', color: '#8B7D73', border: '1px solid #D4C5B9', borderRadius: '6px',
+                padding: '6px 12px', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#EAE7E2'; e.currentTarget.style.borderColor = '#C4B4A6'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#D4C5B9'; }}
+            >
+              ⚙️ Експорт бекапу
+            </button>
+          </div>
         ) : null}
       </div>
 
@@ -589,17 +616,32 @@ export default function CrmDashboard() {
           </div>
         </div>
       )}
+      {showQuickShipment && (
+        <QuickShipmentModal
+          onClose={() => setShowQuickShipment(false)}
+          onUpdate={loadClients}
+        />
+      )}
     </div>
   );
 }
 
 // ----------------------------------------------------
+// Helper to map old statuses to new pipeline stages
+const getMappedStatus = (status) => {
+  const raw = status || 'Борг';
+  if (raw === 'Нова угода' || raw === 'В роботі' || raw === 'Борг') return 'Борг';
+  if (raw === 'Повна оплата / Передоплата' || raw === 'Часткова оплата') return 'Часткова оплата';
+  if (raw === 'До відвантаження' || raw === 'Відвантаження' || raw === 'Повна оплата') return 'Повна оплата';
+  return raw; // e.g. 'Завершено'
+};
+
 // Component: CrmKanbanBoard
 // ----------------------------------------------------
 function CrmKanbanBoard({ clients, onSelectClient, isMobile, onUpdate }) {
   const [draggedProject, setDraggedProject] = useState(null);
   const [draggedOverStage, setDraggedOverStage] = useState(null);
-  const [activeStageTab, setActiveStageTab] = useState('Нова угода');
+  const [activeStageTab, setActiveStageTab] = useState('Борг');
 
   // Collect all projects across all clients
   const allProjects = [];
@@ -618,14 +660,12 @@ function CrmKanbanBoard({ clients, onSelectClient, isMobile, onUpdate }) {
     }
   });
 
-  const STAGES = ['Нова угода', 'Повна оплата / Передоплата', 'До відвантаження'];
+  const STAGES = ['Борг', 'Часткова оплата', 'Повна оплата'];
 
   const grouped = {};
   STAGES.forEach(stage => {
     grouped[stage] = allProjects.filter(p => {
-      let mapped = !p.status || p.status === 'В роботі' ? 'Нова угода' : p.status;
-      if (mapped === 'Відвантаження') mapped = 'До відвантаження';
-      return mapped === stage;
+      return getMappedStatus(p.status) === stage;
     });
   });
 
@@ -690,7 +730,7 @@ function CrmKanbanBoard({ clients, onSelectClient, isMobile, onUpdate }) {
                 project_item_id: mi.id,
                 quantity: remaining,
                 price: parseFloat(mi.price) || 0,
-                currency: mi.currency || 'USD'
+                currency: mi.currency || 'UAH'
               });
             }
           });

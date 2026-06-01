@@ -38,7 +38,7 @@ export const migrationService = {
           agreed_sum: parseFloat(pData.agreed_sum || 0),
           agreed_sum_usd: parseFloat(pData.agreed_sum_usd || 0),
           agreed_sum_uah: parseFloat(pData.agreed_sum_uah || 0),
-          currency: pData.currency || 'USD',
+          currency: pData.currency || 'UAH',
           closed_date: pData.closed_date || null,
           created_at: pData.created_at || new Date().toISOString(),
           updated_at: pData.updated_at || new Date().toISOString()
@@ -69,7 +69,7 @@ export const migrationService = {
             project_id: pData.id,
             date: pay.date || new Date().toISOString().split('T')[0],
             sum: parseFloat(pay.sum || 0),
-            currency: pay.currency || 'USD',
+            currency: pay.currency || 'UAH',
             status: pay.status || 'Оплачено',
             payment_type: pay.payment_type || '',
             note: pay.note || '',

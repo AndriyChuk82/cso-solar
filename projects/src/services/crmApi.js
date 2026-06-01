@@ -250,7 +250,7 @@ export const crmApi = {
       project_item_id: row.id,
       quantity: parseFloat(items[index]?.quantity) || 0,
       price: parseFloat(items[index]?.price) || 0,
-      currency: items[index]?.currency || 'USD'
+      currency: items[index]?.currency || 'UAH'
     }));
   },
 
@@ -523,7 +523,7 @@ export const crmApi = {
           project_item_id: mi.id,
           quantity: remaining,
           price: parseFloat(mi.price) || 0,
-          currency: mi.currency || 'USD'
+          currency: mi.currency || 'UAH'
         });
       }
     });
@@ -797,6 +797,112 @@ export const crmApi = {
     }
 
     return receiptData;
+  },
+
+  getProjectMaterials: async (projectId) => {
+    const { data, error } = await supabase
+      .from('project_materials_ledger')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('issued_at', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  saveProjectMaterial: async (material) => {
+    const payload = {
+      project_id: material.project_id,
+      name: material.name,
+      quantity: parseFloat(material.quantity) || 0,
+      unit: material.unit || 'шт.',
+      price: material.price !== undefined && material.price !== null ? parseFloat(material.price) : null,
+      currency: material.currency || 'UAH',
+      status: material.status || 'Видано',
+      issued_at: material.issued_at || new Date().toISOString(),
+      issued_by: material.issued_by || 'Комірник',
+      is_priced: material.is_priced !== undefined ? material.is_priced : false,
+      note: material.note || null,
+      updated_at: new Date().toISOString()
+    };
+    if (material.id) payload.id = material.id;
+
+    const { data, error } = await supabase
+      .from('project_materials_ledger')
+      .upsert(payload)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  deleteProjectMaterial: async (materialId) => {
+    const { error } = await supabase
+      .from('project_materials_ledger')
+      .delete()
+      .eq('id', materialId);
+    if (error) throw error;
+    return true;
+  },
+
+  priceProjectMaterials: async (projectId, pricedItems) => {
+    // 1. Save all priced items
+    if (pricedItems && pricedItems.length > 0) {
+      const itemsToUpsert = pricedItems.map(item => ({
+        id: item.id,
+        project_id: projectId,
+        name: item.name,
+        quantity: parseFloat(item.quantity) || 0,
+        unit: item.unit || 'шт.',
+        price: parseFloat(item.price) || 0,
+        currency: item.currency || 'UAH',
+        status: item.status || 'Видано',
+        issued_at: item.issued_at || new Date().toISOString(),
+        is_priced: true,
+        note: item.note || null,
+        updated_at: new Date().toISOString()
+      }));
+
+      const { error } = await supabase
+        .from('project_materials_ledger')
+        .upsert(itemsToUpsert);
+      if (error) throw error;
+    }
+
+    // 2. Fetch all materials for this project to calculate new agreed sum totals
+    const { data: allMaterials, error: fetchErr } = await supabase
+      .from('project_materials_ledger')
+      .select('*')
+      .eq('project_id', projectId);
+    if (fetchErr) throw fetchErr;
+
+    // 3. Sum up the priced ones
+    let totalUAH = 0;
+    let totalUSD = 0;
+    (allMaterials || []).forEach(item => {
+      if (item.is_priced && item.price) {
+        const sum = (parseFloat(item.price) || 0) * (parseFloat(item.quantity) || 0);
+        if (item.currency === 'USD') {
+          totalUSD += sum;
+        } else {
+          totalUAH += sum;
+        }
+      }
+    });
+
+    // 4. Update the project agreed sums to recalculate debts!
+    const { data: updatedProject, error: updateErr } = await supabase
+      .from('projects')
+      .update({
+        agreed_sum_usd: totalUSD,
+        agreed_sum_uah: totalUAH,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', projectId)
+      .select()
+      .single();
+
+    if (updateErr) throw updateErr;
+    return updatedProject;
   },
 
   getAllOwedMaterials: async () => {

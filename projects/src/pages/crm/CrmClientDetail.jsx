@@ -3,6 +3,7 @@ import { crmApi } from '../../services/crmApi';
 import { KPSelectionModal } from '../../components/KPSelectionModal';
 import { projectService } from '../../services/api';
 import { ChevronLeft, Phone, Plus, DollarSign, Package, Calendar, FileText, Check, Truck, X, Layers, CreditCard, Trash2, Pencil } from 'lucide-react';
+import { QuickShipmentModal } from './QuickShipmentModal';
 
 export function CrmClientDetail({ client, onBack, onUpdate }) {
   const [projects, setProjects] = useState([]);
@@ -495,14 +496,26 @@ export function CrmClientDetail({ client, onBack, onUpdate }) {
                                 {p.address || p.name || `Угода #${p.id.slice(0, 5)}`}
                               </td>
                               <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                                <span style={{ 
-                                  background: p.status === 'Завершено' ? '#E6F4EA' : (p.status === 'До відвантаження' || p.status === 'Відвантаження') ? '#FFF4E5' : '#FAF6F0', 
-                                  color: p.status === 'Завершено' ? '#137333' : (p.status === 'До відвантаження' || p.status === 'Відвантаження') ? '#B06000' : '#8B7D73', 
-                                  border: `1px solid ${p.status === 'Завершено' ? '#CEEAD6' : (p.status === 'До відвантаження' || p.status === 'Відвантаження') ? '#FFE0B2' : '#D4C5B9'}`,
-                                  fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', textTransform: 'uppercase', display: 'inline-block'
-                                }}>
-                                  {p.status === 'Відвантаження' ? 'До відвантаження' : (p.status || 'Нова угода')}
-                                </span>
+                                {(() => {
+                                  const mapped = (() => {
+                                    const raw = p.status || 'Борг';
+                                    if (raw === 'Нова угода' || raw === 'В роботі' || raw === 'Борг') return 'Борг';
+                                    if (raw === 'Повна оплата / Передоплата' || raw === 'Часткова оплата') return 'Часткова оплата';
+                                    if (raw === 'До відвантаження' || raw === 'Відвантаження' || raw === 'Повна оплата') return 'Повна оплата';
+                                    return raw;
+                                  })();
+                                  const bg = mapped === 'Завершено' ? '#E6F4EA' : mapped === 'Повна оплата' ? '#FFF4E5' : mapped === 'Часткова оплата' ? '#E0F2FE' : '#FEF2F2';
+                                  const color = mapped === 'Завершено' ? '#137333' : mapped === 'Повна оплата' ? '#B06000' : mapped === 'Часткова оплата' ? '#0369A1' : '#991B1B';
+                                  const border = mapped === 'Завершено' ? '#CEEAD6' : mapped === 'Повна оплата' ? '#FFE0B2' : mapped === 'Часткова оплата' ? '#BAE6FD' : '#FECACA';
+                                  return (
+                                    <span style={{ 
+                                      background: bg, color: color, border: `1px solid ${border}`,
+                                      fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', textTransform: 'uppercase', display: 'inline-block'
+                                    }}>
+                                      {mapped}
+                                    </span>
+                                  );
+                                })()}
                               </td>
                               <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: '#4A607A' }}>
                                 ${agreedUSD.toLocaleString('en-US', { minimumFractionDigits: 0 })}
@@ -579,7 +592,7 @@ export function CrmClientDetail({ client, onBack, onUpdate }) {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     {activeProjects.map(project => (
-                      <ProjectCRMCard key={project.id} project={project} onUpdate={loadProjects} isMobile={isMobile} />
+                      <ProjectCRMCard key={project.id} project={project} client={client} onUpdate={loadProjects} isMobile={isMobile} />
                     ))}
                   </div>
                 )}
@@ -610,7 +623,7 @@ export function CrmClientDetail({ client, onBack, onUpdate }) {
                   {showArchive && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '20px' }}>
                       {archivedProjects.map(project => (
-                        <ProjectCRMCard key={project.id} project={project} onUpdate={loadProjects} isMobile={isMobile} />
+                        <ProjectCRMCard key={project.id} project={project} client={client} onUpdate={loadProjects} isMobile={isMobile} />
                       ))}
                     </div>
                   )}
@@ -624,11 +637,76 @@ export function CrmClientDetail({ client, onBack, onUpdate }) {
   );
 }
 
-function ProjectCRMCard({ project, onUpdate, isMobile }) {
+function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [addressInput, setAddressInput] = useState(project.address || '');
   const [noteInput, setNoteInput] = useState(project.note || '');
   const [auditLogs, setAuditLogs] = useState([]);
+  const [showQuickShipment, setShowQuickShipment] = useState(false);
+  const [expressMaterials, setExpressMaterials] = useState([]);
+  const [loadingMaterials, setLoadingMaterials] = useState(false);
+  const [pricingMode, setPricingMode] = useState(false);
+  const [pricingPrices, setPricingPrices] = useState({});
+  const [pricingCurrencies, setPricingCurrencies] = useState({});
+  const [savingPrices, setSavingPrices] = useState(false);
+  const [activeTab, setActiveTab] = useState('finances');
+  const [inlineEditingId, setInlineEditingId] = useState(null);
+  const [inlineEditingData, setInlineEditingData] = useState({});
+  const [unifiedSearch, setUnifiedSearch] = useState('');
+  const [agreedSums, setAgreedSums] = useState({
+    usd: parseFloat(project.agreed_sum_usd) || 0,
+    uah: parseFloat(project.agreed_sum_uah) || 0
+  });
+
+  useEffect(() => {
+    setAgreedSums({
+      usd: parseFloat(project.agreed_sum_usd) || 0,
+      uah: parseFloat(project.agreed_sum_uah) || 0
+    });
+  }, [project.agreed_sum_usd, project.agreed_sum_uah, project.id]);
+
+  const saveAgreedSums = async (newSums = agreedSums) => {
+    try {
+      await crmApi.updateProjectAgreedSums(project.id, newSums);
+      await crmApi.saveAuditLog({
+        projectId: project.id,
+        clientId: project.client_id,
+        actionType: 'Оновлення суми договору',
+        details: `Оновлено узгоджену суму угоди: ${newSums.usd} USD / ${newSums.uah} UAH`
+      });
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      alert('Помилка збереження суми боргу: ' + err.message);
+    }
+  };
+
+  const loadExpressMaterials = async () => {
+    setLoadingMaterials(true);
+    try {
+      const data = await crmApi.getProjectMaterials(project.id);
+      setExpressMaterials(data || []);
+      
+      // Pre-fill pricing states
+      const priceMap = {};
+      const currMap = {};
+      (data || []).forEach(m => {
+        if (!m.is_priced) {
+          priceMap[m.id] = '';
+          currMap[m.id] = 'UAH';
+        }
+      });
+      setPricingPrices(priceMap);
+      setPricingCurrencies(currMap);
+    } catch (err) {
+      console.error('Failed to load project express materials:', err);
+    } finally {
+      setLoadingMaterials(false);
+    }
+  };
+
+  useEffect(() => {
+    loadExpressMaterials();
+  }, [project.id]);
 
   const loadAuditLogs = async () => {
     try {
@@ -729,12 +807,18 @@ function ProjectCRMCard({ project, onUpdate, isMobile }) {
   const leftToIssue = Math.max(0, totalOrdered - totalIssued);
 
   // Список етапів нашої воронки
-  const stages = ['Нова угода', 'Повна оплата / Передоплата', 'До відвантаження', 'Завершено'];
+  const stages = ['Борг', 'Часткова оплата', 'Повна оплата', 'Завершено'];
 
   // Нормалізуємо статус (якщо порожній або старий "В роботі", ставимо перший етап)
-  const currentStatus = (!project.status || project.status === 'В роботі') 
-    ? 'Нова угода' 
-    : (project.status === 'Відвантаження' ? 'До відвантаження' : project.status);
+  const getMappedStatus = (status) => {
+    const raw = status || 'Борг';
+    if (raw === 'Нова угода' || raw === 'В роботі' || raw === 'Борг') return 'Борг';
+    if (raw === 'Повна оплата / Передоплата' || raw === 'Часткова оплата') return 'Часткова оплата';
+    if (raw === 'До відвантаження' || raw === 'Відвантаження' || raw === 'Повна оплата') return 'Повна оплата';
+    return raw; // e.g. 'Завершено'
+  };
+
+  const currentStatus = getMappedStatus(project.status);
 
   // Оновлення етапу
   const handleStatusChange = async (newStatus) => {
@@ -768,7 +852,7 @@ function ProjectCRMCard({ project, onUpdate, isMobile }) {
               project_item_id: mi.id,
               quantity: remaining,
               price: parseFloat(mi.price) || 0,
-              currency: mi.currency || 'USD'
+              currency: mi.currency || 'UAH'
             });
           }
         });
@@ -886,25 +970,47 @@ function ProjectCRMCard({ project, onUpdate, isMobile }) {
             </span>
             
             {currentStatus !== 'Завершено' && currentStatus !== 'Скасовано' && (
-              <button
-                onClick={handleCancelProject}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid #EF4444',
-                  color: '#EF4444',
-                  padding: '4px 10px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  outline: 'none'
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = '#FEE2E2'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-              >
-                Скасувати
-              </button>
+              <>
+                <button
+                  onClick={() => setShowQuickShipment(true)}
+                  style={{
+                    background: '#C4B4A6',
+                    border: 'none',
+                    color: '#FFFFFF',
+                    padding: '5px 12px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    outline: 'none',
+                    boxShadow: '0 2px 4px rgba(196, 180, 166, 0.15)'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#B3A395'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = '#C4B4A6'; }}
+                >
+                  🚛 Швидка видача
+                </button>
+                <button
+                  onClick={handleCancelProject}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid #EF4444',
+                    color: '#EF4444',
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    outline: 'none'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#FEE2E2'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  Скасувати
+                </button>
+              </>
             )}
 
             <button
@@ -983,6 +1089,88 @@ function ProjectCRMCard({ project, onUpdate, isMobile }) {
           </div>
         )}
 
+        {/* Prominent High-Fidelity Currency Cards - Integrated directly into status block header */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+          gap: '12px', 
+          marginTop: '12px',
+          width: '100%', 
+          maxWidth: '480px' 
+        }}>
+          
+          {/* USD Card (Ice Blue Accent) */}
+          <div style={{ 
+            background: '#F4F7F9', border: '1px solid #CAD4DE', borderRadius: '10px', 
+            padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '4px',
+            boxShadow: '0 2px 4px rgba(74,96,122,0.04)',
+            minWidth: 0,
+            boxSizing: 'border-box'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '10px', color: '#4A607A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {debtUSD < 0 ? 'Передоплата USD' : 'Борг USD'}
+              </span>
+              <div style={{ fontSize: '18px', fontWeight: 900, color: debtUSD < 0 ? '#15803D' : debtUSD > 0 ? '#1D4ED8' : '#2C2520' }}>
+                ${Math.abs(debtUSD).toLocaleString('en-US', { minimumFractionDigits: 0 })}
+              </div>
+            </div>
+            <div style={{ borderTop: '1px dashed #CAD4DE', paddingTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+              <span style={{ fontSize: '11px', color: '#5C6E82', fontWeight: 500 }}>Погоджено:</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                <span style={{ fontSize: '11px', color: '#2C2520' }}>$</span>
+                <input 
+                  type="number" 
+                  value={agreedSums.usd} 
+                  onChange={e => setAgreedSums({...agreedSums, usd: parseFloat(e.target.value) || 0})}
+                  onBlur={() => saveAgreedSums()}
+                  style={{ 
+                    width: '64px', fontSize: '11px', fontWeight: 700, padding: '2px 4px', 
+                    border: '1px solid #CAD4DE', borderRadius: '4px', outline: 'none', background: '#FFFFFF', color: '#2C2520', textAlign: 'right',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* UAH Card (Honey Gold Accent) */}
+          <div style={{ 
+            background: '#FFFDF5', border: '1px solid #F2E6C4', borderRadius: '10px', 
+            padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '4px',
+            boxShadow: '0 2px 4px rgba(139,125,112,0.04)',
+            minWidth: 0,
+            boxSizing: 'border-box'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '10px', color: '#8C7355', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {debtUAH < 0 ? 'Передоплата UAH' : 'Борг UAH'}
+              </span>
+              <div style={{ fontSize: '18px', fontWeight: 900, color: debtUAH < 0 ? '#15803D' : debtUAH > 0 ? '#C2410C' : '#2C2520' }}>
+                {Math.abs(debtUAH).toLocaleString('uk-UA')} ₴
+              </div>
+            </div>
+            <div style={{ borderTop: '1px dashed #F2E6C4', paddingTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+              <span style={{ fontSize: '11px', color: '#8B7D73', fontWeight: 500 }}>Погоджено:</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                <input 
+                  type="number" 
+                  value={agreedSums.uah} 
+                  onChange={e => setAgreedSums({...agreedSums, uah: parseFloat(e.target.value) || 0})}
+                  onBlur={() => saveAgreedSums()}
+                  style={{ 
+                    width: '74px', fontSize: '11px', fontWeight: 700, padding: '2px 4px', 
+                    border: '1px solid #F2E6C4', borderRadius: '4px', outline: 'none', background: '#FFFFFF', color: '#2C2520', textAlign: 'right',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <span style={{ fontSize: '11px', color: '#2C2520' }}>₴</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
         {/* Deal Comment Section */}
         <div style={{ borderTop: '1px dashed #D4C5B9', paddingTop: '12px', marginTop: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
@@ -1012,51 +1200,596 @@ function ProjectCRMCard({ project, onUpdate, isMobile }) {
             onFocus={(e) => { e.currentTarget.style.borderColor = '#C4B4A6'; }}
           />
         </div>
+
+        {/* Aesthetic Dashboard Tabs Switcher */}
+        <div style={{ 
+          display: 'flex', 
+          borderTop: '1px solid #EAE7E2', 
+          paddingTop: '12px', 
+          marginTop: '8px',
+          gap: '4px',
+          overflowX: 'auto',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}>
+          <button 
+            onClick={() => setActiveTab('finances')}
+            style={{
+              padding: '10px 16px',
+              fontSize: '12.5px',
+              fontWeight: 800,
+              background: activeTab === 'finances' ? '#FFFFFF' : 'transparent',
+              border: activeTab === 'finances' ? '1px solid #D4C5B9' : '1px solid transparent',
+              borderRadius: '20px',
+              color: activeTab === 'finances' ? '#2C2520' : '#8B7D73',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              outline: 'none',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <span>📊</span> Фінансовий баланс та Борги
+          </button>
+          <button 
+            onClick={() => setActiveTab('logistics')}
+            style={{
+              padding: '10px 16px',
+              fontSize: '12.5px',
+              fontWeight: 800,
+              background: activeTab === 'logistics' ? '#FFFFFF' : 'transparent',
+              border: activeTab === 'logistics' ? '1px solid #D4C5B9' : '1px solid transparent',
+              borderRadius: '20px',
+              color: activeTab === 'logistics' ? '#2C2520' : '#8B7D73',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              outline: 'none',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <span>📦</span> Логістика та Специфікація
+          </button>
+          <button 
+            onClick={() => setActiveTab('unified')}
+            style={{
+              padding: '10px 16px',
+              fontSize: '12.5px',
+              fontWeight: 800,
+              background: activeTab === 'unified' ? '#FFFFFF' : 'transparent',
+              border: activeTab === 'unified' ? '1px solid #D4C5B9' : '1px solid transparent',
+              borderRadius: '20px',
+              color: activeTab === 'unified' ? '#2C2520' : '#8B7D73',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              outline: 'none',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <span>📋</span> Зведена відомість видачі
+          </button>
+          <button 
+            onClick={() => setActiveTab('history')}
+            style={{
+              padding: '10px 16px',
+              fontSize: '12.5px',
+              fontWeight: 800,
+              background: activeTab === 'history' ? '#FFFFFF' : 'transparent',
+              border: activeTab === 'history' ? '1px solid #D4C5B9' : '1px solid transparent',
+              borderRadius: '20px',
+              color: activeTab === 'history' ? '#2C2520' : '#8B7D73',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              outline: 'none',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <span>📜</span> Історія дій ({auditLogs.length})
+          </button>
+        </div>
       </div>
 
-      {/* Side-by-Side Modular Block Layout */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: isMobile ? '100%' : 'repeat(auto-fit, minmax(460px, 1fr))', 
-        gap: isMobile ? '16px' : '30px', 
-        padding: isMobile ? '14px' : '24px', 
-        background: '#FFFFFF',
-        width: '100%',
-        boxSizing: 'border-box'
-      }}>
-        
-        {/* Left Column: Financial Ledger */}
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: '20px', 
-          borderRight: isMobile ? 'none' : '1px solid #FAF6F0', 
-          paddingRight: isMobile ? '0' : '10px',
-          borderBottom: isMobile ? '1px solid #FAF6F0' : 'none',
-          paddingBottom: isMobile ? '20px' : '0',
-          minWidth: 0,
-          width: '100%',
-          boxSizing: 'border-box'
-        }}>
-          <ProjectFinancesBlock 
-            project={project} 
-            validPayments={validPayments} 
-            debtUSD={debtUSD} 
-            debtUAH={debtUAH} 
-            onUpdate={onUpdate} 
-            isMobile={isMobile}
-          />
-        </div>
+      {showQuickShipment && (
+        <QuickShipmentModal
+          clientOverride={client}
+          projectOverride={project}
+          onClose={() => setShowQuickShipment(false)}
+          onUpdate={async () => {
+            await loadExpressMaterials();
+            if (onUpdate) onUpdate();
+          }}
+        />
+      )}
 
-        {/* Right Column: Logistics & Materials */}
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: '20px',
-          minWidth: 0,
-          width: '100%',
-          boxSizing: 'border-box'
-        }}>
+      {/* Tab Contents */}
+      {activeTab === 'finances' && (
+        <div style={{ background: '#FFFFFF', maxWidth: '1200px', boxSizing: 'border-box' }}>
+          {/* Express Materials Ledger (Debt Materials) Section - Placed at the very top of Finances */}
+          <div style={{ borderBottom: '1px solid #FAF6F0', padding: '20px 24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '18px' }}>📋</span>
+                <h5 style={{ margin: 0, fontSize: '13.5px', fontWeight: 850, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Відомість виданих в борг матеріалів (Склад)
+                </h5>
+              </div>
+              
+              {expressMaterials.some(m => !m.is_priced) && (
+                <button
+                  onClick={() => setPricingMode(!pricingMode)}
+                  style={{
+                    background: pricingMode ? '#FFFFFF' : '#C4B4A6',
+                    color: pricingMode ? '#8B7D73' : '#FFFFFF',
+                    border: pricingMode ? '1px solid #D4C5B9' : 'none',
+                    borderRadius: '6px',
+                    padding: '6px 14px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                  onMouseEnter={(e) => { if (!pricingMode) e.currentTarget.style.background = '#B3A395'; }}
+                  onMouseLeave={(e) => { if (!pricingMode) e.currentTarget.style.background = '#C4B4A6'; }}
+                >
+                  {pricingMode ? 'Скасувати оцінку' : '💲 Оцінити неціновані товари'}
+                </button>
+              )}
+            </div>
+
+            {loadingMaterials ? (
+              <div style={{ fontSize: '12px', color: '#8B7D73', fontStyle: 'italic', padding: '10px 0' }}>Завантаження відомості складу...</div>
+            ) : expressMaterials.length === 0 ? (
+              <div style={{ fontSize: '12px', color: '#8B7D73', fontStyle: 'italic', padding: '10px 0', textAlign: 'center', border: '1px dashed #D4C5B9', borderRadius: '8px' }}>
+                Немає зафіксованих матеріалів швидкої видачі. Скористайтеся кнопкою "Швидка видача", щоб додати матеріали зі складу.
+              </div>
+            ) : (
+              <div style={{ border: '1px solid #D4C5B9', borderRadius: '8px', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ background: '#FAF6F0', borderBottom: '1px solid #D4C5B9' }}>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520' }}>Матеріал</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '80px', textAlign: 'center' }}>Кількість</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '80px', textAlign: 'center' }}>Од. вим.</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '120px', textAlign: 'center' }}>Ціна</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '90px', textAlign: 'center' }}>Валюта</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '110px', textAlign: 'center' }}>Статус</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '110px', textAlign: 'center' }}>Дата видачі</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '120px', textAlign: 'center' }}>Примітка</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '100px', textAlign: 'center' }}>Сума боргу</th>
+                      <th style={{ padding: '8px 12px', width: '40px' }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {expressMaterials.map(m => {
+                      const isEditing = inlineEditingId === m.id;
+                      const isPriced = isEditing 
+                        ? (inlineEditingData.price !== '' && inlineEditingData.price !== undefined && inlineEditingData.price !== null)
+                        : m.is_priced;
+                        
+                      const qtyVal = isEditing ? parseFloat(inlineEditingData.quantity) || 0 : parseFloat(m.quantity) || 0;
+                      const prVal = isEditing 
+                        ? (inlineEditingData.price !== '' && inlineEditingData.price !== undefined && inlineEditingData.price !== null ? parseFloat(inlineEditingData.price) || 0 : 0)
+                        : parseFloat(m.price) || 0;
+                        
+                      const itemSum = isPriced ? qtyVal * prVal : null;
+                      const activeCurrency = isEditing ? inlineEditingData.currency : m.currency;
+                      
+                      return (
+                        <tr key={m.id} style={{ borderBottom: '1px solid #FAF6F0', background: !isPriced ? '#FFFDF5' : 'transparent' }}>
+                          
+                          {/* Name Column */}
+                          <td style={{ padding: '10px 12px', fontWeight: 600, color: '#2C2520' }}>
+                            {isEditing ? (
+                              <input 
+                                type="text"
+                                value={inlineEditingData.name || ''}
+                                onChange={e => setInlineEditingData({ ...inlineEditingData, name: e.target.value })}
+                                style={{
+                                  width: '100%', padding: '4px 6px', fontSize: '11.5px', border: '1px solid #C4B4A6',
+                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none'
+                                }}
+                              />
+                            ) : (
+                              m.name
+                            )}
+                          </td>
+
+                          {/* Quantity Column */}
+                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#2C2520', fontWeight: 700 }}>
+                            {isEditing ? (
+                              <input 
+                                type="number"
+                                step="any"
+                                value={inlineEditingData.quantity !== undefined ? inlineEditingData.quantity : ''}
+                                onChange={e => setInlineEditingData({ ...inlineEditingData, quantity: e.target.value })}
+                                style={{
+                                  width: '60px', padding: '4px 6px', fontSize: '11.5px', border: '1px solid #C4B4A6',
+                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none', textAlign: 'center'
+                                }}
+                              />
+                            ) : (
+                              m.quantity
+                            )}
+                          </td>
+
+                          {/* Unit Column */}
+                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#8B7D73' }}>
+                            {isEditing ? (
+                              <input 
+                                type="text"
+                                value={inlineEditingData.unit !== undefined ? inlineEditingData.unit : ''}
+                                onChange={e => setInlineEditingData({ ...inlineEditingData, unit: e.target.value })}
+                                style={{
+                                  width: '50px', padding: '4px 6px', fontSize: '11.5px', border: '1px solid #C4B4A6',
+                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none', textAlign: 'center'
+                                }}
+                              />
+                            ) : (
+                              m.unit
+                            )}
+                          </td>
+                          
+                          {/* Price Column */}
+                          <td style={{ padding: '6px 12px', textAlign: 'center' }}>
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                step="any"
+                                placeholder="Ціна"
+                                value={inlineEditingData.price !== undefined && inlineEditingData.price !== null ? inlineEditingData.price : ''}
+                                onChange={(e) => setInlineEditingData({ ...inlineEditingData, price: e.target.value })}
+                                style={{
+                                  width: '70px', padding: '4px 6px', fontSize: '11px', border: '1px solid #C4B4A6',
+                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none', textAlign: 'center'
+                                }}
+                              />
+                            ) : pricingMode && !m.is_priced ? (
+                              <input
+                                type="number"
+                                step="any"
+                                placeholder="Введіть ціну"
+                                value={pricingPrices[m.id] !== undefined ? pricingPrices[m.id] : ''}
+                                onChange={(e) => setPricingPrices({ ...pricingPrices, [m.id]: e.target.value })}
+                                style={{
+                                  width: '80px', padding: '4px 6px', fontSize: '11px', border: '1px solid #C4B4A6',
+                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none', textAlign: 'center'
+                                }}
+                              />
+                            ) : (
+                              <span style={{ fontWeight: m.is_priced ? 700 : 400, color: m.is_priced ? '#2C2520' : '#8B7D73' }}>
+                                {m.is_priced ? parseFloat(m.price).toLocaleString() : 'не вказано'}
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Currency Column */}
+                          <td style={{ padding: '6px 12px', textAlign: 'center' }}>
+                            {isEditing ? (
+                              <select
+                                value={inlineEditingData.currency || 'UAH'}
+                                onChange={(e) => setInlineEditingData({ ...inlineEditingData, currency: e.target.value })}
+                                style={{
+                                  width: '60px', padding: '4px', fontSize: '11px', border: '1px solid #C4B4A6',
+                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none'
+                                }}
+                              >
+                                <option value="UAH">UAH</option>
+                                <option value="USD">USD</option>
+                              </select>
+                            ) : pricingMode && !m.is_priced ? (
+                              <select
+                                value={pricingCurrencies[m.id] || 'UAH'}
+                                onChange={(e) => setPricingCurrencies({ ...pricingCurrencies, [m.id]: e.target.value })}
+                                style={{
+                                  width: '60px', padding: '4px', fontSize: '11px', border: '1px solid #C4B4A6',
+                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none'
+                                }}
+                              >
+                                <option value="UAH">UAH</option>
+                                <option value="USD">USD</option>
+                              </select>
+                            ) : (
+                              <span style={{ fontWeight: 700, color: m.currency === 'USD' ? '#1D4ED8' : '#C2410C' }}>
+                                {m.is_priced ? m.currency : '—'}
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Status Badges */}
+                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                            {!isPriced ? (
+                              <span style={{ background: '#FFF3E0', color: '#B06000', border: '1px solid #FFE0B2', fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', whiteSpace: 'nowrap' }}>
+                                Очікує оцінки
+                              </span>
+                            ) : (
+                              <span style={{ background: '#E6F4EA', color: '#137333', border: '1px solid #CEEAD6', fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', whiteSpace: 'nowrap' }}>
+                                Враховано
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Date Column */}
+                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#8B7D73', whiteSpace: 'nowrap' }}>
+                            {isEditing ? (
+                              <input 
+                                type="date"
+                                value={inlineEditingData.issued_at ? inlineEditingData.issued_at.split('T')[0] : ''}
+                                onChange={e => setInlineEditingData({ 
+                                  ...inlineEditingData, 
+                                  issued_at: e.target.value ? new Date(e.target.value).toISOString() : new Date().toISOString() 
+                                })}
+                                style={{
+                                  width: '110px', padding: '4px 6px', fontSize: '11px', border: '1px solid #C4B4A6',
+                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none', textAlign: 'center'
+                                }}
+                              />
+                            ) : (
+                              m.issued_at ? new Date(m.issued_at).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
+                            )}
+                          </td>
+
+                          {/* Note Column */}
+                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#8B7D73' }}>
+                            {isEditing ? (
+                              <input 
+                                type="text"
+                                placeholder="Коментар..."
+                                value={inlineEditingData.note || ''}
+                                onChange={e => setInlineEditingData({ ...inlineEditingData, note: e.target.value })}
+                                style={{
+                                  width: '100px', padding: '4px 6px', fontSize: '11px', border: '1px solid #C4B4A6',
+                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none'
+                                }}
+                              />
+                            ) : (
+                              m.note || '—'
+                            )}
+                          </td>
+
+                          {/* Debt Sum Column */}
+                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: activeCurrency === 'USD' ? '#1D4ED8' : '#C2410C' }}>
+                            {itemSum !== null ? (
+                              activeCurrency === 'USD' ? `$${itemSum.toLocaleString()}` : `${itemSum.toLocaleString()} ₴`
+                            ) : '—'}
+                          </td>
+
+                          {/* Action Buttons Column */}
+                          <td style={{ padding: '6px 12px', textAlign: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                              {isEditing ? (
+                                <>
+                                  <button
+                                    onClick={async () => {
+                                      const pQty = parseFloat(inlineEditingData.quantity);
+                                      if (isNaN(pQty) || pQty <= 0) {
+                                        alert('Кількість матеріалу має бути більшою за 0!');
+                                        return;
+                                      }
+                                      if (!inlineEditingData.name || inlineEditingData.name.trim() === '') {
+                                        alert('Назва матеріалу не може бути порожньою!');
+                                        return;
+                                      }
+
+                                      try {
+                                        const pValStr = inlineEditingData.price;
+                                        const hasPrice = pValStr !== '' && pValStr !== undefined && pValStr !== null;
+                                        const parsedPrice = hasPrice ? parseFloat(pValStr) : null;
+                                        
+                                        if (hasPrice && (isNaN(parsedPrice) || parsedPrice < 0)) {
+                                          alert('Будь ласка, введіть коректну числову ціну!');
+                                          return;
+                                        }
+
+                                        const payload = {
+                                          ...m,
+                                          name: inlineEditingData.name.trim(),
+                                          quantity: pQty,
+                                          unit: inlineEditingData.unit || 'шт.',
+                                          price: parsedPrice,
+                                          currency: inlineEditingData.currency || 'UAH',
+                                          is_priced: parsedPrice !== null,
+                                          issued_at: inlineEditingData.issued_at || m.issued_at || new Date().toISOString(),
+                                          note: inlineEditingData.note ? inlineEditingData.note.trim() : null
+                                        };
+
+                                        await crmApi.saveProjectMaterial(payload);
+
+                                        // Trigger a full recalculation of project debts
+                                        await crmApi.priceProjectMaterials(project.id, []);
+
+                                        await crmApi.saveAuditLog({
+                                          projectId: project.id,
+                                          clientId: project.client_id,
+                                          actionType: 'Редагування матеріалу',
+                                          details: `Відредаговано матеріал швидкої видачі: "${payload.name}" (${payload.quantity} ${payload.unit}) по ціні ${hasPrice ? `${payload.price} ${payload.currency}` : 'не вказано'}`
+                                        });
+
+                                        setInlineEditingId(null);
+                                        await loadExpressMaterials();
+                                        if (onUpdate) onUpdate();
+                                      } catch (err) {
+                                        alert('Помилка збереження змін матеріалу: ' + err.message);
+                                      }
+                                    }}
+                                    style={{ background: 'transparent', border: 'none', color: '#137333', cursor: 'pointer', padding: '4px', fontSize: '13px' }}
+                                    title="Зберегти зміни"
+                                  >
+                                    💾
+                                  </button>
+                                  <button
+                                    onClick={() => setInlineEditingId(null)}
+                                    style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '4px', fontSize: '13px' }}
+                                    title="Скасувати"
+                                  >
+                                    ❌
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setInlineEditingId(m.id);
+                                      setInlineEditingData({
+                                        name: m.name,
+                                        quantity: m.quantity,
+                                        unit: m.unit,
+                                        price: m.price !== null ? m.price : '',
+                                        currency: m.currency || 'UAH',
+                                        issued_at: m.issued_at || new Date().toISOString(),
+                                        note: m.note || ''
+                                      });
+                                    }}
+                                    style={{ background: 'transparent', border: 'none', color: '#8B7D73', cursor: 'pointer', padding: '4px' }}
+                                    title="Редагувати запис"
+                                  >
+                                    <Pencil size={13} />
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      if (!window.confirm(`Ви впевнені, що хочете видалити матеріал "${m.name}" з відомості швидкої видачі?`)) return;
+                                      try {
+                                        await crmApi.deleteProjectMaterial(m.id);
+                                        // Trigger recalculation of project debts
+                                        await crmApi.priceProjectMaterials(project.id, []);
+                                        
+                                        await crmApi.saveAuditLog({
+                                          projectId: project.id,
+                                          clientId: project.client_id,
+                                          actionType: 'Видалення матеріалу',
+                                          details: `Видалено матеріал швидкої видачі з відомості складу: "${m.name}"`
+                                        });
+                                        
+                                        await loadExpressMaterials();
+                                        if (onUpdate) onUpdate();
+                                      } catch (err) {
+                                        alert('Помилка видалення матеріалу: ' + err.message);
+                                      }
+                                    }}
+                                    style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '4px' }}
+                                    title="Видалити запис швидкої видачі"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+
+                {/* Pricing Mode Actions Block */}
+                {pricingMode && (
+                  <div style={{ background: '#FAF6F0', borderTop: '1px solid #D4C5B9', padding: '12px 16px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                    <button
+                      onClick={() => setPricingMode(false)}
+                      style={{
+                        background: '#FFFFFF', color: '#8B7D73', border: '1px solid #D4C5B9', borderRadius: '6px',
+                        padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer'
+                      }}
+                    >
+                      Скасувати
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const itemsToSave = [];
+                        let hasInvalid = false;
+                        
+                        expressMaterials.forEach(m => {
+                          if (!m.is_priced) {
+                            const prVal = pricingPrices[m.id];
+                            if (prVal && prVal.trim() !== '') {
+                              const pFloat = parseFloat(prVal);
+                              if (isNaN(pFloat) || pFloat < 0) {
+                                hasInvalid = true;
+                              } else {
+                                itemsToSave.push({
+                                  ...m,
+                                  price: pFloat,
+                                  currency: pricingCurrencies[m.id] || 'UAH',
+                                  is_priced: true
+                                });
+                              }
+                            }
+                          }
+                        });
+
+                        if (hasInvalid) {
+                          alert('Будь ласка, введіть коректні числові ціни (більше або рівні 0)');
+                          return;
+                        }
+
+                        if (itemsToSave.length === 0) {
+                          alert('Ви не ввели ціни для жодного матеріалу!');
+                          return;
+                        }
+
+                        setSavingPrices(true);
+                        try {
+                          await crmApi.priceProjectMaterials(project.id, itemsToSave);
+                          await crmApi.saveAuditLog({
+                            projectId: project.id,
+                            clientId: project.client_id,
+                            actionType: 'Оцінка матеріалів',
+                            details: `Менеджер затвердив ціни на матеріали у кількості ${itemsToSave.length} шт. Фінансові баланси угоди автоматично оновлено.`
+                          });
+
+                          alert('Ціни успішно збережено, баланси угоди перераховано!');
+                          setPricingMode(false);
+                          await loadExpressMaterials();
+                          if (onUpdate) onUpdate();
+                        } catch (err) {
+                          console.error(err);
+                          alert('Помилка при збереженні цін: ' + err.message);
+                        } finally {
+                          setSavingPrices(false);
+                        }
+                      }}
+                      disabled={savingPrices}
+                      style={{
+                        background: '#C4B4A6', color: '#FFFFFF', border: 'none', borderRadius: '6px',
+                        padding: '6px 16px', fontSize: '12px', fontWeight: 800, cursor: 'pointer'
+                      }}
+                    >
+                      {savingPrices ? 'Збереження цін...' : 'Затвердити та перерахувати борг'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Financial Balance Block */}
+          <div style={{ padding: '24px', maxWidth: '720px', boxSizing: 'border-box' }}>
+            <ProjectFinancesBlock 
+              project={project} 
+              validPayments={validPayments} 
+              debtUSD={debtUSD} 
+              debtUAH={debtUAH} 
+              onUpdate={onUpdate} 
+              isMobile={isMobile}
+            />
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'logistics' && (
+        <div style={{ background: '#FFFFFF', padding: '24px', maxWidth: '1200px', boxSizing: 'border-box' }}>
           <ProjectMaterialsBlock 
             project={project} 
             materialItems={materialItems} 
@@ -1066,83 +1799,244 @@ function ProjectCRMCard({ project, onUpdate, isMobile }) {
             isMobile={isMobile}
           />
         </div>
-      </div>
-      
-      {/* Audit Logs / Activity History Timeline Section */}
-      <div style={{ 
-        borderTop: '1px solid #FAF6F0', 
-        background: '#FAF8F5', 
-        padding: '16px 20px',
-        borderBottomLeftRadius: '16px',
-        borderBottomRightRadius: '16px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
-          <Layers size={15} color="#8B7D73" />
-          <span style={{ fontSize: '11px', fontWeight: 800, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            📋 Історія дій по угоді
-          </span>
-        </div>
-        
-        {auditLogs.length === 0 ? (
-          <div style={{ fontSize: '11px', color: '#8B7D73', fontStyle: 'italic', padding: '4px 0' }}>
-            Історія дій поки що порожня. Дії менеджера будуть записуватись автоматично.
-          </div>
-        ) : (
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: '10px',
-            maxHeight: '220px',
-            overflowY: 'auto',
-            paddingRight: '6px',
-            scrollbarWidth: 'thin'
-          }}>
-            {auditLogs.map((log) => {
-              let actionEmoji = '📝';
-              const type = log.action_type || '';
-              if (type.includes('Створення')) actionEmoji = '🟢';
-              else if (type.includes('Статус') || type.includes('статусу') || type.includes('Зміна')) actionEmoji = '🔄';
-              else if (type.includes('Оплата') || type.includes('платежу') || type.includes('договору') || type.includes('суми')) actionEmoji = '💸';
-              else if (type.includes('Відвантаження')) actionEmoji = '📦';
-              else if (type.includes('товар') || type.includes('Товар') || type.includes('кількості') || type.includes('коментаря')) actionEmoji = '🛠️';
-              
-              const formattedDate = new Date(log.created_at).toLocaleString('uk-UA', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              });
+      )}
 
-              return (
-                <div key={log.id} style={{ 
-                  display: 'flex', 
-                  gap: '10px', 
-                  fontSize: '12px',
-                  alignItems: 'flex-start',
-                  background: '#FFFFFF',
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  border: '1px solid #FAF6F0',
-                  boxShadow: '0 1px 2px rgba(139, 125, 112, 0.02)'
-                }}>
-                  <span style={{ fontSize: '14px', flexShrink: 0 }} role="img" aria-label="action">
-                    {actionEmoji}
-                  </span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px', flexWrap: 'wrap', gap: '4px' }}>
-                      <span style={{ fontWeight: 700, color: '#2C2520', fontSize: '11.5px' }}>{log.action_type}</span>
-                      <span style={{ color: '#8B7D73', fontSize: '10px' }}>{formattedDate}</span>
-                    </div>
-                    <div style={{ color: '#554A42', lineHeight: '1.4' }}>{log.details}</div>
-                  </div>
-                </div>
-              );
-            })}
+      {activeTab === 'unified' && (() => {
+        const regularIssued = [];
+        const shipmentsList = project.project_shipments || [];
+        shipmentsList.forEach(s => {
+          s.shipment_items?.forEach(si => {
+            const itemObj = materialItems.find(i => i.id === si.project_item_id);
+            regularIssued.push({
+              id: `shipment-item-${si.id}`,
+              name: itemObj ? itemObj.name : 'Кастомний товар',
+              quantity: parseFloat(si.quantity) || 0,
+              unit: itemObj ? (itemObj.unit || 'шт.') : 'шт.',
+              date: s.date || '—',
+              type: 'По контракту',
+              source: 'Накладна',
+              price: itemObj ? itemObj.price : null,
+              currency: itemObj ? itemObj.currency : 'UAH',
+              note: s.carrier ? `Доставка: ${s.carrier}${s.tracking_number ? `, ТТН: ${s.tracking_number}` : ''}` : '—',
+              isPriced: true
+            });
+          });
+        });
+
+        const debtIssued = expressMaterials.map(m => ({
+          id: `debt-${m.id}`,
+          name: m.name,
+          quantity: parseFloat(m.quantity) || 0,
+          unit: m.unit || 'шт.',
+          date: m.issued_at ? m.issued_at.split('T')[0] : '—',
+          type: 'В борг (Склад)',
+          source: 'Відомість боргу',
+          price: m.is_priced ? m.price : null,
+          currency: m.currency || 'UAH',
+          note: m.note || (m.issued_by ? `Видав: ${m.issued_by}` : '—'),
+          isPriced: m.is_priced
+        }));
+
+        const mergedList = [...regularIssued, ...debtIssued].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        const filteredList = mergedList.filter(item => 
+          item.name.toLowerCase().includes(unifiedSearch.toLowerCase()) || 
+          item.type.toLowerCase().includes(unifiedSearch.toLowerCase()) ||
+          item.note.toLowerCase().includes(unifiedSearch.toLowerCase())
+        );
+
+        const totalContractPos = regularIssued.length;
+        const totalDebtPos = debtIssued.length;
+        const grandTotalPos = totalContractPos + totalDebtPos;
+
+        return (
+          <div style={{ background: '#FFFFFF', padding: '24px', maxWidth: '1200px', boxSizing: 'border-box' }}>
+            {/* Cards stats header */}
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+              <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '14px', borderRadius: '10px' }}>
+                <div style={{ fontSize: '10px', color: '#16A34A', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Видано за контрактом</div>
+                <div style={{ fontSize: '20px', fontWeight: 900, color: '#14532D', marginTop: '4px' }}>{totalContractPos} поз.</div>
+              </div>
+              <div style={{ background: '#FFF7ED', border: '1px solid #FFEDD5', padding: '14px', borderRadius: '10px' }}>
+                <div style={{ fontSize: '10px', color: '#EA580C', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Видано в борг зі складу</div>
+                <div style={{ fontSize: '20px', fontWeight: 900, color: '#7C2D12', marginTop: '4px' }}>{totalDebtPos} поз.</div>
+              </div>
+              <div style={{ background: '#FAF6F0', border: '1px solid #D4C5B9', padding: '14px', borderRadius: '10px' }}>
+                <div style={{ fontSize: '10px', color: '#8B7D73', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Загалом видано матеріалів</div>
+                <div style={{ fontSize: '20px', fontWeight: 900, color: '#2C2520', marginTop: '4px' }}>{grandTotalPos} поз.</div>
+              </div>
+            </div>
+
+            {/* Title & Search bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '18px' }}>📋</span>
+                <h5 style={{ margin: 0, fontSize: '13.5px', fontWeight: 850, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Зведена відомість видачі матеріалів
+                </h5>
+              </div>
+              <div style={{ position: 'relative', width: isMobile ? '100%' : '300px' }}>
+                <input 
+                  type="text"
+                  placeholder="Швидкий пошук за назвою чи приміткою..."
+                  value={unifiedSearch}
+                  onChange={e => setUnifiedSearch(e.target.value)}
+                  style={{
+                    width: '100%', padding: '6px 10px 6px 12px', fontSize: '12px', border: '1px solid #D4C5B9',
+                    borderRadius: '6px', outline: 'none', background: '#FFFFFF', color: '#2C2520', boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+            </div>
+
+            {filteredList.length === 0 ? (
+              <div style={{ fontSize: '12px', color: '#8B7D73', fontStyle: 'italic', padding: '20px 0', textAlign: 'center', border: '1px dashed #D4C5B9', borderRadius: '8px' }}>
+                Матеріалів за вказаними критеріями не знайдено.
+              </div>
+            ) : (
+              <div style={{ border: '1px solid #D4C5B9', borderRadius: '8px', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ background: '#FAF6F0', borderBottom: '1px solid #D4C5B9' }}>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520' }}>Матеріал</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '90px', textAlign: 'center' }}>Кількість</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '95px', textAlign: 'center' }}>Дата видачі</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '130px', textAlign: 'center' }}>Тип походження</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '90px', textAlign: 'center' }}>Ціна</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '100px', textAlign: 'center' }}>Загальна сума</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '220px' }}>Супровідна інформація / Примітка</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredList.map(item => {
+                      const cost = item.price ? item.quantity * item.price : null;
+                      return (
+                        <tr key={item.id} style={{ borderBottom: '1px solid #FAF6F0', transition: 'background 0.15s' }}>
+                          {/* Name */}
+                          <td style={{ padding: '10px 12px', fontWeight: 600, color: '#2C2520' }}>{item.name}</td>
+                          
+                          {/* Qty & Unit */}
+                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: '#2C2520' }}>
+                            {item.quantity} {item.unit}
+                          </td>
+                          
+                          {/* Date */}
+                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#8B7D73', whiteSpace: 'nowrap' }}>
+                            {item.date !== '—' ? new Date(item.date).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'}
+                          </td>
+                          
+                          {/* Type badges */}
+                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                            {item.type === 'По контракту' ? (
+                              <span style={{ background: '#E6F4EA', color: '#137333', border: '1px solid #CEEAD6', fontSize: '9.5px', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', display: 'inline-block', whiteSpace: 'nowrap' }}>
+                                📊 ПО КОНТРАКТУ
+                              </span>
+                            ) : (
+                              <span style={{ background: '#FFF3E0', color: '#B06000', border: '1px solid #FFE0B2', fontSize: '9.5px', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', display: 'inline-block', whiteSpace: 'nowrap' }}>
+                                📦 В БОРГ (СКЛАД)
+                              </span>
+                            )}
+                          </td>
+                          
+                          {/* Price */}
+                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#8B7D73' }}>
+                            {item.price !== null ? (
+                              item.currency === 'USD' ? `$${item.price.toLocaleString()}` : `${item.price.toLocaleString()} ₴`
+                            ) : (
+                              <span style={{ fontStyle: 'italic', fontSize: '11px', color: '#B3A395' }}>неоцінено</span>
+                            )}
+                          </td>
+                          
+                          {/* Total Cost */}
+                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: item.currency === 'USD' ? '#1D4ED8' : '#C2410C' }}>
+                            {cost !== null ? (
+                              item.currency === 'USD' ? `$${cost.toLocaleString()}` : `${cost.toLocaleString()} ₴`
+                            ) : '—'}
+                          </td>
+                          
+                          {/* Note */}
+                          <td style={{ padding: '10px 12px', color: '#8B7D73', fontSize: '11.5px' }}>{item.note}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        )}
+        );
+      })()}
+
+      {activeTab === 'history' && (
+        <div style={{ background: '#FFFFFF', padding: '24px', maxWidth: '1200px', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '16px' }}>
+            <Layers size={15} color="#8B7D73" />
+            <span style={{ fontSize: '11px', fontWeight: 800, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              📋 Історія дій по угоді
+            </span>
+          </div>
+          
+          {auditLogs.length === 0 ? (
+            <div style={{ fontSize: '12px', color: '#8B7D73', fontStyle: 'italic', padding: '12px 0', textAlign: 'center', border: '1px dashed #D4C5B9', borderRadius: '8px' }}>
+              Історія дій поки що порожня. Дії менеджера будуть записуватись автоматично.
+            </div>
+          ) : (
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '10px',
+              maxHeight: '400px',
+              overflowY: 'auto',
+              paddingRight: '6px',
+              scrollbarWidth: 'thin'
+            }}>
+              {auditLogs.map((log) => {
+                let actionEmoji = '📝';
+                const type = log.action_type || '';
+                if (type.includes('Створення')) actionEmoji = '🟢';
+                else if (type.includes('Статус') || type.includes('статусу') || type.includes('Зміна')) actionEmoji = '🔄';
+                else if (type.includes('Оплата') || type.includes('платежу') || type.includes('договору') || type.includes('суми')) actionEmoji = '💸';
+                else if (type.includes('Відвантаження')) actionEmoji = '📦';
+                else if (type.includes('товар') || type.includes('Товар') || type.includes('кількості') || type.includes('коментаря')) actionEmoji = '🛠️';
+                
+                const formattedDate = new Date(log.created_at).toLocaleString('uk-UA', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+
+                return (
+                  <div key={log.id} style={{ 
+                    display: 'flex', 
+                    gap: '10px', 
+                    fontSize: '12px',
+                    alignItems: 'flex-start',
+                    background: '#FFFFFF',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #FAF6F0',
+                    boxShadow: '0 1px 2px rgba(139, 125, 112, 0.02)'
+                  }}>
+                    <span style={{ fontSize: '14px', flexShrink: 0 }} role="img" aria-label="action">
+                      {actionEmoji}
+                    </span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px', flexWrap: 'wrap', gap: '4px' }}>
+                        <span style={{ fontWeight: 700, color: '#2C2520', fontSize: '11.5px' }}>{log.action_type}</span>
+                        <span style={{ color: '#8B7D73', fontSize: '10px' }}>{formattedDate}</span>
+                      </div>
+                      <div style={{ color: '#554A42', lineHeight: '1.4' }}>{log.details}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
       </div>
-    </div>
   );
 }
 
@@ -1153,30 +2047,7 @@ function ProjectFinancesBlock({ project, validPayments, debtUSD, debtUAH, onUpda
   const [saving, setSaving] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [editingPaymentId, setEditingPaymentId] = useState(null);
-  const [newPayment, setNewPayment] = useState({ sum: '', currency: 'USD', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '' });
-
-  const [agreedSums, setAgreedSums] = useState({
-    usd: parseFloat(project.agreed_sum_usd) || 0,
-    uah: parseFloat(project.agreed_sum_uah) || 0
-  });
-
-  const saveAgreedSums = async () => {
-    setSaving(true);
-    try {
-      await crmApi.updateProjectAgreedSums(project.id, agreedSums);
-      await crmApi.saveAuditLog({
-        projectId: project.id,
-        clientId: project.client_id,
-        actionType: 'Оновлення суми договору',
-        details: `Оновлено узгоджену суму угоди: ${agreedSums.usd} USD / ${agreedSums.uah} UAH`
-      });
-      if (onUpdate) onUpdate();
-    } catch (err) {
-      alert('Помилка збереження суми боргу');
-    } finally {
-      setSaving(false);
-    }
-  };
+  const [newPayment, setNewPayment] = useState({ sum: '', currency: 'UAH', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '' });
 
   const handleCancelPayment = async (paymentId) => {
     if (!window.confirm('Ви впевнені, що хочете скасувати цей платіж?')) return;
@@ -1217,12 +2088,12 @@ function ProjectFinancesBlock({ project, validPayments, debtUSD, debtUAH, onUpda
   const handleCancelForm = () => {
     setShowAdd(false);
     setEditingPaymentId(null);
-    setNewPayment({ sum: '', currency: 'USD', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '' });
+    setNewPayment({ sum: '', currency: 'UAH', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '' });
   };
 
   const handleShowAddForm = () => {
     setEditingPaymentId(null);
-    setNewPayment({ sum: '', currency: 'USD', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '' });
+    setNewPayment({ sum: '', currency: 'UAH', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '' });
     setShowAdd(true);
   };
 
@@ -1249,7 +2120,7 @@ function ProjectFinancesBlock({ project, validPayments, debtUSD, debtUAH, onUpda
       });
       setShowAdd(false);
       setEditingPaymentId(null);
-      setNewPayment({ sum: '', currency: 'USD', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '' });
+      setNewPayment({ sum: '', currency: 'UAH', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '' });
       if (onUpdate) onUpdate();
     } catch (err) {
       alert('Помилка збереження');
@@ -1260,88 +2131,6 @@ function ProjectFinancesBlock({ project, validPayments, debtUSD, debtUAH, onUpda
 
   return (
     <div style={{ width: '100%', boxSizing: 'border-box' }}>
-      <h5 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 800, color: '#2C2520', display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <DollarSign size={16} color="#C4B4A6" />
-        Фінансовий баланс угоди
-      </h5>
-
-      {/* Prominent High-Fidelity Currency Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px', marginBottom: '24px', width: '100%' }}>
-        
-        {/* USD Card (Ice Blue Accent) */}
-        <div style={{ 
-          background: '#F4F7F9', border: '1px solid #CAD4DE', borderRadius: '10px', 
-          padding: '14px', display: 'flex', flexDirection: 'column', gap: '6px',
-          boxShadow: '0 2px 4px rgba(74,96,122,0.04)',
-          minWidth: 0,
-          boxSizing: 'border-box',
-          width: '100%'
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '10px', color: '#4A607A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              {debtUSD < 0 ? 'Передоплата USD' : 'Борг USD'}
-            </span>
-            <div style={{ fontSize: '20px', fontWeight: 900, color: debtUSD < 0 ? '#15803D' : debtUSD > 0 ? '#1D4ED8' : '#2C2520', marginTop: '2px' }}>
-              ${Math.abs(debtUSD).toLocaleString('en-US', { minimumFractionDigits: 0 })}
-            </div>
-          </div>
-          <div style={{ borderTop: '1px dashed #CAD4DE', paddingTop: '6px', marginTop: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-            <span style={{ fontSize: '11px', color: '#5C6E82', fontWeight: 500 }}>Погоджено:</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-              <span style={{ fontSize: '11px', color: '#2C2520' }}>$</span>
-              <input 
-                type="number" 
-                value={agreedSums.usd} 
-                onChange={e => setAgreedSums({...agreedSums, usd: parseFloat(e.target.value) || 0})}
-                onBlur={saveAgreedSums}
-                style={{ 
-                  width: '64px', fontSize: '11px', fontWeight: 700, padding: '2px 4px', 
-                  border: '1px solid #CAD4DE', borderRadius: '4px', outline: 'none', background: '#FFFFFF', color: '#2C2520', textAlign: 'right',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* UAH Card (Honey Gold Accent) */}
-        <div style={{ 
-          background: '#FFFDF5', border: '1px solid #F2E6C4', borderRadius: '10px', 
-          padding: '14px', display: 'flex', flexDirection: 'column', gap: '6px',
-          boxShadow: '0 2px 4px rgba(139,125,112,0.04)',
-          minWidth: 0,
-          boxSizing: 'border-box',
-          width: '100%'
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '10px', color: '#8C7355', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              {debtUAH < 0 ? 'Передоплата UAH' : 'Борг UAH'}
-            </span>
-            <div style={{ fontSize: '20px', fontWeight: 900, color: debtUAH < 0 ? '#15803D' : debtUAH > 0 ? '#C2410C' : '#2C2520', marginTop: '2px' }}>
-              {Math.abs(debtUAH).toLocaleString('uk-UA')} ₴
-            </div>
-          </div>
-          <div style={{ borderTop: '1px dashed #F2E6C4', paddingTop: '6px', marginTop: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-            <span style={{ fontSize: '11px', color: '#8B7D73', fontWeight: 500 }}>Погоджено:</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-              <input 
-                type="number" 
-                value={agreedSums.uah} 
-                onChange={e => setAgreedSums({...agreedSums, uah: parseFloat(e.target.value) || 0})}
-                onBlur={saveAgreedSums}
-                style={{ 
-                  width: '74px', fontSize: '11px', fontWeight: 700, padding: '2px 4px', 
-                  border: '1px solid #F2E6C4', borderRadius: '4px', outline: 'none', background: '#FFFFFF', color: '#2C2520', textAlign: 'right',
-                  boxSizing: 'border-box'
-                }}
-              />
-              <span style={{ fontSize: '11px', color: '#2C2520' }}>₴</span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
       {/* Transaction Journal Section */}
       <div style={{ 
         display: 'flex', 
@@ -1565,7 +2354,7 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
 
   // Оплата при відвантаженні
   const [paymentAmount, setPaymentAmount] = useState('');
-  const [paymentCurrency, setPaymentCurrency] = useState('USD');
+  const [paymentCurrency, setPaymentCurrency] = useState('UAH');
   const [paymentType, setPaymentType] = useState('Готівка');
   const [paymentNote, setPaymentNote] = useState('');
 
@@ -1576,7 +2365,7 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
     materialItems.forEach(i => {
       initialQtys[i.id] = 0;
       initialPrices[i.id] = parseFloat(i.price) || 0;
-      initialCurrencies[i.id] = 'USD';
+      initialCurrencies[i.id] = 'UAH';
     });
     setShipQtys(initialQtys);
     setShipPrices(initialPrices);
@@ -1596,7 +2385,7 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
         project_item_id: id,
         quantity: parseFloat(shipQtys[id]) || 0,
         price: parseFloat(shipPrices[id]) || 0,
-        currency: shipCurrencies[id] || 'USD'
+        currency: shipCurrencies[id] || 'UAH'
       }))
       .filter(i => i.quantity > 0);
 
@@ -2298,7 +3087,7 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
                       </td>
                       <td style={{ padding: '6px 0', width: '80px' }}>
                         <select 
-                          value={shipCurrencies[item.id] || 'USD'} 
+                          value={shipCurrencies[item.id] || 'UAH'} 
                           onChange={e => setShipCurrencies({...shipCurrencies, [item.id]: e.target.value})}
                           style={{ width: '100%', padding: '4px', border: '1px solid #D4C5B9', borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none' }}
                         >
@@ -2384,7 +3173,7 @@ function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, le
 
           <button 
             type="button"
-            onClick={() => setNewItems([...newItems, { id: 'temp_' + Date.now(), name: '', quantity: '1', price: '0', currency: 'USD', note: 'Додано на льоту' }])}
+            onClick={() => setNewItems([...newItems, { id: 'temp_' + Date.now(), name: '', quantity: '1', price: '0', currency: 'UAH', note: 'Додано на льоту' }])}
             style={{ background: '#FFFFFF', color: '#8B7D73', border: '1px dashed #D4C5B9', borderRadius: '6px', padding: '4px 10px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', marginBottom: '16px' }}
           >
             + Додати кастомний товар в 1 клік
