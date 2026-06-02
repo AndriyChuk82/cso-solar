@@ -7,7 +7,6 @@
     "packages/*",
     "warehouse",
     "projects",
-    "proposals",
     "proposals-v2",
     "green-tariff-v2",
     "dashboard"
@@ -16,15 +15,14 @@
     "build": "cd green-tariff-v2 && npm install && npm run build",
     "dev:dashboard": "npm run dev --workspace=dashboard",
     "dev:warehouse": "npm run dev --workspace=warehouse",
-    "dev:proposals": "npm run dev --workspace=proposals",
     "dev:proposals-v2": "npm run dev --workspace=proposals-v2",
     "dev:projects": "npm run dev --workspace=projects",
     "dev:green-tariff-v2": "npm run dev --workspace=green-tariff-v2",
-    "dev:all": "concurrently \"npm run dev:dashboard\" \"npm run dev:warehouse\" \"npm run dev:proposals\" \"npm run dev:projects\"",
+    "dev:all": "concurrently \"npm run dev:dashboard\" \"npm run dev:warehouse\" \"npm run dev:proposals-v2\" \"npm run dev:projects\"",
     "agy": "powershell -NoProfile -Command \"& 'C:\\Users\\Чикайло Андрій\\AppData\\Local\\agy\\bin\\agy.exe'\"",
     "hash-password": "node scripts/hash-password.js",
     "install:all": "npm install",
-    "clean": "rm -rf node_modules packages/*/node_modules warehouse/node_modules projects/node_modules proposals/node_modules"
+    "clean": "rm -rf node_modules packages/*/node_modules warehouse/node_modules projects/node_modules proposals-v2/node_modules"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.2",
