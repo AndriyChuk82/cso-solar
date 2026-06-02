@@ -1,1 +1,0 @@
-import{l as e}from"./index-CRC4LoHG.js";export{e as fetchAllData};

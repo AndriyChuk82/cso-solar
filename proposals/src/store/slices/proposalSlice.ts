@@ -267,10 +267,19 @@ export const createProposalSlice: StateCreator<
   },
 
   clearProposal: () => {
-    const { history, selectedSeller } = get();
+    const { history, selectedSeller, settings } = get() as any;
     const newProposal = createEmptyProposal(history);
     // Зберігаємо обраного продавця при очищенні, якщо він був змінений
-    newProposal.seller = SELLERS[selectedSeller] || SELLERS.tov_cso;
+    newProposal.seller = SELLERS[selectedSeller as keyof typeof SELLERS] || SELLERS.tov_cso;
+    
+    // Зберігаємо актуальні курси з налаштувань (наприклад, з Говерли)
+    if (settings && settings.usdRate && settings.eurRate) {
+      newProposal.rates = {
+        usdToUah: settings.usdRate,
+        eurToUah: settings.eurRate,
+      };
+    }
+    
     set({ proposal: newProposal });
   },
 
