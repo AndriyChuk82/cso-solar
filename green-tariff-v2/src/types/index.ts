@@ -147,6 +147,7 @@ export interface GTStoreState {
   // Actions
   fetchProjects: () => Promise<void>;
   saveProject: (project: SemanticProject) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
   loadProject: (id: string) => void;
   resetForm: () => void;
   setStatusFilter: (status: string) => void;

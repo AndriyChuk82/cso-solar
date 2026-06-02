@@ -49,9 +49,14 @@ export async function fetchEquipment(): Promise<GASResponse> {
   return gasGTRequest('getEquipment');
 }
 
+export async function deleteProject(id: string): Promise<GASResponse> {
+  return gasGTRequest('deleteProject', { id });
+}
+
 export const gtApi = {
   fetchProjects,
   saveProject,
   gasGTRequest,
   fetchEquipment,
+  deleteProject,
 };

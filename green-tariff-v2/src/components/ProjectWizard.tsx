@@ -40,6 +40,7 @@ export function ProjectWizard() {
   const { 
     currentProject, 
     saveProject, 
+    deleteProject,
     resetForm, 
     equipment, 
     isLoading, 
@@ -49,6 +50,7 @@ export function ProjectWizard() {
 
   const [activeStep, setActiveStep] = useState(1);
   const [formData, setFormData] = useState<SemanticProject | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Load equipment catalog once on mount
   useEffect(() => {
@@ -217,7 +219,18 @@ export function ProjectWizard() {
             })}
           </div>
 
-          <div className="flex-shrink-0 flex justify-end">
+          <div className="flex-shrink-0 flex justify-end gap-2">
+            {formData && formData.id && !formData.id.startsWith('temp_') && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-red-500 hover:text-white border border-red-200 dark:border-red-900/50 hover:bg-red-500 hover:border-red-500 rounded-xl transition-all"
+              >
+                <Trash2 className="w-4 h-4" />
+                Видалити
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleSave}
@@ -756,6 +769,56 @@ export function ProjectWizard() {
           )}
         </div>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-gray-200/50 dark:border-slate-800/80 rounded-2xl p-6 shadow-xl max-w-sm w-full space-y-4 animate-scale-in">
+            <div className="flex items-center gap-3 text-red-500">
+              <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/30 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white">Видалити цей проєкт?</h4>
+                <p className="text-[10px] text-gray-500">Дія безповоротна та видалить проєкт з бази</p>
+              </div>
+            </div>
+            
+            <p className="text-xs text-gray-600 dark:text-slate-400 leading-relaxed">
+              Ви впевнені, що хочете видалити проєкт замовника <strong className="text-gray-900 dark:text-white font-bold">{formData?.fullName || 'Без імені'}</strong>? Цю операцію неможливо скасувати.
+            </p>
+            
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-700/60 rounded-xl transition"
+              >
+                Скасувати
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (formData?.id) {
+                    await deleteProject(formData.id);
+                    setShowDeleteConfirm(false);
+                  }
+                }}
+                disabled={isLoading}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-red-500 hover:bg-red-600 rounded-xl shadow-md shadow-red-500/15 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Видалення...
+                  </>
+                ) : (
+                  'Так, видалити'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

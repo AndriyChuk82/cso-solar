@@ -19,6 +19,10 @@ function doPost(e) {
       return jsonResponse(saveProjectWithFiles(data));
     }
 
+    if (action === 'deleteProject') {
+      return jsonResponse(deleteProjectRow(data));
+    }
+
     if (action === 'getEquipment') {
       return jsonResponse({ success: true, equipment: getEquipmentFromProjects() });
     }
@@ -270,6 +274,44 @@ function saveProjectWithFiles(data) {
   } catch(e) { throw new Error("Step 3 (Sheet Write) Failed: " + e.toString()); }
   
   return { success: true, id: id, folderUrl: folderUrl };
+}
+
+function deleteProjectRow(data) {
+  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
+  const id = data.id;
+  if (!id) throw new Error("No project ID specified for deletion");
+  
+  const dValues = sheet.getDataRange().getValues();
+  const headers = dValues[0].map(normalizeHeader);
+  const idIdx = headers.indexOf("id");
+  
+  if (idIdx === -1) throw new Error("ID column not found in sheet");
+  
+  let fRow = -1;
+  // 1. Пошук по порядковому індексу (idx_X)
+  if (id.toString().startsWith('idx_')) {
+    const idx = parseInt(id.toString().replace('idx_', ''));
+    if (!isNaN(idx)) fRow = idx + 2; // +1 (0->1) +1 (header)
+  }
+  
+  // 2. Пошук по унікальному ID
+  if (fRow === -1) {
+    for (let i = 1; i < dValues.length; i++) {
+      if (dValues[i].length > idIdx && dValues[i][idIdx] === id) {
+        fRow = i + 1;
+        break;
+      }
+    }
+  }
+  
+  if (fRow !== -1) {
+    sheet.deleteRow(fRow);
+    SpreadsheetApp.flush();
+    return { success: true, id: id };
+  }
+  
+  return { success: false, error: "Project not found" };
 }
 
 function jsonResponse(obj) {

@@ -232,6 +232,38 @@ export const useGTStore = create<GTStoreState>((set, get) => ({
     }
   },
 
+  deleteProject: async (id: string) => {
+    set({ isLoading: true, error: null });
+    
+    const { projects, currentProject } = get();
+    const updatedProjects = projects.filter((p) => p.id !== id);
+    
+    set({ 
+      projects: updatedProjects,
+      currentProject: currentProject?.id === id ? null : currentProject,
+      isLoading: true,
+      unsavedChanges: false
+    });
+
+    try {
+      const res = await gtApi.deleteProject(id);
+      if (res.success) {
+        set({ isLoading: false });
+        get().showToast('Проєкт успішно видалено! 🗑️', 'success', 4000);
+      } else {
+        const errMsg = res.error || 'Помилка видалення на сервері';
+        set({ error: errMsg, isLoading: false });
+        get().showToast(errMsg, 'error', 6000);
+        get().fetchProjects();
+      }
+    } catch (e) {
+      const errMsg = (e as Error).message;
+      set({ error: errMsg, isLoading: false });
+      get().showToast(`Помилка видалення: ${errMsg}`, 'error', 6000);
+      get().fetchProjects();
+    }
+  },
+
   loadProject: (id: string) => {
     const { projects } = get();
     const project = projects.find((p) => p.id === id);
