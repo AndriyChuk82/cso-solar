@@ -124,7 +124,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
 
   return (
     <div
-      className="group bg-white dark:bg-[#1e293b]/60 backdrop-blur-md rounded-xl border border-gray-100 dark:border-[#334155] hover:border-primary/30 dark:hover:border-primary/50 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:hover:shadow-[0_8px_30px_rgba(251,191,36,0.03)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 relative overflow-hidden p-2.5 flex flex-col cursor-pointer"
+      className="group bg-[#fbfaf5]/85 dark:bg-[#1e293b]/55 backdrop-blur-lg rounded-xl border border-[#e8e4d1]/65 dark:border-[#334155]/50 hover:border-amber-500/35 dark:hover:border-amber-500/45 hover:shadow-[0_8px_25px_rgba(245,158,11,0.03)] dark:hover:shadow-[0_8px_25px_rgba(251,191,36,0.02)] hover:scale-[1.015] active:scale-[0.985] transition-all duration-300 relative overflow-hidden p-2.5 flex flex-col cursor-pointer"
       onClick={handleAdd}
     >
       {/* Top Section: Name, Price, and Actions */}

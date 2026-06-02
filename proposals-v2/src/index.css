@@ -13,16 +13,16 @@
 }
 
 :root {
-  --bg-primary: var(--bg-main);
-  --bg-secondary: var(--bg-main);
-  --bg-card: var(--bg-card);
-  --bg-input: var(--bg-card);
-  --accent: var(--primary);
-  --accent-light: var(--primary-light);
-  --accent-dark: var(--primary-dark);
-  --accent-glow: rgba(245, 158, 11, 0.1);
-  --text-primary: #374151;
-  --text-secondary: #6b7280;
+  --bg-primary: #fbfaf5;
+  --bg-secondary: #fbfaf5;
+  --bg-card: #f4f1e1;
+  --bg-input: #f4f1e1;
+  --accent: #f59e0b;
+  --accent-light: #fbbf24;
+  --accent-dark: #d97706;
+  --accent-glow: rgba(245, 158, 11, 0.15);
+  --text-primary: #1f2937;
+  --text-secondary: #4b5563;
   --text-muted: #9ca3af;
   --border: #e8e4d1;
   --border-light: #f1efe2;

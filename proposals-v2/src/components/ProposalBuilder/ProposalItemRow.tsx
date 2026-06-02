@@ -68,13 +68,13 @@ export const ProposalItemRow = memo(function ProposalItemRow({
   }, [item.unit, isEditingUnit]);
 
   return (
-    <tr className="border-b border-slate-100 dark:border-slate-900/60 hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all duration-200 bg-white dark:bg-transparent">
+    <tr className="border-b border-[#e8e4d1]/40 dark:border-slate-800/30 hover:bg-[#faf5ec]/50 dark:hover:bg-slate-800/15 transition-all duration-200 bg-white/20 dark:bg-transparent">
       <td className="px-2 py-2 text-center align-middle" style={{ whiteSpace: 'nowrap' }}>
         <div style={{ display: 'inline-flex', flexDirection: 'column', verticalAlign: 'middle', marginRight: '4px' }} className="no-print">
           <button
             onClick={() => onMoveUp(item.id)}
             disabled={index === 0}
-            className={`p-0 w-3 h-3 text-[8px] flex items-center justify-center border-0 bg-transparent cursor-pointer ${index === 0 ? 'opacity-10' : 'opacity-40 hover:opacity-100 text-slate-500 dark:text-slate-400'}`}
+            className={`p-0 w-3 h-3 text-[8px] flex items-center justify-center border-0 bg-transparent cursor-pointer ${index === 0 ? 'opacity-10' : 'opacity-40 hover:opacity-100 text-[#a89a74] dark:text-slate-400 hover:text-amber-500 dark:hover:text-amber-400'}`}
             title="Вгору"
           >
             ▲
@@ -82,13 +82,13 @@ export const ProposalItemRow = memo(function ProposalItemRow({
           <button
             onClick={() => onMoveDown(item.id)}
             disabled={index === totalItems - 1}
-            className={`p-0 w-3 h-3 text-[8px] flex items-center justify-center border-0 bg-transparent cursor-pointer ${index === totalItems - 1 ? 'opacity-10' : 'opacity-40 hover:opacity-100 text-slate-500 dark:text-slate-400'}`}
+            className={`p-0 w-3 h-3 text-[8px] flex items-center justify-center border-0 bg-transparent cursor-pointer ${index === totalItems - 1 ? 'opacity-10' : 'opacity-40 hover:opacity-100 text-[#a89a74] dark:text-slate-400 hover:text-amber-500 dark:hover:text-amber-400'}`}
             title="Вниз"
           >
             ▼
           </button>
         </div>
-        <span className="inline-block align-middle w-4 text-center text-[10px] text-slate-300 dark:text-slate-600">
+        <span className="inline-block align-middle w-4 text-center text-[10px] text-slate-300 dark:text-slate-600 font-bold">
           {String(index + 1).padStart(2, '0')}
         </span>
       </td>
@@ -103,7 +103,7 @@ export const ProposalItemRow = memo(function ProposalItemRow({
               target.style.height = `${target.scrollHeight}px`;
             }}
             rows={1}
-            className="w-full px-0 py-0.5 text-xs font-semibold border-0 border-b border-transparent focus:border-slate-300 dark:focus:border-slate-700 focus:ring-0 bg-transparent text-slate-800 dark:text-slate-200 transition-all placeholder:text-slate-300 dark:placeholder:text-slate-700 resize-none overflow-hidden"
+            className="w-full px-0 py-0.5 text-xs font-semibold border-0 border-b border-transparent focus:border-amber-500/40 dark:focus:border-slate-700 focus:ring-0 bg-transparent text-slate-800 dark:text-slate-200 transition-all placeholder:text-slate-300 dark:placeholder:text-slate-700 resize-none overflow-hidden"
             placeholder="Назва товару"
             ref={(el) => {
               if (el) {
@@ -121,7 +121,7 @@ export const ProposalItemRow = memo(function ProposalItemRow({
               target.style.height = `${target.scrollHeight}px`;
             }}
             rows={1}
-            className="w-full px-0 py-0 text-[10px] border-0 border-b border-transparent focus:border-slate-200 dark:focus:border-slate-800 focus:ring-0 bg-transparent text-slate-400 dark:text-slate-500 italic transition-all placeholder:text-slate-300 dark:placeholder:text-slate-700 resize-none overflow-hidden"
+            className="w-full px-0 py-0 text-[10px] border-0 border-b border-transparent focus:border-amber-500/20 dark:focus:border-slate-800 focus:ring-0 bg-transparent text-slate-400 dark:text-slate-500 italic transition-all placeholder:text-slate-300 dark:placeholder:text-slate-700 resize-none overflow-hidden"
             placeholder="Додати опис..."
             ref={(el) => {
               if (el) {
@@ -150,12 +150,12 @@ export const ProposalItemRow = memo(function ProposalItemRow({
               setLocalUnit(e.target.value);
               onUpdateField(item.id, 'unit', e.target.value);
             }}
-            className="w-full px-1 py-0.5 text-center text-xs border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-slate-100"
+            className="w-full px-1 py-0.5 text-center text-xs border border-[#e8e4d1] dark:border-slate-800 rounded bg-white dark:bg-slate-900 focus:outline-none focus:border-amber-500 dark:focus:border-slate-700 text-slate-800 dark:text-slate-100"
           />
         ) : (
           <div
             onClick={() => setIsEditingUnit(true)}
-            className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/60 px-1 py-1 rounded text-slate-500 dark:text-slate-400 font-medium select-none min-h-[24px] flex items-center justify-center transition-all duration-150"
+            className="cursor-pointer hover:bg-[#faf5ec]/80 dark:hover:bg-slate-900/60 px-1 py-1 rounded text-slate-500 dark:text-slate-400 font-medium select-none min-h-[24px] flex items-center justify-center transition-all duration-150 cursor-pointer"
           >
             {item.unit || 'шт'}
           </div>
@@ -185,12 +185,12 @@ export const ProposalItemRow = memo(function ProposalItemRow({
                 }
               }
             }}
-            className="w-14 mx-auto px-1 py-0.5 text-center text-xs border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-slate-100 font-bold"
+            className="w-14 mx-auto px-1 py-0.5 text-center text-xs border border-[#e8e4d1] dark:border-slate-800 rounded bg-white dark:bg-slate-900 focus:outline-none focus:border-amber-500 dark:focus:border-slate-700 text-slate-800 dark:text-slate-100 font-bold"
           />
         ) : (
           <div
             onClick={() => setIsEditingQuantity(true)}
-            className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/60 px-1 py-1 rounded text-slate-800 dark:text-slate-200 font-bold select-none min-h-[24px] flex items-center justify-center transition-all duration-150"
+            className="cursor-pointer hover:bg-[#faf5ec]/80 dark:hover:bg-slate-900/60 px-1 py-1 rounded text-slate-800 dark:text-slate-200 font-bold select-none min-h-[24px] flex items-center justify-center transition-all duration-150 cursor-pointer"
           >
             {formatNumber(item.quantity, item.quantity % 1 === 0 ? 0 : 2)}
           </div>
@@ -213,12 +213,12 @@ export const ProposalItemRow = memo(function ProposalItemRow({
                 if (!isNaN(num)) onUpdateCostPrice(item.id, num);
               }
             }}
-            className="w-20 mx-auto px-1 py-0.5 text-center text-xs border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-slate-100"
+            className="w-20 mx-auto px-1 py-0.5 text-center text-xs border border-[#e8e4d1] dark:border-slate-800 rounded bg-white dark:bg-slate-900 focus:outline-none focus:border-amber-500 dark:focus:border-slate-700 text-slate-800 dark:text-slate-100"
           />
         ) : (
           <div
             onClick={() => setIsEditingCost(true)}
-            className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/60 px-1 py-1 rounded text-slate-600 dark:text-slate-300 select-none min-h-[24px] flex items-center justify-center transition-all duration-150"
+            className="cursor-pointer hover:bg-[#faf5ec]/80 dark:hover:bg-slate-900/60 px-1 py-1 rounded text-slate-600 dark:text-slate-300 select-none min-h-[24px] flex items-center justify-center transition-all duration-150 cursor-pointer"
           >
             {formatNumber(displayCostNum)}
           </div>
@@ -244,12 +244,12 @@ export const ProposalItemRow = memo(function ProposalItemRow({
                 if (!isNaN(num)) onUpdateSalePrice(item.id, num);
               }
             }}
-            className="w-20 mx-auto px-1 py-0.5 text-center text-xs border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-900 focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-slate-100 font-semibold"
+            className="w-20 mx-auto px-1 py-0.5 text-center text-xs border border-[#e8e4d1] dark:border-slate-800 rounded bg-white dark:bg-slate-900 focus:outline-none focus:border-amber-500 dark:focus:border-slate-700 text-slate-800 dark:text-slate-100 font-semibold"
           />
         ) : (
           <div
             onClick={() => setIsEditingPrice(true)}
-            className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/60 px-1 py-1 rounded text-slate-900 dark:text-slate-100 font-bold select-none min-h-[24px] flex items-center justify-center transition-all duration-150"
+            className="cursor-pointer hover:bg-[#faf5ec]/80 dark:hover:bg-slate-900/60 px-1 py-1 rounded text-slate-900 dark:text-slate-100 font-bold select-none min-h-[24px] flex items-center justify-center transition-all duration-150 cursor-pointer"
           >
             {formatNumber(displayPriceNum)}
           </div>

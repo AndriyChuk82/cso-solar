@@ -56,10 +56,10 @@ export function SettingsPanel({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-900 p-3 flex flex-wrap items-center justify-between gap-4 no-print transition-all duration-300 shadow-[0_1px_3px_rgba(0,0,0,0.01)]">
+    <div className="bg-[#fbfaf5]/85 dark:bg-slate-900/55 backdrop-blur-lg rounded-xl border border-[#e8e4d1]/65 dark:border-slate-800/40 p-2.5 px-4 flex flex-wrap items-center justify-between gap-4 no-print transition-all duration-300 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
       {/* Курси валют */}
       <div className="flex items-center gap-3">
-        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">Курси:</span>
+        <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">Курси:</span>
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">$</span>
           <input
@@ -123,23 +123,23 @@ export function SettingsPanel({
 
         <button
           onClick={onApplyMarkup}
-          className="px-2.5 py-1 text-[10px] font-semibold border border-slate-800 dark:border-slate-200 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg hover:bg-slate-800 dark:hover:bg-white transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+          className="px-3 py-1.5 text-[10px] font-extrabold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg hover:shadow-[0_2px_8px_rgba(245,158,11,0.2)] active:scale-95 transition-all flex items-center gap-1.5 shadow-sm border-none cursor-pointer"
           title="Застосувати націнку та коригування до всіх товарів"
         >
-          <Zap className="w-2.5 h-2.5" />
+          <Zap className="w-3 h-3 text-amber-100" />
           Застосувати
         </button>
       </div>
 
-      <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200/40 dark:border-slate-900/60">
+      <div className="flex items-center gap-1 bg-slate-100/80 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200/50 dark:border-slate-950">
         {(['UAH', 'USD', 'EUR'] as Currency[]).map((curr) => (
           <button
             key={curr}
             onClick={() => onSetActiveCurrency(curr)}
-            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
+            className={`px-3.5 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
               activeCurrency === curr
-                ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-slate-200/40 dark:border-slate-700/30'
-                : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400'
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
             {curr}
