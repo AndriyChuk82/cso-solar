@@ -23,7 +23,7 @@ export const createProductsSlice: StateCreator<
   [],
   [],
   ProductsSlice
-> = (set) => ({
+> = (set, get) => ({
   // Initial State
   products: [],
   categories: [],
@@ -32,6 +32,15 @@ export const createProductsSlice: StateCreator<
 
   // Actions
   loadProducts: async () => {
+    // Автоматично запускаємо оновлення курсів з Hoverla у фоновому режимі при кожному запуску додатка
+    setTimeout(() => {
+      const state = get() as any;
+      if (typeof state.refreshRates === 'function') {
+        console.log('🔄 Автоматичне фонове оновлення курсів з Hoverla на старті...');
+        state.refreshRates();
+      }
+    }, 500);
+
     try {
       const CACHE_KEY = `cso-products-cache-${CONFIG.CACHE_VERSION}`;
       

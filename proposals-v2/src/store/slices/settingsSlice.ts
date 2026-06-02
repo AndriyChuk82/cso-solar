@@ -47,7 +47,7 @@ export const createSettingsSlice: StateCreator<
 
   refreshRates: async () => {
     const rates = await fetchRates();
-    if (rates) {
+    if (rates && rates.usd && rates.eur) {
       set((state: any) => ({
         settings: {
           ...state.settings,
