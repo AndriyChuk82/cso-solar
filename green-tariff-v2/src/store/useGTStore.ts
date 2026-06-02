@@ -53,11 +53,21 @@ const EMPTY_PROJECT: SemanticProject = {
   reserve: '',
 };
 
-function generateProjectNumber(projectsCount: number): string {
+function countProjectsInCurrentMonth(projects: SemanticProject[]): number {
   const now = new Date();
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const yyyy = now.getFullYear();
-  const count = (projectsCount + 1).toString().padStart(2, '0');
+  const suffix = `/${mm}-${yyyy}-ЦСО`;
+  
+  return projects.filter(p => p.projectNumber && p.projectNumber.endsWith(suffix)).length;
+}
+
+function generateProjectNumber(projects: SemanticProject[]): string {
+  const now = new Date();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yyyy = now.getFullYear();
+  const countInMonth = countProjectsInCurrentMonth(projects);
+  const count = (countInMonth + 1).toString().padStart(2, '0');
   return `${count}/${mm}-${yyyy}-ЦСО`;
 }
 
@@ -283,7 +293,7 @@ export const useGTStore = create<GTStoreState>((set, get) => ({
   resetForm: () => {
     const { projects } = get();
     const newProject = { ...EMPTY_PROJECT };
-    newProject.projectNumber = generateProjectNumber(projects.length);
+    newProject.projectNumber = generateProjectNumber(projects);
     
     set({ 
       currentProject: newProject, 
