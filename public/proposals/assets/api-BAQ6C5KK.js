@@ -1,1 +1,0 @@
-import{l as e}from"./index-Coyq-JeQ.js";export{e as fetchAllData};

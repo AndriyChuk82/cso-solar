@@ -110,9 +110,12 @@ export const createProductsSlice: StateCreator<
                   categories,
                 };
                 if (rates) {
-                  newState.settings = { ...state.settings, usdRate: rates.usd, eurRate: rates.eur };
-                  if (state.proposal) {
-                    newState.proposal = { ...state.proposal, rates: { usdToUah: rates.usd, eurToUah: rates.eur } };
+                  const currentUsd = state.settings?.usdRate;
+                  if (!currentUsd || currentUsd === 41.5 || currentUsd === 44.0) {
+                    newState.settings = { ...state.settings, usdRate: rates.usd, eurRate: rates.eur };
+                    if (state.proposal) {
+                      newState.proposal = { ...state.proposal, rates: { usdToUah: rates.usd, eurToUah: rates.eur } };
+                    }
                   }
                 }
                 return newState;
