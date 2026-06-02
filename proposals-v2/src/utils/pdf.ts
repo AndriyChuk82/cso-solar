@@ -73,11 +73,11 @@ export async function exportToPDF(proposal: Proposal, returnBlob = false, showCo
               <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.unit || 'шт.'}</td>
               <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.quantity}</td>
               ${showCost ? `
-                <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; background: #EFF6FF;">${item.costPrice.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
-                <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; background: #DBEAFE;">${(item.costPrice * item.quantity).toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; background: #EFF6FF;">${(Math.round(item.costPrice * 100) / 100).toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; background: #DBEAFE;">${(Math.round(item.costPrice * 100) / 100 * item.quantity).toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
               ` : ''}
-              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.price.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
-              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 600;">${(item.price * item.quantity).toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
+              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${(Math.round(item.price * 100) / 100).toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
+              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 600;">${(Math.round(item.price * 100) / 100 * item.quantity).toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
             </tr>
           `).join('')}
         </tbody>

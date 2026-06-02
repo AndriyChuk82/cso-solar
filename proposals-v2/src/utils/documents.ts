@@ -95,8 +95,8 @@ function generateInvoiceHTML(proposal: Proposal): string {
   };
 
   const convert = (amount: number) => {
-    // Внутрішні розрахунки завжди в USD
-    return convertCurrency(amount, 'USD', proposal.currency, rates);
+    // Внутрішні розрахунки завжди в USD, округлюємо до 2 знаків після коми для точності
+    return Math.round(convertCurrency(amount, 'USD', proposal.currency, rates) * 100) / 100;
   };
 
   const itemsHTML = (proposal.items || []).map((item, i) => {
@@ -720,7 +720,7 @@ function generateContractHTML(proposal: Proposal, withStamp: boolean = true): st
   };
 
   const convert = (amount: number) => {
-    return convertCurrency(amount, 'USD', proposal.currency, rates);
+    return Math.round(convertCurrency(amount, 'USD', proposal.currency, rates) * 100) / 100;
   };
 
   const totalAmount = convert(proposal.total);

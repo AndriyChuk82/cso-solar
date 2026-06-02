@@ -11,21 +11,36 @@ interface PrintProposalTemplateProps {
   total: number;
 }
 
-export function PrintProposalTemplate({
-  proposal,
-  selectedSeller,
-  activeCurrency,
-  convert,
-  saleSubtotal,
-  vatAmount,
-  total,
-}: PrintProposalTemplateProps) {
+export function PrintProposalTemplate(props: PrintProposalTemplateProps) {
+  const {
+    proposal,
+    selectedSeller,
+    activeCurrency,
+    convert,
+  } = props;
   const seller = SELLERS[selectedSeller];
   const dateStr = proposal.date ? new Date(proposal.date).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
   
-  const displaySubtotal = convert(saleSubtotal, 'USD', activeCurrency);
-  const displayVat = convert(vatAmount, 'USD', activeCurrency);
-  const displayTotal = convert(total, 'USD', activeCurrency);
+  // Обчислюємо точні округлені суми для кожного рядка, щоб уникнути розбіжностей в 0.01 коп
+  const convertedItems = proposal.items.map(item => {
+    const displayPrice = Math.round(convert(item.price, 'USD', activeCurrency) * 100) / 100;
+    const displaySum = Math.round(displayPrice * (item.quantity || 0) * 100) / 100;
+    return { ...item, displayPrice, displaySum };
+  });
+
+  const displaySubtotal = convertedItems.reduce((sum, item) => sum + item.displaySum, 0);
+
+  let displayVat = 0;
+  let displayTotal = displaySubtotal;
+
+  if (proposal.vatMode === 'add') {
+    displayVat = Math.round(displaySubtotal * 0.2 * 100) / 100;
+    displayTotal = displaySubtotal + displayVat;
+  } else if (proposal.vatMode === 'extract') {
+    displayVat = Math.round((displaySubtotal - (displaySubtotal / 1.2)) * 100) / 100;
+    displayTotal = displaySubtotal;
+  }
+
   const currencySymbol = activeCurrency === 'UAH' ? 'грн' : (activeCurrency === 'EUR' ? 'EUR' : 'USD');
 
   return (
@@ -107,9 +122,9 @@ export function PrintProposalTemplate({
             </tr>
           </thead>
           <tbody>
-            {proposal.items.map((item, index) => {
-              const displayPrice = convert(item.price, 'USD', activeCurrency);
-              const displaySum = displayPrice * (item.quantity || 0);
+            {convertedItems.map((item, index) => {
+              const displayPrice = item.displayPrice;
+              const displaySum = item.displaySum;
 
               return (
                 <tr key={item.id} className="hover:bg-slate-50/50">
