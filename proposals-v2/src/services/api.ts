@@ -1198,7 +1198,7 @@ export function searchProducts(products: Product[], query: string): Product[] {
   const filtered = products.filter(p => {
     const name = normalizeForSearch(p.name);
     return words.every(word => {
-      if (/^\d+$/.test(word)) {
+      if (/^\d+$/.test(word) && word.length < 3) {
         const numRegex = new RegExp(`\\b${word}\\b|\\b${word}k|\\b${word}кв|-` + word + `k|/` + word + `|\\b${word}w`, 'i');
         return numRegex.test(name);
       }
