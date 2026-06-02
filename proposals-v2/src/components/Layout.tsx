@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { Home } from 'lucide-react';
+import { Home, FileText, Package, BarChart2, Zap } from 'lucide-react';
 import { SettingsButton } from './Settings';
 import { HistoryButton } from './History';
 import { ThemeToggle } from './ThemeToggle';
@@ -73,45 +73,49 @@ export function Layout({ children }: LayoutProps) {
               <nav className="flex items-center gap-1">
                 <a
                   href="/dashboard/"
-                  className="p-2 text-gray-500 hover:text-primary transition-colors mr-1"
+                  className="p-2 text-gray-500 hover:text-[#f59e0b] hover:bg-gray-100/50 dark:hover:bg-neutral-800/50 rounded-lg transition-all duration-150 mr-1"
                   title="Головна панель"
                 >
-                  <Home className="w-5 h-5" />
+                  <Home className="w-4 h-4" />
                 </a>
                 
                 {hasAccess('proposals') && (
                   <a
                     href="/proposals/"
-                    className="px-3 py-2 text-sm font-medium text-primary bg-primary/10 dark:bg-primary/20 rounded-md"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-[#f59e0b] bg-[#f59e0b]/10 dark:bg-[#f59e0b]/20 rounded-lg transition-all duration-150"
                   >
-                    📄 КП
+                    <FileText className="w-4 h-4" />
+                    КП
                   </a>
                 )}
 
                 {hasAccess('warehouse') && (
                   <a
                     href="/warehouse/"
-                    className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-neutral-350 hover:text-[#f59e0b] hover:bg-gray-100/50 dark:hover:bg-neutral-800/50 rounded-lg transition-all duration-150"
                   >
-                    📦 Склад
+                    <Package className="w-4 h-4" />
+                    Склад
                   </a>
                 )}
                 
                 {hasAccess('projects') && (
                   <a
                     href="/projects/"
-                    className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-neutral-350 hover:text-[#f59e0b] hover:bg-gray-100/50 dark:hover:bg-neutral-800/50 rounded-lg transition-all duration-150"
                   >
-                    📊 Проєкти
+                    <BarChart2 className="w-4 h-4" />
+                    Проєкти
                   </a>
                 )}
                 
                 {hasAccess('gt') && (
                   <a
                     href="/green-tariff/"
-                    className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-neutral-350 hover:text-[#f59e0b] hover:bg-gray-100/50 dark:hover:bg-neutral-800/50 rounded-lg transition-all duration-150"
                   >
-                    🌱 Зелений тариф
+                    <Zap className="w-4 h-4" />
+                    Зелений тариф
                   </a>
                 )}
               </nav>
