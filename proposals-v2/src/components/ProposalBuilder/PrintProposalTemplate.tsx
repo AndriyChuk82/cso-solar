@@ -44,81 +44,96 @@ export function PrintProposalTemplate(props: PrintProposalTemplateProps) {
   const currencySymbol = activeCurrency === 'UAH' ? 'грн' : (activeCurrency === 'EUR' ? 'EUR' : 'USD');
 
   return (
-    <div id="print-proposal-template" className="print-only-block hidden print:block w-full max-w-[210mm] mx-auto bg-white text-slate-900 p-8 font-sans leading-relaxed">
+    <div id="print-proposal-template" className="print-only-block hidden print:block w-full max-w-[210mm] mx-auto text-slate-900 p-8 font-sans leading-relaxed" style={{ backgroundColor: '#ffffff' }}>
       
       {/* 1. ШАПКА */}
-      <div className="flex justify-between items-center border-b-2 border-amber-500 pb-5 mb-6">
-        <div>
-          <img src={seller.logo} alt="CSO Solar Logo" className="h-20 w-auto object-contain" />
+      <div className="grid grid-cols-[140px_1fr_325px] gap-6 items-center border-b-2 border-amber-500 pb-5 mb-6">
+        {/* Column 1: Logo */}
+        <div className="flex items-center">
+          <img src={seller.logo} alt="CSO Solar Logo" className="h-16 w-auto object-contain" />
         </div>
-        <div className="text-right">
-          <div className="bg-slate-50 border border-slate-200/60 rounded-xl px-4 py-2">
-            <h2 className="text-sm font-extrabold text-slate-800 tracking-wider uppercase">
-              КОМЕРЦІЙНА ПРОПОЗИЦІЯ
-            </h2>
-            <div className="text-xs font-bold text-amber-600 mt-0.5">
-              № {proposal.number || 'КП-Нова'}
+
+        {/* Column 2: Centered Title */}
+        <div className="text-center flex flex-col justify-center gap-0.5">
+          <h1 className="text-base font-black text-slate-900 tracking-wider uppercase leading-snug whitespace-nowrap">
+            КОМЕРЦІЙНА ПРОПОЗИЦІЯ
+          </h1>
+          <div className="text-sm font-bold text-amber-600">
+            № {proposal.number || 'КП-Нова'}
+          </div>
+          <div className="text-xs text-slate-500 font-semibold">
+            від {dateStr}
+          </div>
+        </div>
+
+        {/* Column 3: Seller details card block */}
+        <div className="flex justify-end">
+          <div className="border border-[#e8e4d1] rounded-xl p-3 bg-slate-50/30 w-full max-w-[325px] text-[10px] text-slate-700">
+            {/* Seller Title */}
+            <div className="border-b border-[#e8e4d1]/80 pb-1.5 mb-2 text-right">
+              <span className="font-extrabold text-slate-900 uppercase tracking-wide text-[11px] block leading-snug">
+                {seller.id === 'tov_cso' ? 'ТОВ "Центр сервісного обслуговування"' : seller.fullName}
+              </span>
             </div>
-            <div className="text-[10px] text-slate-500 font-medium mt-0.5">
-              від {dateStr}
+
+            {/* Seller Info Rows */}
+            <div className="space-y-1 text-[10px]">
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-slate-400 font-medium">{seller.taxIdType || 'ЄДРПОУ/РНОКПП'}:</span>
+                <span className="font-bold text-slate-800 text-right select-all">{seller.taxId}</span>
+              </div>
+              {seller.iban && (
+                <div className="flex justify-between items-center gap-2">
+                  <span className="text-slate-400 font-medium">IBAN:</span>
+                  <span className="font-bold text-slate-800 text-right select-all whitespace-nowrap">{seller.iban}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-start gap-2">
+                <span className="text-slate-400 font-medium">Телефон:</span>
+                <span className="font-bold text-slate-800 text-right whitespace-pre-line leading-tight">{seller.phone}</span>
+              </div>
+              <div className="flex justify-between items-start gap-2 pt-0.5">
+                <span className="text-slate-400 font-medium shrink-0">Адреса:</span>
+                <span className="font-bold text-slate-800 text-right leading-tight whitespace-normal break-words max-w-[245px]">{seller.office || seller.address}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 3. КЛІЄНТ ТА ВИКОНАВЕЦЬ */}
-      <div className="grid grid-cols-2 gap-8 mb-6 text-xs">
-        {/* Замовник */}
-        <div className="border border-slate-200/60 rounded-xl p-4 bg-slate-50/30">
-          <div className="border-b border-slate-200 pb-1.5 mb-2">
-            <span className="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Замовник (Клієнт)</span>
+      {/* 2. CUSTOMER SECTION */}
+      <div className="mb-6 text-xs">
+        <div className="py-2 px-1">
+          <div className="border-b border-[#e8e4d1]/80 pb-1.5 mb-2.5">
+            <span className="text-[10px] uppercase font-bold text-amber-600 tracking-wider">ЗАМОВНИК</span>
           </div>
-          <div className="space-y-1 text-slate-700">
-            <div className="font-semibold text-slate-800 text-sm mb-1">
+          <div className="space-y-2 text-slate-700 font-medium">
+            <div className="font-extrabold text-slate-900 text-sm tracking-tight">
               {proposal.clientName || 'Шановний Клієнт'}
             </div>
-            {proposal.clientPhone && (
-              <div><span className="text-slate-400">Телефон:</span> <span className="font-medium text-slate-800">{proposal.clientPhone}</span></div>
-            )}
-            {proposal.clientEmail && (
-              <div><span className="text-slate-400">Email:</span> <span className="font-medium text-slate-800">{proposal.clientEmail}</span></div>
-            )}
-            {proposal.clientAddress && (
-              <div><span className="text-slate-400">Адреса об'єкта:</span> <span className="font-medium text-slate-800">{proposal.clientAddress}</span></div>
-            )}
-          </div>
-        </div>
-
-        {/* Виконавець */}
-        <div className="border border-slate-200/60 rounded-xl p-4 bg-slate-50/30">
-          <div className="border-b border-slate-200 pb-1.5 mb-2">
-            <span className="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Виконавець (Продавець)</span>
-          </div>
-          <div className="space-y-1 text-xs text-slate-700">
-            <div className="font-semibold text-slate-800 text-xs mb-1">
-              {seller.id === 'tov_cso' ? 'ТОВ "Центр сервісного обслуговування"' : seller.fullName}
+            <div className="flex flex-wrap gap-x-6 gap-y-1.5 text-[11px]">
+              {proposal.clientPhone && (
+                <div className="flex items-center"><span className="text-slate-400 font-medium mr-1.5">Телефон:</span> <span className="text-slate-800 font-bold">{proposal.clientPhone}</span></div>
+              )}
+              {proposal.clientAddress && (
+                <div className="flex items-center"><span className="text-slate-400 font-medium mr-1.5">Адреса:</span> <span className="text-slate-800 font-semibold">{proposal.clientAddress}</span></div>
+              )}
             </div>
-            <div><span className="text-slate-400">ЄДРПОУ/РНОКПП:</span> <span className="font-medium text-slate-800">{seller.taxId}</span></div>
-            {seller.iban && (
-              <div><span className="text-slate-400">IBAN:</span> <span className="font-medium text-slate-800">{seller.iban}</span></div>
-            )}
-            <div><span className="text-slate-400">Телефон:</span> <span className="font-medium text-slate-800">{seller.phone}</span></div>
-            <div><span className="text-slate-400">Офіс:</span> <span className="font-medium text-slate-800">{seller.office || seller.address}</span></div>
           </div>
         </div>
       </div>
 
       {/* 4. ТАБЛИЦЯ ОБЛАДНАННЯ ТА РОБІТ */}
       <div className="mb-6">
-        <table className="proposal-print-table w-full text-left border-collapse border border-slate-200 text-xs">
+        <table className="proposal-print-table w-full text-left border-collapse border border-[#e8e4d1] text-xs">
           <thead>
-            <tr className="bg-slate-50 text-slate-600 text-[10px] uppercase font-bold tracking-wider border-b border-slate-200">
-              <th className="border border-slate-200 p-2.5 text-center w-8">#</th>
-              <th className="border border-slate-200 p-2.5">Найменування обладнання та послуг</th>
-              <th className="border border-slate-200 p-2.5 text-center w-12">Од.</th>
-              <th className="border border-slate-200 p-2.5 text-center w-20">Кількість</th>
-              <th className="border border-slate-200 p-2.5 text-center w-24">Ціна, {currencySymbol}</th>
-              <th className="border border-slate-200 p-2.5 text-center w-28">Сума, {currencySymbol}</th>
+            <tr className="bg-slate-50 text-slate-600 text-[10px] uppercase font-extrabold tracking-wider border-b border-[#e8e4d1]">
+              <th className="border border-[#e8e4d1] p-2.5 text-center w-8">#</th>
+              <th className="border border-[#e8e4d1] p-2.5">Найменування обладнання та послуг</th>
+              <th className="border border-[#e8e4d1] p-2.5 text-center w-12">Од.</th>
+              <th className="border border-[#e8e4d1] p-2.5 text-center w-20">Кількість</th>
+              <th className="border border-[#e8e4d1] p-2.5 text-center w-24">Ціна, {currencySymbol}</th>
+              <th className="border border-[#e8e4d1] p-2.5 text-center w-28">Сума, {currencySymbol}</th>
             </tr>
           </thead>
           <tbody>
@@ -127,11 +142,11 @@ export function PrintProposalTemplate(props: PrintProposalTemplateProps) {
               const displaySum = item.displaySum;
 
               return (
-                <tr key={item.id} className="hover:bg-slate-50/50">
-                  <td className="border border-slate-200 p-2.5 text-center text-slate-400">
+                <tr key={item.id} className="hover:bg-slate-50/30">
+                  <td className="border border-[#e8e4d1]/80 p-2.5 text-center text-slate-400">
                     {index + 1}
                   </td>
-                  <td className="border border-slate-200 p-2.5">
+                  <td className="border border-[#e8e4d1]/80 p-2.5">
                     <div className="font-semibold text-slate-800">{item.name}</div>
                     {item.description && (
                       <div className="text-[10px] text-slate-400 font-normal leading-tight mt-0.5 whitespace-pre-wrap">
@@ -139,16 +154,16 @@ export function PrintProposalTemplate(props: PrintProposalTemplateProps) {
                       </div>
                     )}
                   </td>
-                  <td className="border border-slate-200 p-2.5 text-center text-slate-500">
+                  <td className="border border-[#e8e4d1]/80 p-2.5 text-center text-slate-500">
                     {item.unit || 'шт'}
                   </td>
-                  <td className="border border-slate-200 p-2.5 text-center font-medium text-slate-800">
+                  <td className="border border-[#e8e4d1]/80 p-2.5 text-center font-medium text-slate-800">
                     {item.quantity || 0}
                   </td>
-                  <td className="border border-slate-200 p-2.5 text-center text-slate-600">
+                  <td className="border border-[#e8e4d1]/80 p-2.5 text-center text-slate-600">
                     {displayPrice.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
-                  <td className="border border-slate-200 p-2.5 text-center font-bold text-slate-800">
+                  <td className="border border-[#e8e4d1]/80 p-2.5 text-center font-bold text-slate-800">
                     {displaySum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                 </tr>
@@ -161,20 +176,20 @@ export function PrintProposalTemplate(props: PrintProposalTemplateProps) {
       {/* 5. ФІНАНСОВИЙ ПІДСУМОК */}
       <div className="flex justify-between items-start gap-8 mb-8 text-xs">
         {/* Примітки */}
-        <div className="flex-1 border border-slate-200/60 rounded-xl p-4 bg-slate-50/20">
-          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Примітки та умови:</span>
+        <div className="flex-1 border border-[#e8e4d1]/80 rounded-xl p-4 bg-slate-50/25">
+          <span className="text-[10px] uppercase font-bold text-[#a89a74] tracking-wider">Примітки та умови:</span>
           <div className="text-xs text-slate-600 leading-normal mt-1.5 whitespace-pre-wrap font-medium">
-            {proposal.notes || "1. Гарантія на сонячні панелі — 12 років.\n2. Гарантія на інвертор — 5 років."}
+            {proposal.notes || "1. Гарантія на сонячні панелі — 12 років.\n2. Гарантія на інвертор — 5 років.\n3. Гарантія на акумуляторну батарею — 5 років."}
           </div>
-          <div className="text-[9px] text-slate-400 font-medium mt-3 pt-2 border-t border-slate-200/60 font-mono">
+          <div className="text-[9px] text-[#a89a74] font-medium mt-3 pt-2 border-t border-[#e8e4d1]/60 font-mono">
             Курс розрахунку: 1$ = {proposal.rates?.usdToUah || 41.5} грн &nbsp;|&nbsp; 1€ = {proposal.rates?.eurToUah || 51.0} грн
           </div>
         </div>
 
         {/* Розрахунки суми */}
-        <div className="w-80 border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white">
+        <div className="w-80 border border-[#e8e4d1] rounded-xl overflow-hidden shadow-sm bg-white">
           {proposal.vatMode && proposal.vatMode !== 'none' && (
-            <div className="p-3 bg-slate-50 border-b border-slate-200 space-y-1.5 text-slate-500 text-xs font-semibold">
+            <div className="p-3 bg-slate-50/50 border-b border-[#e8e4d1]/65 space-y-1.5 text-slate-500 text-xs font-semibold">
               <div className="flex justify-between">
                 <span>Сума без ПДВ:</span>
                 <span className="whitespace-nowrap">{displaySubtotal.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencySymbol}</span>
@@ -187,7 +202,7 @@ export function PrintProposalTemplate(props: PrintProposalTemplateProps) {
           )}
           
           {/* Головний підсумок */}
-          <div className="p-4 bg-amber-500 text-white flex justify-between items-center">
+          <div className="p-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white flex justify-between items-center shadow-inner">
             <span className="font-bold text-xs uppercase tracking-wider">Разом:</span>
             <span className="font-black text-sm whitespace-nowrap">
               {displayTotal.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencySymbol}

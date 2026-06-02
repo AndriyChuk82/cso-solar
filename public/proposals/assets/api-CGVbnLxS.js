@@ -1,1 +1,0 @@
-import{l as e}from"./index-nvY12PLm.js";export{e as fetchAllData};

@@ -20,7 +20,7 @@ export function ProposalActions({
   onClear,
 }: ProposalActionsProps) {
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg border border-slate-200/50 dark:border-slate-800/40 p-2.5 px-4 sm:px-6 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.3)] flex flex-wrap sm:flex-nowrap items-center justify-center gap-2 max-w-[95vw] w-max no-print transition-all duration-300 hover:shadow-[0_12px_45px_rgba(0,0,0,0.12)] hover:dark:shadow-[0_12px_45px_rgba(245,158,11,0.04)] hover:border-slate-300/60 dark:hover:border-slate-700/50 animate-slide-in">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border border-[#c5be9e] dark:border-slate-700 p-2.5 px-4 sm:px-6 rounded-2xl shadow-[0_12px_30px_rgba(138,124,86,0.18)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.4)] flex flex-wrap sm:flex-nowrap items-center justify-center gap-2 max-w-[95vw] w-max no-print transition-all duration-300 hover:shadow-[0_14px_35px_rgba(138,124,86,0.22)] hover:dark:shadow-[0_14px_45px_rgba(245,158,11,0.06)] hover:border-[#a89a74] dark:hover:border-slate-600 animate-slide-in">
       <button
         onClick={onShowSolarWizard}
         className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl hover:shadow-[0_4px_12px_rgba(245,158,11,0.25)] dark:hover:shadow-[0_4px_12px_rgba(245,158,11,0.15)] active:scale-95 transition-all font-extrabold text-xs shrink-0"

@@ -132,7 +132,7 @@ export function ProposalBuilderTable() {
         <ClientInfoForm
           clientName={proposal.clientName}
           clientPhone={proposal.clientPhone || ''}
-          clientEmail={proposal.clientEmail || ''}
+          clientAddress={proposal.clientAddress || ''}
           selectedSeller={selectedSeller}
           onUpdateField={(field, value) => updateProposalField(field as keyof Proposal, value)}
           onSetSeller={setSelectedSeller}

@@ -120,8 +120,8 @@ html {
   .client-info-block *,
   thead, thead tr, thead th, th,
   tr.bg-gray-50, th.bg-gray-50 {
-    background-color: #f3f4f6 !important;
-    background: #f3f4f6 !important;
+    background-color: #faf5ec !important;
+    background: #faf5ec !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -264,7 +264,7 @@ input:focus, select:focus, textarea:focus {
 .dark [class*="bg-green-50"],
 .dark [class*="bg-slate-50"],
 .dark .cost-column {
-  background-color: var(--bg-card) !important;
+  background-color: transparent !important;
 }
 
 /* Текст у стовпцях має бути чітким */
@@ -353,7 +353,7 @@ tfoot, tfoot tr, tfoot td {
 
 /* Прибираємо "сині" фони у підсумках */
 [class*="bg-blue-50"], [class*="bg-green-50"], [class*="bg-slate-50"], .cost-column {
-  background-color: var(--bg-card) !important;
+  background-color: transparent !important;
   color: var(--text-primary) !important;
 }
 
@@ -377,29 +377,70 @@ button.bg-white {
 
 /* Хедер та навігаційні кнопки */
 header nav a {
-  transition: all 0.2s ease !important;
-  color: var(--text-primary) !important;
-  background-color: var(--bg-primary) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 8px !important;
-  margin: 0 2px !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  color: #4b5563 !important; /* Gray-600 */
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  margin: 0 3px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.dark header nav a {
+  color: #d1d5db !important; /* Gray-300 */
 }
 
 header nav a:hover {
-  border-color: var(--primary) !important;
+  border-color: transparent !important;
   color: var(--primary) !important;
-  background-color: #ffffff !important;
-  transform: translateY(-1px);
+  background-color: rgba(245, 158, 11, 0.08) !important; /* Soft warm amber highlight */
+}
+
+.dark header nav a:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* Активна кнопка (поточний модуль) */
-header nav a[class*="text-primary"] {
-  background-color: var(--bg-card) !important;
-  border-color: var(--primary) !important;
-  border-width: 2px !important;
+header nav a[class*="text-primary"],
+header nav a[class*="bg-primary/10"],
+header nav a[class*="bg-primary/20"] {
+  background: linear-gradient(135deg, #f59e0b, #ea580c) !important; /* Amber to Orange gradient */
+  border-color: transparent !important;
+  color: #ffffff !important;
+  font-weight: 850 !important;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.18) !important;
+}
+
+/* Уніфікація кнопок налаштувань, теми та історії праворуч */
+header .flex.items-center.gap-2.border-l button,
+header .flex.items-center.gap-2 button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  color: #4b5563 !important; /* Gray-600 */
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+.dark header .flex.items-center.gap-2.border-l button,
+.dark header .flex.items-center.gap-2 button {
+  color: #d1d5db !important; /* Gray-300 */
+}
+
+header .flex.items-center.gap-2.border-l button:hover,
+header .flex.items-center.gap-2 button:hover {
   color: var(--primary) !important;
-  font-weight: 700 !important;
+  background-color: rgba(245, 158, 11, 0.08) !important; /* Soft warm amber highlight */
+}
+
+.dark header .flex.items-center.gap-2.border-l button:hover,
+.dark header .flex.items-center.gap-2 button:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 * {
@@ -521,7 +562,7 @@ header nav a[class*="text-primary"] {
     background-color: #faf5ec !important;
     box-shadow: inset 0 0 0 9999px #faf5ec !important;
     color: #1e293b !important;
-    border: 1px solid #ccc;
+    border: 1px solid #e8e4d1;
     padding: 4px 10px;
     font-size: 8pt;
     -webkit-print-color-adjust: exact !important;
@@ -531,7 +572,7 @@ header nav a[class*="text-primary"] {
   td {
     background-color: #faf5ec !important;
     box-shadow: inset 0 0 0 9999px #faf5ec !important;
-    border: 1px solid #ddd;
+    border: 1px solid #e8e4d1;
     padding: 4px 10px;
     font-size: 9pt;
     color: #111 !important;
@@ -544,7 +585,7 @@ header nav a[class*="text-primary"] {
     background-color: #faf5ec !important;
     background: #faf5ec !important;
     box-shadow: inset 0 0 0 9999px #faf5ec !important;
-    border-color: #ddd !important;
+    border-color: #e8e4d1 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -659,7 +700,7 @@ body.is-exporting td {
 body.is-exporting .client-info-block,
 body.is-exporting .client-info-block * {
   background: #faf5ec !important;
-  border-color: #ddd !important;
+  border-color: #e8e4d1 !important;
 }
 
 body.is-exporting tfoot tr {
@@ -669,3 +710,168 @@ body.is-exporting tfoot tr {
 body.is-exporting tfoot td {
   background: #faf5ec !important;
 }
+
+/* ==========================================================================
+   Scoped print templates pure white backgrounds (prevents app bg-white and bg-slate leaks in previews and exports)
+   ========================================================================== */
+#print-proposal-template-new,
+#print-proposal-template {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+#print-proposal-template-new .bg-white,
+#print-proposal-template .bg-white {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+#print-proposal-template-new table,
+#print-proposal-template-new tbody,
+#print-proposal-template-new tr,
+#print-proposal-template-new td,
+#print-proposal-template table,
+#print-proposal-template tbody,
+#print-proposal-template tr,
+#print-proposal-template td {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+#print-proposal-template-new thead tr,
+#print-proposal-template-new thead th,
+#print-proposal-template thead tr,
+#print-proposal-template thead th {
+  background-color: #f1f5f9 !important;
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  box-shadow: none !important;
+}
+
+/* Specific background resets for cards and highlights to ensure paper-friendliness */
+#print-proposal-template-new [class*="bg-slate-50"],
+#print-proposal-template-new [class*="bg-slate-100"],
+#print-proposal-template [class*="bg-slate-50"],
+#print-proposal-template [class*="bg-slate-100"] {
+  background-color: #f8fafc !important;
+  background: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+#print-proposal-template-new .bg-slate-50\/50 { background-color: rgba(248, 250, 252, 0.5) !important; box-shadow: none !important; }
+#print-proposal-template-new .bg-slate-50\/70 { background-color: rgba(248, 250, 252, 0.7) !important; box-shadow: none !important; }
+#print-proposal-template-new .bg-slate-50\/20 { background-color: rgba(248, 250, 252, 0.2) !important; box-shadow: none !important; }
+#print-proposal-template-new .bg-slate-50\/30 { background-color: rgba(248, 250, 252, 0.3) !important; box-shadow: none !important; }
+#print-proposal-template-new .bg-slate-50\/40 { background-color: rgba(248, 250, 252, 0.4) !important; box-shadow: none !important; }
+#print-proposal-template-new .bg-slate-100\/60 { background-color: rgba(241, 245, 249, 0.6) !important; box-shadow: none !important; }
+
+/* Scoped overrides for exporting state (body.is-exporting) to prevent sand-beige leaks in generated PDF/previews */
+body.is-exporting #print-proposal-template-new,
+body.is-exporting #print-proposal-template {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+body.is-exporting #print-proposal-template-new th,
+body.is-exporting #print-proposal-template th {
+  background-color: #f1f5f9 !important;
+  background: #f1f5f9 !important;
+  color: #1e293b !important;
+  box-shadow: none !important;
+}
+
+body.is-exporting #print-proposal-template-new td,
+body.is-exporting #print-proposal-template td {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: none !important;
+}
+
+body.is-exporting #print-proposal-template-new [class*="bg-slate-50"],
+body.is-exporting #print-proposal-template-new [class*="bg-slate-100"],
+body.is-exporting #print-proposal-template [class*="bg-slate-50"],
+body.is-exporting #print-proposal-template [class*="bg-slate-100"] {
+  background-color: #f8fafc !important;
+  background: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+body.is-exporting #print-proposal-template-new .bg-slate-50\/20,
+body.is-exporting #print-proposal-template-new .bg-slate-50\/30,
+body.is-exporting #print-proposal-template-new .bg-slate-50\/40,
+body.is-exporting #print-proposal-template-new .bg-slate-50\/50,
+body.is-exporting #print-proposal-template-new .bg-slate-50\/70,
+body.is-exporting #print-proposal-template-new .bg-slate-100\/60,
+body.is-exporting #print-proposal-template .bg-slate-50\/30,
+body.is-exporting #print-proposal-template .bg-slate-50\/25,
+body.is-exporting #print-proposal-template .bg-slate-50\/50,
+body.is-exporting #print-proposal-template .bg-slate-50\/60 {
+  background-color: #f8fafc !important;
+  background: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+body.is-exporting #print-proposal-template-new tfoot tr,
+body.is-exporting #print-proposal-template-new tfoot td,
+body.is-exporting #print-proposal-template tfoot tr,
+body.is-exporting #print-proposal-template tfoot td {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+/* Clear print mode overrides as well to ensure perfect ink printing */
+@media print {
+  #print-proposal-template-new,
+  #print-proposal-template {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  #print-proposal-template-new th,
+  #print-proposal-template th {
+    background-color: #f1f5f9 !important;
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+    box-shadow: none !important;
+    box-shadow: inset 0 0 0 9999px #f1f5f9 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #print-proposal-template-new td,
+  #print-proposal-template td {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    box-shadow: inset 0 0 0 9999px #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #print-proposal-template-new [class*="bg-slate-50"],
+  #print-proposal-template-new [class*="bg-slate-100"],
+  #print-proposal-template [class*="bg-slate-50"],
+  #print-proposal-template [class*="bg-slate-100"],
+  #print-proposal-template-new .client-info-block,
+  #print-proposal-template-new .client-info-block *,
+  #print-proposal-template .client-info-block,
+  #print-proposal-template .client-info-block * {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    box-shadow: inset 0 0 0 9999px #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+
+

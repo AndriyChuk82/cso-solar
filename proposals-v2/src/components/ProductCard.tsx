@@ -206,14 +206,14 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
                 step="0.01"
                 value={editPrice}
                 onChange={(e) => setEditPrice(e.target.value)}
-                className="w-20 px-2 py-1 text-sm border border-primary rounded focus:outline-none focus:ring-1 focus:ring-primary dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                className="w-20 px-2 py-1 text-sm border border-amber-500 rounded focus:outline-none focus:ring-1 focus:ring-amber-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 autoFocus
                 disabled={isSaving}
               />
               <button
                 onClick={handleSavePrice}
                 disabled={isSaving}
-                className="p-1 text-green-600 hover:bg-green-50 rounded transition disabled:opacity-50"
+                className="p-1 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded transition disabled:opacity-50 cursor-pointer"
                 title="Зберегти"
               >
                 <Check className="w-4 h-4" />
@@ -221,7 +221,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
               <button
                 onClick={handleCancelEdit}
                 disabled={isSaving}
-                className="p-1 text-gray-400 hover:bg-gray-100 rounded transition disabled:opacity-50"
+                className="p-1 text-[#a89a74] hover:bg-[#faf5ec]/80 dark:hover:bg-slate-800/80 rounded transition disabled:opacity-50 cursor-pointer"
                 title="Скасувати"
               >
                 <X className="w-4 h-4" />
@@ -229,7 +229,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
             </div>
           ) : (
             <div className="flex flex-col items-end">
-              <span className="text-[0.9rem] font-black text-[#10B981] dark:text-[#34d399] whitespace-nowrap tracking-tight">
+              <span className="text-[0.9rem] font-black text-amber-600 dark:text-amber-400 whitespace-nowrap tracking-tight">
                 {formatCurrency(product.price, product.currency)}
               </span>
             </div>
