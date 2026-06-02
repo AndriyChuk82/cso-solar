@@ -64,7 +64,7 @@ export function SettingsPanel({
           value={rates.usdToUah}
           onChange={(e) => onUpdateRates({ ...rates, usdToUah: parseFloat(e.target.value) || 0 })}
           onFocus={(e) => e.target.select()}
-          className="w-16 px-1.5 py-1 text-xs border border-gray-300 dark:border-slate-700 rounded focus:ring-1 focus:ring-primary font-bold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-900/10 transition-colors"
+          className="w-20 px-1.5 py-1 text-xs border border-gray-300 dark:border-slate-700 rounded focus:ring-1 focus:ring-primary font-bold text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-900/10 transition-colors"
           step="0.1"
         />
         <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider ml-1">€:</label>
@@ -73,7 +73,7 @@ export function SettingsPanel({
           value={rates.eurToUah}
           onChange={(e) => onUpdateRates({ ...rates, eurToUah: parseFloat(e.target.value) || 0 })}
           onFocus={(e) => e.target.select()}
-          className="w-16 px-1.5 py-1 text-xs border border-gray-300 dark:border-slate-700 rounded focus:ring-1 focus:ring-primary font-bold text-purple-600 dark:text-purple-400 bg-purple-50/30 dark:bg-purple-900/10 transition-colors"
+          className="w-20 px-1.5 py-1 text-xs border border-gray-300 dark:border-slate-700 rounded focus:ring-1 focus:ring-primary font-bold text-purple-600 dark:text-purple-400 bg-purple-50/30 dark:bg-purple-900/10 transition-colors"
           step="0.1"
         />
         <button

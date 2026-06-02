@@ -67,7 +67,7 @@ export function SettingsPanel({
             value={rates.usdToUah}
             onChange={(e) => onUpdateRates({ ...rates, usdToUah: parseFloat(e.target.value) || 0 })}
             onFocus={(e) => e.target.select()}
-            className="w-16 px-2 py-1 text-xs border border-slate-200 dark:border-slate-900 rounded-lg focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 bg-transparent text-slate-800 dark:text-slate-100 transition-all font-semibold text-center"
+            className="w-20 px-1.5 py-1 text-xs border border-slate-200 dark:border-slate-900 rounded-lg focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 bg-transparent text-slate-800 dark:text-slate-100 transition-all font-semibold text-center"
             step="0.1"
           />
         </div>
@@ -78,7 +78,7 @@ export function SettingsPanel({
             value={rates.eurToUah}
             onChange={(e) => onUpdateRates({ ...rates, eurToUah: parseFloat(e.target.value) || 0 })}
             onFocus={(e) => e.target.select()}
-            className="w-16 px-2 py-1 text-xs border border-slate-200 dark:border-slate-900 rounded-lg focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 bg-transparent text-slate-800 dark:text-slate-100 transition-all font-semibold text-center"
+            className="w-20 px-1.5 py-1 text-xs border border-slate-200 dark:border-slate-900 rounded-lg focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 bg-transparent text-slate-800 dark:text-slate-100 transition-all font-semibold text-center"
             step="0.1"
           />
         </div>

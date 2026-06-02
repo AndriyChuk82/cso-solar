@@ -1,0 +1,1 @@
+import{l as e}from"./index-BFglPkL6.js";export{e as fetchAllData};
