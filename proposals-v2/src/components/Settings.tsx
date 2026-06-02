@@ -15,16 +15,56 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [localSettings, setLocalSettings] = useState(settings);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUpdatingRates, setIsUpdatingRates] = useState(false);
+  const [diagnosticInfo, setDiagnosticInfo] = useState<string>('');
 
   const handleFetchRates = async () => {
     setIsUpdatingRates(true);
+    setDiagnosticInfo('⏳ Запуск швидкої діагностики Goverla API...\n');
     try {
+      // 1. Тест прямого підключення
+      setDiagnosticInfo(prev => prev + '📡 Тест 1: Прямий запит з браузера до Goverla...\n');
+      try {
+        const payload = {
+          operationName: "Point",
+          variables: { alias: "goverla-ua" },
+          query: "query Point($alias: Alias!) { point(alias: $alias) { rates { currency { codeAlpha } ask { absolute } } } }"
+        };
+        const res = await fetch('https://api.goverla.ua/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const d = await res.json();
+          setDiagnosticInfo(prev => prev + `✅ Тест 1 успішний! HTTP ${res.status}. Дані: ${JSON.stringify(d).substring(0, 100)}...\n`);
+        } else {
+          setDiagnosticInfo(prev => prev + `❌ Тест 1 помилка: HTTP ${res.status} ${res.statusText}\n`);
+        }
+      } catch (err: any) {
+        setDiagnosticInfo(prev => prev + `❌ Тест 1 помилка (CORS/Мережа): ${err.message}\n`);
+      }
+
+      // 2. Тест через Vercel проксі
+      setDiagnosticInfo(prev => prev + '📡 Тест 2: Запит через Vercel проксі (/api/fetch-rates)...\n');
+      try {
+        const res = await fetch('/api/fetch-rates');
+        if (res.ok) {
+          const d = await res.json();
+          setDiagnosticInfo(prev => prev + `✅ Тест 2 успішний! Дані: ${JSON.stringify(d)}\n`);
+        } else {
+          setDiagnosticInfo(prev => prev + `❌ Тест 2 помилка: HTTP ${res.status} ${res.statusText}\n`);
+        }
+      } catch (err: any) {
+        setDiagnosticInfo(prev => prev + `❌ Тест 2 помилка підключення: ${err.message}\n`);
+      }
+
       await refreshRates();
       // Оновлюємо локальні налаштування з нових курсів зі store
       const newSettings = useProposalStore.getState().settings;
       setLocalSettings(newSettings);
-      alert('✅ Курси валют успішно оновлено з Goverla!');
-    } catch (e) {
+      alert('✅ Спроба оновлення курсів завершена! Дивіться лог під кнопкою.');
+    } catch (e: any) {
+      setDiagnosticInfo(prev => prev + `❌ Помилка оновлення курсів: ${e.message}\n`);
       alert('❌ Помилка при оновленні курсів');
     } finally {
       setIsUpdatingRates(false);
@@ -119,6 +159,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <p className="mt-2 text-xs text-gray-500 text-center">
               Автоматично завантажує актуальні курси валют з обмінника Goverla
             </p>
+            {diagnosticInfo && (
+              <pre className="mt-3 p-3 bg-slate-900 text-sky-400 rounded-lg text-[10px] font-mono whitespace-pre-wrap max-h-40 overflow-y-auto border border-slate-800 text-left">
+                {diagnosticInfo}
+              </pre>
+            )}
           </div>
 
           {/* Націнка за замовчуванням */}

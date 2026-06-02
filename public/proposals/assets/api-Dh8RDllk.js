@@ -1,0 +1,1 @@
+import{l as e}from"./index-Dby_X4Jl.js";export{e as fetchAllData};
