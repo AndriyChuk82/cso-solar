@@ -142,41 +142,36 @@ export function SettingsPanel({
         <div className="flex bg-[#f4f0df]/40 dark:bg-slate-950/60 p-0.5 rounded-full border border-[#d2caa4] dark:border-slate-800/60 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] gap-0.5">
           <button
             onClick={() => onUpdateVatMode('none')}
-            className={`px-3 py-0.5 text-[9px] font-extrabold rounded-full transition-all duration-200 cursor-pointer flex items-center gap-1 ${
+            className={`p-1.5 rounded-full transition-all duration-200 cursor-pointer flex items-center justify-center ${
               vatMode === 'none'
                 ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_2px_6px_rgba(245,158,11,0.18)] transform scale-100'
                 : 'text-slate-500 dark:text-slate-400 hover:text-[#b45309] dark:hover:text-[#fbbf24] hover:bg-white/60 dark:hover:bg-slate-900/40 active:scale-95'
             }`}
             title="Без ПДВ"
           >
-            <Ban className="w-2.5 h-2.5" />
-            <span className="hidden md:inline">Без ПДВ</span>
-            <span className="md:hidden">Без</span>
+            <Ban className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => onUpdateVatMode('add')}
-            className={`px-3 py-0.5 text-[9px] font-extrabold rounded-full transition-all duration-200 cursor-pointer flex items-center gap-1 ${
+            className={`p-1.5 rounded-full transition-all duration-200 cursor-pointer flex items-center justify-center ${
               vatMode === 'add'
                 ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_2px_6px_rgba(245,158,11,0.18)] transform scale-100'
                 : 'text-slate-500 dark:text-slate-400 hover:text-[#b45309] dark:hover:text-[#fbbf24] hover:bg-white/60 dark:hover:bg-slate-900/40 active:scale-95'
             }`}
             title="Нарахувати +20%"
           >
-            <Plus className="w-2.5 h-2.5" />
-            <span>+20%</span>
+            <Plus className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => onUpdateVatMode('extract')}
-            className={`px-3 py-0.5 text-[9px] font-extrabold rounded-full transition-all duration-200 cursor-pointer flex items-center gap-1 ${
+            className={`p-1.5 rounded-full transition-all duration-200 cursor-pointer flex items-center justify-center ${
               vatMode === 'extract'
                 ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_2px_6px_rgba(245,158,11,0.18)] transform scale-100'
                 : 'text-slate-500 dark:text-slate-400 hover:text-[#b45309] dark:hover:text-[#fbbf24] hover:bg-white/60 dark:hover:bg-slate-900/40 active:scale-95'
             }`}
             title="Вилучити (в т.ч. 20%)"
           >
-            <Percent className="w-2.5 h-2.5" />
-            <span className="hidden md:inline">в т.ч. 20%</span>
-            <span className="md:hidden">в т.ч.</span>
+            <Percent className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

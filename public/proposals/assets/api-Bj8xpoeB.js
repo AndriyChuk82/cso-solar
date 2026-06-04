@@ -1,1 +1,0 @@
-import{l as e}from"./index-C_uhbBoi.js";export{e as fetchAllData};
