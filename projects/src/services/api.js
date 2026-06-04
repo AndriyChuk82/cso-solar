@@ -149,24 +149,33 @@ export const projectService = {
       const items = proposal.items || [];
       if (items.length === 0) throw new Error('В обраному КП немає товарів');
 
-      // 2. Delete old project items in Supabase
-      const delRes = await supabase.from('project_items').delete().eq('project_id', projectId);
+      // 2. Delete old KP-imported items in Supabase from project_materials_ledger
+      const delRes = await supabase
+        .from('project_materials_ledger')
+        .delete()
+        .eq('project_id', projectId)
+        .like('note', '%Імпортовано з КП%');
+        
       if (delRes.error) throw delRes.error;
 
-      // 3. Insert new items into Supabase
+      // 3. Insert new items into Supabase project_materials_ledger
       if (items.length > 0) {
         const newItems = items.map((item, index) => ({
-          id: `item_${Date.now()}_${index}`,
           project_id: projectId,
           name: item.name || item.productName || 'Товар',
           quantity: parseFloat(item.quantity || item.qty || 0),
+          unit: item.unit || 'шт.',
           price: parseFloat(item.price || item.unitPrice || 0),
-          sum: parseFloat(item.quantity || item.qty || 0) * parseFloat(item.price || item.unitPrice || 0),
-          issued_qty: 0,
-          note: ''
+          currency: 'USD',
+          status: 'Видано',
+          issued_at: new Date().toISOString(),
+          issued_by: 'Комірник',
+          is_priced: parseFloat(item.price || item.unitPrice || 0) > 0,
+          added_to_debt: false,
+          note: 'Імпортовано з КП'
         }));
         
-        const insRes = await supabase.from('project_items').insert(newItems);
+        const insRes = await supabase.from('project_materials_ledger').insert(newItems);
         if (insRes.error) throw insRes.error;
       }
 

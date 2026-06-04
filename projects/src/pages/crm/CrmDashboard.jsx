@@ -46,7 +46,9 @@ export default function CrmDashboard() {
   }, []);
 
   const loadClients = async () => {
-    setLoading(true);
+    if (!selectedClient) {
+      setLoading(true);
+    }
     try {
       const data = await crmApi.getClients();
       setClients(data || []);

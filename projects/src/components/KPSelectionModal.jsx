@@ -20,8 +20,20 @@ export function KPSelectionModal({ isOpen, onClose, onSelect }) {
     try {
       const res = await projectService.getProposals();
       if (res.success) {
-        // Sort by date descending if possible, or just keep as is
-        setProposals(res.proposals || []);
+        // Sort by date descending (latest first), then by number descending
+        const sorted = (res.proposals || []).sort((a, b) => {
+          const dateA = new Date(a.date || 0);
+          const dateB = new Date(b.date || 0);
+          if (dateB - dateA !== 0) return dateB - dateA;
+          
+          const numA = parseInt(a.number || 0, 10);
+          const numB = parseInt(b.number || 0, 10);
+          if (!isNaN(numA) && !isNaN(numB)) {
+            return numB - numA;
+          }
+          return (b.id || '').localeCompare(a.id || '');
+        });
+        setProposals(sorted);
       }
     } catch (err) {
       console.error('Failed to load proposals:', err);
@@ -56,15 +68,18 @@ export function KPSelectionModal({ isOpen, onClose, onSelect }) {
         </div>
 
         <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border-light)' }}>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+          <div style={{ position: 'relative' }}>
+            <Search 
+              size={16} 
+              style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', pointerEvents: 'none' }} 
+            />
             <input
               type="text"
               placeholder="Пошук за клієнтом або номером..."
-              className="form-input w-full pl-10"
+              className="form-input w-full"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              style={{ height: 40, borderRadius: 10 }}
+              style={{ height: 40, borderRadius: 10, paddingLeft: '36px', width: '100%', boxSizing: 'border-box' }}
             />
           </div>
         </div>

@@ -212,6 +212,18 @@ export const crmApi = {
   },
 
   cancelPayment: async (paymentId) => {
+    // 1. Fetch current payment details to check if there is a paired payment
+    const { data: currentPayment, error: fetchError } = await supabase
+      .from('project_payments')
+      .select('related_payment_id')
+      .eq('id', paymentId)
+      .single();
+
+    if (fetchError) {
+      console.warn("Could not fetch payment to check relation:", fetchError);
+    }
+
+    // 2. Cancel the target payment
     const { data, error } = await supabase
       .from('project_payments')
       .update({ status: 'Скасовано' })
@@ -220,6 +232,19 @@ export const crmApi = {
       .single();
 
     if (error) throw error;
+
+    // 3. If there is a linked payment, cancel it too
+    if (currentPayment?.related_payment_id) {
+      const { error: relError } = await supabase
+        .from('project_payments')
+        .update({ status: 'Скасовано' })
+        .eq('id', currentPayment.related_payment_id);
+      
+      if (relError) {
+        console.error("Failed to cancel related payment:", relError);
+      }
+    }
+
     return data;
   },
 
@@ -825,6 +850,9 @@ export const crmApi = {
       updated_at: new Date().toISOString()
     };
     if (material.id) payload.id = material.id;
+    if (material.added_to_debt !== undefined) {
+      payload.added_to_debt = material.added_to_debt;
+    }
 
     const { data, error } = await supabase
       .from('project_materials_ledger')
@@ -840,6 +868,15 @@ export const crmApi = {
       .from('project_materials_ledger')
       .delete()
       .eq('id', materialId);
+    if (error) throw error;
+    return true;
+  },
+
+  deleteProjectMaterials: async (materialIds) => {
+    const { error } = await supabase
+      .from('project_materials_ledger')
+      .delete()
+      .in('id', materialIds);
     if (error) throw error;
     return true;
   },
@@ -939,6 +976,69 @@ export const crmApi = {
         supplier_id: deal?.supplier_id
       };
     });
+  },
+
+  updateShipmentItem: async (id, data) => {
+    const updatePayload = {};
+    if (data.quantity !== undefined) updatePayload.quantity = parseFloat(data.quantity) || 0;
+    if (data.custom_name !== undefined) updatePayload.custom_name = data.custom_name;
+    if (data.custom_price !== undefined) updatePayload.custom_price = data.custom_price !== null ? parseFloat(data.custom_price) : null;
+    if (data.custom_currency !== undefined) updatePayload.custom_currency = data.custom_currency;
+    if (data.note !== undefined) updatePayload.note = data.note;
+    if (data.added_to_debt !== undefined) updatePayload.added_to_debt = data.added_to_debt;
+
+    const { data: resData, error } = await supabase
+      .from('shipment_items')
+      .update(updatePayload)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return resData;
+  },
+
+  updateShipmentDate: async (shipmentId, date) => {
+    const { data, error } = await supabase
+      .from('project_shipments')
+      .update({ date: date })
+      .eq('id', shipmentId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  deleteShipmentItem: async (itemId) => {
+    const { data: itemData, error: getErr } = await supabase
+      .from('shipment_items')
+      .select('shipment_id')
+      .eq('id', itemId)
+      .single();
+    
+    if (getErr) throw getErr;
+
+    const { error: delErr } = await supabase
+      .from('shipment_items')
+      .delete()
+      .eq('id', itemId);
+    
+    if (delErr) throw delErr;
+
+    if (itemData && itemData.shipment_id) {
+      const { data: remaining, error: countErr } = await supabase
+        .from('shipment_items')
+        .select('id')
+        .eq('shipment_id', itemData.shipment_id);
+      
+      if (!countErr && (!remaining || remaining.length === 0)) {
+        await supabase
+          .from('project_shipments')
+          .delete()
+          .eq('id', itemData.shipment_id);
+      }
+    }
+    return true;
   }
 };
+
 

@@ -4,6 +4,49 @@ import { KPSelectionModal } from '../../components/KPSelectionModal';
 import { projectService } from '../../services/api';
 import { ChevronLeft, Phone, Plus, DollarSign, Package, Calendar, FileText, Check, Truck, X, Layers, CreditCard, Trash2, Pencil } from 'lucide-react';
 import { QuickShipmentModal } from './QuickShipmentModal';
+import { supabase } from '../../services/supabaseClient';
+
+function parseShipmentInfo(note) {
+  if (!note) {
+    return { isShipment: false, groupId: null, date: null, carrier: null, trackingNumber: null, cleanNote: '' };
+  }
+
+  const groupMatch = note.match(/\[Group:\s*([^\]]+)\]/);
+  const migratedMatch = note.match(/\[Migrated:\s*shipment-item-([^\]]+)\]/);
+  const logisticMatch = note.match(/\[Накладна від\s*([^,\]]+),\s*Перевізник:\s*([^,\]]+)(?:,\s*ТТН:\s*([^\]]+))?\]/);
+
+  if (!logisticMatch && !groupMatch && !migratedMatch) {
+    return { isShipment: false, groupId: null, date: null, carrier: null, trackingNumber: null, cleanNote: note };
+  }
+
+  const date = logisticMatch ? logisticMatch[1].trim() : null;
+  const carrier = logisticMatch ? logisticMatch[2].trim() : null;
+  const trackingNumber = logisticMatch && logisticMatch[3] ? logisticMatch[3].trim() : null;
+
+  let groupId = null;
+  if (groupMatch) {
+    groupId = groupMatch[1].trim();
+  } else if (logisticMatch) {
+    groupId = `logistic_${date}_${carrier}_${trackingNumber || ''}`.replace(/\s+/g, '_');
+  } else if (migratedMatch) {
+    groupId = `migrated_${migratedMatch[1].trim()}`;
+  }
+
+  let cleanNote = note;
+  cleanNote = cleanNote.replace(/\[Group:\s*[^\]]+\]/g, '');
+  cleanNote = cleanNote.replace(/\[Migrated:\s*[^\]]+\]/g, '');
+  cleanNote = cleanNote.replace(/\[Накладна від\s*[^\]]+\]/g, '');
+  cleanNote = cleanNote.replace(/\s+/g, ' ').trim();
+
+  return {
+    isShipment: true,
+    groupId,
+    date,
+    carrier,
+    trackingNumber,
+    cleanNote
+  };
+}
 
 export function CrmClientDetail({ client, onBack, onUpdate }) {
   const [projects, setProjects] = useState([]);
@@ -15,6 +58,8 @@ export function CrmClientDetail({ client, onBack, onUpdate }) {
   const [clientName, setClientName] = useState(client.name || '');
   const [clientPhone, setClientPhone] = useState(client.phone || '');
   const [clientNote, setClientNote] = useState(client.note || '');
+  const [exchangeRateInput, setExchangeRateInput] = useState('44.3');
+  const [ledgerDisplayCurrency, setLedgerDisplayCurrency] = useState('both');
 
   useEffect(() => {
     setClientName(client.name || '');
@@ -98,14 +143,14 @@ export function CrmClientDetail({ client, onBack, onUpdate }) {
   };
 
   // Розрахунок загальних показників по всіх угодах клієнта
+  const nonCancelledProjects = projects.filter(p => p.status !== 'Скасовано');
+
   let totalAgreedUSD = 0;
   let totalPaidUSD = 0;
   let totalAgreedUAH = 0;
   let totalPaidUAH = 0;
 
-  projects.forEach(p => {
-    if (p.status === 'Скасовано') return;
-    
+  nonCancelledProjects.forEach(p => {
     const validPayments = (p.project_payments || []).filter(pay => !pay.status?.toLowerCase().includes('скасовано'));
     const paidUSD = validPayments.filter(pay => pay.currency === 'USD').reduce((acc, pay) => acc + (parseFloat(pay.sum) || 0), 0);
     const paidUAH = validPayments.filter(pay => pay.currency === 'UAH').reduce((acc, pay) => acc + (parseFloat(pay.sum) || 0), 0);
@@ -124,7 +169,7 @@ export function CrmClientDetail({ client, onBack, onUpdate }) {
       
       {/* Header - Warm light coffee theme */}
       <div style={{ background: '#FAF6F0', borderBottom: '1px solid #D4C5B9', padding: '20px 24px', position: 'sticky', top: 0, zIndex: 10, boxShadow: '0 2px 4px rgba(139, 125, 112, 0.05)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ maxWidth: '100%', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ 
             display: 'flex', 
             flexDirection: isMobile ? 'column' : 'row', 
@@ -415,71 +460,374 @@ export function CrmClientDetail({ client, onBack, onUpdate }) {
       </div>
 
       {/* Main Content Area */}
-      <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: '1200px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px', boxSizing: 'border-box' }}>
-        
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#2C2520', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Layers size={18} color="#C4B4A6" />
-            Угоди контрагента ({projects.length})
-          </h3>
-          <button 
-            onClick={handleCreateProject}
-            disabled={loading}
-            style={{ 
-              background: '#C4B4A6', color: 'white', border: 'none', borderRadius: '6px', 
-              padding: '8px 16px', fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer',
-              opacity: loading ? 0.7 : 1, transition: 'background 0.2s', boxShadow: '0 2px 4px rgba(139, 125, 112, 0.15)'
-            }}
-            onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = '#B3A395'; }}
-            onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = '#C4B4A6'; }}
-          >
-            <Plus size={14} /> Нова угода
-          </button>
-        </div>
+      <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: '100%', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '24px', alignItems: 'flex-start' }}>
+          
+          {/* Left Sidebar - 330px width on desktop, only when there is more than 0 non-cancelled projects */}
+          {!isMobile && nonCancelledProjects.length > 0 && (
+            <div style={{ width: '330px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Зведена фінансова відомість по угодах */}
+              <div style={{ 
+                background: '#FFFFFF', 
+                border: '1px solid #D4C5B9', 
+                borderRadius: '16px', 
+                padding: '16px', 
+                boxShadow: '0 4px 12px rgba(139, 125, 112, 0.04)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }}>
+                <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'space-between' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>📊</span> Зведена відомість по угодах
+                  </span>
+                  <span style={{ display: 'flex', gap: '2px' }}>
+                    {['both', 'USD', 'UAH'].map(mode => (
+                      <button key={mode}
+                        onClick={() => setLedgerDisplayCurrency(mode)}
+                        style={{
+                          padding: '2px 7px',
+                          fontSize: '9px',
+                          fontWeight: ledgerDisplayCurrency === mode ? 800 : 600,
+                          border: `1px solid ${ledgerDisplayCurrency === mode ? '#8B7D73' : '#D4C5B9'}`,
+                          borderRadius: '5px',
+                          background: ledgerDisplayCurrency === mode ? '#2C2520' : '#FAF8F5',
+                          color: ledgerDisplayCurrency === mode ? '#FFFFFF' : '#8B7D73',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                          textTransform: 'none'
+                        }}
+                      >
+                        {mode === 'both' ? 'Обидві' : mode === 'USD' ? '$' : '₴'}
+                      </button>
+                    ))}
+                  </span>
+                </h4>
+                {ledgerDisplayCurrency === 'both' && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', fontWeight: 800, color: '#8B7D73', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '0 13px 6px 13px', borderBottom: '1px solid #EAE7E2', marginTop: '4px' }}>
+                    <span style={{ width: '55px', flexShrink: 0 }}>Валюта</span>
+                    <span style={{ flex: 1, textAlign: 'center' }}>Договір / Сплачено</span>
+                    <span style={{ width: '90px', textAlign: 'right', flexShrink: 0 }}><span style={{ color: '#C2410C' }}>Борг</span> / <span style={{ color: '#15803D' }}>Переплата</span></span>
+                  </div>
+                )}
+                {ledgerDisplayCurrency !== 'both' && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', fontWeight: 800, color: '#8B7D73', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '0 13px 6px 13px', borderBottom: '1px solid #EAE7E2', marginTop: '4px' }}>
+                    <span style={{ flex: 1, textAlign: 'center' }}>Договір / Сплачено</span>
+                    <span style={{ width: '100px', textAlign: 'right', flexShrink: 0 }}><span style={{ color: '#C2410C' }}>Борг</span> / <span style={{ color: '#15803D' }}>Переплата</span></span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {nonCancelledProjects.map(p => {
+                    const validPayments = (p.project_payments || []).filter(pay => !pay.status?.toLowerCase().includes('скасовано'));
+                    const paidUSD = validPayments.filter(pay => pay.currency === 'USD').reduce((acc, pay) => acc + (parseFloat(pay.sum) || 0), 0);
+                    const paidUAH = validPayments.filter(pay => pay.currency === 'UAH').reduce((acc, pay) => acc + (parseFloat(pay.sum) || 0), 0);
+                    
+                    const agreedUSD = parseFloat(p.agreed_sum_usd) || 0;
+                    const agreedUAH = parseFloat(p.agreed_sum_uah) || 0;
+                    const debtUSD = agreedUSD - paidUSD;
+                    const debtUAH = agreedUAH - paidUAH;
 
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#8B7D73', fontSize: '13px', fontWeight: 500 }}>Завантаження інформації про угоди...</div>
-        ) : projects.length === 0 ? (
-          <div style={{ background: '#FFFFFF', border: '1px dashed #D4C5B9', borderRadius: '12px', padding: '60px 40px', textAlign: 'center', color: '#8B7D73', fontSize: '14px' }}>
-            У цього контрагента ще немає активних або завершених угод. Натисніть кнопку вище, щоб створити нову угоду.
-          </div>
-        ) : (() => {
-          const activeProjects = projects.filter(p => p.status !== 'Завершено' && p.status !== 'Скасовано');
-          const archivedProjects = projects.filter(p => p.status === 'Завершено' || p.status === 'Скасовано');
-          const nonCancelledProjects = projects.filter(p => p.status !== 'Скасовано');
+                    const rate = parseFloat(exchangeRateInput) || 1;
 
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-              {/* Зведена відомість по усіх угодах */}
-              {nonCancelledProjects.length > 1 && (
-                <div style={{ 
-                  background: '#FFFFFF', 
-                  border: '1px solid #D4C5B9', 
-                  borderRadius: '16px', 
-                  padding: isMobile ? '16px' : '20px', 
-                  boxShadow: '0 8px 16px rgba(139, 125, 112, 0.05)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px'
-                }}>
-                  <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>📊</span> Зведена фінансова відомість по угодах
-                  </h4>
-                  <div style={{ overflowX: 'auto', width: '100%', borderRadius: '8px', border: '1px solid #EAE7E2' }}>
-                    <table style={{ width: '100%', minWidth: '800px', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
-                      <thead>
-                        <tr style={{ background: '#FAF6F0', borderBottom: '1px solid #D4C5B9', color: '#2C2520' }}>
-                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Назва угоди</th>
-                          <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, width: '110px' }}>Статус</th>
-                          <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, width: '100px' }}>Погоджено USD</th>
-                          <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, width: '100px' }}>Сплачено USD</th>
-                          <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, width: '100px' }}>Борг USD</th>
-                          <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, width: '110px' }}>Погоджено UAH</th>
-                          <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, width: '110px' }}>Сплачено UAH</th>
-                          <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, width: '110px' }}>Борг UAH</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                    const mapped = (() => {
+                      const raw = p.status || 'Борг';
+                      if (raw === 'Нова угода' || raw === 'В роботі' || raw === 'Борг') return 'Борг';
+                      if (raw === 'Повна оплата / Передоплата' || raw === 'Часткова оплата') return 'Часткова оплата';
+                      if (raw === 'До відвантаження' || raw === 'Відвантаження' || raw === 'Повна оплата') return 'Повна оплата';
+                      return raw;
+                    })();
+                    const bg = mapped === 'Завершено' ? '#E6F4EA' : mapped === 'Повна оплата' ? '#FFF4E5' : mapped === 'Часткова оплата' ? '#E0F2FE' : '#FEF2F2';
+                    const color = mapped === 'Завершено' ? '#137333' : mapped === 'Повна оплата' ? '#B06000' : mapped === 'Часткова оплата' ? '#0369A1' : '#991B1B';
+                    const border = mapped === 'Завершено' ? '#CEEAD6' : mapped === 'Повна оплата' ? '#FFE0B2' : mapped === 'Часткова оплата' ? '#BAE6FD' : '#FECACA';
+
+                    // Unified amounts based on selected currency
+                    const uniAgreed = ledgerDisplayCurrency === 'USD' ? agreedUSD + agreedUAH / rate : agreedUAH + agreedUSD * rate;
+                    const uniPaid = ledgerDisplayCurrency === 'USD' ? paidUSD + paidUAH / rate : paidUAH + paidUSD * rate;
+                    const uniDebt = uniAgreed - uniPaid;
+                    const sym = ledgerDisplayCurrency === 'USD' ? '$' : '₴';
+                    const loc = ledgerDisplayCurrency === 'USD' ? 'en-US' : 'uk-UA';
+                    const fmtAmt = (v) => ledgerDisplayCurrency === 'USD' ? `$${Math.round(v).toLocaleString(loc)}` : `${Math.round(v).toLocaleString(loc)} ₴`;
+                    const fmtDebt = (v) => {
+                      if (ledgerDisplayCurrency === 'USD') return v < 0 ? `-$${Math.abs(Math.round(v)).toLocaleString(loc)}` : `$${Math.round(v).toLocaleString(loc)}`;
+                      return v < 0 ? `-${Math.abs(Math.round(v)).toLocaleString(loc)} ₴` : `${Math.round(v).toLocaleString(loc)} ₴`;
+                    };
+
+                    return (
+                      <div key={p.id} style={{ border: '1px solid #EAE7E2', borderRadius: '10px', padding: '10px 12px', background: '#FAFDFD' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <span style={{ fontWeight: 800, fontSize: '12px', color: '#2C2520', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '170px' }} title={p.address || p.name || `Угода #${p.id.slice(0, 5)}`}>
+                            {p.address || p.name || `Угода #${p.id.slice(0, 5)}`}
+                          </span>
+                          <span style={{ 
+                            background: bg, color: color, border: `1px solid ${border}`,
+                            fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '10px', textTransform: 'uppercase'
+                          }}>
+                            {mapped}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px' }}>
+                          {ledgerDisplayCurrency === 'both' ? (
+                            <>
+                              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px dotted #EAE7E2', paddingBottom: '3px' }}>
+                                <span style={{ color: '#8B7D73', width: '55px', flexShrink: 0 }}>🇺🇸 USD:</span>
+                                <span style={{ fontWeight: 600, color: '#4A607A', flex: 1, textAlign: 'center' }}>
+                                  ${Math.round(agreedUSD).toLocaleString('en-US')} / <span style={{ color: '#15803D' }}>${Math.round(paidUSD).toLocaleString('en-US')}</span>
+                                </span>
+                                <span style={{ fontWeight: 800, color: debtUSD < 0 ? '#15803D' : debtUSD > 0 ? '#1D4ED8' : '#2C2520', width: '90px', textAlign: 'right', flexShrink: 0 }}>
+                                  {debtUSD < 0 ? `-$${Math.abs(Math.round(debtUSD)).toLocaleString('en-US')}` : `$${Math.round(debtUSD).toLocaleString('en-US')}`}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <span style={{ color: '#8B7D73', width: '55px', flexShrink: 0 }}>🇺🇦 UAH:</span>
+                                <span style={{ fontWeight: 600, color: '#8C7355', flex: 1, textAlign: 'center' }}>
+                                  {Math.round(agreedUAH).toLocaleString('uk-UA')} / <span style={{ color: '#15803D' }}>{Math.round(paidUAH).toLocaleString('uk-UA')}</span>
+                                </span>
+                                <span style={{ fontWeight: 800, color: debtUAH < 0 ? '#15803D' : debtUAH > 0 ? '#C2410C' : '#2C2520', width: '90px', textAlign: 'right', flexShrink: 0 }}>
+                                  {debtUAH < 0 ? `-${Math.abs(Math.round(debtUAH)).toLocaleString('uk-UA')} ₴` : `${Math.round(debtUAH).toLocaleString('uk-UA')} ₴`}
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                              <span style={{ fontWeight: 600, color: ledgerDisplayCurrency === 'USD' ? '#4A607A' : '#8C7355', flex: 1, textAlign: 'center' }}>
+                                {fmtAmt(uniAgreed)} / <span style={{ color: '#15803D' }}>{fmtAmt(uniPaid)}</span>
+                              </span>
+                              <span style={{ fontWeight: 800, color: uniDebt < 0 ? '#15803D' : uniDebt > 0 ? (ledgerDisplayCurrency === 'USD' ? '#1D4ED8' : '#C2410C') : '#2C2520', width: '100px', textAlign: 'right', flexShrink: 0 }}>
+                                {fmtDebt(uniDebt)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Grand totals card */}
+                <div style={{ background: '#FAF6F0', border: '1px solid #D4C5B9', borderRadius: '10px', padding: '10px 12px', marginTop: '4px', fontSize: '11px' }}>
+                  <div style={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '10px', color: '#2C2520', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>🤝</span> Всього по усіх угодах:
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {ledgerDisplayCurrency === 'both' ? (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px dotted #D4C5B9', paddingBottom: '3px' }}>
+                          <span style={{ color: '#8B7D73', fontWeight: 600, width: '55px', flexShrink: 0 }}>🇺🇸 USD:</span>
+                          <span style={{ fontWeight: 600, color: '#4A607A', flex: 1, textAlign: 'center' }}>
+                            ${Math.round(totalAgreedUSD).toLocaleString('en-US')} / <span style={{ color: '#15803D' }}>${Math.round(totalPaidUSD).toLocaleString('en-US')}</span>
+                          </span>
+                          <span style={{ fontWeight: 900, color: totalDebtUSD < 0 ? '#15803D' : totalDebtUSD > 0 ? '#1D4ED8' : '#2C2520', width: '90px', textAlign: 'right', flexShrink: 0 }}>
+                            {totalDebtUSD < 0 ? `-$${Math.abs(Math.round(totalDebtUSD)).toLocaleString('en-US')}` : `$${Math.round(totalDebtUSD).toLocaleString('en-US')}`}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <span style={{ color: '#8B7D73', fontWeight: 600, width: '55px', flexShrink: 0 }}>🇺🇦 UAH:</span>
+                          <span style={{ fontWeight: 600, color: '#8C7355', flex: 1, textAlign: 'center' }}>
+                            {Math.round(totalAgreedUAH).toLocaleString('uk-UA')} / <span style={{ color: '#15803D' }}>{Math.round(totalPaidUAH).toLocaleString('uk-UA')}</span>
+                          </span>
+                          <span style={{ fontWeight: 900, color: totalDebtUAH < 0 ? '#15803D' : totalDebtUAH > 0 ? '#C2410C' : '#2C2520', width: '90px', textAlign: 'right', flexShrink: 0 }}>
+                            {totalDebtUAH < 0 ? `-${Math.abs(Math.round(totalDebtUAH)).toLocaleString('uk-UA')} ₴` : `${Math.round(totalDebtUAH).toLocaleString('uk-UA')} ₴`}
+                          </span>
+                        </div>
+                      </>
+                    ) : (() => {
+                      const rate = parseFloat(exchangeRateInput) || 1;
+                      const tAgreed = ledgerDisplayCurrency === 'USD' ? totalAgreedUSD + totalAgreedUAH / rate : totalAgreedUAH + totalAgreedUSD * rate;
+                      const tPaid = ledgerDisplayCurrency === 'USD' ? totalPaidUSD + totalPaidUAH / rate : totalPaidUAH + totalPaidUSD * rate;
+                      const tDebt = tAgreed - tPaid;
+                      const loc = ledgerDisplayCurrency === 'USD' ? 'en-US' : 'uk-UA';
+                      const fA = (v) => ledgerDisplayCurrency === 'USD' ? `$${Math.round(v).toLocaleString(loc)}` : `${Math.round(v).toLocaleString(loc)} ₴`;
+                      const fD = (v) => {
+                        if (ledgerDisplayCurrency === 'USD') return v < 0 ? `-$${Math.abs(Math.round(v)).toLocaleString(loc)}` : `$${Math.round(v).toLocaleString(loc)}`;
+                        return v < 0 ? `-${Math.abs(Math.round(v)).toLocaleString(loc)} ₴` : `${Math.round(v).toLocaleString(loc)} ₴`;
+                      };
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 600, color: ledgerDisplayCurrency === 'USD' ? '#4A607A' : '#8C7355', flex: 1, textAlign: 'center' }}>
+                            {fA(tAgreed)} / <span style={{ color: '#15803D' }}>{fA(tPaid)}</span>
+                          </span>
+                          <span style={{ fontWeight: 900, color: tDebt < 0 ? '#15803D' : tDebt > 0 ? (ledgerDisplayCurrency === 'USD' ? '#1D4ED8' : '#C2410C') : '#2C2520', width: '100px', textAlign: 'right', flexShrink: 0 }}>
+                            {fD(tDebt)}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Consolidated Balance Section */}
+                  <div style={{ borderTop: '1px solid #D4C5B9', marginTop: '8px', paddingTop: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '9px', fontWeight: 800, color: '#8B7D73', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                        Консолідований баланс:
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px', color: '#8B7D73' }}>
+                        <span>курс $:</span>
+                        <input 
+                          type="text" 
+                          inputMode="decimal"
+                          value={exchangeRateInput}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
+                            setExchangeRateInput(val);
+                          }}
+                          style={{
+                            width: '50px',
+                            border: '1px solid #D4C5B9',
+                            borderRadius: '4px',
+                            padding: '1px 3px',
+                            fontSize: '9.5px',
+                            fontWeight: 700,
+                            color: '#2C2520',
+                            background: '#FFFFFF',
+                            textAlign: 'center',
+                            outline: 'none',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+                    </div>
+                    {(() => {
+                      const rate = parseFloat(exchangeRateInput) || 0;
+                      // Consolidated debt in UAH: positive is client owes us, negative is we owe client
+                      const netDebtUAH = totalDebtUAH + (totalDebtUSD * rate);
+                      const netDebtUSD = totalDebtUSD + (totalDebtUAH / rate);
+                      
+                      const isClientOwes = netDebtUAH > 0;
+                      const isZero = Math.abs(netDebtUAH) < 1;
+                      
+                      if (isZero) {
+                        return (
+                          <div style={{ fontSize: '11px', fontWeight: 800, color: '#2C2520', textAlign: 'center', padding: '2px 0' }}>
+                            ⚖️ Розрахунки повністю закриті
+                          </div>
+                        );
+                      }
+                      
+                      const color = isClientOwes ? '#1D4ED8' : '#15803D';
+                      const bg = isClientOwes ? '#EFF6FF' : '#F0FDF4';
+                      const border = isClientOwes ? '#DBEAFE' : '#DCFCE7';
+                      const label = isClientOwes ? 'Клієнт винен нам' : 'Ми винні клієнту';
+                      
+                      return (
+                        <div style={{ 
+                          background: bg, 
+                          border: `1px solid ${border}`, 
+                          borderRadius: '6px', 
+                          padding: '6px 8px', 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          gap: '2px'
+                        }}>
+                          <div style={{ fontSize: '9px', fontWeight: 700, color: '#8B7D73', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                            {label}:
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 900, color }}>
+                              ${Math.round(Math.abs(netDebtUSD)).toLocaleString('en-US')}
+                            </span>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#8B7D73' }}>
+                              або ~{Math.round(Math.abs(netDebtUAH)).toLocaleString('uk-UA')} ₴
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Right Main Content Area - flex: 1 */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px', width: '100%' }}>
+            
+            {/* Header: Title and Create Deal button */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#2C2520', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Layers size={18} color="#C4B4A6" />
+                Угоди контрагента ({projects.length})
+              </h3>
+              <button 
+                onClick={handleCreateProject}
+                disabled={loading}
+                style={{ 
+                  background: '#C4B4A6', color: 'white', border: 'none', borderRadius: '6px', 
+                  padding: '8px 16px', fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer',
+                  opacity: loading ? 0.7 : 1, transition: 'background 0.2s', boxShadow: '0 2px 4px rgba(139, 125, 112, 0.15)'
+                }}
+                onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = '#B3A395'; }}
+                onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = '#C4B4A6'; }}
+              >
+                <Plus size={14} /> Нова угода
+              </button>
+            </div>
+
+            {loading && projects.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#8B7D73', fontSize: '13px', fontWeight: 500 }}>Завантаження інформації про угоди...</div>
+            ) : projects.length === 0 ? (
+              <div style={{ background: '#FFFFFF', border: '1px dashed #D4C5B9', borderRadius: '12px', padding: '60px 40px', textAlign: 'center', color: '#8B7D73', fontSize: '14px' }}>
+                У цього контрагента ще немає активних або завершених угод. Натисніть кнопку вище, щоб створити нову угоду.
+              </div>
+            ) : (() => {
+              const activeProjects = projects.filter(p => p.status !== 'Завершено' && p.status !== 'Скасовано');
+              const archivedProjects = projects.filter(p => p.status === 'Завершено' || p.status === 'Скасовано');
+              const nonCancelledProjects = projects.filter(p => p.status !== 'Скасовано');
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                  
+                  {/* On Mobile: Зведена відомість по усіх угодах (shown at the top of the main area) */}
+                  {isMobile && nonCancelledProjects.length > 0 && (
+                    <div style={{ 
+                      background: '#FFFFFF', 
+                      border: '1px solid #D4C5B9', 
+                      borderRadius: '16px', 
+                      padding: '16px', 
+                      boxShadow: '0 4px 12px rgba(139, 125, 112, 0.04)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px'
+                    }}>
+                      <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'space-between' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>📊</span> Зведена відомість по угодах
+                        </span>
+                        <span style={{ display: 'flex', gap: '2px' }}>
+                          {['both', 'USD', 'UAH'].map(mode => (
+                            <button key={mode}
+                              onClick={() => setLedgerDisplayCurrency(mode)}
+                              style={{
+                                padding: '2px 7px',
+                                fontSize: '9px',
+                                fontWeight: ledgerDisplayCurrency === mode ? 800 : 600,
+                                border: `1px solid ${ledgerDisplayCurrency === mode ? '#8B7D73' : '#D4C5B9'}`,
+                                borderRadius: '5px',
+                                background: ledgerDisplayCurrency === mode ? '#2C2520' : '#FAF8F5',
+                                color: ledgerDisplayCurrency === mode ? '#FFFFFF' : '#8B7D73',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s',
+                                textTransform: 'none'
+                              }}
+                            >
+                              {mode === 'both' ? 'Обидві' : mode === 'USD' ? '$' : '₴'}
+                            </button>
+                          ))}
+                        </span>
+                      </h4>
+                      {ledgerDisplayCurrency === 'both' && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', fontWeight: 800, color: '#8B7D73', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '0 13px 6px 13px', borderBottom: '1px solid #EAE7E2', marginTop: '4px' }}>
+                          <span style={{ width: '55px', flexShrink: 0 }}>Валюта</span>
+                          <span style={{ flex: 1, textAlign: 'center' }}>Договір / Сплачено</span>
+                          <span style={{ width: '90px', textAlign: 'right', flexShrink: 0 }}><span style={{ color: '#C2410C' }}>Борг</span> / <span style={{ color: '#15803D' }}>Переплата</span></span>
+                        </div>
+                      )}
+                      {ledgerDisplayCurrency !== 'both' && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', fontWeight: 800, color: '#8B7D73', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '0 13px 6px 13px', borderBottom: '1px solid #EAE7E2', marginTop: '4px' }}>
+                          <span style={{ flex: 1, textAlign: 'center' }}>Договір / Сплачено</span>
+                          <span style={{ width: '100px', textAlign: 'right', flexShrink: 0 }}><span style={{ color: '#C2410C' }}>Борг</span> / <span style={{ color: '#15803D' }}>Переплата</span></span>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {nonCancelledProjects.map(p => {
                           const validPayments = (p.project_payments || []).filter(pay => !pay.status?.toLowerCase().includes('скасовано'));
                           const paidUSD = validPayments.filter(pay => pay.currency === 'USD').reduce((acc, pay) => acc + (parseFloat(pay.sum) || 0), 0);
@@ -490,148 +838,266 @@ export function CrmClientDetail({ client, onBack, onUpdate }) {
                           const debtUSD = agreedUSD - paidUSD;
                           const debtUAH = agreedUAH - paidUAH;
 
+                          const rate = parseFloat(exchangeRateInput) || 1;
+
+                          const mapped = (() => {
+                            const raw = p.status || 'Борг';
+                            if (raw === 'Нова угода' || raw === 'В роботі' || raw === 'Борг') return 'Борг';
+                            if (raw === 'Повна оплата / Передоплата' || raw === 'Часткова оплата') return 'Часткова оплата';
+                            if (raw === 'До відвантаження' || raw === 'Відвантаження' || raw === 'Повна оплата') return 'Повна оплата';
+                            return raw;
+                          })();
+                          const bg = mapped === 'Завершено' ? '#E6F4EA' : mapped === 'Повна оплата' ? '#FFF4E5' : mapped === 'Часткова оплата' ? '#E0F2FE' : '#FEF2F2';
+                          const color = mapped === 'Завершено' ? '#137333' : mapped === 'Повна оплата' ? '#B06000' : mapped === 'Часткова оплата' ? '#0369A1' : '#991B1B';
+                          const border = mapped === 'Завершено' ? '#CEEAD6' : mapped === 'Повна оплата' ? '#FFE0B2' : mapped === 'Часткова оплата' ? '#BAE6FD' : '#FECACA';
+
+                          const uniAgreed = ledgerDisplayCurrency === 'USD' ? agreedUSD + agreedUAH / rate : agreedUAH + agreedUSD * rate;
+                          const uniPaid = ledgerDisplayCurrency === 'USD' ? paidUSD + paidUAH / rate : paidUAH + paidUSD * rate;
+                          const uniDebt = uniAgreed - uniPaid;
+                          const loc = ledgerDisplayCurrency === 'USD' ? 'en-US' : 'uk-UA';
+                          const fmtAmt = (v) => ledgerDisplayCurrency === 'USD' ? `$${Math.round(v).toLocaleString(loc)}` : `${Math.round(v).toLocaleString(loc)} ₴`;
+                          const fmtDebt = (v) => {
+                            if (ledgerDisplayCurrency === 'USD') return v < 0 ? `-$${Math.abs(Math.round(v)).toLocaleString(loc)}` : `$${Math.round(v).toLocaleString(loc)}`;
+                            return v < 0 ? `-${Math.abs(Math.round(v)).toLocaleString(loc)} ₴` : `${Math.round(v).toLocaleString(loc)} ₴`;
+                          };
+
                           return (
-                            <tr key={p.id} style={{ borderBottom: '1px solid #EAE7E2', transition: 'background 0.2s' }}>
-                              <td style={{ padding: '10px 12px', fontWeight: 700, color: '#2C2520' }}>
-                                {p.address || p.name || `Угода #${p.id.slice(0, 5)}`}
-                              </td>
-                              <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                                {(() => {
-                                  const mapped = (() => {
-                                    const raw = p.status || 'Борг';
-                                    if (raw === 'Нова угода' || raw === 'В роботі' || raw === 'Борг') return 'Борг';
-                                    if (raw === 'Повна оплата / Передоплата' || raw === 'Часткова оплата') return 'Часткова оплата';
-                                    if (raw === 'До відвантаження' || raw === 'Відвантаження' || raw === 'Повна оплата') return 'Повна оплата';
-                                    return raw;
-                                  })();
-                                  const bg = mapped === 'Завершено' ? '#E6F4EA' : mapped === 'Повна оплата' ? '#FFF4E5' : mapped === 'Часткова оплата' ? '#E0F2FE' : '#FEF2F2';
-                                  const color = mapped === 'Завершено' ? '#137333' : mapped === 'Повна оплата' ? '#B06000' : mapped === 'Часткова оплата' ? '#0369A1' : '#991B1B';
-                                  const border = mapped === 'Завершено' ? '#CEEAD6' : mapped === 'Повна оплата' ? '#FFE0B2' : mapped === 'Часткова оплата' ? '#BAE6FD' : '#FECACA';
-                                  return (
-                                    <span style={{ 
-                                      background: bg, color: color, border: `1px solid ${border}`,
-                                      fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', textTransform: 'uppercase', display: 'inline-block'
-                                    }}>
-                                      {mapped}
+                            <div key={p.id} style={{ border: '1px solid #EAE7E2', borderRadius: '10px', padding: '10px 12px', background: '#FAFDFD' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <span style={{ fontWeight: 800, fontSize: '12px', color: '#2C2520', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '170px' }} title={p.address || p.name || `Угода #${p.id.slice(0, 5)}`}>
+                                  {p.address || p.name || `Угода #${p.id.slice(0, 5)}`}
+                                </span>
+                                <span style={{ 
+                                  background: bg, color: color, border: `1px solid ${border}`,
+                                  fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '10px', textTransform: 'uppercase'
+                                }}>
+                                  {mapped}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px' }}>
+                                {ledgerDisplayCurrency === 'both' ? (
+                                  <>
+                                    <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px dotted #EAE7E2', paddingBottom: '3px' }}>
+                                      <span style={{ color: '#8B7D73', width: '55px', flexShrink: 0 }}>🇺🇸 USD:</span>
+                                      <span style={{ fontWeight: 600, color: '#4A607A', flex: 1, textAlign: 'center' }}>
+                                        ${Math.round(agreedUSD).toLocaleString('en-US')} / <span style={{ color: '#15803D' }}>${Math.round(paidUSD).toLocaleString('en-US')}</span>
+                                      </span>
+                                      <span style={{ fontWeight: 800, color: debtUSD < 0 ? '#15803D' : debtUSD > 0 ? '#1D4ED8' : '#2C2520', width: '90px', textAlign: 'right', flexShrink: 0 }}>
+                                        {debtUSD < 0 ? `-$${Math.abs(Math.round(debtUSD)).toLocaleString('en-US')}` : `$${Math.round(debtUSD).toLocaleString('en-US')}`}
+                                      </span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                      <span style={{ color: '#8B7D73', width: '55px', flexShrink: 0 }}>🇺🇦 UAH:</span>
+                                      <span style={{ fontWeight: 600, color: '#8C7355', flex: 1, textAlign: 'center' }}>
+                                        {Math.round(agreedUAH).toLocaleString('uk-UA')} / <span style={{ color: '#15803D' }}>{Math.round(paidUAH).toLocaleString('uk-UA')}</span>
+                                      </span>
+                                      <span style={{ fontWeight: 800, color: debtUAH < 0 ? '#15803D' : debtUAH > 0 ? '#C2410C' : '#2C2520', width: '90px', textAlign: 'right', flexShrink: 0 }}>
+                                        {debtUAH < 0 ? `-${Math.abs(Math.round(debtUAH)).toLocaleString('uk-UA')} ₴` : `${Math.round(debtUAH).toLocaleString('uk-UA')} ₴`}
+                                      </span>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <span style={{ fontWeight: 600, color: ledgerDisplayCurrency === 'USD' ? '#4A607A' : '#8C7355', flex: 1, textAlign: 'center' }}>
+                                      {fmtAmt(uniAgreed)} / <span style={{ color: '#15803D' }}>{fmtAmt(uniPaid)}</span>
                                     </span>
-                                  );
-                                })()}
-                              </td>
-                              <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: '#4A607A' }}>
-                                ${agreedUSD.toLocaleString('en-US', { minimumFractionDigits: 0 })}
-                              </td>
-                              <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: '#15803D' }}>
-                                ${paidUSD.toLocaleString('en-US', { minimumFractionDigits: 0 })}
-                              </td>
-                              <td style={{ 
-                                padding: '10px 12px', textAlign: 'right', fontWeight: 800, 
-                                color: debtUSD < 0 ? '#15803D' : debtUSD > 0 ? '#1D4ED8' : '#2C2520'
-                              }}>
-                                {debtUSD < 0 ? `-$${Math.abs(Math.round(debtUSD)).toLocaleString('en-US')}` : `$${Math.round(debtUSD).toLocaleString('en-US')}`}
-                              </td>
-                              <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: '#8C7355' }}>
-                                {agreedUAH.toLocaleString('uk-UA')} ₴
-                              </td>
-                              <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: '#15803D' }}>
-                                {paidUAH.toLocaleString('uk-UA')} ₴
-                              </td>
-                              <td style={{ 
-                                padding: '10px 12px', textAlign: 'right', fontWeight: 800, 
-                                color: debtUAH < 0 ? '#15803D' : debtUAH > 0 ? '#C2410C' : '#2C2520'
-                              }}>
-                                {debtUAH < 0 ? `-${Math.abs(Math.round(debtUAH)).toLocaleString('uk-UA')} ₴` : `${Math.round(debtUAH).toLocaleString('uk-UA')} ₴`}
-                              </td>
-                            </tr>
+                                    <span style={{ fontWeight: 800, color: uniDebt < 0 ? '#15803D' : uniDebt > 0 ? (ledgerDisplayCurrency === 'USD' ? '#1D4ED8' : '#C2410C') : '#2C2520', width: '100px', textAlign: 'right', flexShrink: 0 }}>
+                                      {fmtDebt(uniDebt)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           );
                         })}
-                        {/* Підсумковий рядок */}
-                        <tr style={{ background: '#FAF6F0', borderTop: '2px solid #D4C5B9', fontWeight: 900, color: '#2C2520' }}>
-                          <td colSpan={2} style={{ padding: '12px', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '11px' }}>
-                            <span>🤝</span> Всього по усіх угодах:
-                          </td>
-                          <td style={{ padding: '12px', textAlign: 'right', color: '#4A607A' }}>
-                            ${totalAgreedUSD.toLocaleString('en-US', { minimumFractionDigits: 0 })}
-                          </td>
-                          <td style={{ padding: '12px', textAlign: 'right', color: '#15803D' }}>
-                            ${totalPaidUSD.toLocaleString('en-US', { minimumFractionDigits: 0 })}
-                          </td>
-                          <td style={{ 
-                            padding: '12px', textAlign: 'right', fontWeight: 900,
-                            color: totalDebtUSD < 0 ? '#15803D' : totalDebtUSD > 0 ? '#1D4ED8' : '#2C2520'
-                          }}>
-                            {totalDebtUSD < 0 ? `-$${Math.abs(Math.round(totalDebtUSD)).toLocaleString('en-US')}` : `$${Math.round(totalDebtUSD).toLocaleString('en-US')}`}
-                          </td>
-                          <td style={{ padding: '12px', textAlign: 'right', color: '#8C7355' }}>
-                            {totalAgreedUAH.toLocaleString('uk-UA')} ₴
-                          </td>
-                          <td style={{ padding: '12px', textAlign: 'right', color: '#15803D' }}>
-                            {totalPaidUAH.toLocaleString('uk-UA')} ₴
-                          </td>
-                          <td style={{ 
-                            padding: '12px', textAlign: 'right', fontWeight: 900,
-                            color: totalDebtUAH < 0 ? '#15803D' : totalDebtUAH > 0 ? '#C2410C' : '#2C2520'
-                          }}>
-                            {totalDebtUAH < 0 ? `-${Math.abs(Math.round(totalDebtUAH)).toLocaleString('uk-UA')} ₴` : `${Math.round(totalDebtUAH).toLocaleString('uk-UA')} ₴`}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
+                      </div>
+                      <div style={{ background: '#FAF6F0', border: '1px solid #D4C5B9', borderRadius: '10px', padding: '10px 12px', marginTop: '4px', fontSize: '11px' }}>
+                        <div style={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '10px', color: '#2C2520', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span>🤝</span> Всього по усіх угодах:
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          {ledgerDisplayCurrency === 'both' ? (
+                            <>
+                              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px dotted #D4C5B9', paddingBottom: '3px' }}>
+                                <span style={{ color: '#8B7D73', fontWeight: 600, width: '55px', flexShrink: 0 }}>🇺🇸 USD:</span>
+                                <span style={{ fontWeight: 600, color: '#4A607A', flex: 1, textAlign: 'center' }}>
+                                  ${Math.round(totalAgreedUSD).toLocaleString('en-US')} / <span style={{ color: '#15803D' }}>${Math.round(totalPaidUSD).toLocaleString('en-US')}</span>
+                                </span>
+                                <span style={{ fontWeight: 900, color: totalDebtUSD < 0 ? '#15803D' : totalDebtUSD > 0 ? '#1D4ED8' : '#2C2520', width: '90px', textAlign: 'right', flexShrink: 0 }}>
+                                  {totalDebtUSD < 0 ? `-$${Math.abs(Math.round(totalDebtUSD)).toLocaleString('en-US')}` : `$${Math.round(totalDebtUSD).toLocaleString('en-US')}`}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <span style={{ color: '#8B7D73', fontWeight: 600, width: '55px', flexShrink: 0 }}>🇺🇦 UAH:</span>
+                                <span style={{ fontWeight: 600, color: '#8C7355', flex: 1, textAlign: 'center' }}>
+                                  {Math.round(totalAgreedUAH).toLocaleString('uk-UA')} / <span style={{ color: '#15803D' }}>{Math.round(totalPaidUAH).toLocaleString('uk-UA')}</span>
+                                </span>
+                                <span style={{ fontWeight: 900, color: totalDebtUAH < 0 ? '#15803D' : totalDebtUAH > 0 ? '#C2410C' : '#2C2520', width: '90px', textAlign: 'right', flexShrink: 0 }}>
+                                  {totalDebtUAH < 0 ? `-${Math.abs(Math.round(totalDebtUAH)).toLocaleString('uk-UA')} ₴` : `${Math.round(totalDebtUAH).toLocaleString('uk-UA')} ₴`}
+                                </span>
+                              </div>
+                            </>
+                          ) : (() => {
+                            const rate = parseFloat(exchangeRateInput) || 1;
+                            const tAgreed = ledgerDisplayCurrency === 'USD' ? totalAgreedUSD + totalAgreedUAH / rate : totalAgreedUAH + totalAgreedUSD * rate;
+                            const tPaid = ledgerDisplayCurrency === 'USD' ? totalPaidUSD + totalPaidUAH / rate : totalPaidUAH + totalPaidUSD * rate;
+                            const tDebt = tAgreed - tPaid;
+                            const loc = ledgerDisplayCurrency === 'USD' ? 'en-US' : 'uk-UA';
+                            const fA = (v) => ledgerDisplayCurrency === 'USD' ? `$${Math.round(v).toLocaleString(loc)}` : `${Math.round(v).toLocaleString(loc)} ₴`;
+                            const fD = (v) => {
+                              if (ledgerDisplayCurrency === 'USD') return v < 0 ? `-$${Math.abs(Math.round(v)).toLocaleString(loc)}` : `$${Math.round(v).toLocaleString(loc)}`;
+                              return v < 0 ? `-${Math.abs(Math.round(v)).toLocaleString(loc)} ₴` : `${Math.round(v).toLocaleString(loc)} ₴`;
+                            };
+                            return (
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <span style={{ fontWeight: 600, color: ledgerDisplayCurrency === 'USD' ? '#4A607A' : '#8C7355', flex: 1, textAlign: 'center' }}>
+                                  {fA(tAgreed)} / <span style={{ color: '#15803D' }}>{fA(tPaid)}</span>
+                                </span>
+                                <span style={{ fontWeight: 900, color: tDebt < 0 ? '#15803D' : tDebt > 0 ? (ledgerDisplayCurrency === 'USD' ? '#1D4ED8' : '#C2410C') : '#2C2520', width: '100px', textAlign: 'right', flexShrink: 0 }}>
+                                  {fD(tDebt)}
+                                </span>
+                              </div>
+                            );
+                          })()}
+                        </div>
 
-              {/* Active Deals */}
-              <div>
-                <h4 style={{ margin: '0 0 16px 0', fontSize: '12px', fontWeight: 800, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '8px' }}>🟢</span> Активні угоди ({activeProjects.length})
-                </h4>
-                {activeProjects.length === 0 ? (
-                  <div style={{ background: '#FFFFFF', border: '1px dashed #D4C5B9', borderRadius: '12px', padding: '30px', textAlign: 'center', color: '#8B7D73', fontSize: '13px' }}>
-                    Немає активних угод. Усі угоди завершено та перенесено в архів, або ще не створено.
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    {activeProjects.map(project => (
-                      <ProjectCRMCard key={project.id} project={project} client={client} onUpdate={loadProjects} isMobile={isMobile} />
-                    ))}
-                  </div>
-                )}
-              </div>
+                        {/* Consolidated Balance Section */}
+                        <div style={{ borderTop: '1px solid #D4C5B9', marginTop: '8px', paddingTop: '8px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '9px', fontWeight: 800, color: '#8B7D73', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                              Консолідований баланс:
+                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px', color: '#8B7D73' }}>
+                              <span>курс $:</span>
+                              <input 
+                                type="text" 
+                                inputMode="decimal"
+                                value={exchangeRateInput}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
+                                  setExchangeRateInput(val);
+                                }}
+                                style={{
+                                  width: '50px',
+                                  border: '1px solid #D4C5B9',
+                                  borderRadius: '4px',
+                                  padding: '1px 3px',
+                                  fontSize: '9.5px',
+                                  fontWeight: 700,
+                                  color: '#2C2520',
+                                  background: '#FFFFFF',
+                                  textAlign: 'center',
+                                  outline: 'none',
+                                  boxSizing: 'border-box'
+                                }}
+                              />
+                            </div>
+                          </div>
+                          {(() => {
+                            const rate = parseFloat(exchangeRateInput) || 0;
+                            // Consolidated debt in UAH: positive is client owes us, negative is we owe client
+                            const netDebtUAH = totalDebtUAH + (totalDebtUSD * rate);
+                            const netDebtUSD = totalDebtUSD + (totalDebtUAH / rate);
+                            
+                            const isClientOwes = netDebtUAH > 0;
+                            const isZero = Math.abs(netDebtUAH) < 1;
+                            
+                            if (isZero) {
+                              return (
+                                <div style={{ fontSize: '11px', fontWeight: 800, color: '#2C2520', textAlign: 'center', padding: '2px 0' }}>
+                                  ⚖️ Розрахунки повністю закриті
+                                </div>
+                              );
+                            }
+                            
+                            const color = isClientOwes ? '#1D4ED8' : '#15803D';
+                            const bg = isClientOwes ? '#EFF6FF' : '#F0FDF4';
+                            const border = isClientOwes ? '#DBEAFE' : '#DCFCE7';
+                            const label = isClientOwes ? 'Клієнт винен нам' : 'Ми винні клієнту';
+                            
+                            return (
+                              <div style={{ 
+                                background: bg, 
+                                border: `1px solid ${border}`, 
+                                borderRadius: '6px', 
+                                padding: '6px 8px', 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                gap: '2px'
+                              }}>
+                                <div style={{ fontSize: '9px', fontWeight: 700, color: '#8B7D73', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                                  {label}:
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                                  <span style={{ fontSize: '13px', fontWeight: 900, color }}>
+                                    ${Math.round(Math.abs(netDebtUSD)).toLocaleString('en-US')}
+                                  </span>
+                                  <span style={{ fontSize: '10px', fontWeight: 700, color: '#8B7D73' }}>
+                                    або ~{Math.round(Math.abs(netDebtUAH)).toLocaleString('uk-UA')} ₴
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-              {/* Archive Section */}
-              {archivedProjects.length > 0 && (
-                <div style={{ marginTop: '10px', borderTop: '1px solid #D4C5B9', paddingTop: '24px' }}>
-                  <button 
-                    onClick={() => setShowArchive(!showArchive)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '8px', background: '#FAF6F0',
-                      border: '1px solid #D4C5B9', borderRadius: '8px', padding: '12px 18px',
-                      color: '#2C2520', fontSize: '13px', fontWeight: 700, cursor: 'pointer',
-                      transition: 'all 0.2s', outline: 'none', width: '100%', justifyContent: 'space-between'
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#EAE7E2'}
-                    onMouseLeave={e => e.currentTarget.style.background = '#FAF6F0'}
-                  >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span>📁</span> Архів завершених угод ({archivedProjects.length})
-                    </span>
-                    <span style={{ fontSize: '11px', color: '#8B7D73', fontWeight: 800 }}>
-                      {showArchive ? 'Приховати ▲' : 'Показати ▼'}
-                    </span>
-                  </button>
-                  
-                  {showArchive && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '20px' }}>
-                      {archivedProjects.map(project => (
-                        <ProjectCRMCard key={project.id} project={project} client={client} onUpdate={loadProjects} isMobile={isMobile} />
-                      ))}
+                  {/* Active Deals */}
+                  <div>
+                    <h4 style={{ margin: '0 0 16px 0', fontSize: '12px', fontWeight: 800, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '8px' }}>🟢</span> Активні угоди ({activeProjects.length})
+                    </h4>
+                    {activeProjects.length === 0 ? (
+                      <div style={{ background: '#FFFFFF', border: '1px dashed #D4C5B9', borderRadius: '12px', padding: '30px', textAlign: 'center', color: '#8B7D73', fontSize: '13px' }}>
+                        Немає активних угод. Усі угоди завершено та перенесено в архів, або ще не створено.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                        {activeProjects.map(project => (
+                          <ProjectCRMCard key={project.id} project={project} client={client} onUpdate={loadProjects} isMobile={isMobile} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Archive Section */}
+                  {archivedProjects.length > 0 && (
+                    <div style={{ marginTop: '10px', borderTop: '1px solid #D4C5B9', paddingTop: '24px' }}>
+                      <button 
+                        onClick={() => setShowArchive(!showArchive)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '8px', background: '#FAF6F0',
+                          border: '1px solid #D4C5B9', borderRadius: '8px', padding: '12px 18px',
+                          color: '#2C2520', fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+                          transition: 'all 0.2s', outline: 'none', width: '100%', justifyContent: 'space-between'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#EAE7E2'}
+                        onMouseLeave={e => e.currentTarget.style.background = '#FAF6F0'}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>📁</span> Архів завершених угод ({archivedProjects.length})
+                        </span>
+                        <span style={{ fontSize: '11px', color: '#8B7D73', fontWeight: 800 }}>
+                          {showArchive ? 'Приховати ▲' : 'Показати ▼'}
+                        </span>
+                      </button>
+                      
+                      {showArchive && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '20px' }}>
+                          {archivedProjects.map(project => (
+                            <ProjectCRMCard key={project.id} project={project} client={client} onUpdate={loadProjects} isMobile={isMobile} />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          );
-        })()}
+              );
+            })()}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -643,6 +1109,7 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
   const [noteInput, setNoteInput] = useState(project.note || '');
   const [auditLogs, setAuditLogs] = useState([]);
   const [showQuickShipment, setShowQuickShipment] = useState(false);
+  const [showKPImportModal, setShowKPImportModal] = useState(false);
   const [expressMaterials, setExpressMaterials] = useState([]);
   const [loadingMaterials, setLoadingMaterials] = useState(false);
   const [pricingMode, setPricingMode] = useState(false);
@@ -652,11 +1119,66 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
   const [activeTab, setActiveTab] = useState('finances');
   const [inlineEditingId, setInlineEditingId] = useState(null);
   const [inlineEditingData, setInlineEditingData] = useState({});
+  const [editingUnifiedId, setEditingUnifiedId] = useState(null);
+  const [editingUnifiedData, setEditingUnifiedData] = useState({});
   const [unifiedSearch, setUnifiedSearch] = useState('');
   const [agreedSums, setAgreedSums] = useState({
     usd: parseFloat(project.agreed_sum_usd) || 0,
     uah: parseFloat(project.agreed_sum_uah) || 0
   });
+
+  const [catalogProducts, setCatalogProducts] = useState([]);
+
+  // Load products catalog from Supabase
+  useEffect(() => {
+    const loadCatalogProducts = async () => {
+      try {
+        const { data, error } = await supabase.from('products').select('name, unit');
+        if (!error && data) {
+          setCatalogProducts(data);
+        }
+      } catch (err) {
+        console.warn('Failed to load products from catalog in detail card:', err);
+      }
+    };
+    loadCatalogProducts();
+  }, []);
+
+  const combinedSuggestions = React.useMemo(() => {
+    const kpSuggestions = (expressMaterials || []).map(item => ({
+      name: item.name,
+      unit: item.unit || 'шт.',
+      source: 'Імпортовані/Видані'
+    }));
+
+    const catalogSuggestions = (catalogProducts || []).map(prod => ({
+      name: prod.name,
+      unit: prod.unit || 'шт.',
+      source: 'Каталог'
+    }));
+
+    const combined = [...kpSuggestions];
+    catalogSuggestions.forEach(cat => {
+      if (!combined.some(c => c.name.toLowerCase() === cat.name.toLowerCase())) {
+        combined.push(cat);
+      }
+    });
+
+    return combined;
+  }, [expressMaterials, catalogProducts]);
+
+  const getFilteredSuggestions = (query) => {
+    if (!query || query.trim() === '') {
+      return combinedSuggestions.slice(0, 15);
+    }
+    const words = query.toLowerCase().trim().split(/\s+/);
+    return combinedSuggestions
+      .filter(s => {
+        const nameLower = s.name.toLowerCase();
+        return words.every(word => nameLower.includes(word));
+      })
+      .slice(0, 15);
+  };
 
   useEffect(() => {
     setAgreedSums({
@@ -677,6 +1199,22 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
       if (onUpdate) onUpdate();
     } catch (err) {
       alert('Помилка збереження суми боргу: ' + err.message);
+    }
+  };
+
+  const handleSelectKPForProject = async (proposalId) => {
+    setShowKPImportModal(false);
+    try {
+      const res = await projectService.importFromProposal(project.id, proposalId);
+      if (res.success) {
+        alert('Імпорт КП завершено успішно!');
+        await loadExpressMaterials();
+        if (onUpdate) onUpdate();
+      } else {
+        alert('Помилка імпорту з КП: ' + res.error);
+      }
+    } catch (err) {
+      alert('Помилка імпорту: ' + err.message);
     }
   };
 
@@ -707,6 +1245,293 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
   useEffect(() => {
     loadExpressMaterials();
   }, [project.id]);
+
+  const handleEditUnifiedRow = (item) => {
+    setEditingUnifiedId(item.id);
+    setEditingUnifiedData({
+      name: item.name,
+      date: item.date,
+      quantity: item.quantity,
+      price: item.price !== null ? item.price : '',
+      currency: item.currency || 'UAH',
+      note: item.shipInfo && item.shipInfo.isShipment ? item.shipInfo.cleanNote : item.note,
+      unit: item.unit || 'шт.'
+    });
+  };
+
+  const handleSaveUnifiedRow = async (item) => {
+    try {
+      const quantity = parseFloat(editingUnifiedData.quantity) || 0;
+      const price = editingUnifiedData.price !== '' ? parseFloat(editingUnifiedData.price) : 0;
+      const currency = editingUnifiedData.currency || 'UAH';
+      const name = editingUnifiedData.name;
+      const cleanNoteInput = editingUnifiedData.note || '';
+      const date = editingUnifiedData.date;
+
+      let updatedNote = cleanNoteInput;
+      if (item.shipInfo && item.shipInfo.isShipment) {
+        const groupTag = item.note.match(/\[Group:\s*[^\]]+\]/);
+        const migratedTag = item.note.match(/\[Migrated:\s*[^\]]+\]/);
+        const carrier = item.shipInfo.carrier || 'Самовивіз';
+        const trackingNumber = item.shipInfo.trackingNumber || '';
+        const logisticTag = `[Накладна від ${date}, Перевізник: ${carrier}${trackingNumber ? `, ТТН: ${trackingNumber}` : ''}]`;
+        
+        const tags = [];
+        if (groupTag) tags.push(groupTag[0]);
+        if (migratedTag) tags.push(migratedTag[0]);
+        tags.push(logisticTag);
+        
+        updatedNote = [...tags, cleanNoteInput.trim()].filter(Boolean).join(' ');
+      }
+
+      // Check if price or currency changed and item is already added to debt
+      if (item.addedToDebt) {
+        const oldCost = (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0);
+        const newCost = quantity * price;
+        const oldCurrency = item.currency;
+        const newCurrency = currency;
+
+        let usdDelta = 0;
+        let uahDelta = 0;
+
+        if (oldCurrency === 'USD') usdDelta -= oldCost;
+        if (oldCurrency === 'UAH') uahDelta -= oldCost;
+        if (newCurrency === 'USD') usdDelta += newCost;
+        if (newCurrency === 'UAH') uahDelta += newCost;
+
+        if (usdDelta !== 0 || uahDelta !== 0) {
+          const newUSD = (parseFloat(project.agreed_sum_usd) || 0) + usdDelta;
+          const newUAH = (parseFloat(project.agreed_sum_uah) || 0) + uahDelta;
+          await crmApi.updateProjectAgreedSums(project.id, { usd: newUSD, uah: newUAH });
+        }
+      }
+
+      await crmApi.saveProjectMaterial({
+        id: item.dbId,
+        project_id: project.id,
+        name,
+        quantity,
+        unit: editingUnifiedData.unit || 'шт.',
+        price,
+        currency,
+        note: updatedNote,
+        issued_at: date,
+        is_priced: price > 0,
+        added_to_debt: item.addedToDebt
+      });
+
+      await crmApi.saveAuditLog({
+        projectId: project.id,
+        clientId: project.client_id,
+        actionType: 'Редагування матеріалу',
+        details: `Відредаговано матеріал "${name}" (Кількість: ${quantity}, Ціна: ${price} ${currency}, Дата: ${date}, Коментар: "${cleanNoteInput}")`
+      });
+
+      setEditingUnifiedId(null);
+      if (onUpdate) onUpdate();
+      await loadExpressMaterials();
+      await loadAuditLogs();
+    } catch (err) {
+      console.error(err);
+      alert('Помилка збереження змін: ' + err.message);
+    }
+  };
+
+  const handleDeleteUnifiedRow = async (item) => {
+    if (!window.confirm(`Ви впевнені, що хочете видалити видачу матеріалу "${item.name}"?`)) return;
+    try {
+      if (item.addedToDebt) {
+        const cost = (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0);
+        if (cost > 0) {
+          const newUSD = (parseFloat(project.agreed_sum_usd) || 0) - (item.currency === 'USD' ? cost : 0);
+          const newUAH = (parseFloat(project.agreed_sum_uah) || 0) - (item.currency === 'UAH' ? cost : 0);
+          await crmApi.updateProjectAgreedSums(project.id, { usd: newUSD, uah: newUAH });
+        }
+      }
+
+      await crmApi.deleteProjectMaterial(item.dbId);
+      await crmApi.saveAuditLog({
+        projectId: project.id,
+        clientId: project.client_id,
+        actionType: 'Видалення матеріалу',
+        details: `Видалено матеріал "${item.name}"`
+      });
+
+      if (onUpdate) onUpdate();
+      await loadExpressMaterials();
+      await loadAuditLogs();
+    } catch (err) {
+      console.error(err);
+      alert('Помилка видалення матеріалу: ' + err.message);
+    }
+  };
+
+  const handleDeleteDateGroup = async (group) => {
+    const groupDateStr = group.date !== '—' ? new Date(group.date).toLocaleDateString('uk-UA') : '—';
+    const confirmMsg = `Ви впевнені, що хочете видалити ВСІ видачі матеріалів від ${groupDateStr}? Це видалить усі ${group.items.length} товарів у цій таблиці!`;
+    if (!window.confirm(confirmMsg)) return;
+
+    setLoadingMaterials(true);
+    try {
+      let usdDeduction = 0;
+      let uahDeduction = 0;
+      const idsToDelete = [];
+
+      group.items.forEach(item => {
+        idsToDelete.push(item.dbId);
+        if (item.addedToDebt) {
+          const cost = (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0);
+          if (cost > 0) {
+            if (item.currency === 'USD') usdDeduction += cost;
+            if (item.currency === 'UAH') uahDeduction += cost;
+          }
+        }
+      });
+
+      if (usdDeduction > 0 || uahDeduction > 0) {
+        const newUSD = (parseFloat(project.agreed_sum_usd) || 0) - usdDeduction;
+        const newUAH = (parseFloat(project.agreed_sum_uah) || 0) - uahDeduction;
+        await crmApi.updateProjectAgreedSums(project.id, { usd: newUSD, uah: newUAH });
+      }
+
+      await crmApi.deleteProjectMaterials(idsToDelete);
+
+      await crmApi.saveAuditLog({
+        projectId: project.id,
+        clientId: project.client_id,
+        actionType: 'Видалення видачі матеріалів за день',
+        details: `Видалено видачі матеріалів від ${group.date}. Кількість позицій: ${group.items.length}`
+      });
+
+      alert('Видачі успішно видалено!');
+      if (onUpdate) onUpdate();
+      await loadExpressMaterials();
+      await loadAuditLogs();
+    } catch (err) {
+      console.error(err);
+      alert('Помилка видалення видач: ' + err.message);
+    } finally {
+      setLoadingMaterials(false);
+    }
+  };
+
+  const handleToggleDebtStatus = async (item) => {
+    const isAdding = !item.addedToDebt;
+    const cost = (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0);
+    if (cost <= 0) {
+      alert("Ця позиція не має ціни або кількості. Неможливо змінити статус боргу.");
+      return;
+    }
+
+    const confirmMsg = isAdding
+      ? `Ви впевнені, що хочете додати вартість позиції "${item.name}" у розмірі ${cost.toLocaleString()} ${item.currency === 'USD' ? '$' : '₴'} до боргу клієнта? Погоджена сума угоди збільшиться.`
+      : `Ви впевнені, що хочете вилучити вартість позиції "${item.name}" з боргу клієнта? Погоджена сума угоди зменшиться.`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setLoadingMaterials(true);
+    try {
+      const delta = isAdding ? cost : -cost;
+      const newUSD = (parseFloat(project.agreed_sum_usd) || 0) + (item.currency === 'USD' ? delta : 0);
+      const newUAH = (parseFloat(project.agreed_sum_uah) || 0) + (item.currency === 'UAH' ? delta : 0);
+
+      await crmApi.updateProjectAgreedSums(project.id, { usd: newUSD, uah: newUAH });
+
+      const rawMaterial = expressMaterials.find(m => m.id === item.dbId);
+      if (rawMaterial) {
+        await crmApi.saveProjectMaterial({
+          ...rawMaterial,
+          added_to_debt: isAdding
+        });
+      }
+
+      await crmApi.saveAuditLog({
+        projectId: project.id,
+        clientId: project.client_id,
+        actionType: isAdding ? 'Перенесення у борг' : 'Вилучення з боргу',
+        details: isAdding
+          ? `Перенесено вартість позиції "${item.name}" у борг клієнта (+${cost} ${item.currency})`
+          : `Вилучено вартість позиції "${item.name}" з боргу клієнта (-${cost} ${item.currency})`
+      });
+
+      if (onUpdate) onUpdate();
+      await loadExpressMaterials();
+      await loadAuditLogs();
+
+      alert(isAdding ? 'Успішно додано до боргу клієнта!' : 'Успішно вилучено з боргу клієнта!');
+    } catch (err) {
+      console.error(err);
+      alert('Помилка оновлення статусу боргу: ' + err.message);
+    } finally {
+      setLoadingMaterials(false);
+    }
+  };
+
+  const handleToggleAllDebtInGroup = async (itemsList, toDebt) => {
+    // Filter items that have a price and whose debt status differs from target
+    const eligible = itemsList.filter(item => {
+      const cost = (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0);
+      return cost > 0 && item.addedToDebt !== toDebt;
+    });
+
+    if (eligible.length === 0) {
+      alert(toDebt ? 'Усі позиції з ціною вже в боргу.' : 'Жодна позиція не знаходиться в боргу.');
+      return;
+    }
+
+    let totalDeltaUSD = 0;
+    let totalDeltaUAH = 0;
+    eligible.forEach(item => {
+      const cost = (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0);
+      const delta = toDebt ? cost : -cost;
+      if (item.currency === 'USD') totalDeltaUSD += delta;
+      if (item.currency === 'UAH') totalDeltaUAH += delta;
+    });
+
+    const action = toDebt ? 'додати' : 'вилучити';
+    const confirmMsg = `${toDebt ? 'Додати' : 'Вилучити'} ${eligible.length} поз. ${toDebt ? 'у борг' : 'з боргу'}?\n` +
+      (totalDeltaUSD !== 0 ? `USD: ${toDebt ? '+' : ''}${totalDeltaUSD.toLocaleString()} $\n` : '') +
+      (totalDeltaUAH !== 0 ? `UAH: ${toDebt ? '+' : ''}${totalDeltaUAH.toLocaleString()} ₴\n` : '') +
+      `Погоджена сума угоди ${toDebt ? 'збільшиться' : 'зменшиться'}.`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setLoadingMaterials(true);
+    try {
+      const newUSD = (parseFloat(project.agreed_sum_usd) || 0) + totalDeltaUSD;
+      const newUAH = (parseFloat(project.agreed_sum_uah) || 0) + totalDeltaUAH;
+      await crmApi.updateProjectAgreedSums(project.id, { usd: newUSD, uah: newUAH });
+
+      for (const item of eligible) {
+        const rawMaterial = expressMaterials.find(m => m.id === item.dbId);
+        if (rawMaterial) {
+          await crmApi.saveProjectMaterial({
+            ...rawMaterial,
+            added_to_debt: toDebt
+          });
+        }
+      }
+
+      const names = eligible.map(i => i.name).join(', ');
+      await crmApi.saveAuditLog({
+        projectId: project.id,
+        clientId: project.client_id,
+        actionType: toDebt ? 'Масове перенесення у борг' : 'Масове вилучення з боргу',
+        details: `${toDebt ? 'Перенесено' : 'Вилучено'} ${eligible.length} поз. ${toDebt ? 'у борг' : 'з боргу'}: ${names}`
+      });
+
+      if (onUpdate) onUpdate();
+      await loadExpressMaterials();
+      await loadAuditLogs();
+
+      alert(`Успішно ${toDebt ? 'додано до боргу' : 'вилучено з боргу'}: ${eligible.length} поз.`);
+    } catch (err) {
+      console.error(err);
+      alert('Помилка масового оновлення статусу боргу: ' + err.message);
+    } finally {
+      setLoadingMaterials(false);
+    }
+  };
 
   const loadAuditLogs = async () => {
     try {
@@ -1040,13 +1865,13 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
         ) : (
           <div style={{ 
             borderTop: '1px solid #EAE7E2', 
-            paddingTop: '12px', 
+            paddingTop: '10px', 
             display: 'flex', 
             alignItems: 'center', 
             gap: '6px', 
             overflowX: isMobile ? 'auto' : 'visible',
             whiteSpace: isMobile ? 'nowrap' : 'normal',
-            paddingBottom: isMobile ? '8px' : '0',
+            paddingBottom: isMobile ? '6px' : '0',
             msOverflowStyle: 'none',
             scrollbarWidth: 'none',
           }}>
@@ -1057,7 +1882,7 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
               
               return (
                 <React.Fragment key={stage}>
-                  {idx > 0 && <span style={{ color: '#D4C5B9', fontSize: '11px', fontWeight: 900, flexShrink: 0 }}>➔</span>}
+                  {idx > 0 && <span style={{ color: '#D4C5B9', fontSize: '9px', fontWeight: 900, flexShrink: 0 }}>➔</span>}
                   <button
                     onClick={() => handleStatusChange(stage)}
                     style={{
@@ -1065,13 +1890,13 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
                       background: isActive ? '#C4B4A6' : isCompleted ? '#FAF6F0' : '#FFFFFF',
                       border: `1px solid ${isActive ? '#C4B4A6' : '#D4C5B9'}`,
                       color: isActive ? '#FFFFFF' : isCompleted ? '#2C2520' : '#8B7D73',
-                      padding: '5px 12px',
-                      fontSize: '11px',
+                      padding: '3px 10px',
+                      fontSize: '10.5px',
                       fontWeight: isActive ? 800 : 600,
                       borderRadius: '20px',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
-                      boxShadow: isActive ? '0 2px 4px rgba(196, 180, 166, 0.3)' : 'none',
+                      boxShadow: isActive ? '0 1.5px 3px rgba(196, 180, 166, 0.3)' : 'none',
                       outline: 'none'
                     }}
                     onMouseEnter={(e) => {
@@ -1089,116 +1914,104 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
           </div>
         )}
 
-        {/* Prominent High-Fidelity Currency Cards - Integrated directly into status block header */}
+        {/* Sleek, Single-Row Financial & Comment Summary */}
         <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
-          gap: '12px', 
-          marginTop: '12px',
-          width: '100%', 
-          maxWidth: '480px' 
+          display: 'flex', 
+          flexDirection: isMobile ? 'column' : 'row', 
+          alignItems: isMobile ? 'stretch' : 'center', 
+          gap: isMobile ? '12px' : '20px', 
+          marginTop: '10px',
+          paddingTop: '10px',
+          borderTop: '1px dashed #D4C5B9',
+          width: '100%',
+          boxSizing: 'border-box',
+          fontSize: '11.5px',
+          color: '#2C2520'
         }}>
-          
-          {/* USD Card (Ice Blue Accent) */}
-          <div style={{ 
-            background: '#F4F7F9', border: '1px solid #CAD4DE', borderRadius: '10px', 
-            padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '4px',
-            boxShadow: '0 2px 4px rgba(74,96,122,0.04)',
-            minWidth: 0,
-            boxSizing: 'border-box'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '10px', color: '#4A607A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                {debtUSD < 0 ? 'Передоплата USD' : 'Борг USD'}
-              </span>
-              <div style={{ fontSize: '18px', fontWeight: 900, color: debtUSD < 0 ? '#15803D' : debtUSD > 0 ? '#1D4ED8' : '#2C2520' }}>
-                ${Math.abs(debtUSD).toLocaleString('en-US', { minimumFractionDigits: 0 })}
-              </div>
+          {/* USD Inline */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <span style={{ fontSize: '13px' }}>🇺🇸</span>
+            <span style={{ fontWeight: 800, color: '#4A607A' }}>USD:</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1px' }}>
+              <span style={{ color: '#8B7D73' }}>$</span>
+              <input 
+                type="number" 
+                value={agreedSums.usd} 
+                onChange={e => setAgreedSums({...agreedSums, usd: parseFloat(e.target.value) || 0})}
+                onBlur={() => saveAgreedSums()}
+                style={{ 
+                  width: '64px', fontSize: '11px', fontWeight: 700, padding: '2px 4px', 
+                  border: '1px solid #CAD4DE', borderRadius: '4px', outline: 'none', background: '#FAFDFD', color: '#2C2520', textAlign: 'right',
+                  boxSizing: 'border-box'
+                }}
+              />
             </div>
-            <div style={{ borderTop: '1px dashed #CAD4DE', paddingTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-              <span style={{ fontSize: '11px', color: '#5C6E82', fontWeight: 500 }}>Погоджено:</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                <span style={{ fontSize: '11px', color: '#2C2520' }}>$</span>
-                <input 
-                  type="number" 
-                  value={agreedSums.usd} 
-                  onChange={e => setAgreedSums({...agreedSums, usd: parseFloat(e.target.value) || 0})}
-                  onBlur={() => saveAgreedSums()}
-                  style={{ 
-                    width: '64px', fontSize: '11px', fontWeight: 700, padding: '2px 4px', 
-                    border: '1px solid #CAD4DE', borderRadius: '4px', outline: 'none', background: '#FFFFFF', color: '#2C2520', textAlign: 'right',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-            </div>
+            <span style={{ 
+              fontWeight: 800, 
+              color: debtUSD < 0 ? '#15803D' : debtUSD > 0 ? '#1D4ED8' : '#2C2520'
+            }}>
+              ({debtUSD < 0 ? `Переплата: $${Math.abs(Math.round(debtUSD)).toLocaleString('en-US')}` : `Борг: $${Math.round(debtUSD).toLocaleString('en-US')}`})
+            </span>
           </div>
 
-          {/* UAH Card (Honey Gold Accent) */}
-          <div style={{ 
-            background: '#FFFDF5', border: '1px solid #F2E6C4', borderRadius: '10px', 
-            padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '4px',
-            boxShadow: '0 2px 4px rgba(139,125,112,0.04)',
-            minWidth: 0,
-            boxSizing: 'border-box'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '10px', color: '#8C7355', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                {debtUAH < 0 ? 'Передоплата UAH' : 'Борг UAH'}
-              </span>
-              <div style={{ fontSize: '18px', fontWeight: 900, color: debtUAH < 0 ? '#15803D' : debtUAH > 0 ? '#C2410C' : '#2C2520' }}>
-                {Math.abs(debtUAH).toLocaleString('uk-UA')} ₴
-              </div>
+          {/* Divider on desktop */}
+          {!isMobile && <div style={{ width: '1px', height: '14px', background: '#D4C5B9' }} />}
+
+          {/* UAH Inline */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <span style={{ fontSize: '13px' }}>🇺🇦</span>
+            <span style={{ fontWeight: 800, color: '#8C7355' }}>UAH:</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1px' }}>
+              <input 
+                type="number" 
+                value={agreedSums.uah} 
+                onChange={e => setAgreedSums({...agreedSums, uah: parseFloat(e.target.value) || 0})}
+                onBlur={() => saveAgreedSums()}
+                style={{ 
+                  width: '74px', fontSize: '11px', fontWeight: 700, padding: '2px 4px', 
+                  border: '1px solid #F2E6C4', borderRadius: '4px', outline: 'none', background: '#FFFDF9', color: '#2C2520', textAlign: 'right',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <span style={{ color: '#8B7D73', marginLeft: '1px' }}>₴</span>
             </div>
-            <div style={{ borderTop: '1px dashed #F2E6C4', paddingTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-              <span style={{ fontSize: '11px', color: '#8B7D73', fontWeight: 500 }}>Погоджено:</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                <input 
-                  type="number" 
-                  value={agreedSums.uah} 
-                  onChange={e => setAgreedSums({...agreedSums, uah: parseFloat(e.target.value) || 0})}
-                  onBlur={() => saveAgreedSums()}
-                  style={{ 
-                    width: '74px', fontSize: '11px', fontWeight: 700, padding: '2px 4px', 
-                    border: '1px solid #F2E6C4', borderRadius: '4px', outline: 'none', background: '#FFFFFF', color: '#2C2520', textAlign: 'right',
-                    boxSizing: 'border-box'
-                  }}
-                />
-                <span style={{ fontSize: '11px', color: '#2C2520' }}>₴</span>
-              </div>
-            </div>
+            <span style={{ 
+              fontWeight: 800, 
+              color: debtUAH < 0 ? '#15803D' : debtUAH > 0 ? '#C2410C' : '#2C2520'
+            }}>
+              ({debtUAH < 0 ? `Переплата: ${Math.abs(Math.round(debtUAH)).toLocaleString('uk-UA')} ₴` : `Борг: ${Math.round(debtUAH).toLocaleString('uk-UA')} ₴`})
+            </span>
           </div>
 
-        </div>
+          {/* Divider on desktop */}
+          {!isMobile && <div style={{ width: '1px', height: '14px', background: '#D4C5B9' }} />}
 
-        {/* Deal Comment Section */}
-        <div style={{ borderTop: '1px dashed #D4C5B9', paddingTop: '12px', marginTop: '4px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-            <FileText size={13} color="#8B7D73" />
-            <span style={{ fontSize: '11px', fontWeight: 800, color: '#8B7D73', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Коментар до угоди</span>
+          {/* Comment Inline */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: isMobile ? '100%' : '180px' }}>
+            <span style={{ color: '#8B7D73', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+              <FileText size={12} />
+              <span>Коментар:</span>
+            </span>
+            <input
+              type="text"
+              value={noteInput}
+              onChange={(e) => setNoteInput(e.target.value)}
+              onBlur={handleSaveNote}
+              placeholder="Коментар менеджера..."
+              style={{
+                flex: 1,
+                padding: '3px 8px',
+                fontSize: '11px',
+                color: '#2C2520',
+                border: '1px solid #D4C5B9',
+                borderRadius: '6px',
+                background: '#FFFFFF',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = '#C4B4A6'; }}
+            />
           </div>
-          <textarea
-            value={noteInput}
-            onChange={(e) => setNoteInput(e.target.value)}
-            onBlur={handleSaveNote}
-            placeholder="Введіть важливі деталі по угоді (наприклад: терміни, особливі вимоги клієнта, нюанси монтажу)..."
-            style={{
-              width: '100%',
-              minHeight: '44px',
-              padding: '8px 12px',
-              fontSize: '12px',
-              color: '#2C2520',
-              border: '1px solid #D4C5B9',
-              borderRadius: '8px',
-              background: '#FFFFFF',
-              outline: 'none',
-              resize: 'vertical',
-              fontFamily: 'Inter, sans-serif',
-              boxSizing: 'border-box',
-              transition: 'border-color 0.2s'
-            }}
-            onFocus={(e) => { e.currentTarget.style.borderColor = '#C4B4A6'; }}
-          />
         </div>
 
         {/* Aesthetic Dashboard Tabs Switcher */}
@@ -1231,28 +2044,7 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
               whiteSpace: 'nowrap'
             }}
           >
-            <span>📊</span> Фінансовий баланс та Борги
-          </button>
-          <button 
-            onClick={() => setActiveTab('logistics')}
-            style={{
-              padding: '10px 16px',
-              fontSize: '12.5px',
-              fontWeight: 800,
-              background: activeTab === 'logistics' ? '#FFFFFF' : 'transparent',
-              border: activeTab === 'logistics' ? '1px solid #D4C5B9' : '1px solid transparent',
-              borderRadius: '20px',
-              color: activeTab === 'logistics' ? '#2C2520' : '#8B7D73',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              outline: 'none',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            <span>📦</span> Логістика та Специфікація
+            <span>📊</span> Фінанси
           </button>
           <button 
             onClick={() => setActiveTab('unified')}
@@ -1273,7 +2065,7 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
               whiteSpace: 'nowrap'
             }}
           >
-            <span>📋</span> Зведена відомість видачі
+            <span>📦</span> Видача матеріалів
           </button>
           <button 
             onClick={() => setActiveTab('history')}
@@ -1303,6 +2095,7 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
         <QuickShipmentModal
           clientOverride={client}
           projectOverride={project}
+          projectItems={project?.project_items || []}
           onClose={() => setShowQuickShipment(false)}
           onUpdate={async () => {
             await loadExpressMaterials();
@@ -1313,467 +2106,7 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
 
       {/* Tab Contents */}
       {activeTab === 'finances' && (
-        <div style={{ background: '#FFFFFF', maxWidth: '1200px', boxSizing: 'border-box' }}>
-          {/* Express Materials Ledger (Debt Materials) Section - Placed at the very top of Finances */}
-          <div style={{ borderBottom: '1px solid #FAF6F0', padding: '20px 24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '18px' }}>📋</span>
-                <h5 style={{ margin: 0, fontSize: '13.5px', fontWeight: 850, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Відомість виданих в борг матеріалів (Склад)
-                </h5>
-              </div>
-              
-              {expressMaterials.some(m => !m.is_priced) && (
-                <button
-                  onClick={() => setPricingMode(!pricingMode)}
-                  style={{
-                    background: pricingMode ? '#FFFFFF' : '#C4B4A6',
-                    color: pricingMode ? '#8B7D73' : '#FFFFFF',
-                    border: pricingMode ? '1px solid #D4C5B9' : 'none',
-                    borderRadius: '6px',
-                    padding: '6px 14px',
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                  onMouseEnter={(e) => { if (!pricingMode) e.currentTarget.style.background = '#B3A395'; }}
-                  onMouseLeave={(e) => { if (!pricingMode) e.currentTarget.style.background = '#C4B4A6'; }}
-                >
-                  {pricingMode ? 'Скасувати оцінку' : '💲 Оцінити неціновані товари'}
-                </button>
-              )}
-            </div>
-
-            {loadingMaterials ? (
-              <div style={{ fontSize: '12px', color: '#8B7D73', fontStyle: 'italic', padding: '10px 0' }}>Завантаження відомості складу...</div>
-            ) : expressMaterials.length === 0 ? (
-              <div style={{ fontSize: '12px', color: '#8B7D73', fontStyle: 'italic', padding: '10px 0', textAlign: 'center', border: '1px dashed #D4C5B9', borderRadius: '8px' }}>
-                Немає зафіксованих матеріалів швидкої видачі. Скористайтеся кнопкою "Швидка видача", щоб додати матеріали зі складу.
-              </div>
-            ) : (
-              <div style={{ border: '1px solid #D4C5B9', borderRadius: '8px', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ background: '#FAF6F0', borderBottom: '1px solid #D4C5B9' }}>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520' }}>Матеріал</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '80px', textAlign: 'center' }}>Кількість</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '80px', textAlign: 'center' }}>Од. вим.</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '120px', textAlign: 'center' }}>Ціна</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '90px', textAlign: 'center' }}>Валюта</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '110px', textAlign: 'center' }}>Статус</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '110px', textAlign: 'center' }}>Дата видачі</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '120px', textAlign: 'center' }}>Примітка</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '100px', textAlign: 'center' }}>Сума боргу</th>
-                      <th style={{ padding: '8px 12px', width: '40px' }}></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {expressMaterials.map(m => {
-                      const isEditing = inlineEditingId === m.id;
-                      const isPriced = isEditing 
-                        ? (inlineEditingData.price !== '' && inlineEditingData.price !== undefined && inlineEditingData.price !== null)
-                        : m.is_priced;
-                        
-                      const qtyVal = isEditing ? parseFloat(inlineEditingData.quantity) || 0 : parseFloat(m.quantity) || 0;
-                      const prVal = isEditing 
-                        ? (inlineEditingData.price !== '' && inlineEditingData.price !== undefined && inlineEditingData.price !== null ? parseFloat(inlineEditingData.price) || 0 : 0)
-                        : parseFloat(m.price) || 0;
-                        
-                      const itemSum = isPriced ? qtyVal * prVal : null;
-                      const activeCurrency = isEditing ? inlineEditingData.currency : m.currency;
-                      
-                      return (
-                        <tr key={m.id} style={{ borderBottom: '1px solid #FAF6F0', background: !isPriced ? '#FFFDF5' : 'transparent' }}>
-                          
-                          {/* Name Column */}
-                          <td style={{ padding: '10px 12px', fontWeight: 600, color: '#2C2520' }}>
-                            {isEditing ? (
-                              <input 
-                                type="text"
-                                value={inlineEditingData.name || ''}
-                                onChange={e => setInlineEditingData({ ...inlineEditingData, name: e.target.value })}
-                                style={{
-                                  width: '100%', padding: '4px 6px', fontSize: '11.5px', border: '1px solid #C4B4A6',
-                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none'
-                                }}
-                              />
-                            ) : (
-                              m.name
-                            )}
-                          </td>
-
-                          {/* Quantity Column */}
-                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#2C2520', fontWeight: 700 }}>
-                            {isEditing ? (
-                              <input 
-                                type="number"
-                                step="any"
-                                value={inlineEditingData.quantity !== undefined ? inlineEditingData.quantity : ''}
-                                onChange={e => setInlineEditingData({ ...inlineEditingData, quantity: e.target.value })}
-                                style={{
-                                  width: '60px', padding: '4px 6px', fontSize: '11.5px', border: '1px solid #C4B4A6',
-                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none', textAlign: 'center'
-                                }}
-                              />
-                            ) : (
-                              m.quantity
-                            )}
-                          </td>
-
-                          {/* Unit Column */}
-                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#8B7D73' }}>
-                            {isEditing ? (
-                              <input 
-                                type="text"
-                                value={inlineEditingData.unit !== undefined ? inlineEditingData.unit : ''}
-                                onChange={e => setInlineEditingData({ ...inlineEditingData, unit: e.target.value })}
-                                style={{
-                                  width: '50px', padding: '4px 6px', fontSize: '11.5px', border: '1px solid #C4B4A6',
-                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none', textAlign: 'center'
-                                }}
-                              />
-                            ) : (
-                              m.unit
-                            )}
-                          </td>
-                          
-                          {/* Price Column */}
-                          <td style={{ padding: '6px 12px', textAlign: 'center' }}>
-                            {isEditing ? (
-                              <input
-                                type="number"
-                                step="any"
-                                placeholder="Ціна"
-                                value={inlineEditingData.price !== undefined && inlineEditingData.price !== null ? inlineEditingData.price : ''}
-                                onChange={(e) => setInlineEditingData({ ...inlineEditingData, price: e.target.value })}
-                                style={{
-                                  width: '70px', padding: '4px 6px', fontSize: '11px', border: '1px solid #C4B4A6',
-                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none', textAlign: 'center'
-                                }}
-                              />
-                            ) : pricingMode && !m.is_priced ? (
-                              <input
-                                type="number"
-                                step="any"
-                                placeholder="Введіть ціну"
-                                value={pricingPrices[m.id] !== undefined ? pricingPrices[m.id] : ''}
-                                onChange={(e) => setPricingPrices({ ...pricingPrices, [m.id]: e.target.value })}
-                                style={{
-                                  width: '80px', padding: '4px 6px', fontSize: '11px', border: '1px solid #C4B4A6',
-                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none', textAlign: 'center'
-                                }}
-                              />
-                            ) : (
-                              <span style={{ fontWeight: m.is_priced ? 700 : 400, color: m.is_priced ? '#2C2520' : '#8B7D73' }}>
-                                {m.is_priced ? parseFloat(m.price).toLocaleString() : 'не вказано'}
-                              </span>
-                            )}
-                          </td>
-
-                          {/* Currency Column */}
-                          <td style={{ padding: '6px 12px', textAlign: 'center' }}>
-                            {isEditing ? (
-                              <select
-                                value={inlineEditingData.currency || 'UAH'}
-                                onChange={(e) => setInlineEditingData({ ...inlineEditingData, currency: e.target.value })}
-                                style={{
-                                  width: '60px', padding: '4px', fontSize: '11px', border: '1px solid #C4B4A6',
-                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none'
-                                }}
-                              >
-                                <option value="UAH">UAH</option>
-                                <option value="USD">USD</option>
-                              </select>
-                            ) : pricingMode && !m.is_priced ? (
-                              <select
-                                value={pricingCurrencies[m.id] || 'UAH'}
-                                onChange={(e) => setPricingCurrencies({ ...pricingCurrencies, [m.id]: e.target.value })}
-                                style={{
-                                  width: '60px', padding: '4px', fontSize: '11px', border: '1px solid #C4B4A6',
-                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none'
-                                }}
-                              >
-                                <option value="UAH">UAH</option>
-                                <option value="USD">USD</option>
-                              </select>
-                            ) : (
-                              <span style={{ fontWeight: 700, color: m.currency === 'USD' ? '#1D4ED8' : '#C2410C' }}>
-                                {m.is_priced ? m.currency : '—'}
-                              </span>
-                            )}
-                          </td>
-
-                          {/* Status Badges */}
-                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                            {!isPriced ? (
-                              <span style={{ background: '#FFF3E0', color: '#B06000', border: '1px solid #FFE0B2', fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', whiteSpace: 'nowrap' }}>
-                                Очікує оцінки
-                              </span>
-                            ) : (
-                              <span style={{ background: '#E6F4EA', color: '#137333', border: '1px solid #CEEAD6', fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', whiteSpace: 'nowrap' }}>
-                                Враховано
-                              </span>
-                            )}
-                          </td>
-
-                          {/* Date Column */}
-                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#8B7D73', whiteSpace: 'nowrap' }}>
-                            {isEditing ? (
-                              <input 
-                                type="date"
-                                value={inlineEditingData.issued_at ? inlineEditingData.issued_at.split('T')[0] : ''}
-                                onChange={e => setInlineEditingData({ 
-                                  ...inlineEditingData, 
-                                  issued_at: e.target.value ? new Date(e.target.value).toISOString() : new Date().toISOString() 
-                                })}
-                                style={{
-                                  width: '110px', padding: '4px 6px', fontSize: '11px', border: '1px solid #C4B4A6',
-                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none', textAlign: 'center'
-                                }}
-                              />
-                            ) : (
-                              m.issued_at ? new Date(m.issued_at).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
-                            )}
-                          </td>
-
-                          {/* Note Column */}
-                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#8B7D73' }}>
-                            {isEditing ? (
-                              <input 
-                                type="text"
-                                placeholder="Коментар..."
-                                value={inlineEditingData.note || ''}
-                                onChange={e => setInlineEditingData({ ...inlineEditingData, note: e.target.value })}
-                                style={{
-                                  width: '100px', padding: '4px 6px', fontSize: '11px', border: '1px solid #C4B4A6',
-                                  borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none'
-                                }}
-                              />
-                            ) : (
-                              m.note || '—'
-                            )}
-                          </td>
-
-                          {/* Debt Sum Column */}
-                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: activeCurrency === 'USD' ? '#1D4ED8' : '#C2410C' }}>
-                            {itemSum !== null ? (
-                              activeCurrency === 'USD' ? `$${itemSum.toLocaleString()}` : `${itemSum.toLocaleString()} ₴`
-                            ) : '—'}
-                          </td>
-
-                          {/* Action Buttons Column */}
-                          <td style={{ padding: '6px 12px', textAlign: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                              {isEditing ? (
-                                <>
-                                  <button
-                                    onClick={async () => {
-                                      const pQty = parseFloat(inlineEditingData.quantity);
-                                      if (isNaN(pQty) || pQty <= 0) {
-                                        alert('Кількість матеріалу має бути більшою за 0!');
-                                        return;
-                                      }
-                                      if (!inlineEditingData.name || inlineEditingData.name.trim() === '') {
-                                        alert('Назва матеріалу не може бути порожньою!');
-                                        return;
-                                      }
-
-                                      try {
-                                        const pValStr = inlineEditingData.price;
-                                        const hasPrice = pValStr !== '' && pValStr !== undefined && pValStr !== null;
-                                        const parsedPrice = hasPrice ? parseFloat(pValStr) : null;
-                                        
-                                        if (hasPrice && (isNaN(parsedPrice) || parsedPrice < 0)) {
-                                          alert('Будь ласка, введіть коректну числову ціну!');
-                                          return;
-                                        }
-
-                                        const payload = {
-                                          ...m,
-                                          name: inlineEditingData.name.trim(),
-                                          quantity: pQty,
-                                          unit: inlineEditingData.unit || 'шт.',
-                                          price: parsedPrice,
-                                          currency: inlineEditingData.currency || 'UAH',
-                                          is_priced: parsedPrice !== null,
-                                          issued_at: inlineEditingData.issued_at || m.issued_at || new Date().toISOString(),
-                                          note: inlineEditingData.note ? inlineEditingData.note.trim() : null
-                                        };
-
-                                        await crmApi.saveProjectMaterial(payload);
-
-                                        // Trigger a full recalculation of project debts
-                                        await crmApi.priceProjectMaterials(project.id, []);
-
-                                        await crmApi.saveAuditLog({
-                                          projectId: project.id,
-                                          clientId: project.client_id,
-                                          actionType: 'Редагування матеріалу',
-                                          details: `Відредаговано матеріал швидкої видачі: "${payload.name}" (${payload.quantity} ${payload.unit}) по ціні ${hasPrice ? `${payload.price} ${payload.currency}` : 'не вказано'}`
-                                        });
-
-                                        setInlineEditingId(null);
-                                        await loadExpressMaterials();
-                                        if (onUpdate) onUpdate();
-                                      } catch (err) {
-                                        alert('Помилка збереження змін матеріалу: ' + err.message);
-                                      }
-                                    }}
-                                    style={{ background: 'transparent', border: 'none', color: '#137333', cursor: 'pointer', padding: '4px', fontSize: '13px' }}
-                                    title="Зберегти зміни"
-                                  >
-                                    💾
-                                  </button>
-                                  <button
-                                    onClick={() => setInlineEditingId(null)}
-                                    style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '4px', fontSize: '13px' }}
-                                    title="Скасувати"
-                                  >
-                                    ❌
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <button
-                                    onClick={() => {
-                                      setInlineEditingId(m.id);
-                                      setInlineEditingData({
-                                        name: m.name,
-                                        quantity: m.quantity,
-                                        unit: m.unit,
-                                        price: m.price !== null ? m.price : '',
-                                        currency: m.currency || 'UAH',
-                                        issued_at: m.issued_at || new Date().toISOString(),
-                                        note: m.note || ''
-                                      });
-                                    }}
-                                    style={{ background: 'transparent', border: 'none', color: '#8B7D73', cursor: 'pointer', padding: '4px' }}
-                                    title="Редагувати запис"
-                                  >
-                                    <Pencil size={13} />
-                                  </button>
-                                  <button
-                                    onClick={async () => {
-                                      if (!window.confirm(`Ви впевнені, що хочете видалити матеріал "${m.name}" з відомості швидкої видачі?`)) return;
-                                      try {
-                                        await crmApi.deleteProjectMaterial(m.id);
-                                        // Trigger recalculation of project debts
-                                        await crmApi.priceProjectMaterials(project.id, []);
-                                        
-                                        await crmApi.saveAuditLog({
-                                          projectId: project.id,
-                                          clientId: project.client_id,
-                                          actionType: 'Видалення матеріалу',
-                                          details: `Видалено матеріал швидкої видачі з відомості складу: "${m.name}"`
-                                        });
-                                        
-                                        await loadExpressMaterials();
-                                        if (onUpdate) onUpdate();
-                                      } catch (err) {
-                                        alert('Помилка видалення матеріалу: ' + err.message);
-                                      }
-                                    }}
-                                    style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '4px' }}
-                                    title="Видалити запис швидкої видачі"
-                                  >
-                                    <Trash2 size={13} />
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-
-                {/* Pricing Mode Actions Block */}
-                {pricingMode && (
-                  <div style={{ background: '#FAF6F0', borderTop: '1px solid #D4C5B9', padding: '12px 16px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                    <button
-                      onClick={() => setPricingMode(false)}
-                      style={{
-                        background: '#FFFFFF', color: '#8B7D73', border: '1px solid #D4C5B9', borderRadius: '6px',
-                        padding: '6px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer'
-                      }}
-                    >
-                      Скасувати
-                    </button>
-                    <button
-                      onClick={async () => {
-                        const itemsToSave = [];
-                        let hasInvalid = false;
-                        
-                        expressMaterials.forEach(m => {
-                          if (!m.is_priced) {
-                            const prVal = pricingPrices[m.id];
-                            if (prVal && prVal.trim() !== '') {
-                              const pFloat = parseFloat(prVal);
-                              if (isNaN(pFloat) || pFloat < 0) {
-                                hasInvalid = true;
-                              } else {
-                                itemsToSave.push({
-                                  ...m,
-                                  price: pFloat,
-                                  currency: pricingCurrencies[m.id] || 'UAH',
-                                  is_priced: true
-                                });
-                              }
-                            }
-                          }
-                        });
-
-                        if (hasInvalid) {
-                          alert('Будь ласка, введіть коректні числові ціни (більше або рівні 0)');
-                          return;
-                        }
-
-                        if (itemsToSave.length === 0) {
-                          alert('Ви не ввели ціни для жодного матеріалу!');
-                          return;
-                        }
-
-                        setSavingPrices(true);
-                        try {
-                          await crmApi.priceProjectMaterials(project.id, itemsToSave);
-                          await crmApi.saveAuditLog({
-                            projectId: project.id,
-                            clientId: project.client_id,
-                            actionType: 'Оцінка матеріалів',
-                            details: `Менеджер затвердив ціни на матеріали у кількості ${itemsToSave.length} шт. Фінансові баланси угоди автоматично оновлено.`
-                          });
-
-                          alert('Ціни успішно збережено, баланси угоди перераховано!');
-                          setPricingMode(false);
-                          await loadExpressMaterials();
-                          if (onUpdate) onUpdate();
-                        } catch (err) {
-                          console.error(err);
-                          alert('Помилка при збереженні цін: ' + err.message);
-                        } finally {
-                          setSavingPrices(false);
-                        }
-                      }}
-                      disabled={savingPrices}
-                      style={{
-                        background: '#C4B4A6', color: '#FFFFFF', border: 'none', borderRadius: '6px',
-                        padding: '6px 16px', fontSize: '12px', fontWeight: 800, cursor: 'pointer'
-                      }}
-                    >
-                      {savingPrices ? 'Збереження цін...' : 'Затвердити та перерахувати борг'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
+        <div style={{ background: '#FFFFFF', maxWidth: '100%', boxSizing: 'border-box' }}>
           {/* Financial Balance Block */}
           <div style={{ padding: '24px', maxWidth: '720px', boxSizing: 'border-box' }}>
             <ProjectFinancesBlock 
@@ -1788,179 +2121,494 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
         </div>
       )}
 
-      {activeTab === 'logistics' && (
-        <div style={{ background: '#FFFFFF', padding: '24px', maxWidth: '1200px', boxSizing: 'border-box' }}>
-          <ProjectMaterialsBlock 
-            project={project} 
-            materialItems={materialItems} 
-            shipments={project.project_shipments || []} 
-            onUpdate={onUpdate} 
-            leftToIssue={leftToIssue}
-            isMobile={isMobile}
-          />
-        </div>
-      )}
-
       {activeTab === 'unified' && (() => {
-        const regularIssued = [];
-        const shipmentsList = project.project_shipments || [];
-        shipmentsList.forEach(s => {
-          s.shipment_items?.forEach(si => {
-            const itemObj = materialItems.find(i => i.id === si.project_item_id);
-            regularIssued.push({
-              id: `shipment-item-${si.id}`,
-              name: itemObj ? itemObj.name : 'Кастомний товар',
-              quantity: parseFloat(si.quantity) || 0,
-              unit: itemObj ? (itemObj.unit || 'шт.') : 'шт.',
-              date: s.date || '—',
-              type: 'По контракту',
-              source: 'Накладна',
-              price: itemObj ? itemObj.price : null,
-              currency: itemObj ? itemObj.currency : 'UAH',
-              note: s.carrier ? `Доставка: ${s.carrier}${s.tracking_number ? `, ТТН: ${s.tracking_number}` : ''}` : '—',
-              isPriced: true
-            });
-          });
+        const processedMaterials = (expressMaterials || []).map(m => {
+          const shipInfo = parseShipmentInfo(m.note);
+          return {
+            id: `debt-${m.id}`,
+            dbId: m.id,
+            name: m.name,
+            quantity: parseFloat(m.quantity) || 0,
+            unit: m.unit || 'шт.',
+            date: m.issued_at ? m.issued_at.split('T')[0] : '—',
+            price: m.price || 0,
+            currency: m.currency || 'UAH',
+            note: m.note || '',
+            isPriced: m.is_priced,
+            addedToDebt: m.added_to_debt || false,
+            shipInfo
+          };
         });
 
-        const debtIssued = expressMaterials.map(m => ({
-          id: `debt-${m.id}`,
-          name: m.name,
-          quantity: parseFloat(m.quantity) || 0,
-          unit: m.unit || 'шт.',
-          date: m.issued_at ? m.issued_at.split('T')[0] : '—',
-          type: 'В борг (Склад)',
-          source: 'Відомість боргу',
-          price: m.is_priced ? m.price : null,
-          currency: m.currency || 'UAH',
-          note: m.note || (m.issued_by ? `Видав: ${m.issued_by}` : '—'),
-          isPriced: m.is_priced
-        }));
+        const filteredMaterials = processedMaterials.filter(item => {
+          const term = unifiedSearch.toLowerCase().trim();
+          if (!term) return true;
+          return item.name.toLowerCase().includes(term) || 
+                 item.note.toLowerCase().includes(term) ||
+                 (item.shipInfo.carrier && item.shipInfo.carrier.toLowerCase().includes(term)) ||
+                 (item.shipInfo.trackingNumber && item.shipInfo.trackingNumber.toLowerCase().includes(term));
+        });
 
-        const mergedList = [...regularIssued, ...debtIssued].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const grandTotalPos = processedMaterials.length;
 
-        const filteredList = mergedList.filter(item => 
-          item.name.toLowerCase().includes(unifiedSearch.toLowerCase()) || 
-          item.type.toLowerCase().includes(unifiedSearch.toLowerCase()) ||
-          item.note.toLowerCase().includes(unifiedSearch.toLowerCase())
-        );
+        // Calculate Grand Totals in UAH & USD
+        const grandTotalUAH = processedMaterials.reduce((acc, item) => {
+          if (item.currency === 'UAH') {
+            return acc + (item.quantity * (item.price || 0));
+          }
+          return acc;
+        }, 0);
 
-        const totalContractPos = regularIssued.length;
-        const totalDebtPos = debtIssued.length;
-        const grandTotalPos = totalContractPos + totalDebtPos;
+        const grandTotalUSD = processedMaterials.reduce((acc, item) => {
+          if (item.currency === 'USD') {
+            return acc + (item.quantity * (item.price || 0));
+          }
+          return acc;
+        }, 0);
+
+        // Group ALL filtered materials strictly by date of issuance
+        const groupsMap = {};
+        filteredMaterials.forEach(item => {
+          const dateKey = item.date || '—';
+          if (!groupsMap[dateKey]) {
+            groupsMap[dateKey] = {
+              date: dateKey,
+              items: []
+            };
+          }
+          groupsMap[dateKey].items.push(item);
+        });
+
+        const dateGroups = Object.values(groupsMap).sort((a, b) => {
+          if (a.date === '—') return 1;
+          if (b.date === '—') return -1;
+          return new Date(b.date) - new Date(a.date);
+        });
+
+        const renderMaterialsTable = (group) => {
+          const itemsList = group.items;
+          const totalUAH = itemsList.reduce((acc, item) => item.currency === 'UAH' ? acc + (item.quantity * (item.price || 0)) : acc, 0);
+          const totalUSD = itemsList.reduce((acc, item) => item.currency === 'USD' ? acc + (item.quantity * (item.price || 0)) : acc, 0);
+
+          return (
+            <div style={{ 
+              border: '1px solid #D4C5B9', 
+              borderRadius: '8px', 
+              overflow: 'hidden', 
+              marginBottom: '24px',
+              boxShadow: '0 2px 6px rgba(139, 125, 112, 0.04)'
+            }}>
+              {/* Group Header by Date */}
+              <div style={{ 
+                background: '#FAF6F0', 
+                borderBottom: '1px solid #D4C5B9', 
+                padding: '10px 16px', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '10px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: '#2C2520' }}>
+                  <span style={{ fontSize: '16px' }}>📅</span>
+                  <span>Видача від {group.date !== '—' ? new Date(group.date).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'}</span>
+                  <span style={{ height: '12px', width: '1px', background: '#D4C5B9', margin: '0 4px' }} />
+                  <span style={{ color: '#8B7D73', fontWeight: 650 }}>{group.items.length} поз.</span>
+                </div>
+                <button
+                  onClick={() => handleDeleteDateGroup(group)}
+                  style={{
+                    background: '#FCE8E6',
+                    color: '#C5221F',
+                    border: '1px solid #FAD2CF',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#FAD2CF'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '#FCE8E6'; }}
+                >
+                  <Trash2 size={12} /> Видалити видачу за день
+                </button>
+                {(() => {
+                  const pricedItems = itemsList.filter(i => (parseFloat(i.price) || 0) > 0);
+                  const allInDebt = pricedItems.length > 0 && pricedItems.every(i => i.addedToDebt);
+                  const noneInDebt = pricedItems.every(i => !i.addedToDebt);
+                  if (pricedItems.length === 0) return null;
+                  return (
+                    <button
+                      onClick={() => handleToggleAllDebtInGroup(itemsList, !allInDebt)}
+                      style={{
+                        background: allInDebt ? '#F0FDF4' : '#EFF6FF',
+                        color: allInDebt ? '#15803D' : '#1D4ED8',
+                        border: `1px solid ${allInDebt ? '#DCFCE7' : '#DBEAFE'}`,
+                        borderRadius: '6px',
+                        padding: '4px 10px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.opacity = '0.8'; }}
+                      onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                    >
+                      {allInDebt ? '✓ Зняти з боргу' : '📋 Все в борг'}
+                    </button>
+                  );
+                })()}
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ background: '#FAF8F5', borderBottom: '1px solid #D4C5B9' }}>
+                      <th style={{ padding: '8px 12px', width: '70px', textAlign: 'center', fontWeight: 800, color: '#2C2520' }}>В борг</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520' }}>Матеріал</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '95px', textAlign: 'center' }}>Дата</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '100px', textAlign: 'center' }}>Кількість</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '110px', textAlign: 'center' }}>Ціна за од.</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '110px', textAlign: 'center' }}>Сума</th>
+                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520' }}>Коментар</th>
+                      <th style={{ padding: '8px 12px', width: '150px', textAlign: 'center' }}>Дії</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {itemsList.map(item => {
+                      const isEditing = editingUnifiedId === item.id;
+                      const cost = isEditing 
+                        ? (parseFloat(editingUnifiedData.quantity) || 0) * (parseFloat(editingUnifiedData.price) || 0)
+                        : (item.price ? item.quantity * item.price : 0);
+
+                      return (
+                        <tr key={item.id} style={{ borderBottom: '1px solid #FAF6F0', transition: 'background 0.15s', background: isEditing ? '#FFFDF5' : 'transparent' }}>
+                          <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                            {item.price && item.price > 0 ? (
+                              <input 
+                                type="checkbox"
+                                checked={item.addedToDebt}
+                                onChange={() => handleToggleDebtStatus(item)}
+                                style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#C2410C' }}
+                              />
+                            ) : (
+                              <span title="Без ціни — неможливо перенести" style={{ fontSize: '10px', color: '#B3A395', fontStyle: 'italic' }}>—</span>
+                            )}
+                          </td>
+
+                          <td style={{ padding: '8px 12px', fontWeight: 600, color: '#2C2520' }}>
+                            {isEditing ? (
+                              <>
+                                <input 
+                                  type="text"
+                                  value={editingUnifiedData.name}
+                                  onChange={e => {
+                                    const val = e.target.value;
+                                    const updatedData = { ...editingUnifiedData, name: val };
+                                    const match = combinedSuggestions.find(s => s.name.toLowerCase().trim() === val.toLowerCase().trim());
+                                    if (match) {
+                                      updatedData.unit = match.unit;
+                                    }
+                                    setEditingUnifiedData(updatedData);
+                                  }}
+                                  list={`suggestions-unified-${item.id}`}
+                                  style={{ width: '100%', padding: '4px', border: '1px solid #D4C5B9', borderRadius: '4px', outline: 'none', fontSize: '12px' }}
+                                />
+                                <datalist id={`suggestions-unified-${item.id}`}>
+                                  {getFilteredSuggestions(editingUnifiedData.name).map((s, sIdx) => (
+                                    <option key={sIdx} value={s.name}>
+                                      {s.source === 'КП' ? 'Проектний кошторис' : 'Каталог товарів'}
+                                    </option>
+                                  ))}
+                                </datalist>
+                              </>
+                            ) : (
+                              item.name
+                            )}
+                          </td>
+                          
+                          <td style={{ padding: '8px 12px', textAlign: 'center', color: '#8B7D73' }}>
+                            {isEditing ? (
+                              <input 
+                                type="date"
+                                value={editingUnifiedData.date}
+                                onChange={e => setEditingUnifiedData({...editingUnifiedData, date: e.target.value})}
+                                style={{ width: '100%', padding: '3px', border: '1px solid #D4C5B9', borderRadius: '4px', outline: 'none', fontSize: '11px', textAlign: 'center' }}
+                              />
+                            ) : (
+                              item.date !== '—' ? new Date(item.date).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
+                            )}
+                          </td>
+
+                          <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 700, color: '#2C2520' }}>
+                            {isEditing ? (
+                              <input 
+                                type="number"
+                                step="any"
+                                value={editingUnifiedData.quantity}
+                                onChange={e => setEditingUnifiedData({...editingUnifiedData, quantity: e.target.value})}
+                                style={{ width: '60px', padding: '4px', border: '1px solid #D4C5B9', borderRadius: '4px', outline: 'none', fontSize: '12px', textAlign: 'center' }}
+                              />
+                            ) : (
+                              `${item.quantity} ${item.unit}`
+                            )}
+                          </td>
+                          
+                          <td style={{ padding: '8px 12px', textAlign: 'center', color: '#8B7D73' }}>
+                            {isEditing ? (
+                              <div style={{ display: 'flex', gap: '3px', alignItems: 'center', justifyContent: 'center' }}>
+                                <input 
+                                  type="number"
+                                  step="any"
+                                  value={editingUnifiedData.price}
+                                  placeholder="0.00"
+                                  onChange={e => setEditingUnifiedData({...editingUnifiedData, price: e.target.value})}
+                                  style={{ width: '55px', padding: '4px', border: '1px solid #D4C5B9', borderRadius: '4px', outline: 'none', fontSize: '12px', textAlign: 'center' }}
+                                />
+                                <select 
+                                  value={editingUnifiedData.currency}
+                                  onChange={e => setEditingUnifiedData({...editingUnifiedData, currency: e.target.value})}
+                                  style={{ padding: '4px', border: '1px solid #D4C5B9', borderRadius: '4px', background: '#FFFFFF', fontSize: '11px', outline: 'none' }}
+                                >
+                                  <option value="UAH">₴</option>
+                                  <option value="USD">$</option>
+                                </select>
+                              </div>
+                            ) : (
+                              item.price !== null && item.price !== 0 ? (
+                                item.currency === 'USD' ? `$${item.price.toLocaleString()}` : `${item.price.toLocaleString()} ₴`
+                              ) : (
+                                <span style={{ fontStyle: 'italic', fontSize: '11px', color: '#B3A395' }}>без ціни</span>
+                              )
+                            )}
+                          </td>
+                          
+                          <td style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 800, color: (isEditing ? editingUnifiedData.currency : item.currency) === 'USD' ? '#1D4ED8' : '#C2410C' }}>
+                            {cost > 0 ? (
+                              (isEditing ? editingUnifiedData.currency : item.currency) === 'USD' ? `$${cost.toLocaleString()}` : `${cost.toLocaleString()} ₴`
+                            ) : '—'}
+                          </td>
+                          
+                          <td style={{ padding: '8px 12px', color: '#8B7D73', fontSize: '11.5px' }}>
+                            {isEditing ? (
+                              <input 
+                                type="text"
+                                value={editingUnifiedData.note}
+                                onChange={e => setEditingUnifiedData({...editingUnifiedData, note: e.target.value})}
+                                style={{ width: '100%', padding: '4px', border: '1px solid #D4C5B9', borderRadius: '4px', outline: 'none', fontSize: '12px' }}
+                              />
+                            ) : (
+                              item.shipInfo && item.shipInfo.isShipment ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                  {item.shipInfo.carrier && (
+                                    <span style={{ 
+                                      background: '#FAF6F0', 
+                                      border: '1px solid #D4C5B9', 
+                                      borderRadius: '4px', 
+                                      padding: '1px 6px', 
+                                      fontSize: '9.5px', 
+                                      color: '#8B7D73',
+                                      fontWeight: 700,
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}>
+                                      🚚 {item.shipInfo.carrier}
+                                      {item.shipInfo.trackingNumber ? ` (${item.shipInfo.trackingNumber})` : ''}
+                                    </span>
+                                  )}
+                                  <span>{item.shipInfo.cleanNote || '—'}</span>
+                                </div>
+                              ) : (
+                                item.note || '—'
+                              )
+                            )}
+                          </td>
+
+                          <td style={{ padding: '8px 12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                            {isEditing ? (
+                              <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                                <button 
+                                  onClick={() => handleSaveUnifiedRow(item)}
+                                  style={{
+                                    background: '#E6F4EA', color: '#137333', border: '1px solid #CEEAD6',
+                                    borderRadius: '4px', padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', gap: '3px'
+                                  }}
+                                >
+                                  <Check size={12} /> Зберегти
+                                </button>
+                                <button 
+                                  onClick={() => setEditingUnifiedId(null)}
+                                  style={{
+                                    background: '#FCE8E6', color: '#C5221F', border: '1px solid #FAD2CF',
+                                    borderRadius: '4px', padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', gap: '3px'
+                                  }}
+                                >
+                                  <X size={12} /> Скасувати
+                                </button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                                <button 
+                                  onClick={() => handleEditUnifiedRow(item)}
+                                  disabled={item.addedToDebt}
+                                  title={item.addedToDebt ? "Позиція перенесена в борг. Вилучіть її з боргу, щоб редагувати" : ""}
+                                  style={{
+                                    background: '#FAF6F0', color: '#8B7D73', border: '1px solid #D4C5B9',
+                                    borderRadius: '4px', padding: '4px 6px', fontSize: '11px', fontWeight: 600, cursor: item.addedToDebt ? 'not-allowed' : 'pointer',
+                                    display: 'flex', alignItems: 'center', gap: '3px', opacity: item.addedToDebt ? 0.5 : 1
+                                  }}
+                                >
+                                  <Pencil size={11} /> Редагувати
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteUnifiedRow(item)}
+                                  disabled={item.addedToDebt}
+                                  title={item.addedToDebt ? "Позиція перенесена в борг. Вилучіть її з боргу, щоб видалити" : ""}
+                                  style={{
+                                    background: '#FCE8E6', color: '#C5221F', border: '1px solid #FAD2CF',
+                                    borderRadius: '4px', padding: '4px 6px', fontSize: '11px', fontWeight: 600, cursor: item.addedToDebt ? 'not-allowed' : 'pointer',
+                                    display: 'flex', alignItems: 'center', gap: '3px', opacity: item.addedToDebt ? 0.5 : 1
+                                  }}
+                                >
+                                  <Trash2 size={11} /> Видалити
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{ background: '#FAF8F5', borderTop: '2px solid #D4C5B9', fontWeight: 800 }}>
+                      <td colSpan="5" style={{ padding: '10px 12px', color: '#2C2520', textAlign: 'right', textTransform: 'uppercase' }}>
+                        Підсумок дня:
+                      </td>
+                      <td style={{ padding: '10px 12px', textAlign: 'center', color: '#2C2520' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                          {totalUAH > 0 && <span style={{ color: '#C2410C' }}>{totalUAH.toLocaleString('uk-UA')} ₴</span>}
+                          {totalUSD > 0 && <span style={{ color: '#1D4ED8' }}>${totalUSD.toLocaleString('en-US')}</span>}
+                          {totalUAH === 0 && totalUSD === 0 && <span>—</span>}
+                        </div>
+                      </td>
+                      <td colSpan="2" style={{ padding: '10px 12px' }}></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          );
+        };
 
         return (
-          <div style={{ background: '#FFFFFF', padding: '24px', maxWidth: '1200px', boxSizing: 'border-box' }}>
-            {/* Cards stats header */}
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-              <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '14px', borderRadius: '10px' }}>
-                <div style={{ fontSize: '10px', color: '#16A34A', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Видано за контрактом</div>
-                <div style={{ fontSize: '20px', fontWeight: 900, color: '#14532D', marginTop: '4px' }}>{totalContractPos} поз.</div>
+          <div style={{ background: '#FFFFFF', padding: '24px', maxWidth: '100%', boxSizing: 'border-box' }}>
+            {/* Combined compact stats bar */}
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: isMobile ? 'column' : 'row', 
+              alignItems: isMobile ? 'stretch' : 'center', 
+              gap: isMobile ? '10px' : '24px', 
+              background: '#FAF6F0', 
+              border: '1px solid #D4C5B9', 
+              padding: '8px 16px', 
+              borderRadius: '8px',
+              marginBottom: '16px',
+              fontSize: '12px',
+              fontWeight: 650,
+              color: '#2C2520'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '15px' }}>📦</span>
+                <span style={{ color: '#8B7D73' }}>Видано матеріалів:</span>
+                <span style={{ fontWeight: 800 }}>{grandTotalPos} поз.</span>
               </div>
-              <div style={{ background: '#FFF7ED', border: '1px solid #FFEDD5', padding: '14px', borderRadius: '10px' }}>
-                <div style={{ fontSize: '10px', color: '#EA580C', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Видано в борг зі складу</div>
-                <div style={{ fontSize: '20px', fontWeight: 900, color: '#7C2D12', marginTop: '4px' }}>{totalDebtPos} поз.</div>
+              
+              {!isMobile && <div style={{ width: '1px', height: '14px', background: '#D4C5B9' }} />}
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '15px' }}>🇺🇦</span>
+                <span style={{ color: '#8C7355' }}>Сума UAH:</span>
+                <span style={{ fontWeight: 800, color: '#C2410C' }}>{grandTotalUAH.toLocaleString('uk-UA')} ₴</span>
               </div>
-              <div style={{ background: '#FAF6F0', border: '1px solid #D4C5B9', padding: '14px', borderRadius: '10px' }}>
-                <div style={{ fontSize: '10px', color: '#8B7D73', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Загалом видано матеріалів</div>
-                <div style={{ fontSize: '20px', fontWeight: 900, color: '#2C2520', marginTop: '4px' }}>{grandTotalPos} поз.</div>
+              
+              {!isMobile && <div style={{ width: '1px', height: '14px', background: '#D4C5B9' }} />}
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '15px' }}>🇺🇸</span>
+                <span style={{ color: '#4A607A' }}>Сума USD:</span>
+                <span style={{ fontWeight: 800, color: '#1D4ED8' }}>${grandTotalUSD.toLocaleString('en-US')}</span>
               </div>
             </div>
 
-            {/* Title & Search bar */}
+            {/* Title & Actions */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '18px' }}>📋</span>
                 <h5 style={{ margin: 0, fontSize: '13.5px', fontWeight: 850, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Зведена відомість видачі матеріалів
                 </h5>
               </div>
-              <div style={{ position: 'relative', width: isMobile ? '100%' : '300px' }}>
-                <input 
-                  type="text"
-                  placeholder="Швидкий пошук за назвою чи приміткою..."
-                  value={unifiedSearch}
-                  onChange={e => setUnifiedSearch(e.target.value)}
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: isMobile ? '100%' : 'auto', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => setShowKPImportModal(true)}
                   style={{
-                    width: '100%', padding: '6px 10px 6px 12px', fontSize: '12px', border: '1px solid #D4C5B9',
-                    borderRadius: '6px', outline: 'none', background: '#FFFFFF', color: '#2C2520', boxSizing: 'border-box'
+                    background: '#FAF6F0', color: '#8B7D73', border: '1px solid #D4C5B9', borderRadius: '6px',
+                    padding: '5px 12px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', cursor: 'pointer',
+                    height: '28px', transition: 'background 0.2s', boxSizing: 'border-box'
                   }}
-                />
+                  onMouseEnter={e => e.currentTarget.style.background = '#EAE7E2'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#FAF6F0'}
+                >
+                  <FileText size={12} /> Імпорт з КП
+                </button>
+                <div style={{ position: 'relative', width: isMobile ? '100%' : '250px' }}>
+                  <input 
+                    type="text"
+                    placeholder="Швидкий пошук за назвою, ТТН, перевізником..."
+                    value={unifiedSearch}
+                    onChange={e => setUnifiedSearch(e.target.value)}
+                    style={{
+                      width: '100%', padding: '6px 10px', fontSize: '12px', border: '1px solid #D4C5B9',
+                      borderRadius: '6px', outline: 'none', background: '#FFFFFF', color: '#2C2520', boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <button 
+                  onClick={() => setShowQuickShipment(true)}
+                  style={{
+                    background: '#C4B4A6', color: '#FFFFFF', border: 'none', borderRadius: '6px',
+                    padding: '6px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '6px', outline: 'none', whiteSpace: 'nowrap'
+                  }}
+                >
+                  <span>🚛</span> Швидка видача
+                </button>
               </div>
             </div>
 
-            {filteredList.length === 0 ? (
+            {filteredMaterials.length === 0 ? (
               <div style={{ fontSize: '12px', color: '#8B7D73', fontStyle: 'italic', padding: '20px 0', textAlign: 'center', border: '1px dashed #D4C5B9', borderRadius: '8px' }}>
-                Матеріалів за вказаними критеріями не знайдено.
+                Виданих матеріалів не знайдено.
               </div>
             ) : (
-              <div style={{ border: '1px solid #D4C5B9', borderRadius: '8px', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ background: '#FAF6F0', borderBottom: '1px solid #D4C5B9' }}>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520' }}>Матеріал</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '90px', textAlign: 'center' }}>Кількість</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '95px', textAlign: 'center' }}>Дата видачі</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '130px', textAlign: 'center' }}>Тип походження</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '90px', textAlign: 'center' }}>Ціна</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '100px', textAlign: 'center' }}>Загальна сума</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '220px' }}>Супровідна інформація / Примітка</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredList.map(item => {
-                      const cost = item.price ? item.quantity * item.price : null;
-                      return (
-                        <tr key={item.id} style={{ borderBottom: '1px solid #FAF6F0', transition: 'background 0.15s' }}>
-                          {/* Name */}
-                          <td style={{ padding: '10px 12px', fontWeight: 600, color: '#2C2520' }}>{item.name}</td>
-                          
-                          {/* Qty & Unit */}
-                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: '#2C2520' }}>
-                            {item.quantity} {item.unit}
-                          </td>
-                          
-                          {/* Date */}
-                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#8B7D73', whiteSpace: 'nowrap' }}>
-                            {item.date !== '—' ? new Date(item.date).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'}
-                          </td>
-                          
-                          {/* Type badges */}
-                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                            {item.type === 'По контракту' ? (
-                              <span style={{ background: '#E6F4EA', color: '#137333', border: '1px solid #CEEAD6', fontSize: '9.5px', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', display: 'inline-block', whiteSpace: 'nowrap' }}>
-                                📊 ПО КОНТРАКТУ
-                              </span>
-                            ) : (
-                              <span style={{ background: '#FFF3E0', color: '#B06000', border: '1px solid #FFE0B2', fontSize: '9.5px', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', display: 'inline-block', whiteSpace: 'nowrap' }}>
-                                📦 В БОРГ (СКЛАД)
-                              </span>
-                            )}
-                          </td>
-                          
-                          {/* Price */}
-                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#8B7D73' }}>
-                            {item.price !== null ? (
-                              item.currency === 'USD' ? `$${item.price.toLocaleString()}` : `${item.price.toLocaleString()} ₴`
-                            ) : (
-                              <span style={{ fontStyle: 'italic', fontSize: '11px', color: '#B3A395' }}>неоцінено</span>
-                            )}
-                          </td>
-                          
-                          {/* Total Cost */}
-                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: item.currency === 'USD' ? '#1D4ED8' : '#C2410C' }}>
-                            {cost !== null ? (
-                              item.currency === 'USD' ? `$${cost.toLocaleString()}` : `${cost.toLocaleString()} ₴`
-                            ) : '—'}
-                          </td>
-                          
-                          {/* Note */}
-                          <td style={{ padding: '10px 12px', color: '#8B7D73', fontSize: '11.5px' }}>{item.note}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div>
+                {dateGroups.map(group => (
+                  <div key={group.date}>
+                    {renderMaterialsTable(group)}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -1968,7 +2616,7 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
       })()}
 
       {activeTab === 'history' && (
-        <div style={{ background: '#FFFFFF', padding: '24px', maxWidth: '1200px', boxSizing: 'border-box' }}>
+        <div style={{ background: '#FFFFFF', padding: '24px', maxWidth: '100%', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '16px' }}>
             <Layers size={15} color="#8B7D73" />
             <span style={{ fontSize: '11px', fontWeight: 800, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -2036,6 +2684,9 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
           )}
         </div>
       )}
+      {showKPImportModal && (
+        <KPSelectionModal isOpen={true} onClose={() => setShowKPImportModal(false)} onSelect={handleSelectKPForProject} />
+      )}
       </div>
   );
 }
@@ -2044,10 +2695,37 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
 // БЛОК ФІНАНСИ (Side-by-side USD/UAH, payments, add form)
 // -------------------------------------------------------------
 function ProjectFinancesBlock({ project, validPayments, debtUSD, debtUAH, onUpdate, isMobile }) {
+  const sortedPayments = [...validPayments].sort((a, b) => {
+    const dateA = new Date(a.date || 0);
+    const dateB = new Date(b.date || 0);
+    if (dateB - dateA !== 0) return dateB - dateA;
+    
+    const timeA = new Date(a.created_at || a.id || 0);
+    const timeB = new Date(b.created_at || b.id || 0);
+    return timeB - timeA;
+  });
+
   const [saving, setSaving] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [editingPaymentId, setEditingPaymentId] = useState(null);
-  const [newPayment, setNewPayment] = useState({ sum: '', currency: 'UAH', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '' });
+  const [newPayment, setNewPayment] = useState({ sum: '', currency: 'UAH', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '', conversion_rate: '' });
+
+  // Mutual Offset (Conversion) Modal States
+  const [showMutualOffsetModal, setShowMutualOffsetModal] = useState(false);
+  const [mutualOffsetData, setMutualOffsetData] = useState({
+    isEdit: false,
+    fromCurrency: 'UAH',
+    toCurrency: 'USD',
+    fromAmount: '',
+    toAmount: '',
+    rate: '',
+    date: new Date().toISOString().split('T')[0],
+    note: '',
+    uahId: null,
+    usdId: null,
+    uahIsNegative: true,
+    usdIsNegative: false
+  });
 
   const handleCancelPayment = async (paymentId) => {
     if (!window.confirm('Ви впевнені, що хочете скасувати цей платіж?')) return;
@@ -2074,13 +2752,38 @@ function ProjectFinancesBlock({ project, validPayments, debtUSD, debtUAH, onUpda
   };
 
   const handleStartEdit = (payment) => {
+    if (payment.is_conversion) {
+      // Edit conversion payment using MutualOffsetModal
+      const related = validPayments.find(r => r.id === payment.related_payment_id);
+      const uahPay = payment.currency === 'UAH' ? payment : related;
+      const usdPay = payment.currency === 'USD' ? payment : related;
+      
+      setMutualOffsetData({
+        isEdit: true,
+        fromCurrency: uahPay?.sum < 0 ? 'UAH' : 'USD',
+        toCurrency: uahPay?.sum < 0 ? 'USD' : 'UAH',
+        fromAmount: uahPay ? Math.abs(uahPay.sum) : 0,
+        toAmount: usdPay ? Math.abs(usdPay.sum) : 0,
+        rate: payment.conversion_rate || '',
+        date: payment.date,
+        note: payment.note || '',
+        uahId: uahPay?.id || null,
+        usdId: usdPay?.id || null,
+        uahIsNegative: uahPay ? uahPay.sum < 0 : true,
+        usdIsNegative: usdPay ? usdPay.sum < 0 : false
+      });
+      setShowMutualOffsetModal(true);
+      return;
+    }
+
     setEditingPaymentId(payment.id);
     setNewPayment({
       sum: payment.sum,
       currency: payment.currency,
       date: payment.date,
       payment_type: payment.payment_type || 'Оплата',
-      note: payment.note || ''
+      note: payment.note || '',
+      conversion_rate: payment.conversion_rate || ''
     });
     setShowAdd(true);
   };
@@ -2088,12 +2791,12 @@ function ProjectFinancesBlock({ project, validPayments, debtUSD, debtUAH, onUpda
   const handleCancelForm = () => {
     setShowAdd(false);
     setEditingPaymentId(null);
-    setNewPayment({ sum: '', currency: 'UAH', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '' });
+    setNewPayment({ sum: '', currency: 'UAH', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '', conversion_rate: '' });
   };
 
   const handleShowAddForm = () => {
     setEditingPaymentId(null);
-    setNewPayment({ sum: '', currency: 'UAH', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '' });
+    setNewPayment({ sum: '', currency: 'UAH', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '', conversion_rate: '' });
     setShowAdd(true);
   };
 
@@ -2110,27 +2813,94 @@ function ProjectFinancesBlock({ project, validPayments, debtUSD, debtUAH, onUpda
         date: newPayment.date,
         payment_type: newPayment.payment_type,
         note: newPayment.note,
-        status: 'Оплачено'
+        status: 'Оплачено',
+        conversion_rate: newPayment.conversion_rate ? parseFloat(newPayment.conversion_rate) : null
       });
       await crmApi.saveAuditLog({
         projectId: project.id,
         clientId: project.client_id,
         actionType: isEdit ? 'Редагування платежу' : 'Додавання платежу',
-        details: `${isEdit ? 'Відредаговано' : 'Додано'} платіж: ${newPayment.sum} ${newPayment.currency} (${newPayment.payment_type}) від ${newPayment.date} ${newPayment.note ? `[${newPayment.note}]` : ''}`
+        details: `${isEdit ? 'Відредаговано' : 'Додано'} платіж: ${newPayment.sum} ${newPayment.currency} (${newPayment.payment_type}) від ${newPayment.date} ${newPayment.conversion_rate ? `[курс: ${newPayment.conversion_rate}]` : ''} ${newPayment.note ? `[${newPayment.note}]` : ''}`
       });
       setShowAdd(false);
       setEditingPaymentId(null);
-      setNewPayment({ sum: '', currency: 'UAH', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '' });
+      setNewPayment({ sum: '', currency: 'UAH', date: new Date().toISOString().split('T')[0], payment_type: 'Оплата', note: '', conversion_rate: '' });
       if (onUpdate) onUpdate();
     } catch (err) {
-      alert('Помилка збереження');
+      alert('Помилка збереження: ' + err.message);
     } finally {
       setSaving(false);
     }
   };
 
+  const hasCrossCurrencyImbalance = (debtUAH < -0.01 && debtUSD > 0.01) || (debtUSD < -0.01 && debtUAH > 0.01);
+
   return (
     <div style={{ width: '100%', boxSizing: 'border-box' }}>
+      {/* Cross-Currency Imbalance Warning Banner */}
+      {hasCrossCurrencyImbalance && (
+        <div style={{
+          background: 'linear-gradient(135deg, #FFF9F2 0%, #FAF0E6 100%)',
+          border: '1px dashed #D4C5B9',
+          borderRadius: '10px',
+          padding: '14px',
+          marginBottom: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          boxShadow: '0 2px 8px rgba(139, 125, 115, 0.04)',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '16px' }}>⚠️</span>
+            <div style={{ fontSize: '11px', fontWeight: 800, color: '#5C4A3C', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Виявлено крос-валютний баланс
+            </div>
+          </div>
+          <div style={{ fontSize: '12px', color: '#5C4A3C', lineHeight: '1.4' }}>
+            Клієнт має {debtUSD > 0 ? `борг $${Number(debtUSD.toFixed(2)).toLocaleString()} USD` : `переплату $${Number(Math.abs(debtUSD).toFixed(2)).toLocaleString()} USD`} та {debtUAH > 0 ? `борг ${Number(debtUAH.toFixed(2)).toLocaleString()} UAH` : `переплату ${Number(Math.abs(debtUAH).toFixed(2)).toLocaleString()} UAH`}.
+            Ви можете провести взаємозалік (конвертацію), щоб звести баланси.
+          </div>
+          <button
+            onClick={() => {
+              const fromCurr = debtUAH < 0 ? 'UAH' : 'USD';
+              const toCurr = debtUAH < 0 ? 'USD' : 'UAH';
+              const amountVal = fromCurr === 'UAH' ? Math.abs(debtUAH) : Math.abs(debtUSD);
+              setMutualOffsetData({
+                isEdit: false,
+                fromCurrency: fromCurr,
+                toCurrency: toCurr,
+                fromAmount: amountVal,
+                toAmount: '',
+                rate: '',
+                date: new Date().toISOString().split('T')[0],
+                note: `Взаємозалік ${fromCurr} в ${toCurr}`
+              });
+              setShowMutualOffsetModal(true);
+            }}
+            style={{
+              background: '#C4B4A6',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px 14px',
+              fontSize: '11px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              alignSelf: 'flex-start',
+              transition: 'background 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#B3A395'}
+            onMouseLeave={e => e.currentTarget.style.background = '#C4B4A6'}
+          >
+            🔁 Провести взаємозалік
+          </button>
+        </div>
+      )}
       {/* Transaction Journal Section */}
       <div style={{ 
         display: 'flex', 
@@ -2209,6 +2979,17 @@ function ProjectFinancesBlock({ project, validPayments, debtUSD, debtUAH, onUpda
                 <option value="Повернення">Повернення</option>
               </select>
             </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#2C2520', marginBottom: '4px' }}>Курс приходу</label>
+              <input 
+                type="number" 
+                step="any"
+                value={newPayment.conversion_rate || ''} 
+                onChange={e => setNewPayment({...newPayment, conversion_rate: e.target.value})} 
+                style={{ width: '100%', padding: '6px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', outline: 'none', background: '#FFFFFF', boxSizing: 'border-box' }} 
+                placeholder="Не вказано" 
+              />
+            </div>
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#2C2520', marginBottom: '4px' }}>Коментар до платежу</label>
@@ -2243,7 +3024,7 @@ function ProjectFinancesBlock({ project, validPayments, debtUSD, debtUAH, onUpda
         <div style={{ textAlign: 'center', padding: '30px', fontSize: '12px', color: '#8B7D73', border: '1px dashed #D4C5B9', borderRadius: '10px' }}>Оплат по цій угоді ще не надходило</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
-          {validPayments.map(p => {
+          {sortedPayments.map(p => {
             const isUSD = p.currency === 'USD';
             return (
               <div 
@@ -2267,6 +3048,16 @@ function ProjectFinancesBlock({ project, validPayments, debtUSD, debtUAH, onUpda
                   <span style={{ fontSize: '13px', fontWeight: 800, color: isUSD ? '#1D4ED8' : '#C2410C', minWidth: isMobile ? 'auto' : '76px' }}>
                     {isUSD ? `$${Number(p.sum).toLocaleString()}` : `${Number(p.sum).toLocaleString()} ₴`}
                   </span>
+                  {p.is_conversion && (
+                    <span style={{ background: '#FAF6F0', color: '#8B7D73', border: '1px solid #D4C5B9', fontSize: '9px', fontWeight: 800, padding: '1px 6px', borderRadius: '4px' }}>
+                      🔁 Взаємозалік
+                    </span>
+                  )}
+                  {p.conversion_rate && (
+                    <span style={{ fontSize: '11px', color: '#8B7D73', fontStyle: 'italic' }}>
+                      (курс: {Number(p.conversion_rate).toLocaleString('uk-UA')})
+                    </span>
+                  )}
                   <span style={{ fontSize: '10px', color: '#8B7D73', background: '#FFFFFF', border: '1px solid #D4C5B9', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
                     {p.date}
                   </span>
@@ -2328,987 +3119,291 @@ function ProjectFinancesBlock({ project, validPayments, debtUSD, debtUAH, onUpda
           })}
         </div>
       )}
+      {showMutualOffsetModal && (
+        <MutualOffsetModal
+          isOpen={true}
+          onClose={() => setShowMutualOffsetModal(false)}
+          data={mutualOffsetData}
+          project={project}
+          onSave={() => {
+            if (onUpdate) onUpdate();
+          }}
+        />
+      )}
     </div>
   );
 }
 
 // -------------------------------------------------------------
-// БЛОК МАТЕРІАЛИ (Ordered list, shipments timeline, custom builder)
+// МОДАЛЬНЕ ВІКНО КРОСС-ВАЛЮТНОГО ВЗАЄМОЗАЛІКУ
 // -------------------------------------------------------------
-function ProjectMaterialsBlock({ project, materialItems, shipments, onUpdate, leftToIssue, isMobile }) {
+function MutualOffsetModal({ isOpen, onClose, data, project, onSave }) {
+  const [fromCurrency, setFromCurrency] = useState(data.fromCurrency || 'UAH');
+  const [toCurrency, setToCurrency] = useState(data.toCurrency || 'USD');
+  const [fromAmount, setFromAmount] = useState(data.fromAmount || '');
+  const [toAmount, setToAmount] = useState(data.toAmount || '');
+  const [rate, setRate] = useState(data.rate || '');
+  const [date, setDate] = useState(data.date || new Date().toISOString().split('T')[0]);
+  const [note, setNote] = useState(data.note || '');
   const [saving, setSaving] = useState(false);
-  const [showAdd, setShowAdd] = useState(false);
-  const [showKPModal, setShowKPModal] = useState(false);
-  
-  // Нові стани для додавання позиції матеріалу
-  const [showAddNewItem, setShowAddNewItem] = useState(false);
-  const [newItemsList, setNewItemsList] = useState([{ name: '', quantity: '', price: '', note: '' }]);
-  
-  // Нове відвантаження - За замовчуванням Самовивіз
-  const [newShipment, setNewShipment] = useState({ date: new Date().toISOString().split('T')[0], carrier: 'Самовивіз', tracking_number: '', note: '' });
-  const [shipQtys, setShipQtys] = useState({});
-  const [shipPrices, setShipPrices] = useState({});
-  const [shipCurrencies, setShipCurrencies] = useState({});
-  const [newItems, setNewItems] = useState([]);
-  const [addToContract, setAddToContract] = useState(true);
 
-  // Оплата при відвантаженні
-  const [paymentAmount, setPaymentAmount] = useState('');
-  const [paymentCurrency, setPaymentCurrency] = useState('UAH');
-  const [paymentType, setPaymentType] = useState('Готівка');
-  const [paymentNote, setPaymentNote] = useState('');
+  const handleFromAmountChange = (val) => {
+    setFromAmount(val);
+    const numVal = parseFloat(val);
+    const numRate = parseFloat(rate);
+    if (!isNaN(numVal) && !isNaN(numRate) && numRate > 0) {
+      if (fromCurrency === 'UAH' && toCurrency === 'USD') {
+        setToAmount((numVal / numRate).toFixed(2));
+      } else if (fromCurrency === 'USD' && toCurrency === 'UAH') {
+        setToAmount((numVal * numRate).toFixed(2));
+      }
+    }
+  };
+
+  const handleToAmountChange = (val) => {
+    setToAmount(val);
+    const numVal = parseFloat(fromAmount);
+    const numTo = parseFloat(val);
+    if (!isNaN(numVal) && numVal > 0 && !isNaN(numTo) && numTo > 0) {
+      if (fromCurrency === 'UAH' && toCurrency === 'USD') {
+        setRate((numVal / numTo).toFixed(4));
+      } else if (fromCurrency === 'USD' && toCurrency === 'UAH') {
+        setRate((numTo / numVal).toFixed(4));
+      }
+    }
+  };
+
+  const handleRateChange = (val) => {
+    setRate(val);
+    const numVal = parseFloat(fromAmount);
+    const numRate = parseFloat(val);
+    if (!isNaN(numVal) && !isNaN(numRate) && numRate > 0) {
+      if (fromCurrency === 'UAH' && toCurrency === 'USD') {
+        setToAmount((numVal / numRate).toFixed(2));
+      } else if (fromCurrency === 'USD' && toCurrency === 'UAH') {
+        setToAmount((numVal * numRate).toFixed(2));
+      }
+    }
+  };
+
+  const handleCurrencySwap = () => {
+    const tempCurr = fromCurrency;
+    setFromCurrency(toCurrency);
+    setToCurrency(tempCurr);
+    const tempAmt = fromAmount;
+    setFromAmount(toAmount);
+    setToAmount(tempAmt);
+  };
 
   useEffect(() => {
-    const initialQtys = {};
-    const initialPrices = {};
-    const initialCurrencies = {};
-    materialItems.forEach(i => {
-      initialQtys[i.id] = 0;
-      initialPrices[i.id] = parseFloat(i.price) || 0;
-      initialCurrencies[i.id] = 'UAH';
-    });
-    setShipQtys(initialQtys);
-    setShipPrices(initialPrices);
-    setShipCurrencies(initialCurrencies);
-  }, [materialItems]);
+    setFromCurrency(data.fromCurrency || 'UAH');
+    setToCurrency(data.toCurrency || 'USD');
+    setFromAmount(data.fromAmount || '');
+    setToAmount(data.toAmount || '');
+    setRate(data.rate || '');
+    setDate(data.date || new Date().toISOString().split('T')[0]);
+    setNote(data.note || '');
+  }, [data, isOpen]);
 
-  const getIssuedQty = (itemId) => {
-    let sum = 0;
-    shipments.forEach(s => s.shipment_items?.forEach(si => { if (si.project_item_id === itemId) sum += parseFloat(si.quantity || 0); }));
-    return sum;
-  };
+  if (!isOpen) return null;
 
-  const handleSaveShipment = async () => {
-    // 1. Товари
-    const itemsToShip = Object.keys(shipQtys)
-      .map(id => ({
-        project_item_id: id,
-        quantity: parseFloat(shipQtys[id]) || 0,
-        price: parseFloat(shipPrices[id]) || 0,
-        currency: shipCurrencies[id] || 'UAH'
-      }))
-      .filter(i => i.quantity > 0);
+  const handleConfirm = async () => {
+    const numFrom = parseFloat(fromAmount);
+    const numTo = parseFloat(toAmount);
+    const numRate = parseFloat(rate);
 
-    // 2. Нові товари на льоту
-    const customItems = newItems.filter(item => item.name.trim() !== '' && (parseFloat(item.quantity) || 0) > 0);
-
-    if (itemsToShip.length === 0 && customItems.length === 0) {
-      return alert('Вкажіть кількість для відвантаження');
-    }
+    if (isNaN(numFrom) || numFrom <= 0) return alert('Вкажіть коректну суму списання!');
+    if (isNaN(numTo) || numTo <= 0) return alert('Вкажіть коректну суму зарахування!');
+    if (isNaN(numRate) || numRate <= 0) return alert('Вкажіть коректний курс!');
 
     setSaving(true);
     try {
-      const savedCustomItems = await crmApi.createProjectItems(project.id, customItems);
-      const allShipmentItems = [...itemsToShip, ...savedCustomItems];
+      const uahVal = fromCurrency === 'UAH' ? numFrom : numTo;
+      const usdVal = fromCurrency === 'USD' ? numFrom : numTo;
+      const uahIsNegative = data.isEdit ? data.uahIsNegative : (fromCurrency === 'UAH');
+      const usdIsNegative = data.isEdit ? data.usdIsNegative : (fromCurrency === 'USD');
 
-      // Вираховуємо загальну вартість
-      let totalUSD = 0;
-      let totalUAH = 0;
-      allShipmentItems.forEach(item => {
-        const cost = item.quantity * item.price;
-        if (item.currency === 'USD') {
-          totalUSD += cost;
-        } else {
-          totalUAH += cost;
-        }
-      });
+      const uahSum = uahIsNegative ? -uahVal : uahVal;
+      const usdSum = usdIsNegative ? -usdVal : usdVal;
 
-      // Збільшуємо погоджену суму угоди якщо ввімкнено checkbox
-      if (addToContract) {
-        const currentAgreedUSD = parseFloat(project.agreed_sum_usd) || 0;
-        const currentAgreedUAH = parseFloat(project.agreed_sum_uah) || 0;
-        await crmApi.updateProjectAgreedSums(project.id, {
-          usd: currentAgreedUSD + totalUSD,
-          uah: currentAgreedUAH + totalUAH
-        });
-      }
+      const finalNote = note.trim() || `Взаємозалік ${fromCurrency} <-> ${toCurrency} за курсом ${numRate}`;
 
-      // Зберігаємо накладну
-      await crmApi.saveShipment({ project_id: project.id, ...newShipment }, allShipmentItems);
+      const uahId = data.isEdit ? data.uahId : `pay_conv_uah_${Date.now()}`;
+      const usdId = data.isEdit ? data.usdId : `pay_conv_usd_${Date.now()}`;
 
-      // Audit Log for Shipment
-      const itemsCount = allShipmentItems.reduce((acc, item) => acc + item.quantity, 0);
-      const itemsDetails = allShipmentItems.map(si => {
-        const matchingItem = materialItems.find(mi => mi.id === si.project_item_id) || customItems.find(ci => ci.name === si.name);
-        const name = matchingItem ? matchingItem.name : 'Товар';
-        return `${name} (${si.quantity} шт по ${si.price} ${si.currency})`;
-      }).join(', ');
-
-      await crmApi.saveAuditLog({
-        projectId: project.id,
-        clientId: project.client_id,
-        actionType: 'Відвантаження',
-        details: `Створено відвантаження: перевізник "${newShipment.carrier}", ТТН: "${newShipment.tracking_number || '-'}", відвантажено ${itemsCount} од. товару [${itemsDetails}]. ${newShipment.note ? `Коментар: ${newShipment.note}` : ''}`
-      });
-
-      // Записуємо платіж на місці
-      const paidSum = parseFloat(paymentAmount) || 0;
-      if (paidSum > 0) {
-        await crmApi.savePayment({
+      await Promise.all([
+        crmApi.savePayment({
+          id: uahId,
           project_id: project.id,
-          sum: paidSum,
-          currency: paymentCurrency,
-          date: newShipment.date || new Date().toISOString().split('T')[0],
-          payment_type: paymentType,
-          note: paymentNote || `Оплата при відвантаженні (${newShipment.carrier})`,
-          status: 'Оплачено'
-        });
+          sum: uahSum,
+          currency: 'UAH',
+          date: date,
+          payment_type: 'Оплата',
+          note: finalNote,
+          status: 'Оплачено',
+          is_conversion: true,
+          conversion_rate: numRate,
+          related_payment_id: usdId
+        }),
+        crmApi.savePayment({
+          id: usdId,
+          project_id: project.id,
+          sum: usdSum,
+          currency: 'USD',
+          date: date,
+          payment_type: 'Оплата',
+          note: finalNote,
+          status: 'Оплачено',
+          is_conversion: true,
+          conversion_rate: numRate,
+          related_payment_id: uahId
+        })
+      ]);
 
-        await crmApi.saveAuditLog({
-          projectId: project.id,
-          clientId: project.client_id,
-          actionType: 'Додавання платежу',
-          details: `Додано платіж (при відвантаженні): ${paidSum} ${paymentCurrency} (${paymentType}) від ${newShipment.date || new Date().toISOString().split('T')[0]}. ${paymentNote ? `Коментар: ${paymentNote}` : ''}`
-        });
-      }
+      await crmApi.saveAuditLog({
+        projectId: project.id,
+        clientId: project.client_id,
+        actionType: data.isEdit ? 'Редагування взаємозаліку' : 'Взаємозалік',
+        details: `${data.isEdit ? 'Відредаговано' : 'Проведено'} крос-валютний взаємозалік: списано ${fromAmount} ${fromCurrency}, зараховано ${toAmount} ${toCurrency} за курсом ${numRate}. Коментар: "${finalNote}"`
+      });
 
-      // Скидання
-      setShowAdd(false);
-      setNewShipment({ date: new Date().toISOString().split('T')[0], carrier: 'Самовивіз', tracking_number: '', note: '' });
-      setShipQtys({});
-      setShipPrices({});
-      setShipCurrencies({});
-      setNewItems([]);
-      setPaymentAmount('');
-      setPaymentNote('');
-
-      if (onUpdate) onUpdate();
+      onSave();
+      onClose();
     } catch (err) {
-      console.error(err);
-      alert('Помилка збереження відвантаження: ' + err.message);
+      alert('Помилка проведення взаємозаліку: ' + err.message);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleDeleteShipment = async (shipmentId) => {
-    if (!window.confirm('Ви впевнені, що хочете видалити це відвантаження? Товари будуть повернуті до видачі.')) return;
-    setSaving(true);
-    try {
-      const shipmentToDelete = shipments.find(s => s.id === shipmentId);
-      const carrier = shipmentToDelete ? shipmentToDelete.carrier : '';
-      const ttn = shipmentToDelete ? shipmentToDelete.tracking_number : '';
-
-      await crmApi.deleteShipment(shipmentId);
-      
-      await crmApi.saveAuditLog({
-        projectId: project.id,
-        clientId: project.client_id,
-        actionType: 'Видалення відвантаження',
-        details: `Видалено відвантаження (перевізник: "${carrier}"${ttn ? `, ТТН: "${ttn}"` : ''}). Товари повернуто до видачі.`
-      });
-
-      if (onUpdate) onUpdate();
-    } catch (err) {
-      alert('Помилка видалення: ' + err.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSelectKP = async (proposalId) => {
-    setShowKPModal(false);
-    setSaving(true);
-    try {
-      const res = await projectService.importFromProposal(project.id, proposalId);
-      if (res.success) {
-        if (onUpdate) onUpdate();
-      } else {
-        alert('Помилка імпорту з КП: ' + res.error);
-      }
-    } catch (err) {
-      alert('Помилка імпорту');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleUpdateItemNote = async (item, note) => {
-    try {
-      const oldNote = item.note || '';
-      await crmApi.updateProjectItemNote(item.id, note);
-      
-      await crmApi.saveAuditLog({
-        projectId: project.id,
-        clientId: project.client_id,
-        actionType: 'Редагування товару',
-        details: `Змінено коментар товару "${item.name}" з "${oldNote}" на "${note}".`
-      });
-
-      if (onUpdate) onUpdate();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleUpdateItemQty = async (item, qty) => {
-    try {
-      const oldQty = item.quantity;
-      await crmApi.updateProjectItemQuantity(item.id, qty);
-      
-      await crmApi.saveAuditLog({
-        projectId: project.id,
-        clientId: project.client_id,
-        actionType: 'Редагування товару',
-        details: `Змінено кількість товару "${item.name}" з ${oldQty} шт на ${qty} шт.`
-      });
-
-      if (onUpdate) onUpdate();
-    } catch (err) {
-      console.error(err);
-      alert('Помилка оновлення кількості: ' + err.message);
-    }
-  };
-
-  const handleUpdateItemPrice = async (item, price) => {
-    try {
-      const oldPrice = item.price || 0;
-      await crmApi.updateProjectItemPrice(item.id, price);
-      
-      await crmApi.saveAuditLog({
-        projectId: project.id,
-        clientId: project.client_id,
-        actionType: 'Редагування товару',
-        details: `Змінено ціну товару "${item.name}" з $${parseFloat(oldPrice).toFixed(2)} на $${parseFloat(price).toFixed(2)}.`
-      });
-
-      if (onUpdate) onUpdate();
-    } catch (err) {
-      console.error(err);
-      alert('Помилка оновлення ціни: ' + err.message);
-    }
-  };
-
-  const handleAddNewItem = async () => {
-    const validItems = newItemsList.filter(item => item.name.trim() !== '' && (parseFloat(item.quantity) || 0) > 0);
-    if (validItems.length === 0) {
-      return alert('Будь ласка, заповніть хоча б одну позицію товару з кількістю більше 0');
-    }
-
-    setSaving(true);
-    try {
-      for (const item of validItems) {
-        const qty = parseFloat(item.quantity);
-        const price = parseFloat(item.price) || 0;
-        await crmApi.addProjectItem(project.id, {
-          name: item.name.trim(),
-          quantity: qty,
-          price: price,
-          note: item.note.trim()
-        });
-
-        await crmApi.saveAuditLog({
-          projectId: project.id,
-          clientId: project.client_id,
-          actionType: 'Додавання товару',
-          details: `Додано товар "${item.name.trim()}" у кількості ${qty} шт до видачі (Ціна: $${price.toFixed(2)}, Сума: $${(qty * price).toFixed(2)}).${item.note.trim() ? ` Коментар: "${item.note.trim()}"` : ''}`
-        });
-      }
-
-      setShowAddNewItem(false);
-      setNewItemsList([{ name: '', quantity: '', price: '', note: '' }]);
-      if (onUpdate) onUpdate();
-    } catch (err) {
-      alert('Помилка додавання товару: ' + err.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDeleteItem = async (item) => {
-    const issued = getIssuedQty(item.id);
-    if (issued > 0) {
-      return alert('Неможливо видалити товар, який вже був частково або повністю відвантажений.');
-    }
-    if (!window.confirm(`Ви впевнені, що хочете видалити товар "${item.name}" зі специфікації?`)) return;
-
-    try {
-      await crmApi.deleteProjectItem(item.id);
-      
-      await crmApi.saveAuditLog({
-        projectId: project.id,
-        clientId: project.client_id,
-        actionType: 'Видалення товару',
-        details: `Видалено товар "${item.name}" зі специфікації.`
-      });
-
-      if (onUpdate) onUpdate();
-    } catch (err) {
-      alert('Помилка видалення товару: ' + err.message);
     }
   };
 
   return (
-    <div style={{ width: '100%', boxSizing: 'border-box' }}>
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: isMobile ? 'column' : 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between', 
-        alignItems: isMobile ? 'stretch' : 'center', 
-        gap: isMobile ? '10px' : '12px',
-        marginBottom: '12px' 
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      background: 'rgba(44, 37, 32, 0.4)', backdropFilter: 'blur(4px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+      fontFamily: 'Inter, sans-serif'
+    }}>
+      <div style={{
+        background: '#FAF8F5', border: '1px solid #D4C5B9', borderRadius: '12px',
+        padding: '24px', width: '90%', maxWidth: '440px', boxShadow: '0 10px 25px rgba(139, 125, 112, 0.15)',
+        display: 'flex', flexDirection: 'column', gap: '16px'
       }}>
-        <h5 style={{ margin: 0, fontSize: '14px', fontWeight: 800, color: '#2C2520', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-          <Package size={16} color="#C4B4A6" />
-          До видачі (Залишок: {leftToIssue} шт)
-        </h5>
-        
-        <div style={{ display: 'flex', gap: '8px', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'space-between' : 'flex-end', flexShrink: 0 }}>
-          <button 
-            onClick={() => setShowKPModal(true)} 
-            style={{ 
-              flex: isMobile ? 1 : 'none',
-              background: '#FAF6F0', color: '#8B7D73', border: '1px solid #D4C5B9', borderRadius: '6px', 
-              padding: '5px 10px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', cursor: 'pointer',
-              transition: 'background 0.2s'
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = '#EAE7E2'}
-            onMouseLeave={e => e.currentTarget.style.background = '#FAF6F0'}
-          >
-            <FileText size={12} /> Імпорт з КП
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #EAE7E2', paddingBottom: '12px' }}>
+          <h5 style={{ margin: 0, fontSize: '14px', fontWeight: 850, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            {data.isEdit ? '🔁 Редагувати взаємозалік' : '🔁 Провести взаємозалік'}
+          </h5>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#8B7D73', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <X size={18} />
           </button>
-          <button 
-            onClick={() => setShowAddNewItem(true)} 
-            style={{ 
-              flex: isMobile ? 1 : 'none',
-              background: '#FAF6F0', color: '#8B7D73', border: '1px solid #D4C5B9', borderRadius: '6px', 
-              padding: '5px 10px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', cursor: 'pointer',
-              transition: 'background 0.2s'
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = '#EAE7E2'}
-            onMouseLeave={e => e.currentTarget.style.background = '#FAF6F0'}
-          >
-            <Plus size={12} /> Додати позицію
-          </button>
-          {!showAdd && (
-            <button 
-              onClick={() => setShowAdd(true)} 
-              style={{ 
-                flex: isMobile ? 1 : 'none',
-                background: '#C4B4A6', color: 'white', border: 'none', borderRadius: '6px', 
-                padding: '5px 12px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', cursor: 'pointer',
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = '#B3A395'}
-              onMouseLeave={e => e.currentTarget.style.background = '#C4B4A6'}
-            >
-              <Truck size={12} /> Відвантажити
-            </button>
-          )}
         </div>
-      </div>
 
-      {/* Add New Project Item Form */}
-      {showAddNewItem && (
-        <div style={{ 
-          background: '#FAF6F0', 
-          border: '1px solid #D4C5B9', 
-          borderRadius: '10px', 
-          padding: '14px', 
-          marginBottom: '16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          boxShadow: '0 4px 8px rgba(139, 125, 112, 0.05)'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h6 style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.2px' }}>
-              📦 Додавання товарів до видачі
-            </h6>
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {newItemsList.map((item, index) => (
-              <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%', boxSizing: 'border-box' }}>
-                <div style={{ flex: 3 }}>
-                  <input 
-                    type="text" 
-                    placeholder="Найменування товару..." 
-                    value={item.name}
-                    onChange={e => {
-                      const next = [...newItemsList];
-                      next[index].name = e.target.value;
-                      setNewItemsList(next);
-                    }}
-                    style={{ width: '100%', padding: '6px 10px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', outline: 'none', background: '#FFFFFF', color: '#2C2520', boxSizing: 'border-box' }}
-                  />
-                </div>
-                <div style={{ flex: 1, minWidth: '70px' }}>
-                  <input 
-                    type="number" 
-                    placeholder="Кількість..." 
-                    value={item.quantity}
-                    onChange={e => {
-                      const next = [...newItemsList];
-                      next[index].quantity = e.target.value;
-                      setNewItemsList(next);
-                    }}
-                    style={{ width: '100%', padding: '6px 10px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', outline: 'none', background: '#FFFFFF', color: '#2C2520', boxSizing: 'border-box' }}
-                  />
-                </div>
-                <div style={{ flex: 1, minWidth: '80px' }}>
-                  <input 
-                    type="number" 
-                    min="0"
-                    step="0.01"
-                    placeholder="Ціна ($)..." 
-                    value={item.price}
-                    onChange={e => {
-                      const next = [...newItemsList];
-                      next[index].price = e.target.value;
-                      setNewItemsList(next);
-                    }}
-                    style={{ width: '100%', padding: '6px 10px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', outline: 'none', background: '#FFFFFF', color: '#2C2520', boxSizing: 'border-box' }}
-                  />
-                </div>
-                <div style={{ flex: 3 }}>
-                  <input 
-                    type="text" 
-                    placeholder="Коментар специфікації..." 
-                    value={item.note}
-                    onChange={e => {
-                      const next = [...newItemsList];
-                      next[index].note = e.target.value;
-                      setNewItemsList(next);
-                    }}
-                    style={{ width: '100%', padding: '6px 10px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', outline: 'none', background: '#FFFFFF', color: '#2C2520', boxSizing: 'border-box' }}
-                  />
-                </div>
-                {newItemsList.length > 1 && (
-                  <button 
-                    onClick={() => {
-                      setNewItemsList(newItemsList.filter((_, i) => i !== index));
-                    }}
-                    style={{ 
-                      background: 'none', border: 'none', color: '#B3A395', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'color 0.2s'
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#D9534F'}
-                    onMouseLeave={e => e.currentTarget.style.color = '#B3A395'}
-                    title="Видалити рядок"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-            <button 
-              onClick={() => setNewItemsList([...newItemsList, { name: '', quantity: '', price: '', note: '' }])}
-              style={{ 
-                background: '#FAF6F0', color: '#8B7D73', border: '1px dashed #D4C5B9', borderRadius: '6px', 
-                padding: '4px 10px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer',
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = '#EAE7E2'}
-              onMouseLeave={e => e.currentTarget.style.background = '#FAF6F0'}
-            >
-              <Plus size={12} /> ➕ Ще один товар
-            </button>
-
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button 
-                onClick={() => {
-                  setShowAddNewItem(false);
-                  setNewItemsList([{ name: '', quantity: '', price: '', note: '' }]);
-                }}
-                style={{ background: '#FFFFFF', color: '#8B7D73', border: '1px solid #D4C5B9', borderRadius: '6px', padding: '4px 12px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
-              >
-                Скасувати
-              </button>
-              <button 
-                onClick={handleAddNewItem}
-                disabled={saving}
-                style={{ background: '#C4B4A6', color: '#FFFFFF', border: 'none', borderRadius: '6px', padding: '4px 14px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
-              >
-                {saving ? 'Збереження...' : 'Зберегти'}
-              </button>
+          {/* From Currency Block */}
+          <div style={{ background: '#FFFFFF', border: '1px solid #D4C5B9', borderRadius: '8px', padding: '10px 12px' }}>
+            <label style={{ display: 'block', fontSize: '10px', fontWeight: 750, color: '#8B7D73', textTransform: 'uppercase', marginBottom: '6px' }}>Віддає (Списання)</label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="number"
+                step="any"
+                value={fromAmount}
+                onChange={e => handleFromAmountChange(e.target.value)}
+                style={{ flex: 1, padding: '8px', fontSize: '13px', border: '1px solid #D4C5B9', borderRadius: '6px', outline: 'none' }}
+                placeholder="0.00"
+              />
+              <span style={{ fontSize: '13px', fontWeight: 800, color: '#2C2520', width: '45px', textAlign: 'center' }}>{fromCurrency}</span>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Materials specification table */}
-      <div style={{ background: '#FFFFFF', border: '1px solid #D4C5B9', borderRadius: '10px', overflow: 'hidden', marginBottom: '24px', width: '100%', boxSizing: 'border-box' }}>
-        <div style={{ overflowX: 'auto', width: '100%', webkitOverflowScrolling: 'touch' }}>
-          <table style={{ width: '100%', minWidth: isMobile ? '600px' : 'auto', borderCollapse: 'collapse', fontSize: '12px' }}>
-          <thead>
-            <tr style={{ background: '#FAF6F0', borderBottom: '1px solid #D4C5B9' }}>
-              <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 800, color: '#2C2520' }}>Найменування</th>
-              <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#2C2520', width: '80px' }}>Замовлено</th>
-              <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#2C2520', width: '80px' }}>Ціна ($)</th>
-              <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#2C2520', width: '90px' }}>Сума ($)</th>
-              <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#2C2520', width: '70px' }}>До видачі (шт)</th>
-              <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 800, color: '#2C2520', width: '150px' }}>Коментар специфікації</th>
-              <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#2C2520', width: '40px' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {materialItems.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '30px', color: '#8B7D73', fontStyle: 'italic' }}>Немає замовлених матеріалів. Імпортуйте КП або відвантажте позиції на льоту.</td></tr>
-            ) : materialItems.map(item => {
-              const issued = getIssuedQty(item.id);
-              const ordered = parseFloat(item.quantity) || 0;
-              const itemPrice = parseFloat(item.price) || 0;
-              const itemSum = parseFloat(item.sum) || (ordered * itemPrice);
-              const left = Math.max(0, ordered - issued);
-              const canDelete = issued === 0;
-              return (
-                <tr key={item.id} style={{ borderBottom: '1px solid #FAF6F0' }}>
-                  <td style={{ padding: '10px 12px', color: '#2C2520', fontWeight: 600 }}>{item.name}</td>
-                  <td style={{ padding: '6px 12px', textAlign: 'center' }}>
-                    <input 
-                      type="number" 
-                      defaultValue={ordered} 
-                      onBlur={(e) => {
-                        const val = parseFloat(e.target.value) || 0;
-                        if (val !== ordered) {
-                          handleUpdateItemQty(item, val);
-                        }
-                      }}
-                      style={{ 
-                        width: '60px', padding: '4px 6px', fontSize: '11px', border: '1px solid transparent', 
-                        borderRadius: '6px', background: '#FAF6F0', color: '#2C2520', outline: 'none', textAlign: 'center' 
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.border = '1px solid #D4C5B9';
-                        e.target.style.background = '#FFFFFF';
-                      }}
-                    />
-                  </td>
-                  <td style={{ padding: '6px 12px', textAlign: 'center' }}>
-                    <input 
-                      type="number" 
-                      min="0"
-                      step="0.01"
-                      defaultValue={itemPrice > 0 ? itemPrice : ''} 
-                      placeholder="0.00"
-                      onBlur={(e) => {
-                        const val = parseFloat(e.target.value) || 0;
-                        if (val !== itemPrice) {
-                          handleUpdateItemPrice(item, val);
-                        }
-                      }}
-                      style={{ 
-                        width: '70px', padding: '4px 6px', fontSize: '11px', border: '1px solid transparent', 
-                        borderRadius: '6px', background: '#FAF6F0', color: '#2C2520', outline: 'none', textAlign: 'center' 
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.border = '1px solid #D4C5B9';
-                        e.target.style.background = '#FFFFFF';
-                      }}
-                    />
-                  </td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center', color: '#2C2520', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-                    {itemSum > 0 ? `$${itemSum.toFixed(2)}` : '—'}
-                  </td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center', color: left > 0 ? '#C2410C' : '#15803D', fontWeight: 850 }}>{left}</td>
-                  <td style={{ padding: '6px 12px' }}>
-                    <input 
-                      type="text" 
-                      defaultValue={item.note || ''} 
-                      placeholder="Редагувати нотатку..." 
-                      onBlur={(e) => {
-                        if (e.target.value !== item.note) {
-                          handleUpdateItemNote(item, e.target.value);
-                        }
-                      }}
-                      style={{ 
-                        width: '100%', padding: '4px 8px', fontSize: '11px', border: '1px solid transparent', 
-                        borderRadius: '6px', background: '#FAF6F0', color: '#2C2520', outline: 'none' 
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.border = '1px solid #D4C5B9';
-                        e.target.style.background = '#FFFFFF';
-                      }}
-                    />
-                  </td>
-                  <td style={{ padding: '6px 12px', textAlign: 'center' }}>
-                    <button 
-                      onClick={() => handleDeleteItem(item)}
-                      title={canDelete ? "Видалити позицію" : "Неможливо видалити відвантажений товар"}
-                      style={{ 
-                        background: 'transparent', 
-                        border: 'none', 
-                        color: '#EF4444', 
-                        cursor: canDelete ? 'pointer' : 'not-allowed', 
-                        opacity: canDelete ? 1 : 0.25,
-                        transition: 'opacity 0.2s',
-                        padding: '4px'
-                      }}
-                      disabled={!canDelete}
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-          {materialItems.length > 0 && (() => {
-            const totalOrdered = materialItems.reduce((acc, i) => acc + (parseFloat(i.quantity) || 0), 0);
-            const totalSum = materialItems.reduce((acc, i) => {
-              const q = parseFloat(i.quantity) || 0;
-              const p = parseFloat(i.price) || 0;
-              return acc + (parseFloat(i.sum) || (q * p));
-            }, 0);
-            const totalLeft = materialItems.reduce((acc, i) => {
-              const ordered = parseFloat(i.quantity) || 0;
-              const issued = getIssuedQty(i.id);
-              return acc + Math.max(0, ordered - issued);
-            }, 0);
-            return (
-              <tfoot>
-                <tr style={{ background: 'linear-gradient(135deg, #FAF6F0 0%, #F5EDE4 100%)', borderTop: '2px solid #D4C5B9' }}>
-                  <td style={{ padding: '10px 12px', fontWeight: 800, color: '#2C2520', fontSize: '12px' }}>
-                    Разом ({materialItems.length} поз.)
-                  </td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#2C2520' }}>
-                    {totalOrdered}
-                  </td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#8B7D73' }}>
-                    —
-                  </td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 900, color: '#2C2520', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>
-                    {totalSum > 0 ? `$${totalSum.toFixed(2)}` : '—'}
-                  </td>
-                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 850, color: totalLeft > 0 ? '#C2410C' : '#15803D' }}>
-                    {totalLeft}
-                  </td>
-                  <td colSpan={2}></td>
-                </tr>
-              </tfoot>
-            );
-          })()}
-        </table>
-      </div>
-    </div>
-
-      {/* Complex Shipment Form */}
-      {showAdd && (
-        <div style={{ background: '#FAF6F0', border: '1px solid #D4C5B9', borderRadius: '10px', padding: '16px', marginBottom: '24px', boxShadow: '0 4px 10px rgba(139,125,112,0.08)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px solid #D4C5B9', paddingBottom: '8px' }}>
-            <h5 style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.2px' }}>📦 Комплексне відвантаження</h5>
-            <button 
-              onClick={() => {
-                const newQtys = { ...shipQtys };
-                materialItems.forEach(item => {
-                  const left = Math.max(0, (parseFloat(item.quantity) || 0) - getIssuedQty(item.id));
-                  if (left > 0) newQtys[item.id] = left;
-                });
-                setShipQtys(newQtys);
+          {/* Swap icon */}
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '-6px 0' }}>
+            <button
+              onClick={handleCurrencySwap}
+              type="button"
+              disabled={data.isEdit}
+              style={{
+                background: '#FFFFFF', border: '1px solid #D4C5B9', borderRadius: '50%',
+                width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: data.isEdit ? 'not-allowed' : 'pointer', color: '#8B7D73', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                opacity: data.isEdit ? 0.6 : 1
               }}
-              style={{ background: '#FFFFFF', color: '#8B7D73', border: '1px solid #D4C5B9', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+              title="Змінити напрямок конвертації"
             >
-              Все
+              🔄
             </button>
           </div>
-          
-          {/* Logistics header */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '16px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '10px', color: '#8B7D73', fontWeight: 700, marginBottom: '4px' }}>Служба доставки</label>
-              <select 
-                value={newShipment.carrier} 
-                onChange={e => setNewShipment({...newShipment, carrier: e.target.value})} 
-                style={{ width: '100%', padding: '6px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', background: '#FFFFFF', color: '#2C2520', outline: 'none' }}
-              >
-                <option value="Самовивіз">Самовивіз</option>
-                <option value="Нова Пошта">Нова Пошта</option>
-                <option value="Кур'єр">Кур'єр компанії</option>
-                <option value="Делівері">Делівері</option>
-              </select>
+
+          {/* To Currency Block */}
+          <div style={{ background: '#FFFFFF', border: '1px solid #D4C5B9', borderRadius: '8px', padding: '10px 12px' }}>
+            <label style={{ display: 'block', fontSize: '10px', fontWeight: 750, color: '#8B7D73', textTransform: 'uppercase', marginBottom: '6px' }}>Отримує (Зарахування)</label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="number"
+                step="any"
+                value={toAmount}
+                onChange={e => handleToAmountChange(e.target.value)}
+                style={{ flex: 1, padding: '8px', fontSize: '13px', border: '1px solid #D4C5B9', borderRadius: '6px', outline: 'none' }}
+                placeholder="0.00"
+              />
+              <span style={{ fontSize: '13px', fontWeight: 800, color: '#2C2520', width: '45px', textAlign: 'center' }}>{toCurrency}</span>
             </div>
+          </div>
+
+          {/* Rate & Date Block */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '10px', color: '#8B7D73', fontWeight: 700, marginBottom: '4px' }}>ТТН / Супровідний номер</label>
-              <input 
-                type="text" 
-                placeholder="ТТН (за наявності)..." 
-                value={newShipment.tracking_number} 
-                onChange={e => setNewShipment({...newShipment, tracking_number: e.target.value})} 
-                style={{ width: '100%', padding: '6px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', background: '#FFFFFF', color: '#2C2520', outline: 'none', boxSizing: 'border-box' }} 
+              <label style={{ display: 'block', fontSize: '10px', fontWeight: 750, color: '#8B7D73', marginBottom: '4px' }}>Курс конвертації</label>
+              <input
+                type="number"
+                step="any"
+                value={rate}
+                onChange={e => handleRateChange(e.target.value)}
+                style={{ width: '100%', padding: '8px', fontSize: '13px', border: '1px solid #D4C5B9', borderRadius: '6px', outline: 'none', boxSizing: 'border-box' }}
+                placeholder="курс"
               />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '10px', color: '#8B7D73', fontWeight: 700, marginBottom: '4px' }}>Дата відвантаження</label>
-              <input 
-                type="date" 
-                value={newShipment.date} 
-                onChange={e => setNewShipment({...newShipment, date: e.target.value})} 
-                style={{ width: '100%', padding: '5px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', background: '#FFFFFF', color: '#2C2520', outline: 'none', boxSizing: 'border-box' }} 
+              <label style={{ display: 'block', fontSize: '10px', fontWeight: 750, color: '#8B7D73', marginBottom: '4px' }}>Дата операції</label>
+              <input
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                style={{ width: '100%', padding: '7px 8px', fontSize: '13px', border: '1px solid #D4C5B9', borderRadius: '6px', outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
           </div>
 
-          {/* List of items to ship */}
-          <div style={{ marginBottom: '14px' }}>
-            <h6 style={{ margin: '0 0 6px 0', fontSize: '11px', fontWeight: 800, color: '#8B7D73', textTransform: 'uppercase' }}>Товари для накладної</h6>
-            <div style={{ overflowX: 'auto', width: '100%', marginBottom: '8px' }}>
-              <table style={{ width: '100%', minWidth: isMobile ? '400px' : 'auto', borderCollapse: 'collapse', fontSize: '11px' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #D4C5B9', color: '#8B7D73' }}>
-                  <th style={{ textAlign: 'left', paddingBottom: '4px' }}>Найменування</th>
-                  <th style={{ textAlign: 'center', paddingBottom: '4px', width: '80px' }}>К-ть</th>
-                  <th style={{ textAlign: 'center', paddingBottom: '4px', width: '80px' }}>Ціна</th>
-                  <th style={{ textAlign: 'center', paddingBottom: '4px', width: '80px' }}>Валюта</th>
-                </tr>
-              </thead>
-              <tbody>
-                {materialItems.map(item => {
-                  const left = Math.max(0, (parseFloat(item.quantity) || 0) - getIssuedQty(item.id));
-                  if (left <= 0) return null;
-                  return (
-                    <tr key={item.id} style={{ borderBottom: '1px solid #EAE7E2' }}>
-                      <td style={{ padding: '6px 0', color: '#2C2520', fontWeight: 600 }}>
-                        {item.name} <span style={{ color: '#8B7D73', fontSize: '9px', marginLeft: '4px' }}>(до видачі: {left} шт)</span>
-                      </td>
-                      <td style={{ padding: '6px 0', width: '80px' }}>
-                        <input 
-                          type="number" 
-                          min="0" 
-                          max={left} 
-                          value={shipQtys[item.id] || ''} 
-                          onChange={e => setShipQtys({...shipQtys, [item.id]: e.target.value})} 
-                          placeholder={`Макс: ${left}`} 
-                          style={{ width: '100%', padding: '4px', textAlign: 'center', border: '1px solid #D4C5B9', borderRadius: '4px', outline: 'none' }} 
-                        />
-                      </td>
-                      <td style={{ padding: '6px 4px', width: '80px' }}>
-                        <input 
-                          type="number" 
-                          min="0" 
-                          value={shipPrices[item.id] || ''} 
-                          onChange={e => setShipPrices({...shipPrices, [item.id]: e.target.value})} 
-                          placeholder="Ціна" 
-                          style={{ width: '100%', padding: '4px', textAlign: 'center', border: '1px solid #D4C5B9', borderRadius: '4px', outline: 'none' }} 
-                        />
-                      </td>
-                      <td style={{ padding: '6px 0', width: '80px' }}>
-                        <select 
-                          value={shipCurrencies[item.id] || 'UAH'} 
-                          onChange={e => setShipCurrencies({...shipCurrencies, [item.id]: e.target.value})}
-                          style={{ width: '100%', padding: '4px', border: '1px solid #D4C5B9', borderRadius: '4px', background: '#FFFFFF', color: '#2C2520', outline: 'none' }}
-                        >
-                          <option value="USD">USD ($)</option>
-                          <option value="UAH">UAH (₴)</option>
-                        </select>
-                      </td>
-                    </tr>
-                  );
-                })}
-                
-                {/* Dynamically added custom items */}
-                {newItems.map((item, idx) => (
-                  <tr key={item.id} style={{ borderBottom: '1px solid #EAE7E2' }}>
-                    <td style={{ padding: '6px 0' }}>
-                      <input 
-                        type="text" 
-                        value={item.name} 
-                        onChange={e => {
-                          const next = [...newItems];
-                          next[idx].name = e.target.value;
-                          setNewItems(next);
-                        }} 
-                        placeholder="Кастомний товар прямо тут..." 
-                        style={{ width: '100%', padding: '4px 6px', border: '1px solid #C4B4A6', borderRadius: '4px', fontSize: '11px', outline: 'none' }} 
-                      />
-                    </td>
-                    <td style={{ padding: '6px 0', width: '80px' }}>
-                      <input 
-                        type="number" 
-                        min="1" 
-                        value={item.quantity} 
-                        onChange={e => {
-                          const next = [...newItems];
-                          next[idx].quantity = e.target.value;
-                          setNewItems(next);
-                        }} 
-                        placeholder="К-ть" 
-                        style={{ width: '100%', padding: '4px', textAlign: 'center', border: '1px solid #C4B4A6', borderRadius: '4px', outline: 'none' }} 
-                      />
-                    </td>
-                    <td style={{ padding: '6px 4px', width: '80px' }}>
-                      <input 
-                        type="number" 
-                        min="0" 
-                        value={item.price} 
-                        onChange={e => {
-                          const next = [...newItems];
-                          next[idx].price = e.target.value;
-                          setNewItems(next);
-                        }} 
-                        placeholder="0" 
-                        style={{ width: '100%', padding: '4px', textAlign: 'center', border: '1px solid #C4B4A6', borderRadius: '4px', outline: 'none' }} 
-                      />
-                    </td>
-                    <td style={{ padding: '6px 0', width: '80px', display: 'flex', gap: '2px', alignItems: 'center' }}>
-                      <select 
-                        value={item.currency} 
-                        onChange={e => {
-                          const next = [...newItems];
-                          next[idx].currency = e.target.value;
-                          setNewItems(next);
-                        }}
-                        style={{ flex: 1, padding: '4px', border: '1px solid #C4B4A6', borderRadius: '4px', background: '#FFFFFF', fontSize: '10px', outline: 'none' }}
-                      >
-                        <option value="USD">USD</option>
-                        <option value="UAH">UAH</option>
-                      </select>
-                      <button 
-                        type="button" 
-                        onClick={() => setNewItems(newItems.filter(x => x.id !== item.id))} 
-                        style={{ border: 'none', background: 'transparent', color: '#EF4444', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
-                      >
-                        <X size={12} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-          <button 
-            type="button"
-            onClick={() => setNewItems([...newItems, { id: 'temp_' + Date.now(), name: '', quantity: '1', price: '0', currency: 'UAH', note: 'Додано на льоту' }])}
-            style={{ background: '#FFFFFF', color: '#8B7D73', border: '1px dashed #D4C5B9', borderRadius: '6px', padding: '4px 10px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', marginBottom: '16px' }}
-          >
-            + Додати кастомний товар в 1 клік
-          </button>
-
-          {/* Instant financial settlement in shipment builder */}
-          <div style={{ background: '#FFFFFF', border: '1px solid #D4C5B9', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
-            <h6 style={{ margin: '0 0 8px 0', fontSize: '11px', fontWeight: 800, color: '#2C2520', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <CreditCard size={12} color="#C4B4A6" />
-              Розрахунок при відвантаженні
-            </h6>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
-              <input 
-                type="checkbox" 
-                id="addToContract" 
-                checked={addToContract} 
-                onChange={e => setAddToContract(e.target.checked)} 
-                style={{ cursor: 'pointer' }}
-              />
-              <label htmlFor="addToContract" style={{ fontSize: '11px', color: '#2C2520', cursor: 'pointer', fontWeight: 700 }}>
-                Додати вартість відвантаженого товару до погодженої суми угоди
-              </label>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '8px', marginBottom: '8px' }}>
-              <div>
-                <label style={{ fontSize: '10px', color: '#8B7D73', display: 'block', marginBottom: '2px', fontWeight: 750 }}>Оплачено зараз (Сума)</label>
-                <input 
-                  type="number" 
-                  value={paymentAmount} 
-                  onChange={e => setPaymentAmount(e.target.value)} 
-                  placeholder="0" 
-                  style={{ width: '100%', padding: '6px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', outline: 'none', background: '#FFFFFF', color: '#2C2520', boxSizing: 'border-box' }} 
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '10px', color: '#8B7D73', display: 'block', marginBottom: '2px', fontWeight: 750 }}>Валюта оплати</label>
-                <select 
-                  value={paymentCurrency} 
-                  onChange={e => setPaymentCurrency(e.target.value)} 
-                  style={{ width: '100%', padding: '6px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', background: '#FFFFFF', color: '#2C2520', outline: 'none', boxSizing: 'border-box' }}
-                >
-                  <option value="USD">USD ($)</option>
-                  <option value="UAH">UAH (₴)</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ fontSize: '10px', color: '#8B7D73', display: 'block', marginBottom: '2px', fontWeight: 750 }}>Каса / Метод</label>
-                <select 
-                  value={paymentType} 
-                  onChange={e => setPaymentType(e.target.value)} 
-                  style={{ width: '100%', padding: '6px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', background: '#FFFFFF', color: '#2C2520', outline: 'none', boxSizing: 'border-box' }}
-                >
-                  <option value="Готівка">Готівка</option>
-                  <option value="Карта">Карта</option>
-                  <option value="Рахунок">Рахунок</option>
-                </select>
-              </div>
-            </div>
-            
-            <input 
-              type="text" 
-              placeholder="Коментар розрахунку (наприклад: Оплата за самовивіз)..." 
-              value={paymentNote} 
-              onChange={e => setPaymentNote(e.target.value)} 
-              style={{ width: '100%', padding: '6px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', outline: 'none', background: '#FFFFFF', color: '#2C2520', marginTop: '4px', boxSizing: 'border-box' }} 
+          {/* Note Input */}
+          <div>
+            <label style={{ display: 'block', fontSize: '10px', fontWeight: 750, color: '#8B7D73', marginBottom: '4px' }}>Коментар</label>
+            <input
+              type="text"
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              style={{ width: '100%', padding: '8px', fontSize: '12px', border: '1px solid #D4C5B9', borderRadius: '6px', outline: 'none', boxSizing: 'border-box' }}
+              placeholder="Вкажіть коментар..."
             />
           </div>
 
-          {/* Action buttons */}
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-            <button 
-              onClick={() => setShowAdd(false)} 
-              style={{ background: 'transparent', border: '1px solid #D4C5B9', padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, color: '#8B7D73', cursor: 'pointer' }}
-            >
-              Скасувати
-            </button>
-            <button 
-              onClick={handleSaveShipment} 
-              disabled={saving} 
-              style={{ background: '#C4B4A6', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
-            >
-              {saving ? '...' : 'Зафіксувати транзакцію'}
-            </button>
-          </div>
         </div>
-      )}
 
-      {/* Timeline of shipments */}
-      <h6 style={{ margin: '0 0 10px 0', fontSize: '12px', fontWeight: 800, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🚚 Історія відвантажень</h6>
-      {shipments.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '30px', fontSize: '12px', color: '#8B7D73', border: '1px dashed #D4C5B9', borderRadius: '10px' }}>Відвантажень по цій угоді ще не здійснювалось</div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {shipments.map(s => (
-            <div key={s.id} style={{ border: '1px solid #D4C5B9', borderRadius: '8px', overflow: 'hidden', background: '#FFFFFF' }}>
-              <div style={{ background: '#FAF6F0', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #D4C5B9', fontSize: '12px', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 800, color: '#2C2520' }}>{s.date}</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#8B7D73', background: '#FFFFFF', border: '1px solid #D4C5B9', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                    <Truck size={12} color="#C4B4A6" /> {s.carrier}
-                  </span>
-                  {s.tracking_number && <span style={{ color: '#1D4ED8', fontWeight: 700 }}>ТТН: {s.tracking_number}</span>}
-                </div>
-                <button 
-                  onClick={() => handleDeleteShipment(s.id)}
-                  disabled={saving}
-                  style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', transition: 'transform 0.2s' }}
-                  title="Видалити відвантаження"
-                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                  <X size={14} />
-                </button>
-              </div>
-              <div style={{ padding: '10px 12px', background: '#FFFFFF' }}>
-                {s.shipment_items?.map(si => {
-                  const itemName = materialItems.find(i => i.id === si.project_item_id)?.name || 'Кастомний/невідомий товар';
-                  return (
-                    <div key={si.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#2C2520', marginBottom: '4px', borderBottom: '1px dashed #FAF6F0', paddingBottom: '3px' }}>
-                      <span style={{ fontWeight: 500 }}>{itemName}</span>
-                      <span style={{ fontWeight: 800, color: '#2C2520' }}>{si.quantity} шт</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid #EAE7E2', paddingTop: '12px', marginTop: '4px' }}>
+          <button
+            onClick={onClose}
+            style={{ background: 'transparent', border: '1px solid #D4C5B9', padding: '8px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, color: '#8B7D73', cursor: 'pointer' }}
+          >
+            Скасувати
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={saving}
+            style={{ background: '#C4B4A6', color: 'white', border: 'none', padding: '8px 18px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+          >
+            {saving ? 'Збереження...' : 'Підтвердити'}
+          </button>
         </div>
-      )}
-      
-      {showKPModal && (
-        <KPSelectionModal isOpen={true} onClose={() => setShowKPModal(false)} onSelect={handleSelectKP} />
-      )}
+      </div>
     </div>
   );
 }
