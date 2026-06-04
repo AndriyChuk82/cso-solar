@@ -94,14 +94,22 @@ function generateInvoiceHTML(proposal: Proposal): string {
     UAH: 1
   };
 
-  const convert = (amount: number) => {
-    // Внутрішні розрахунки завжди в USD, округлюємо до 2 знаків після коми для точності
-    return Math.round(convertCurrency(amount, 'USD', proposal.currency, rates) * 100) / 100;
-  };
+  // Округляємо ціни окремо для кожного товару у валюті відображення
+  const convertedItems = (proposal.items || []).map(item => {
+    const price = Math.round(convertCurrency(item.price || 0, 'USD', proposal.currency, rates) * 100) / 100;
+    const sum = Math.round(price * (item.quantity || 0) * 100) / 100;
+    return { ...item, displayPrice: price, displaySum: sum };
+  });
 
-  const itemsHTML = (proposal.items || []).map((item, i) => {
-    const price = convert(item.price || 0);
-    const sum = price * (item.quantity || 0);
+  const displaySubtotal = convertedItems.reduce((acc, item) => acc + item.displaySum, 0);
+
+  let totalConverted = displaySubtotal;
+  if (proposal.vatMode === 'add') {
+    const displayVat = Math.round(displaySubtotal * 0.2 * 100) / 100;
+    totalConverted = displaySubtotal + displayVat;
+  }
+
+  const itemsHTML = convertedItems.map((item, i) => {
     const itemName = item.name || item.product?.name || 'Без назви';
     const itemUnit = item.unit || item.product?.unit || 'шт.';
     
@@ -113,13 +121,11 @@ function generateInvoiceHTML(proposal: Proposal): string {
         </td>
         <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${itemUnit}</td>
         <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.quantity || 0}</td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${price.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap; font-weight: 600;">${sum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${item.displayPrice.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap; font-weight: 600;">${item.displaySum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       </tr>
     `;
   }).join('');
-
-  const totalConverted = convert(proposal.total);
 
   return `
     <html>
@@ -719,16 +725,24 @@ function generateContractHTML(proposal: Proposal, withStamp: boolean = true): st
     UAH: 1
   };
 
-  const convert = (amount: number) => {
-    return Math.round(convertCurrency(amount, 'USD', proposal.currency, rates) * 100) / 100;
-  };
+  // Округляємо ціни окремо для кожного товару у валюті відображення
+  const convertedItems = (proposal.items || []).map(item => {
+    const price = Math.round(convertCurrency(item.price || 0, 'USD', proposal.currency, rates) * 100) / 100;
+    const sum = Math.round(price * (item.quantity || 0) * 100) / 100;
+    return { ...item, displayPrice: price, displaySum: sum };
+  });
 
-  const totalAmount = convert(proposal.total);
-  const vatAmount = isVAT ? (totalAmount / 1.2) * 0.2 : 0;
+  const displaySubtotal = convertedItems.reduce((acc, item) => acc + item.displaySum, 0);
+
+  let totalAmount = displaySubtotal;
+  if (proposal.vatMode === 'add') {
+    const displayVat = Math.round(displaySubtotal * 0.2 * 100) / 100;
+    totalAmount = displaySubtotal + displayVat;
+  }
+
+  const vatAmount = isVAT ? Math.round((totalAmount - (totalAmount / 1.2)) * 100) / 100 : 0;
   
-  const itemsHTML = (proposal.items || []).map((item, i) => {
-    const price = convert(item.price || 0);
-    const sum = price * (item.quantity || 0);
+  const itemsHTML = convertedItems.map((item, i) => {
     const itemName = item.name || item.product?.name || 'Без назви';
     const itemUnit = item.unit || item.product?.unit || 'шт.';
     
@@ -738,8 +752,8 @@ function generateContractHTML(proposal: Proposal, withStamp: boolean = true): st
         <td>${itemName}</td>
         <td class="center">${itemUnit}</td>
         <td class="center">${item.quantity || 0}</td>
-        <td class="right">${price.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-        <td class="right">${sum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td class="right">${item.displayPrice.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td class="right">${item.displaySum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       </tr>
     `;
   }).join('');

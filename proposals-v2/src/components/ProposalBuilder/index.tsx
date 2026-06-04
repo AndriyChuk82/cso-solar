@@ -59,11 +59,37 @@ export function ProposalBuilderTable() {
   const { costSubtotal, saleSubtotal, profit, profitPercent } = useProposalCalculations(proposal.items);
 
   // Конвертовані товари для відображення
-  const convertedItems = proposal.items.map((item: any) => ({
-    ...item,
-    displayCost: convert(item.costPrice, 'USD', activeCurrency),
-    displayPrice: convert(item.price, 'USD', activeCurrency),
-  }));
+  const convertedItems = proposal.items.map((item: any) => {
+    const displayCost = Math.round(convert(item.costPrice, 'USD', activeCurrency) * 100) / 100;
+    const displayPrice = Math.round(convert(item.price, 'USD', activeCurrency) * 100) / 100;
+    const quantity = item.quantity ?? 1;
+    const displayCostSum = Math.round(displayCost * quantity * 100) / 100;
+    const displayPriceSum = Math.round(displayPrice * quantity * 100) / 100;
+    return {
+      ...item,
+      displayCost,
+      displayPrice,
+      displayCostSum,
+      displayPriceSum,
+    };
+  });
+
+  const displayCostSubtotal = convertedItems.reduce((sum, item) => sum + item.displayCostSum, 0);
+  const displaySaleSubtotal = convertedItems.reduce((sum, item) => sum + item.displayPriceSum, 0);
+
+  let displayVat = 0;
+  let displayTotal = displaySaleSubtotal;
+
+  if (proposal.vatMode === 'add') {
+    displayVat = Math.round(displaySaleSubtotal * 0.2 * 100) / 100;
+    displayTotal = displaySaleSubtotal + displayVat;
+  } else if (proposal.vatMode === 'extract') {
+    displayVat = Math.round((displaySaleSubtotal - (displaySaleSubtotal / 1.2)) * 100) / 100;
+    displayTotal = displaySaleSubtotal;
+  }
+
+  const displayProfit = displaySaleSubtotal - displayCostSubtotal;
+  const displayProfitPercent = displaySaleSubtotal > 0 ? (displayProfit / displaySaleSubtotal) * 100 : 0;
 
   const handleRefreshRates = async () => {
     setIsRefreshingRates(true);
@@ -167,19 +193,18 @@ export function ProposalBuilderTable() {
 
         <ProposalSummary
           itemsCount={proposal.items.length}
-          costSubtotal={costSubtotal}
+          costSubtotal={displayCostSubtotal}
           vatMode={proposal.vatMode || 'none'}
-          vatAmount={proposal.vatAmount || 0}
-          total={proposal.total}
-          profit={profit}
-          profitPercent={profitPercent}
+          vatAmount={displayVat}
+          total={displayTotal}
+          profit={displayProfit}
+          profitPercent={displayProfitPercent}
           activeCurrency={activeCurrency}
           usdRate={settings.usdRate}
           eurRate={settings.eurRate}
           notes={proposal.notes || ''}
           onUpdateNotes={(notes) => updateProposalField('notes', notes)}
           onUpdateVatMode={(mode) => updateProposalField('vatMode', mode)}
-          convert={convert}
         />
 
         <ProposalActions

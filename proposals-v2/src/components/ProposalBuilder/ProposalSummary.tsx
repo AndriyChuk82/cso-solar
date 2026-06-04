@@ -15,7 +15,6 @@ interface ProposalSummaryProps {
   notes: string;
   onUpdateNotes: (notes: string) => void;
   onUpdateVatMode: (mode: 'none' | 'add' | 'extract') => void;
-  convert: (amount: number, from: Currency, to: Currency) => number;
 }
 
 export function ProposalSummary({
@@ -32,7 +31,6 @@ export function ProposalSummary({
   notes,
   onUpdateNotes,
   onUpdateVatMode,
-  convert,
 }: ProposalSummaryProps) {
   if (itemsCount === 0) return null;
 
@@ -85,11 +83,11 @@ export function ProposalSummary({
               </td>
               <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-600 dark:text-slate-400 print:bg-transparent"></td>
               <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-500 dark:text-slate-400 underline decoration-gray-300 dark:decoration-slate-700 print:bg-transparent">
-                {formatCurrency(convert(costSubtotal, 'USD', activeCurrency), activeCurrency)}
+                {formatCurrency(costSubtotal, activeCurrency)}
               </td>
               <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 no-print"></td>
               <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 text-gray-600 dark:text-slate-400 print:bg-transparent">
-                {formatCurrency(convert(total - vatAmount, 'USD', activeCurrency), activeCurrency)}
+                {formatCurrency(total - vatAmount, activeCurrency)}
               </td>
               <td className="no-print"></td>
             </tr>
@@ -104,7 +102,7 @@ export function ProposalSummary({
                 <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column"></td>
                 <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 no-print"></td>
                 <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 text-gray-500 dark:text-slate-400 font-medium">
-                  {formatCurrency(convert(vatAmount, 'USD', activeCurrency), activeCurrency)}
+                  {formatCurrency(vatAmount, activeCurrency)}
                 </td>
                 <td className="no-print"></td>
               </tr>
@@ -117,11 +115,11 @@ export function ProposalSummary({
               </td>
               <td className="px-1 py-4 text-center cost-column" style={{ backgroundColor: '#faf5ec' }}></td>
               <td className="px-1 py-4 text-center cost-column text-gray-700 dark:text-slate-300 font-black" style={{ backgroundColor: '#faf5ec' }}>
-                {formatCurrency(convert(costSubtotal, 'USD', activeCurrency), activeCurrency)}
+                {formatCurrency(costSubtotal, activeCurrency)}
               </td>
               <td className="px-1 py-4 text-center no-print" style={{ backgroundColor: '#faf5ec' }}></td>
               <td className="px-1 py-4 text-center text-primary dark:text-blue-400 text-lg print:text-base font-black" style={{ backgroundColor: '#faf5ec' }}>
-                {formatCurrency(convert(total, 'USD', activeCurrency), activeCurrency)}
+                {formatCurrency(total, activeCurrency)}
               </td>
               <td className="no-print"></td>
             </tr>
@@ -131,7 +129,7 @@ export function ProposalSummary({
               </td>
               <td colSpan={5} className="px-3 py-2 text-right font-bold">
                 <span className="text-green-600 dark:text-green-400 px-3 py-1 bg-green-50 dark:bg-green-900/20 rounded">
-                  Прибуток: {formatCurrency(convert(profit, 'USD', activeCurrency), activeCurrency)} ({profitPercent.toFixed(1)}%)
+                  Прибуток: {formatCurrency(profit, activeCurrency)} ({profitPercent.toFixed(1)}%)
                 </span>
               </td>
               <td className="no-print"></td>

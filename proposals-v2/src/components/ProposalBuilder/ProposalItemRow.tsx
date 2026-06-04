@@ -27,12 +27,12 @@ export const ProposalItemRow = memo(function ProposalItemRow({
   onMoveDown,
   onRemove,
 }: ProposalItemRowProps) {
-  const displayCostNum = Math.round((item.displayCost ?? 0) * 100) / 100;
-  const displayPriceNum = Math.round((item.displayPrice ?? 0) * 100) / 100;
+  const displayCostNum = item.displayCost ?? 0;
+  const displayPriceNum = item.displayPrice ?? 0;
   const quantityNum = item.quantity ?? 1;
 
-  const costTotal = Math.round(displayCostNum * quantityNum * 100) / 100;
-  const saleTotal = Math.round(displayPriceNum * quantityNum * 100) / 100;
+  const costTotal = item.displayCostSum ?? 0;
+  const saleTotal = item.displayPriceSum ?? 0;
 
   const [localCost, setLocalCost] = useState(displayCostNum.toString());
   const [localPrice, setLocalPrice] = useState(displayPriceNum.toString());
