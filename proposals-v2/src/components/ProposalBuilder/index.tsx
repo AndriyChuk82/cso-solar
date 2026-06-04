@@ -162,6 +162,8 @@ export function ProposalBuilderTable() {
           selectedSeller={selectedSeller}
           onUpdateField={(field, value) => updateProposalField(field as keyof Proposal, value)}
           onSetSeller={setSelectedSeller}
+          proposalNumber={proposal.number || ''}
+          status={proposal.status || 'draft'}
         />
 
         <SettingsPanel

@@ -9,6 +9,8 @@ interface ClientInfoFormProps {
   selectedSeller: SellerId;
   onUpdateField: (field: string, value: string) => void;
   onSetSeller: (seller: SellerId) => void;
+  proposalNumber: string;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected';
 }
 
 export function ClientInfoForm({
@@ -18,14 +20,33 @@ export function ClientInfoForm({
   selectedSeller,
   onUpdateField,
   onSetSeller,
+  proposalNumber,
+  status,
 }: ClientInfoFormProps) {
   return (
     <div className="bg-[#fbfaf5]/90 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-[#e8e4d1]/75 dark:border-slate-800/50 p-4 client-info-block transition-all duration-300 shadow-[0_8px_30px_rgba(245,158,11,0.02)] hover:shadow-[0_12px_40px_rgba(245,158,11,0.04)] no-print">
-      {/* Title block */}
-      <h3 className="font-extrabold text-[#a89a74] dark:text-slate-400 mb-3 text-[10px] uppercase tracking-widest font-mono flex items-center gap-2 select-none border-b border-[#e8e4d1]/40 dark:border-slate-800/30 pb-1.5">
-        <UserCheck className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-        Параметри комерційної пропозиції
-      </h3>
+      {/* Title block with status indicator */}
+      <div className="flex items-center justify-between border-b border-[#e8e4d1]/40 dark:border-slate-800/30 pb-2 mb-3 select-none">
+        <h3 className="font-extrabold text-[#a89a74] dark:text-slate-400 text-[10px] uppercase tracking-widest font-mono flex items-center gap-2">
+          <UserCheck className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+          Параметри комерційної пропозиції
+        </h3>
+        
+        {/* Status Indicator */}
+        <div className="flex items-center gap-2">
+          {status !== 'draft' ? (
+            <div className="flex items-center gap-1.5 bg-green-500/10 dark:bg-green-500/20 text-green-700 dark:text-green-400 border border-green-500/20 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider font-mono">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+              {proposalNumber} • {status === 'accepted' ? 'ПРИЙНЯТО' : status === 'rejected' ? 'ВІДХИЛЕНО' : 'ЗБЕРЕЖЕНО'}
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider font-mono">
+              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping"></span>
+              ЧЕРНЕТКА (НЕ ЗБЕРЕЖЕНО)
+            </div>
+          )}
+        </div>
+      </div>
       
       {/* Split Grid - Optimized to 5-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-center">
