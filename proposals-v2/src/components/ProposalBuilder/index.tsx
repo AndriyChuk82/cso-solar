@@ -200,8 +200,8 @@ export function ProposalBuilderTable() {
           profit={displayProfit}
           profitPercent={displayProfitPercent}
           activeCurrency={activeCurrency}
-          usdRate={settings.usdRate}
-          eurRate={settings.eurRate}
+          usdRate={proposal.rates?.usdToUah || settings.usdRate}
+          eurRate={proposal.rates?.eurToUah || settings.eurRate}
           notes={proposal.notes || ''}
           onUpdateNotes={(notes) => updateProposalField('notes', notes)}
           onUpdateVatMode={(mode) => updateProposalField('vatMode', mode)}

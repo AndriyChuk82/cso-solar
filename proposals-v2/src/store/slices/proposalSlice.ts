@@ -414,6 +414,8 @@ export const createProposalSlice: StateCreator<
 
   updateProposalRates: (usd: number, eur: number) => {
     const { proposal } = get();
+    // Якщо пропозиція збережена (статус 'sent'), ми не оновлюємо її курси автоматично
+    if (proposal.status === 'sent') return;
     set({
       proposal: {
         ...proposal,
