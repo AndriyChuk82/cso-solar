@@ -176,6 +176,8 @@ export function ProposalBuilderTable() {
           onUpdateAdjustment={(adjustment) => updateProposalField('adjustment', adjustment)}
           onRefreshRates={handleRefreshRates}
           onApplyMarkup={applyProposalMarkupToItems}
+          vatMode={proposal.vatMode || 'none'}
+          onUpdateVatMode={(mode) => updateProposalField('vatMode', mode)}
         />
 
         <ProposalItemsTable
@@ -204,7 +206,6 @@ export function ProposalBuilderTable() {
           eurRate={proposal.rates?.eurToUah || settings.eurRate}
           notes={proposal.notes || ''}
           onUpdateNotes={(notes) => updateProposalField('notes', notes)}
-          onUpdateVatMode={(mode) => updateProposalField('vatMode', mode)}
         />
 
         <ProposalActions

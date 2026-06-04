@@ -14,7 +14,6 @@ interface ProposalSummaryProps {
   eurRate: number;
   notes: string;
   onUpdateNotes: (notes: string) => void;
-  onUpdateVatMode: (mode: 'none' | 'add' | 'extract') => void;
 }
 
 export function ProposalSummary({
@@ -30,47 +29,11 @@ export function ProposalSummary({
   eurRate,
   notes,
   onUpdateNotes,
-  onUpdateVatMode,
 }: ProposalSummaryProps) {
   if (itemsCount === 0) return null;
 
   return (
     <>
-      <div className="flex items-center gap-3 mb-3 no-print">
-        <span className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">ПДВ:</span>
-        <div className="flex bg-gray-100 dark:bg-slate-800 p-0.5 rounded-lg border border-gray-200 dark:border-slate-700">
-          <button
-            onClick={() => onUpdateVatMode('none')}
-            className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${
-              vatMode === 'none' 
-                ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-700 dark:text-blue-400' 
-                : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'
-            }`}
-          >
-            Без ПДВ
-          </button>
-          <button
-            onClick={() => onUpdateVatMode('add')}
-            className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${
-              vatMode === 'add' 
-                ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-700 dark:text-blue-400' 
-                : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'
-            }`}
-          >
-            Нарахувати (+20%)
-          </button>
-          <button
-            onClick={() => onUpdateVatMode('extract')}
-            className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${
-              vatMode === 'extract' 
-                ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-700 dark:text-blue-400' 
-                : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'
-            }`}
-          >
-            Вилучити (в т.ч. 20%)
-          </button>
-        </div>
-      </div>
 
       {/* Summary Footer */}
       <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 overflow-hidden shadow-sm">
