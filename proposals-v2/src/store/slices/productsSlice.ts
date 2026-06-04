@@ -96,8 +96,9 @@ export const createProductsSlice: StateCreator<
                   return a.name.localeCompare(b.name);
                 });
 
+              const customMaterials = data.customMaterials || [];
               try {
-                localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), products, categories, rates }));
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), products, categories, rates, customMaterials }));
               } catch (storageError) {
                 console.warn('⚠️ Не вдалося зберегти кеш у localStorage (переповнено):', storageError);
               }
@@ -108,6 +109,7 @@ export const createProductsSlice: StateCreator<
                   ...state,
                   products,
                   categories,
+                  customMaterials,
                 };
                 if (rates) {
                   const currentUsd = state.settings?.usdRate;
@@ -140,14 +142,15 @@ export const createProductsSlice: StateCreator<
           } else {
             // КРОК 1: Миттєво показуємо інтерфейс з кешу (0 мс завантаження!)
             console.log('✅ Миттєвий старт з кешу (вік:', Math.round(cacheAge / 1000), 'сек)');
-          set((state: any) => {
-            const newState = {
-              ...state,
-              products: cache.products,
-              categories: cache.categories,
-              loading: false,
-              error: null
-            };
+            set((state: any) => {
+              const newState = {
+                ...state,
+                products: cache.products,
+                categories: cache.categories,
+                customMaterials: cache.customMaterials || [],
+                loading: false,
+                error: null
+              };
             if (cache.rates) {
               newState.settings = { ...state.settings, usdRate: cache.rates.usd, eurRate: cache.rates.eur };
               if (state.proposal) {
@@ -200,8 +203,9 @@ export const createProductsSlice: StateCreator<
           return a.name.localeCompare(b.name);
         });
 
+      const customMaterials = data.customMaterials || [];
       try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, products, categories, rates }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, products, categories, rates, customMaterials }));
       } catch (storageError) {
         console.warn('⚠️ Не вдалося зберегти кеш у localStorage (переповнено):', storageError);
       }
@@ -212,6 +216,7 @@ export const createProductsSlice: StateCreator<
           ...state,
           products,
           categories,
+          customMaterials,
           loading: false,
         };
         

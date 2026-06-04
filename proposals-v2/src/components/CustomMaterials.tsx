@@ -118,10 +118,27 @@ export function CustomMaterialsModal({ isOpen, onClose, initialProductId }: Cust
           return;
         }
 
-        // Оновлюємо локально
-        removeCustomMaterial(editingId);
-        addCustomMaterial(materialData);
-        alert('✅ Товар оновлено локально');
+        // Видаляємо стару версію з хмари
+        await deleteCustomMaterialAPI(editingId);
+
+        // Створюємо нові дані з унікальним ID
+        const newMaterialData = {
+          ...materialData,
+          id: `custom_${Date.now()}`
+        };
+
+        // Зберігаємо нову версію в Google Sheets
+        const result = await addCustomMaterialAPI(newMaterialData);
+
+        if (result.success && result.product) {
+          removeCustomMaterial(editingId);
+          addCustomMaterial(result.product);
+          clearProductsCache();
+          alert('✅ Товар оновлено та збережено в Google Sheets');
+        } else {
+          alert('❌ Помилка збереження оновленого товару: ' + (result.error || 'Не вдалося зберегти товар'));
+          return;
+        }
       } else {
         // Додавання нового - перевірка на дублікат
         const duplicate = [...customMaterials, ...products].find(m => 
