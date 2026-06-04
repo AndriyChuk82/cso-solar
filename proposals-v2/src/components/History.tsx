@@ -3,6 +3,7 @@ import { History as HistoryIcon, X, Eye, Trash2, FileText, RefreshCw, Search } f
 import { useProposalStore } from '../store';
 import { formatCurrency } from '../utils/currency';
 import { formatDateTime } from '../utils/calculations';
+import { toast } from 'sonner';
 
 interface HistoryModalProps {
   isOpen: boolean;
@@ -25,8 +26,18 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
 
   const handleSync = async () => {
     setIsSyncing(true);
+    const syncPromise = syncHistory();
+
+    toast.promise(syncPromise, {
+      loading: 'Синхронізація історії з Google Sheets...',
+      success: 'Історію успішно синхронізовано!',
+      error: (err) => `Помилка синхронізації: ${err?.message || 'невідома помилка'}`,
+    });
+
     try {
-      await syncHistory();
+      await syncPromise;
+    } catch (error) {
+      console.error('Sync error:', error);
     } finally {
       setIsSyncing(false);
     }

@@ -327,40 +327,84 @@ export const createProposalSlice: StateCreator<
   },
 
   syncHistory: async () => {
-    try {
-      const sheetProposals = await fetchProposalsHistory();
-      if (sheetProposals.length > 0) {
-        set((state) => {
-          // Об'єднуємо з локальною історією (пріоритет даним з таблиці)
-          const merged = [...sheetProposals];
+    // 1. Отримуємо список пропозицій з хмари (Google Sheets)
+    const sheetProposals = (await fetchProposalsHistory()) as Proposal[];
+    const { history: localHistory } = get();
 
-          // Додаємо локальні пропозиції, яких немає в таблиці
-          state.history.forEach(lh => {
-            if (!merged.find(sh => sh.id === lh.id)) {
-              merged.push(lh);
-            }
-          });
+    // 2. Визначаємо локальні пропозиції, які потрібно завантажити у хмару:
+    // - вони повинні мати статус 'sent' (збережені КП)
+    // - їх або взагалі немає в таблиці
+    // - або локальна версія оновлена пізніше, ніж хмарна версія
+    const toUpload = localHistory.filter(lp => {
+      if (lp.status !== 'sent') return false;
 
-          // Перераховуємо кожен елемент історії, щоб заповнити можливі нулі
-          const validatedHistory = merged.map(p => calculateProposalTotals(p));
+      const sp = sheetProposals.find(s => s.id === lp.id);
+      if (!sp) return true; // немає в таблиці
 
-          const newState: any = { history: validatedHistory };
+      const localTime = new Date(lp.updatedAt || lp.createdAt || 0).getTime();
+      const sheetTime = new Date(sp.updatedAt || sp.createdAt || 0).getTime();
+      return localTime > sheetTime; // локальна версія є новішою
+    });
 
-          // Якщо поточна пропозиція пуста (чернетка без товарів і імені клієнта),
-          // оновлюємо її номер на основі отриманої історії
-          if (state.proposal.items.length === 0 && !state.proposal.clientName) {
-            newState.proposal = {
-              ...state.proposal,
-              number: getNextProposalNumber(validatedHistory)
-            };
-          }
-
-          return newState;
-        });
-      }
-    } catch (error) {
-      console.error('Failed to sync history:', error);
+    // 3. Завантажуємо несинхронізовані КП до Google Sheets
+    if (toUpload.length > 0) {
+      console.log(`📤 Завантаження ${toUpload.length} несинхронізованих КП до Google Sheets...`);
+      await Promise.all(toUpload.map(prop => saveProposalToSheet(prop)));
     }
+
+    // 4. Якщо були вивантаження, повторно завантажуємо актуальний список з хмари
+    let finalSheetProposals = sheetProposals;
+    if (toUpload.length > 0) {
+      finalSheetProposals = (await fetchProposalsHistory()) as Proposal[];
+    }
+
+    // 5. Об'єднуємо хмарні та локальні пропозиції в Map для уникнення дублікатів
+    const mergedMap = new Map<string, Proposal>();
+    
+    // Спочатку додаємо хмарні пропозиції
+    finalSheetProposals.forEach(sp => {
+      mergedMap.set(sp.id, sp);
+    });
+
+    // Потім об'єднуємо з локальними пропозиціями (залишаємо новішу за часом оновлення)
+    localHistory.forEach(lp => {
+      const existing = mergedMap.get(lp.id);
+      if (!existing) {
+        mergedMap.set(lp.id, lp);
+      } else {
+        const localTime = new Date(lp.updatedAt || lp.createdAt || 0).getTime();
+        const sheetTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+        if (localTime > sheetTime) {
+          mergedMap.set(lp.id, lp);
+        }
+      }
+    });
+
+    // 6. Перераховуємо суми для гарантії цілісності даних
+    const validatedHistory = Array.from(mergedMap.values()).map(p => calculateProposalTotals(p));
+
+    // Сортуємо від найновіших до найстаріших
+    validatedHistory.sort((a, b) => {
+      const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
+
+    // 7. Оновлюємо стан історії
+    set((state) => {
+      const newState: any = { history: validatedHistory };
+
+      // Якщо поточна пропозиція пуста (чернетка без товарів і імені клієнта),
+      // оновлюємо її номер на основі отриманої історії
+      if (state.proposal.items.length === 0 && !state.proposal.clientName) {
+        newState.proposal = {
+          ...state.proposal,
+          number: getNextProposalNumber(validatedHistory)
+        };
+      }
+
+      return newState;
+    });
   },
 
   deleteProposal: async (id: string) => {

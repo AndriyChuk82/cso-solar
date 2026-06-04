@@ -1153,7 +1153,10 @@ export async function saveProposalToSheet(proposal: any) {
 
 export async function fetchProposalsHistory() {
   const res = await gasRequest('getProposals');
-  return res.success ? res.proposals : [];
+  if (!res || !res.success) {
+    throw new Error(res?.error || 'Не вдалося завантажити історію з Google Sheets');
+  }
+  return res.proposals || [];
 }
 
 export async function deleteProposalFromSheet(proposalId: string) {
