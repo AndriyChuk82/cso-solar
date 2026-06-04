@@ -1,1 +1,0 @@
-import{l as e}from"./index-S0UB3paP.js";export{e as fetchAllData};

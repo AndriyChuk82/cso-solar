@@ -11,6 +11,7 @@ interface ClientInfoFormProps {
   onSetSeller: (seller: SellerId) => void;
   proposalNumber: string;
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
+  hasUnsavedChanges: boolean;
 }
 
 export function ClientInfoForm({
@@ -22,6 +23,7 @@ export function ClientInfoForm({
   onSetSeller,
   proposalNumber,
   status,
+  hasUnsavedChanges,
 }: ClientInfoFormProps) {
   return (
     <div className="bg-[#fbfaf5]/90 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-[#e8e4d1]/75 dark:border-slate-800/50 p-4 client-info-block transition-all duration-300 shadow-[0_8px_30px_rgba(245,158,11,0.02)] hover:shadow-[0_12px_40px_rgba(245,158,11,0.04)] no-print">
@@ -35,10 +37,17 @@ export function ClientInfoForm({
         {/* Status Indicator */}
         <div className="flex items-center gap-2">
           {status !== 'draft' ? (
-            <div className="flex items-center gap-1.5 bg-green-500/10 dark:bg-green-500/20 text-green-700 dark:text-green-400 border border-green-500/20 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider font-mono">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-              {proposalNumber} • {status === 'accepted' ? 'ПРИЙНЯТО' : status === 'rejected' ? 'ВІДХИЛЕНО' : 'ЗБЕРЕЖЕНО'}
-            </div>
+            hasUnsavedChanges ? (
+              <div className="flex items-center gap-1.5 bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider font-mono">
+                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
+                {proposalNumber} • ЗМІНЕНО (НЕ ЗБЕРЕЖЕНО)
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 bg-green-500/10 dark:bg-green-500/20 text-green-700 dark:text-green-400 border border-green-500/20 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider font-mono">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                {proposalNumber} • {status === 'accepted' ? 'ПРИЙНЯТО' : status === 'rejected' ? 'ВІДХИЛЕНО' : 'ЗБЕРЕЖЕНО'}
+              </div>
+            )
           ) : (
             <div className="flex items-center gap-1.5 bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider font-mono">
               <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping"></span>

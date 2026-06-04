@@ -7,6 +7,7 @@ import {
   selectSelectedSeller,
   selectSettings,
   selectActiveCurrency,
+  selectHistory,
 } from '../../store/selectors';
 import { useCurrencyConverter, useProposalCalculations } from '../../hooks/useCurrency';
 import { sendToTelegram, sendToViber } from '../../utils/messaging';
@@ -28,6 +29,7 @@ export function ProposalBuilderTable() {
   const selectedSeller = useProposalStore(selectSelectedSeller);
   const settings = useProposalStore(selectSettings);
   const activeCurrency = useProposalStore(selectActiveCurrency);
+  const history = useProposalStore(selectHistory);
 
   // Actions
   const updateQuantity = useProposalStore((state) => state.updateQuantity);
@@ -57,6 +59,45 @@ export function ProposalBuilderTable() {
     proposal.rates?.eurToUah || settings.eurRate
   );
   const { costSubtotal, saleSubtotal, profit, profitPercent } = useProposalCalculations(proposal.items);
+
+  // Порівнюємо поточну пропозицію зі збереженою в історії для виявлення незбережених змін
+  const savedVersion = history.find((p) => p.id === proposal.id);
+  const hasUnsavedChanges = (() => {
+    if (proposal.status === 'draft') return false;
+    if (!savedVersion) return true;
+
+    if (proposal.clientName !== savedVersion.clientName) return true;
+    if ((proposal.clientPhone || '') !== (savedVersion.clientPhone || '')) return true;
+    if ((proposal.clientAddress || '') !== (savedVersion.clientAddress || '')) return true;
+    if ((proposal.clientEmail || '') !== (savedVersion.clientEmail || '')) return true;
+    if (proposal.vatMode !== savedVersion.vatMode) return true;
+    if (proposal.markup !== savedVersion.markup) return true;
+    if ((proposal.adjustment || 0) !== (savedVersion.adjustment || 0)) return true;
+    if ((proposal.notes || '') !== (savedVersion.notes || '')) return true;
+    if ((proposal.seller?.id || proposal.sellerId || '') !== (savedVersion.seller?.id || savedVersion.sellerId || '')) return true;
+    if (proposal.currency !== savedVersion.currency) return true;
+
+    if (proposal.rates?.usdToUah !== savedVersion.rates?.usdToUah) return true;
+    if (proposal.rates?.eurToUah !== savedVersion.rates?.eurToUah) return true;
+
+    const activeItems = proposal.items || [];
+    const savedItems = savedVersion.items || [];
+    if (activeItems.length !== savedItems.length) return true;
+
+    for (let i = 0; i < activeItems.length; i++) {
+      const a = activeItems[i];
+      const s = savedItems[i];
+      if (a.productId !== s.productId) return true;
+      if (a.quantity !== s.quantity) return true;
+      if (a.price !== s.price) return true;
+      if (a.costPrice !== s.costPrice) return true;
+      if (a.name !== s.name) return true;
+      if ((a.description || '') !== (s.description || '')) return true;
+      if (a.unit !== s.unit) return true;
+    }
+
+    return false;
+  })();
 
   // Конвертовані товари для відображення
   const convertedItems = proposal.items.map((item: any) => {
@@ -164,6 +205,7 @@ export function ProposalBuilderTable() {
           onSetSeller={setSelectedSeller}
           proposalNumber={proposal.number || ''}
           status={proposal.status || 'draft'}
+          hasUnsavedChanges={hasUnsavedChanges}
         />
 
         <SettingsPanel
