@@ -142,8 +142,8 @@ export function CrmClientDetail({ client, onBack, onUpdate }) {
     }
   };
 
-  // Розрахунок загальних показників по всіх угодах клієнта
-  const nonCancelledProjects = projects.filter(p => p.status !== 'Скасовано');
+  // Розрахунок загальних показників по всіх угодах клієнта (тільки активні, без завершених та скасованих)
+  const nonCancelledProjects = projects.filter(p => p.status !== 'Скасовано' && p.status !== 'Завершено');
 
   let totalAgreedUSD = 0;
   let totalPaidUSD = 0;
@@ -771,7 +771,7 @@ export function CrmClientDetail({ client, onBack, onUpdate }) {
             ) : (() => {
               const activeProjects = projects.filter(p => p.status !== 'Завершено' && p.status !== 'Скасовано');
               const archivedProjects = projects.filter(p => p.status === 'Завершено' || p.status === 'Скасовано');
-              const nonCancelledProjects = projects.filter(p => p.status !== 'Скасовано');
+              const nonCancelledProjects = activeProjects;
 
               return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
