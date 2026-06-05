@@ -118,7 +118,9 @@ export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTN
       trailer,
       carrier,
       driver,
-      sender: proposal.seller?.fullName || '',
+      sender: proposal.seller 
+        ? `${proposal.seller.fullName}, ${proposal.seller.taxIdType} ${proposal.seller.taxId}` 
+        : '',
       receiver: proposal.clientName || '',
       loadPoint,
       unloadPoint,
@@ -230,7 +232,11 @@ export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTN
               </label>
               <input
                 type="text"
-                value={proposal.seller?.fullName || ''}
+                value={
+                  proposal.seller 
+                    ? `${proposal.seller.fullName}, ${proposal.seller.taxIdType} ${proposal.seller.taxId}` 
+                    : ''
+                }
                 readOnly
                 className="w-full px-2 py-1.5 text-xs border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50 rounded text-gray-600 dark:text-slate-400 cursor-not-allowed"
               />
