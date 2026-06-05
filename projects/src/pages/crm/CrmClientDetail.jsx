@@ -1122,6 +1122,7 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
   const [editingUnifiedId, setEditingUnifiedId] = useState(null);
   const [editingUnifiedData, setEditingUnifiedData] = useState({});
   const [unifiedSearch, setUnifiedSearch] = useState('');
+  const [materialsViewMode, setMaterialsViewMode] = useState('grouped'); // 'grouped', 'list', 'client'
   const [agreedSums, setAgreedSums] = useState({
     usd: parseFloat(project.agreed_sum_usd) || 0,
     uah: parseFloat(project.agreed_sum_uah) || 0
@@ -2185,10 +2186,54 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
           return new Date(b.date) - new Date(a.date);
         });
 
+        const handleCopyMaterialsText = () => {
+          try {
+            const sorted = [...filteredMaterials].sort((a, b) => {
+              if (a.date === '—') return 1;
+              if (b.date === '—') return -1;
+              return new Date(b.date) - new Date(a.date);
+            });
+            
+            let text = `Відомість видачі матеріалів — ${project.name || ''}\n`;
+            text += `Дата | Назва матеріалу | Кількість | Ціна | Сума | Коментар\n`;
+            text += `---------------------------------------------------------\n`;
+            sorted.forEach(item => {
+              const dateStr = item.date !== '—' ? new Date(item.date).toLocaleDateString('uk-UA') : '—';
+              const priceStr = item.price ? (item.currency === 'USD' ? `$${item.price}` : `${item.price} ₴`) : 'без ціни';
+              const costStr = item.price ? (item.currency === 'USD' ? `$${item.quantity * item.price}` : `${item.quantity * item.price} ₴`) : '—';
+              
+              let commentStr = item.note || '';
+              if (item.shipInfo && item.shipInfo.isShipment) {
+                const parts = [];
+                if (item.shipInfo.carrier) parts.push(`🚚 ${item.shipInfo.carrier}`);
+                if (item.shipInfo.trackingNumber) parts.push(`(${item.shipInfo.trackingNumber})`);
+                if (item.shipInfo.cleanNote) parts.push(item.shipInfo.cleanNote);
+                commentStr = parts.join(' ');
+              }
+              if (!commentStr) commentStr = '—';
+              
+              text += `${dateStr} | ${item.name} | ${item.quantity} ${item.unit} | ${priceStr} | ${costStr} | ${commentStr}\n`;
+            });
+            
+            text += `---------------------------------------------------------\n`;
+            text += `Загалом позицій: ${grandTotalPos}\n`;
+            text += `Сума UAH: ${grandTotalUAH.toLocaleString('uk-UA')} ₴\n`;
+            text += `Сума USD: $${grandTotalUSD.toLocaleString('en-US')}\n`;
+
+            navigator.clipboard.writeText(text);
+            alert('Дані успішно скопійовано в буфер обміну!');
+          } catch (e) {
+            alert('Не вдалося скопіювати дані: ' + e.message);
+          }
+        };
+
         const renderMaterialsTable = (group) => {
           const itemsList = group.items;
           const totalUAH = itemsList.reduce((acc, item) => item.currency === 'UAH' ? acc + (item.quantity * (item.price || 0)) : acc, 0);
           const totalUSD = itemsList.reduce((acc, item) => item.currency === 'USD' ? acc + (item.quantity * (item.price || 0)) : acc, 0);
+
+          const isGrouped = materialsViewMode === 'grouped';
+          const isClient = materialsViewMode === 'client';
 
           return (
             <div style={{ 
@@ -2198,7 +2243,7 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
               marginBottom: '24px',
               boxShadow: '0 2px 6px rgba(139, 125, 112, 0.04)'
             }}>
-              {/* Group Header by Date */}
+              {/* Group Header */}
               <div style={{ 
                 background: '#FAF6F0', 
                 borderBottom: '1px solid #D4C5B9', 
@@ -2210,33 +2255,43 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
                 gap: '10px'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: '#2C2520' }}>
-                  <span style={{ fontSize: '16px' }}>📅</span>
-                  <span>Видача від {group.date !== '—' ? new Date(group.date).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'}</span>
+                  <span style={{ fontSize: '16px' }}>{isClient ? '👁️' : '📅'}</span>
+                  <span>
+                    {isClient 
+                      ? 'Зведена відомість видачі матеріалів для замовника' 
+                      : !isGrouped 
+                        ? 'Загальний список виданих матеріалів' 
+                        : `Видача від ${group.date !== '—' ? new Date(group.date).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'}`}
+                  </span>
                   <span style={{ height: '12px', width: '1px', background: '#D4C5B9', margin: '0 4px' }} />
                   <span style={{ color: '#8B7D73', fontWeight: 650 }}>{group.items.length} поз.</span>
                 </div>
-                <button
-                  onClick={() => handleDeleteDateGroup(group)}
-                  style={{
-                    background: '#FCE8E6',
-                    color: '#C5221F',
-                    border: '1px solid #FAD2CF',
-                    borderRadius: '6px',
-                    padding: '4px 10px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#FAD2CF'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = '#FCE8E6'; }}
-                >
-                  <Trash2 size={12} /> Видалити видачу за день
-                </button>
-                {(() => {
+                
+                {isGrouped && (
+                  <button
+                    onClick={() => handleDeleteDateGroup(group)}
+                    style={{
+                      background: '#FCE8E6',
+                      color: '#C5221F',
+                      border: '1px solid #FAD2CF',
+                      borderRadius: '6px',
+                      padding: '4px 10px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#FAD2CF'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#FCE8E6'; }}
+                  >
+                    <Trash2 size={12} /> Видалити видачу за день
+                  </button>
+                )}
+                
+                {!isClient && (() => {
                   const pricedItems = itemsList.filter(i => (parseFloat(i.price) || 0) > 0);
                   const allInDebt = pricedItems.length > 0 && pricedItems.every(i => i.addedToDebt);
                   const noneInDebt = pricedItems.every(i => !i.addedToDebt);
@@ -2261,7 +2316,9 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
                       onMouseEnter={e => { e.currentTarget.style.opacity = '0.8'; }}
                       onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
                     >
-                      {allInDebt ? '✓ Зняти з боргу' : '📋 Все в борг'}
+                      {allInDebt 
+                        ? (isGrouped ? '✓ Зняти з боргу' : '✓ Зняти весь список з боргу') 
+                        : (isGrouped ? '📋 Все в борг' : '📋 Весь список в борг')}
                     </button>
                   );
                 })()}
@@ -2271,14 +2328,14 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
                   <thead>
                     <tr style={{ background: '#FAF8F5', borderBottom: '1px solid #D4C5B9' }}>
-                      <th style={{ padding: '8px 12px', width: '70px', textAlign: 'center', fontWeight: 800, color: '#2C2520' }}>В борг</th>
+                      {!isClient && <th style={{ padding: '8px 12px', width: '70px', textAlign: 'center', fontWeight: 800, color: '#2C2520' }}>В борг</th>}
                       <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520' }}>Матеріал</th>
                       <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '95px', textAlign: 'center' }}>Дата</th>
                       <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '100px', textAlign: 'center' }}>Кількість</th>
                       <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '110px', textAlign: 'center' }}>Ціна за од.</th>
                       <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520', width: '110px', textAlign: 'center' }}>Сума</th>
                       <th style={{ padding: '8px 12px', fontWeight: 800, color: '#2C2520' }}>Коментар</th>
-                      <th style={{ padding: '8px 12px', width: '150px', textAlign: 'center' }}>Дії</th>
+                      {!isClient && <th style={{ padding: '8px 12px', width: '150px', textAlign: 'center' }}>Дії</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -2290,18 +2347,20 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
 
                       return (
                         <tr key={item.id} style={{ borderBottom: '1px solid #FAF6F0', transition: 'background 0.15s', background: isEditing ? '#FFFDF5' : 'transparent' }}>
-                          <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                            {item.price && item.price > 0 ? (
-                              <input 
-                                type="checkbox"
-                                checked={item.addedToDebt}
-                                onChange={() => handleToggleDebtStatus(item)}
-                                style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#C2410C' }}
-                              />
-                            ) : (
-                              <span title="Без ціни — неможливо перенести" style={{ fontSize: '10px', color: '#B3A395', fontStyle: 'italic' }}>—</span>
-                            )}
-                          </td>
+                          {!isClient && (
+                            <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                              {item.price && item.price > 0 ? (
+                                <input 
+                                  type="checkbox"
+                                  checked={item.addedToDebt}
+                                  onChange={() => handleToggleDebtStatus(item)}
+                                  style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#C2410C' }}
+                                />
+                              ) : (
+                                <span title="Без ціни — неможливо перенести" style={{ fontSize: '10px', color: '#B3A395', fontStyle: 'italic' }}>—</span>
+                              )}
+                            </td>
+                          )}
 
                           <td style={{ padding: '8px 12px', fontWeight: 600, color: '#2C2520' }}>
                             {isEditing ? (
@@ -2432,67 +2491,69 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
                             )}
                           </td>
 
-                          <td style={{ padding: '8px 12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                            {isEditing ? (
-                              <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                                <button 
-                                  onClick={() => handleSaveUnifiedRow(item)}
-                                  style={{
-                                    background: '#E6F4EA', color: '#137333', border: '1px solid #CEEAD6',
-                                    borderRadius: '4px', padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
-                                    display: 'flex', alignItems: 'center', gap: '3px'
-                                  }}
-                                >
-                                  <Check size={12} /> Зберегти
-                                </button>
-                                <button 
-                                  onClick={() => setEditingUnifiedId(null)}
-                                  style={{
-                                    background: '#FCE8E6', color: '#C5221F', border: '1px solid #FAD2CF',
-                                    borderRadius: '4px', padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
-                                    display: 'flex', alignItems: 'center', gap: '3px'
-                                  }}
-                                >
-                                  <X size={12} /> Скасувати
-                                </button>
-                              </div>
-                            ) : (
-                              <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                                <button 
-                                  onClick={() => handleEditUnifiedRow(item)}
-                                  disabled={item.addedToDebt}
-                                  title={item.addedToDebt ? "Позиція перенесена в борг. Вилучіть її з боргу, щоб редагувати" : ""}
-                                  style={{
-                                    background: '#FAF6F0', color: '#8B7D73', border: '1px solid #D4C5B9',
-                                    borderRadius: '4px', padding: '4px 6px', fontSize: '11px', fontWeight: 600, cursor: item.addedToDebt ? 'not-allowed' : 'pointer',
-                                    display: 'flex', alignItems: 'center', gap: '3px', opacity: item.addedToDebt ? 0.5 : 1
-                                  }}
-                                >
-                                  <Pencil size={11} /> Редагувати
-                                </button>
-                                <button 
-                                  onClick={() => handleDeleteUnifiedRow(item)}
-                                  disabled={item.addedToDebt}
-                                  title={item.addedToDebt ? "Позиція перенесена в борг. Вилучіть її з боргу, щоб видалити" : ""}
-                                  style={{
-                                    background: '#FCE8E6', color: '#C5221F', border: '1px solid #FAD2CF',
-                                    borderRadius: '4px', padding: '4px 6px', fontSize: '11px', fontWeight: 600, cursor: item.addedToDebt ? 'not-allowed' : 'pointer',
-                                    display: 'flex', alignItems: 'center', gap: '3px', opacity: item.addedToDebt ? 0.5 : 1
-                                  }}
-                                >
-                                  <Trash2 size={11} /> Видалити
-                                </button>
-                              </div>
-                            )}
-                          </td>
+                          {!isClient && (
+                            <td style={{ padding: '8px 12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                              {isEditing ? (
+                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                                  <button 
+                                    onClick={() => handleSaveUnifiedRow(item)}
+                                    style={{
+                                      background: '#E6F4EA', color: '#137333', border: '1px solid #CEEAD6',
+                                      borderRadius: '4px', padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
+                                      display: 'flex', alignItems: 'center', gap: '3px'
+                                    }}
+                                  >
+                                    <Check size={12} /> Зберегти
+                                  </button>
+                                  <button 
+                                    onClick={() => setEditingUnifiedId(null)}
+                                    style={{
+                                      background: '#FCE8E6', color: '#C5221F', border: '1px solid #FAD2CF',
+                                      borderRadius: '4px', padding: '4px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
+                                      display: 'flex', alignItems: 'center', gap: '3px'
+                                    }}
+                                  >
+                                    <X size={12} /> Скасувати
+                                  </button>
+                                </div>
+                              ) : (
+                                <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                                  <button 
+                                    onClick={() => handleEditUnifiedRow(item)}
+                                    disabled={item.addedToDebt}
+                                    title={item.addedToDebt ? "Позиція перенесена в борг. Вилучіть її з боргу, щоб редагувати" : ""}
+                                    style={{
+                                      background: '#FAF6F0', color: '#8B7D73', border: '1px solid #D4C5B9',
+                                      borderRadius: '4px', padding: '4px 6px', fontSize: '11px', fontWeight: 600, cursor: item.addedToDebt ? 'not-allowed' : 'pointer',
+                                      display: 'flex', alignItems: 'center', gap: '3px', opacity: item.addedToDebt ? 0.5 : 1
+                                    }}
+                                  >
+                                    <Pencil size={11} /> Редагувати
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeleteUnifiedRow(item)}
+                                    disabled={item.addedToDebt}
+                                    title={item.addedToDebt ? "Позиція перенесена в борг. Вилучіть її з боргу, щоб видалити" : ""}
+                                    style={{
+                                      background: '#FCE8E6', color: '#C5221F', border: '1px solid #FAD2CF',
+                                      borderRadius: '4px', padding: '4px 6px', fontSize: '11px', fontWeight: 600, cursor: item.addedToDebt ? 'not-allowed' : 'pointer',
+                                      display: 'flex', alignItems: 'center', gap: '3px', opacity: item.addedToDebt ? 0.5 : 1
+                                    }}
+                                  >
+                                    <Trash2 size={11} /> Видалити
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          )}
                         </tr>
                       );
                     })}
                   </tbody>
                   <tfoot>
                     <tr style={{ background: '#FAF8F5', borderTop: '2px solid #D4C5B9', fontWeight: 800 }}>
-                      <td colSpan="5" style={{ padding: '10px 12px', color: '#2C2520', textAlign: 'right', textTransform: 'uppercase' }}>
-                        Підсумок дня:
+                      <td colSpan={isClient ? "4" : "5"} style={{ padding: '10px 12px', color: '#2C2520', textAlign: 'right', textTransform: 'uppercase' }}>
+                        Підсумок:
                       </td>
                       <td style={{ padding: '10px 12px', textAlign: 'center', color: '#2C2520' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
@@ -2501,7 +2562,7 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
                           {totalUAH === 0 && totalUSD === 0 && <span>—</span>}
                         </div>
                       </td>
-                      <td colSpan="2" style={{ padding: '10px 12px' }}></td>
+                      <td colSpan={isClient ? "1" : "2"} style={{ padding: '10px 12px' }}></td>
                     </tr>
                   </tfoot>
                 </table>
@@ -2552,26 +2613,59 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
 
             {/* Title & Actions */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '18px' }}>📋</span>
-                <h5 style={{ margin: 0, fontSize: '13.5px', fontWeight: 850, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Зведена відомість видачі матеріалів
-                </h5>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '18px' }}>📋</span>
+                  <h5 style={{ margin: 0, fontSize: '13.5px', fontWeight: 850, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Зведена відомість видачі матеріалів
+                  </h5>
+                </div>
+                
+                {/* View Mode Toggle */}
+                <div style={{ display: 'flex', border: '1px solid #D4C5B9', borderRadius: '6px', overflow: 'hidden' }}>
+                  {[
+                    { id: 'grouped', label: '📅 По датах' },
+                    { id: 'list', label: '📋 Список' },
+                    { id: 'client', label: '👁️ Для замовника' }
+                  ].map((mode) => (
+                    <button
+                      key={mode.id}
+                      onClick={() => setMaterialsViewMode(mode.id)}
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '11px',
+                        fontWeight: materialsViewMode === mode.id ? 800 : 600,
+                        border: `1px solid ${materialsViewMode === mode.id ? '#8B7D73' : '#D4C5B9'}`,
+                        borderWidth: '0 1px 0 0',
+                        background: materialsViewMode === mode.id ? '#2C2520' : '#FAF8F5',
+                        color: materialsViewMode === mode.id ? '#FFFFFF' : '#8B7D73',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        outline: 'none'
+                      }}
+                    >
+                      {mode.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: isMobile ? '100%' : 'auto', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => setShowKPImportModal(true)}
-                  style={{
-                    background: '#FAF6F0', color: '#8B7D73', border: '1px solid #D4C5B9', borderRadius: '6px',
-                    padding: '5px 12px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', cursor: 'pointer',
-                    height: '28px', transition: 'background 0.2s', boxSizing: 'border-box'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#EAE7E2'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#FAF6F0'}
-                >
-                  <FileText size={12} /> Імпорт з КП
-                </button>
+                {materialsViewMode !== 'client' && (
+                  <button
+                    onClick={() => setShowKPImportModal(true)}
+                    style={{
+                      background: '#FAF6F0', color: '#8B7D73', border: '1px solid #D4C5B9', borderRadius: '6px',
+                      padding: '5px 12px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', cursor: 'pointer',
+                      height: '28px', transition: 'background 0.2s', boxSizing: 'border-box'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#EAE7E2'}
+                    onMouseLeave={e => e.currentTarget.style.background = '#FAF6F0'}
+                  >
+                    <FileText size={12} /> Імпорт з КП
+                  </button>
+                )}
+                
                 <div style={{ position: 'relative', width: isMobile ? '100%' : '250px' }}>
                   <input 
                     type="text"
@@ -2585,16 +2679,29 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
                   />
                 </div>
 
-                <button 
-                  onClick={() => setShowQuickShipment(true)}
-                  style={{
-                    background: '#C4B4A6', color: '#FFFFFF', border: 'none', borderRadius: '6px',
-                    padding: '6px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', gap: '6px', outline: 'none', whiteSpace: 'nowrap'
-                  }}
-                >
-                  <span>🚛</span> Швидка видача
-                </button>
+                {materialsViewMode !== 'client' ? (
+                  <button 
+                    onClick={() => setShowQuickShipment(true)}
+                    style={{
+                      background: '#C4B4A6', color: '#FFFFFF', border: 'none', borderRadius: '6px',
+                      padding: '6px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: '6px', outline: 'none', whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <span>🚛</span> Швидка видача
+                  </button>
+                ) : (
+                  <button 
+                    onClick={handleCopyMaterialsText}
+                    style={{
+                      background: '#8B7D73', color: '#FFFFFF', border: 'none', borderRadius: '6px',
+                      padding: '6px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: '6px', outline: 'none', whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <span>📋</span> Скопіювати для клієнта
+                  </button>
+                )}
               </div>
             </div>
 
@@ -2604,11 +2711,22 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
               </div>
             ) : (
               <div>
-                {dateGroups.map(group => (
-                  <div key={group.date}>
-                    {renderMaterialsTable(group)}
-                  </div>
-                ))}
+                {materialsViewMode === 'grouped' ? (
+                  dateGroups.map(group => (
+                    <div key={group.date}>
+                      {renderMaterialsTable(group)}
+                    </div>
+                  ))
+                ) : (
+                  renderMaterialsTable({
+                    date: 'all',
+                    items: [...filteredMaterials].sort((a, b) => {
+                      if (a.date === '—') return 1;
+                      if (b.date === '—') return -1;
+                      return new Date(b.date) - new Date(a.date);
+                    })
+                  })
+                )}
               </div>
             )}
           </div>
