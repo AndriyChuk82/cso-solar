@@ -2069,6 +2069,27 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
             <span>📦</span> Видача матеріалів
           </button>
           <button 
+            onClick={() => setActiveTab('reconciliation')}
+            style={{
+              padding: '10px 16px',
+              fontSize: '12.5px',
+              fontWeight: 800,
+              background: activeTab === 'reconciliation' ? '#FFFFFF' : 'transparent',
+              border: activeTab === 'reconciliation' ? '1px solid #D4C5B9' : '1px solid transparent',
+              borderRadius: '20px',
+              color: activeTab === 'reconciliation' ? '#2C2520' : '#8B7D73',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              outline: 'none',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <span>⚖️</span> Акт звірки
+          </button>
+          <button 
             onClick={() => setActiveTab('history')}
             style={{
               padding: '10px 16px',
@@ -2727,6 +2748,329 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
                     })
                   })
                 )}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {activeTab === 'reconciliation' && (() => {
+        const displayCurrency = ledgerDisplayCurrency === 'USD' ? 'USD' : 'UAH';
+        const sym = displayCurrency === 'USD' ? '$' : '₴';
+        const rate = parseFloat(exchangeRateInput) || 44.3;
+
+        const processedMaterials = (expressMaterials || []).map(m => {
+          const shipInfo = parseShipmentInfo(m.note);
+          return {
+            id: `debt-${m.id}`,
+            dbId: m.id,
+            name: m.name,
+            quantity: parseFloat(m.quantity) || 0,
+            unit: m.unit || 'шт.',
+            date: m.issued_at ? m.issued_at.split('T')[0] : '—',
+            price: m.price || 0,
+            currency: m.currency || 'UAH',
+            note: m.note || '',
+            addedToDebt: m.added_to_debt || false,
+            shipInfo
+          };
+        });
+
+        // Calculate materials cost added to debt
+        let materialsUSD = 0;
+        let materialsUAH = 0;
+        processedMaterials.forEach(m => {
+          if (m.addedToDebt && m.price > 0) {
+            const cost = m.quantity * m.price;
+            if (m.currency === 'USD') materialsUSD += cost;
+            else if (m.currency === 'UAH') materialsUAH += cost;
+          }
+        });
+
+        // Base Contract Sum
+        const agreedUSD = parseFloat(project.agreed_sum_usd) || 0;
+        const agreedUAH = parseFloat(project.agreed_sum_uah) || 0;
+        const baseUSD = agreedUSD - materialsUSD;
+        const baseUAH = agreedUAH - materialsUAH;
+
+        const events = [];
+
+        // 1. Add Base Contract Sum
+        if (baseUSD > 0 || baseUAH > 0 || (agreedUSD === 0 && agreedUAH === 0)) {
+          const date = project.created_at ? project.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
+          let amount = 0;
+          let origDetails = '';
+          if (displayCurrency === 'USD') {
+            amount = baseUSD + (baseUAH / rate);
+            if (baseUSD > 0 && baseUAH > 0) {
+              origDetails = ` (ориг. $${Math.round(baseUSD).toLocaleString()} + ${Math.round(baseUAH).toLocaleString()} ₴)`;
+            } else if (baseUAH > 0) {
+              origDetails = ` (ориг. ${Math.round(baseUAH).toLocaleString()} ₴ за курсом ${rate})`;
+            }
+          } else {
+            amount = baseUAH + (baseUSD * rate);
+            if (baseUSD > 0 && baseUAH > 0) {
+              origDetails = ` (ориг. ${Math.round(baseUAH).toLocaleString()} ₴ + $${Math.round(baseUSD).toLocaleString()})`;
+            } else if (baseUSD > 0) {
+              origDetails = ` (ориг. $${Math.round(baseUSD).toLocaleString()} за курсом ${rate})`;
+            }
+          }
+          
+          events.push({
+            date,
+            description: `Угода: ${project.address || project.name || 'Базова вартість'}${origDetails}`,
+            debit: amount,
+            credit: 0,
+            originalCurrency: baseUSD > 0 ? 'USD' : 'UAH',
+            type: 'debit'
+          });
+        }
+
+        // 2. Add materials
+        processedMaterials.forEach(m => {
+          if (m.addedToDebt && m.price > 0) {
+            const cost = m.quantity * m.price;
+            let amount = cost;
+            let origDetails = '';
+            if (displayCurrency === 'USD') {
+              if (m.currency === 'UAH') {
+                amount = cost / rate;
+                origDetails = ` (ориг. ${Math.round(cost).toLocaleString()} ₴ за курсом ${rate})`;
+              }
+            } else {
+              if (m.currency === 'USD') {
+                amount = cost * rate;
+                origDetails = ` (ориг. $${Math.round(cost).toLocaleString()} за курсом ${rate})`;
+              }
+            }
+
+            let commentStr = '';
+            if (m.shipInfo && m.shipInfo.isShipment) {
+              const parts = [];
+              if (m.shipInfo.carrier) parts.push(`🚚 ${m.shipInfo.carrier}`);
+              if (m.shipInfo.trackingNumber) parts.push(`(${m.shipInfo.trackingNumber})`);
+              if (m.shipInfo.cleanNote) parts.push(m.shipInfo.cleanNote);
+              commentStr = parts.join(' ');
+            } else if (m.note) {
+              commentStr = m.note;
+            }
+            if (commentStr) commentStr = ` [${commentStr}]`;
+
+            events.push({
+              date: m.date,
+              description: `Видача: ${m.name} (${m.quantity} ${m.unit} × ${m.price.toLocaleString()} ${m.currency === 'USD' ? '$' : '₴'})${commentStr}${origDetails}`,
+              debit: amount,
+              credit: 0,
+              originalCurrency: m.currency,
+              type: 'debit'
+            });
+          }
+        });
+
+        // 3. Add payments
+        const validPayments = (project.project_payments || []).filter(pay => !pay.status?.toLowerCase().includes('скасовано'));
+        validPayments.forEach(pay => {
+          const sum = parseFloat(pay.sum) || 0;
+          let amount = sum;
+          let origDetails = '';
+          
+          if (displayCurrency === 'USD') {
+            if (pay.currency === 'UAH') {
+              const payRate = parseFloat(pay.conversion_rate) || rate;
+              amount = sum / payRate;
+              origDetails = ` (ориг. ${Math.round(sum).toLocaleString()} ₴ за курсом ${payRate})`;
+            }
+          } else {
+            if (pay.currency === 'USD') {
+              const payRate = parseFloat(pay.conversion_rate) || rate;
+              amount = sum * payRate;
+              origDetails = ` (ориг. $${Math.round(sum).toLocaleString()} за курсом ${payRate})`;
+            }
+          }
+
+          const noteStr = pay.note ? ` [${pay.note}]` : '';
+
+          events.push({
+            date: pay.date ? pay.date.split('T')[0] : '—',
+            description: `${pay.payment_type || 'Оплата'}${noteStr}${origDetails}`,
+            debit: 0,
+            credit: amount,
+            originalCurrency: pay.currency,
+            type: 'credit'
+          });
+        });
+
+        // Sort events: date ascending, debits first if same date
+        events.sort((a, b) => {
+          if (a.date === '—') return 1;
+          if (b.date === '—') return -1;
+          const dateDiff = new Date(a.date) - new Date(b.date);
+          if (dateDiff !== 0) return dateDiff;
+          if (a.type === 'debit' && b.type === 'credit') return -1;
+          if (a.type === 'credit' && b.type === 'debit') return 1;
+          return 0;
+        });
+
+        // Calculate running balance
+        let balance = 0;
+        const rows = events.map(ev => {
+          if (ev.type === 'debit') {
+            balance += ev.debit;
+          } else {
+            balance -= ev.credit;
+          }
+          return {
+            ...ev,
+            balance
+          };
+        });
+
+        const totalDebit = rows.reduce((acc, r) => acc + r.debit, 0);
+        const totalCredit = rows.reduce((acc, r) => acc + r.credit, 0);
+
+        const handleCopyReconciliationText = () => {
+          try {
+            let text = `АКТ ЗВІРКИ ВЗАЄМОРОЗРАХУНКІВ\n`;
+            text += `Контрагент: ${client.name || ''}\n`;
+            text += `Угода: ${project.name || project.address || ''}\n`;
+            text += `Валюта звірки: ${displayCurrency}\n`;
+            text += `Курс конвертації: ${rate} (для операцій без фіксованого курсу)\n`;
+            text += `----------------------------------------------------------------------\n`;
+            text += `Дата | Опис операції | Нараховано (Дебет) | Сплачено (Кредит) | Залишок боргу\n`;
+            text += `----------------------------------------------------------------------\n`;
+            
+            rows.forEach(r => {
+              const dateStr = r.date !== '—' ? new Date(r.date).toLocaleDateString('uk-UA') : '—';
+              const debStr = r.debit > 0 ? (displayCurrency === 'USD' ? `$${Math.round(r.debit).toLocaleString()}` : `${Math.round(r.debit).toLocaleString()} ₴`) : '—';
+              const credStr = r.credit > 0 ? (displayCurrency === 'USD' ? `$${Math.round(r.credit).toLocaleString()}` : `${Math.round(r.credit).toLocaleString()} ₴`) : '—';
+              const balStr = displayCurrency === 'USD'
+                ? (r.balance < 0 ? `-$${Math.abs(Math.round(r.balance)).toLocaleString()}` : `$${Math.round(r.balance).toLocaleString()}`)
+                : (r.balance < 0 ? `-${Math.abs(Math.round(r.balance)).toLocaleString()} ₴` : `${Math.round(r.balance).toLocaleString()} ₴`);
+                
+              text += `${dateStr} | ${r.description} | ${debStr} | ${credStr} | ${balStr}\n`;
+            });
+            
+            text += `----------------------------------------------------------------------\n`;
+            const fmt = (v) => displayCurrency === 'USD'
+              ? (v < 0 ? `-$${Math.abs(Math.round(v)).toLocaleString()}` : `$${Math.round(v).toLocaleString()}`)
+              : (v < 0 ? `-${Math.abs(Math.round(v)).toLocaleString()} ₴` : `${Math.round(v).toLocaleString()} ₴`);
+            const fmtP = (v) => displayCurrency === 'USD' ? `$${Math.round(v).toLocaleString()}` : `${Math.round(v).toLocaleString()} ₴`;
+
+            text += `Всього нараховано: ${fmtP(totalDebit)}\n`;
+            text += `Всього сплачено: ${fmtP(totalCredit)}\n`;
+            text += `Кінцевий баланс: ${fmt(balance)} (${balance > 0 ? 'Клієнт винен нам' : balance < 0 ? 'Переплата' : 'Розрахунки закриті'})\n`;
+
+            navigator.clipboard.writeText(text);
+            alert('Акт звірки успішно скопійовано в буфер обміну!');
+          } catch (e) {
+            alert('Помилка копіювання: ' + e.message);
+          }
+        };
+
+        const fmtVal = (val, isZeroDash = true) => {
+          if (val === 0) return isZeroDash ? '—' : (displayCurrency === 'USD' ? '$0' : '0 ₴');
+          return displayCurrency === 'USD' ? `$${Math.round(val).toLocaleString('en-US')}` : `${Math.round(val).toLocaleString('uk-UA')} ₴`;
+        };
+
+        const fmtBal = (val) => {
+          const formatted = displayCurrency === 'USD'
+            ? (val < 0 ? `-$${Math.abs(Math.round(val)).toLocaleString('en-US')}` : `$${Math.round(val).toLocaleString('en-US')}`)
+            : (val < 0 ? `-${Math.abs(Math.round(val)).toLocaleString('uk-UA')} ₴` : `${Math.round(val).toLocaleString('uk-UA')} ₴`);
+          
+          const color = val < 0 ? '#15803D' : val > 0 ? (displayCurrency === 'USD' ? '#1D4ED8' : '#C2410C') : '#2C2520';
+          return <span style={{ color, fontWeight: 800 }}>{formatted}</span>;
+        };
+
+        return (
+          <div style={{ background: '#FFFFFF', padding: '24px', maxWidth: '100%', boxSizing: 'border-box' }}>
+            {/* Header & Copy Button */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '18px' }}>⚖️</span>
+                <h5 style={{ margin: 0, fontSize: '13.5px', fontWeight: 850, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Акт звірки взаєморозрахунків (валюта: {displayCurrency})
+                </h5>
+              </div>
+              <button 
+                onClick={handleCopyReconciliationText}
+                style={{
+                  background: '#8B7D73', color: '#FFFFFF', border: 'none', borderRadius: '6px',
+                  padding: '6px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: '6px', outline: 'none', whiteSpace: 'nowrap'
+                }}
+              >
+                <span>📋</span> Скопіювати для клієнта
+              </button>
+            </div>
+
+            {rows.length === 0 ? (
+              <div style={{ fontSize: '12px', color: '#8B7D73', fontStyle: 'italic', padding: '20px 0', textAlign: 'center', border: '1px dashed #D4C5B9', borderRadius: '8px' }}>
+                Немає фінансових операцій для відображення.
+              </div>
+            ) : (
+              <div style={{ border: '1px solid #D4C5B9', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 6px rgba(139, 125, 112, 0.04)' }}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ background: '#FAF6F0', borderBottom: '1px solid #D4C5B9' }}>
+                        <th style={{ padding: '10px 12px', fontWeight: 800, color: '#2C2520', width: '95px', textAlign: 'center' }}>Дата</th>
+                        <th style={{ padding: '10px 12px', fontWeight: 800, color: '#2C2520' }}>Опис операції</th>
+                        <th style={{ padding: '10px 12px', fontWeight: 800, color: '#C2410C', width: '120px', textAlign: 'center' }}>Нараховано (+)</th>
+                        <th style={{ padding: '10px 12px', fontWeight: 800, color: '#15803D', width: '120px', textAlign: 'center' }}>Сплачено (-)</th>
+                        <th style={{ padding: '10px 12px', fontWeight: 800, color: '#2C2520', width: '130px', textAlign: 'center' }}>Залишок боргу</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((r, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #FAF6F0', transition: 'background 0.15s' }}>
+                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#8B7D73' }}>
+                            {r.date !== '—' ? new Date(r.date).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'}
+                          </td>
+                          <td style={{ padding: '10px 12px', color: '#2C2520', fontWeight: r.type === 'debit' && r.description.startsWith('Угода') ? 700 : 500 }}>
+                            {r.description}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: '#C2410C' }}>
+                            {r.debit > 0 ? fmtVal(r.debit) : '—'}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: '#15803D' }}>
+                            {r.credit > 0 ? fmtVal(r.credit) : '—'}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                            {fmtBal(r.balance)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr style={{ background: '#FAF8F5', borderTop: '2px solid #D4C5B9', fontWeight: 800 }}>
+                        <td colSpan="2" style={{ padding: '12px', color: '#2C2520', textAlign: 'right', textTransform: 'uppercase' }}>
+                          Всього обороти:
+                        </td>
+                        <td style={{ padding: '12px', textAlign: 'center', color: '#C2410C' }}>
+                          {fmtVal(totalDebit, false)}
+                        </td>
+                        <td style={{ padding: '12px', textAlign: 'center', color: '#15803D' }}>
+                          {fmtVal(totalCredit, false)}
+                        </td>
+                        <td style={{ padding: '12px', textAlign: 'center' }}>
+                          {fmtBal(balance)}
+                        </td>
+                      </tr>
+                      <tr style={{ background: '#FAF6F0', borderTop: '1px solid #EAE7E2' }}>
+                        <td colSpan="5" style={{ padding: '10px 12px', textAlign: 'center' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', fontWeight: 800 }}>
+                            <span>📊</span>
+                            <span>Кінцевий баланс:</span>
+                            {fmtBal(balance)}
+                            <span style={{ fontSize: '11px', color: '#8B7D73', fontWeight: 600 }}>
+                              ({balance > 0 ? 'Клієнт винен нам' : balance < 0 ? 'Переплата (ми винні)' : 'Розрахунки повністю закриті'})
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
               </div>
             )}
           </div>
