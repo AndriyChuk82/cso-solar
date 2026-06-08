@@ -2243,7 +2243,9 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
               let commentStr = item.note || '';
               if (item.shipInfo && item.shipInfo.isShipment) {
                 const parts = [];
-                if (item.shipInfo.carrier) parts.push(`🚚 ${item.shipInfo.carrier}`);
+                if (item.shipInfo.carrier && item.shipInfo.carrier.trim().toLowerCase() !== 'самовивіз') {
+                  parts.push(`🚚 ${item.shipInfo.carrier}`);
+                }
                 if (item.shipInfo.trackingNumber) parts.push(`(${item.shipInfo.trackingNumber})`);
                 if (item.shipInfo.cleanNote) parts.push(item.shipInfo.cleanNote);
                 commentStr = parts.join(' ');
@@ -2504,7 +2506,7 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
                             ) : (
                               item.shipInfo && item.shipInfo.isShipment ? (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                  {item.shipInfo.carrier && (
+                                  {item.shipInfo.carrier && item.shipInfo.carrier.trim().toLowerCase() !== 'самовивіз' && (
                                     <span style={{ 
                                       background: '#FAF6F0', 
                                       border: '1px solid #D4C5B9', 
@@ -2864,7 +2866,9 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
             let commentStr = '';
             if (m.shipInfo && m.shipInfo.isShipment) {
               const parts = [];
-              if (m.shipInfo.carrier) parts.push(`🚚 ${m.shipInfo.carrier}`);
+              if (m.shipInfo.carrier && m.shipInfo.carrier.trim().toLowerCase() !== 'самовивіз') {
+                parts.push(`🚚 ${m.shipInfo.carrier}`);
+              }
               if (m.shipInfo.trackingNumber) parts.push(`(${m.shipInfo.trackingNumber})`);
               if (m.shipInfo.cleanNote) parts.push(m.shipInfo.cleanNote);
               commentStr = parts.join(' ');
