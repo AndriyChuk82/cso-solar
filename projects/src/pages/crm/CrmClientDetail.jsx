@@ -2983,6 +2983,117 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
           }
         };
 
+        const handlePrintReconciliation = () => {
+          const printWindow = window.open('', '_blank');
+          if (!printWindow) {
+            alert('Будь ласка, дозвольте спливаючі вікна для друку.');
+            return;
+          }
+          
+          let tableRowsHtml = '';
+          rows.forEach(r => {
+            const dateStr = r.date !== '—' ? new Date(r.date).toLocaleDateString('uk-UA') : '—';
+            const debStr = r.debit > 0 ? (displayCurrency === 'USD' ? `$${Math.round(r.debit).toLocaleString()}` : `${Math.round(r.debit).toLocaleString()} ₴`) : '—';
+            const credStr = r.credit > 0 ? (displayCurrency === 'USD' ? `$${Math.round(r.credit).toLocaleString()}` : `${Math.round(r.credit).toLocaleString()} ₴`) : '—';
+            
+            const balVal = r.balance;
+            const balStr = displayCurrency === 'USD'
+              ? (balVal < 0 ? `-$${Math.abs(Math.round(balVal)).toLocaleString()}` : `$${Math.round(balVal).toLocaleString()}`)
+              : (balVal < 0 ? `-${Math.abs(Math.round(balVal)).toLocaleString()} ₴` : `${Math.round(balVal).toLocaleString()} ₴`);
+            const balColor = balVal < 0 ? '#15803D' : balVal > 0 ? (displayCurrency === 'USD' ? '#1D4ED8' : '#C2410C') : '#2C2520';
+
+            tableRowsHtml += `
+              <tr style="border-bottom: 1px solid #FAF6F0;">
+                <td style="padding: 10px 12px; text-align: center; color: #555;">${dateStr}</td>
+                <td style="padding: 10px 12px; color: #2C2520;">${r.description}</td>
+                <td style="padding: 10px 12px; text-align: center; font-weight: 700; color: #C2410C;">${debStr}</td>
+                <td style="padding: 10px 12px; text-align: center; font-weight: 700; color: #15803D;">${credStr}</td>
+                <td style="padding: 10px 12px; text-align: center; font-weight: 800; color: ${balColor};">${balStr}</td>
+              </tr>
+            `;
+          });
+
+          const fmt = (v) => displayCurrency === 'USD'
+            ? (v < 0 ? `-$${Math.abs(Math.round(v)).toLocaleString()}` : `$${Math.round(v).toLocaleString()}`)
+            : (v < 0 ? `-${Math.abs(Math.round(v)).toLocaleString()} ₴` : `${Math.round(v).toLocaleString()} ₴`);
+          const fmtP = (v) => displayCurrency === 'USD' ? `$${Math.round(v).toLocaleString()}` : `${Math.round(v).toLocaleString()} ₴`;
+
+          const htmlContent = `
+            <html>
+              <head>
+                <title>Акт звірки взаєморозрахунків - ${client.name || ''}</title>
+                <style>
+                  body { font-family: 'Inter', sans-serif; color: #2C2520; padding: 20px; line-height: 1.5; }
+                  .header { margin-bottom: 24px; border-bottom: 2px solid #8B7D73; padding-bottom: 12px; }
+                  .title { font-size: 18px; font-weight: 800; text-transform: uppercase; margin: 0; }
+                  .meta { font-size: 12px; color: #555; margin-top: 6px; }
+                  table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+                  th { background: #FAF6F0; border-bottom: 2px solid #D4C5B9; padding: 10px 12px; font-weight: 800; text-align: left; }
+                  td { padding: 10px 12px; border-bottom: 1px solid #EAE7E2; }
+                  .footer-row { font-weight: bold; background: #FAF8F5; border-top: 2px solid #D4C5B9; }
+                  .balance-box { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold; margin-top: 20px; border: 1px solid #D4C5B9; padding: 10px 16px; border-radius: 8px; background: #FAF6F0; }
+                  @media print {
+                    body { padding: 0; }
+                    button { display: none; }
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="header">
+                  <div class="title">Акт звірки взаєморозрахунків</div>
+                  <div class="meta">
+                    <strong>Контрагент:</strong> ${client.name || ''}<br/>
+                    <strong>Угода:</strong> ${project.name || project.address || ''}<br/>
+                    <strong>Валюта звірки:</strong> ${displayCurrency}<br/>
+                    <strong>Курс конвертації:</strong> ${rate} (для операцій без фіксованого курсу)<br/>
+                    <strong>Дата формування:</strong> ${new Date().toLocaleDateString('uk-UA')}<br/>
+                  </div>
+                </div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="width: 90px; text-align: center;">Дата</th>
+                      <th>Опис операції</th>
+                      <th style="width: 120px; text-align: center; color: #C2410C;">Нараховано (+)</th>
+                      <th style="width: 120px; text-align: center; color: #15803D;">Сплачено (-)</th>
+                      <th style="width: 130px; text-align: center;">Залишок боргу</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${tableRowsHtml}
+                    <tr class="footer-row">
+                      <td colspan="2" style="text-align: right; text-transform: uppercase;">Всього обороти:</td>
+                      <td style="text-align: center; color: #C2410C;">${fmtP(totalDebit)}</td>
+                      <td style="text-align: center; color: #15803D;">${fmtP(totalCredit)}</td>
+                      <td style="text-align: center;">${fmt(balance)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div style="margin-top: 20px;">
+                  <div class="balance-box">
+                    ⚖️ Кінцевий баланс: 
+                    <span style="color: ${balance < 0 ? '#15803D' : balance > 0 ? (displayCurrency === 'USD' ? '#1D4ED8' : '#C2410C') : '#2C2520'}">
+                      ${fmt(balance)}
+                    </span>
+                    <span style="font-weight: normal; font-size: 11px; color: #555;">
+                      (${balance > 0 ? 'Клієнт винен нам' : balance < 0 ? 'Переплата (ми винні)' : 'Розрахунки повністю закриті'})
+                    </span>
+                  </div>
+                </div>
+                <script>
+                  window.onload = function() {
+                    window.print();
+                    setTimeout(function() { window.close(); }, 500);
+                  };
+                </script>
+              </body>
+            </html>
+          `;
+          
+          printWindow.document.write(htmlContent);
+          printWindow.document.close();
+        };
+
         const fmtVal = (val, isZeroDash = true) => {
           if (val === 0) return isZeroDash ? '—' : (displayCurrency === 'USD' ? '$0' : '0 ₴');
           return displayCurrency === 'USD' ? `$${Math.round(val).toLocaleString('en-US')}` : `${Math.round(val).toLocaleString('uk-UA')} ₴`;
@@ -3007,16 +3118,28 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
                   Акт звірки взаєморозрахунків (валюта: {displayCurrency})
                 </h5>
               </div>
-              <button 
-                onClick={handleCopyReconciliationText}
-                style={{
-                  background: '#8B7D73', color: '#FFFFFF', border: 'none', borderRadius: '6px',
-                  padding: '6px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: '6px', outline: 'none', whiteSpace: 'nowrap'
-                }}
-              >
-                <span>📋</span> Скопіювати для клієнта
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button 
+                  onClick={handleCopyReconciliationText}
+                  style={{
+                    background: '#8B7D73', color: '#FFFFFF', border: 'none', borderRadius: '6px',
+                    padding: '6px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '6px', outline: 'none', whiteSpace: 'nowrap'
+                  }}
+                >
+                  <span>📋</span> Скопіювати для клієнта
+                </button>
+                <button 
+                  onClick={handlePrintReconciliation}
+                  style={{
+                    background: '#C4B4A6', color: '#FFFFFF', border: 'none', borderRadius: '6px',
+                    padding: '6px 14px', fontSize: '12px', fontWeight: 800, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '6px', outline: 'none', whiteSpace: 'nowrap'
+                  }}
+                >
+                  <span>🖨️</span> Друк
+                </button>
+              </div>
             </div>
 
             {rows.length === 0 ? (
