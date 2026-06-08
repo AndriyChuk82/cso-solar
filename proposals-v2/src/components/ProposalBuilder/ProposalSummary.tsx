@@ -14,6 +14,7 @@ interface ProposalSummaryProps {
   eurRate: number;
   notes: string;
   onUpdateNotes: (notes: string) => void;
+  showCostPrices?: boolean;
 }
 
 export function ProposalSummary({
@@ -29,6 +30,7 @@ export function ProposalSummary({
   eurRate,
   notes,
   onUpdateNotes,
+  showCostPrices = true,
 }: ProposalSummaryProps) {
   if (itemsCount === 0) return null;
 
@@ -44,10 +46,14 @@ export function ProposalSummary({
               <td colSpan={3} className="px-3 py-2 text-right text-xs text-gray-500 dark:text-slate-400">
                 Разом (без ПДВ):
               </td>
-              <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-600 dark:text-slate-400 print:bg-transparent"></td>
-              <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-500 dark:text-slate-400 underline decoration-gray-300 dark:decoration-slate-700 print:bg-transparent">
-                {formatCurrency(costSubtotal, activeCurrency)}
-              </td>
+              {showCostPrices && (
+                <>
+                  <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-600 dark:text-slate-400 print:bg-transparent"></td>
+                  <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column text-gray-500 dark:text-slate-400 underline decoration-gray-300 dark:decoration-slate-700 print:bg-transparent">
+                    {formatCurrency(costSubtotal, activeCurrency)}
+                  </td>
+                </>
+              )}
               <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 no-print"></td>
               <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 text-gray-600 dark:text-slate-400 print:bg-transparent">
                 {formatCurrency(total - vatAmount, activeCurrency)}
@@ -61,8 +67,12 @@ export function ProposalSummary({
                 <td colSpan={3} className="px-3 py-2 text-right text-xs text-gray-500 dark:text-slate-400 italic">
                   {vatMode === 'add' ? 'ПДВ (20%):' : 'в т.ч. ПДВ (20%):'}
                 </td>
-                <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column"></td>
-                <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column"></td>
+                {showCostPrices && (
+                  <>
+                    <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column"></td>
+                    <td className="px-1 py-2 text-center bg-blue-50/30 dark:bg-blue-900/10 cost-column"></td>
+                  </>
+                )}
                 <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 no-print"></td>
                 <td className="px-1 py-2 text-center bg-green-50/30 dark:bg-green-900/10 text-gray-500 dark:text-slate-400 font-medium">
                   {formatCurrency(vatAmount, activeCurrency)}
@@ -76,27 +86,33 @@ export function ProposalSummary({
               <td colSpan={3} className="px-3 py-2 print:py-1.5 text-right uppercase tracking-wider text-xs text-gray-700 dark:text-slate-300" style={{ backgroundColor: '#faf5ec' }}>
                 {vatMode === 'none' ? 'Загальний підсумок:' : 'Всього до сплати (з ПДВ):'}
               </td>
-              <td className="px-1 py-4 text-center cost-column" style={{ backgroundColor: '#faf5ec' }}></td>
-              <td className="px-1 py-4 text-center cost-column text-gray-700 dark:text-slate-300 font-black" style={{ backgroundColor: '#faf5ec' }}>
-                {formatCurrency(costSubtotal, activeCurrency)}
-              </td>
+              {showCostPrices && (
+                <>
+                  <td className="px-1 py-4 text-center cost-column" style={{ backgroundColor: '#faf5ec' }}></td>
+                  <td className="px-1 py-4 text-center cost-column text-gray-700 dark:text-slate-300 font-black" style={{ backgroundColor: '#faf5ec' }}>
+                    {formatCurrency(costSubtotal, activeCurrency)}
+                  </td>
+                </>
+              )}
               <td className="px-1 py-4 text-center no-print" style={{ backgroundColor: '#faf5ec' }}></td>
               <td className="px-1 py-4 text-center text-primary dark:text-blue-400 text-lg print:text-base font-black" style={{ backgroundColor: '#faf5ec' }}>
                 {formatCurrency(total, activeCurrency)}
               </td>
               <td className="no-print"></td>
             </tr>
-            <tr className="text-xs bg-white dark:bg-slate-900 no-print profit-row">
-              <td colSpan={3} className="px-3 py-2 text-right text-gray-400 dark:text-slate-500 font-medium">
-                Маржинальність пропозиції:
-              </td>
-              <td colSpan={5} className="px-3 py-2 text-right font-bold">
-                <span className="text-green-600 dark:text-green-400 px-3 py-1 bg-green-50 dark:bg-green-900/20 rounded">
-                  Прибуток: {formatCurrency(profit, activeCurrency)} ({profitPercent.toFixed(1)}%)
-                </span>
-              </td>
-              <td className="no-print"></td>
-            </tr>
+            {showCostPrices && (
+              <tr className="text-xs bg-white dark:bg-slate-900 no-print profit-row">
+                <td colSpan={3} className="px-3 py-2 text-right text-gray-400 dark:text-slate-500 font-medium">
+                  Маржинальність пропозиції:
+                </td>
+                <td colSpan={5} className="px-3 py-2 text-right font-bold">
+                  <span className="text-green-600 dark:text-green-400 px-3 py-1 bg-green-50 dark:bg-green-900/20 rounded">
+                    Прибуток: {formatCurrency(profit, activeCurrency)} ({profitPercent.toFixed(1)}%)
+                  </span>
+                </td>
+                <td className="no-print"></td>
+              </tr>
+            )}
           </tfoot>
         </table>
       </div>

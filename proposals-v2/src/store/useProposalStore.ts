@@ -187,6 +187,7 @@ export const useProposalStore = create<ProposalStore>()(
         showPrices: true,
         autoSave: true,
         showCostInCapture: false,
+        showCostPrices: true,
       },
       history: [],
       activeCurrency: 'USD',

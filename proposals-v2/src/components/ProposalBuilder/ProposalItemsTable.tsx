@@ -13,6 +13,7 @@ interface ProposalItemsTableProps {
   onMoveDown: (itemId: string) => void;
   onRemove: (itemId: string) => void;
   onAddManualItem: () => void;
+  showCostPrices?: boolean;
 }
 
 export function ProposalItemsTable({
@@ -26,6 +27,7 @@ export function ProposalItemsTable({
   onMoveDown,
   onRemove,
   onAddManualItem,
+  showCostPrices = true,
 }: ProposalItemsTableProps) {
   return (
     <div className="bg-[#fbfaf5]/85 dark:bg-slate-900/55 backdrop-blur-lg rounded-xl border border-[#e8e4d1]/65 dark:border-slate-800/40 overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.02)] transition-all duration-300">
@@ -37,8 +39,12 @@ export function ProposalItemsTable({
               <th className="px-3 py-3 text-left font-bold text-slate-600 dark:text-slate-300 text-[10px] uppercase tracking-wider">Назва / Опис товару</th>
               <th className="px-2 py-3 text-center font-bold text-[#a89a74] dark:text-slate-400 text-[10px] uppercase tracking-wider w-14">Од.</th>
               <th className="px-3 py-3 text-center font-bold text-[#a89a74] dark:text-slate-400 text-[10px] uppercase tracking-wider w-20">Кіл.</th>
-              <th className="px-3 py-3 text-center font-bold text-[#a89a74] dark:text-slate-400 text-[10px] uppercase tracking-wider w-28 cost-column">Собів. ({activeCurrency})</th>
-              <th className="px-3 py-3 text-center font-bold text-[#a89a74] dark:text-slate-400 text-[10px] uppercase tracking-wider w-28 cost-column">Сума соб.</th>
+              {showCostPrices && (
+                <>
+                  <th className="px-3 py-3 text-center font-bold text-[#a89a74] dark:text-slate-400 text-[10px] uppercase tracking-wider w-28 cost-column">Собів. ({activeCurrency})</th>
+                  <th className="px-3 py-3 text-center font-bold text-[#a89a74] dark:text-slate-400 text-[10px] uppercase tracking-wider w-28 cost-column">Сума соб.</th>
+                </>
+              )}
               <th className="px-3 py-3 text-center font-bold text-[#a89a74] dark:text-slate-400 text-[10px] uppercase tracking-wider w-28">Ціна ({activeCurrency})</th>
               <th className="px-3 py-3 text-center font-black text-amber-800 dark:text-amber-400 text-[10px] uppercase tracking-wider w-28">Сума</th>
               <th className="px-1 py-3 w-10 no-print"></th>
@@ -58,12 +64,13 @@ export function ProposalItemsTable({
                 onMoveUp={onMoveUp}
                 onMoveDown={onMoveDown}
                 onRemove={onRemove}
+                showCostPrices={showCostPrices}
               />
             ))}
             
             {/* Minimalist Add Button Row */}
             <tr className="no-print border-t border-[#e8e4d1]/50 dark:border-slate-800/50 hover:bg-[#faf5ec]/50 dark:hover:bg-slate-800/20 transition-all">
-              <td colSpan={9} className="px-4 py-3">
+              <td colSpan={showCostPrices ? 9 : 7} className="px-4 py-3">
                 <button
                   onClick={onAddManualItem}
                   className="flex items-center gap-2 px-3 py-2 text-[10px] font-extrabold text-[#a89a74] dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-all uppercase tracking-wider cursor-pointer"
@@ -75,7 +82,7 @@ export function ProposalItemsTable({
 
             {items.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-16 text-center text-slate-400 dark:text-slate-500">
+                <td colSpan={showCostPrices ? 9 : 7} className="px-4 py-16 text-center text-slate-400 dark:text-slate-500">
                   <div className="text-4xl mb-3 opacity-20">📋</div>
                   <p className="text-sm font-medium italic">Список порожній. Скористайтесь каталогом або додайте товар вручну.</p>
                 </td>

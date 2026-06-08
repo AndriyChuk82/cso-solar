@@ -221,6 +221,20 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 />
                 <span className="text-gray-700">Автоматичне збереження</span>
               </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={localSettings.showCostPrices !== false}
+                  onChange={(e) =>
+                    setLocalSettings({
+                      ...localSettings,
+                      showCostPrices: e.target.checked,
+                    })
+                  }
+                  className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
+                />
+                <span className="text-gray-700">Показувати собівартість та закупівлю в КП</span>
+              </label>
             </div>
           </div>
 

@@ -235,6 +235,7 @@ export function ProposalBuilderTable() {
           onMoveDown={moveItemDown}
           onRemove={removeFromProposal}
           onAddManualItem={() => useProposalStore.getState().addManualItem()}
+          showCostPrices={settings.showCostPrices !== false}
         />
 
         <ProposalSummary
@@ -250,6 +251,7 @@ export function ProposalBuilderTable() {
           eurRate={proposal.rates?.eurToUah || settings.eurRate}
           notes={proposal.notes || ''}
           onUpdateNotes={(notes) => updateProposalField('notes', notes)}
+          showCostPrices={settings.showCostPrices !== false}
         />
 
         <ProposalActions

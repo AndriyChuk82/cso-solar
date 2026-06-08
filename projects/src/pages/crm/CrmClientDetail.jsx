@@ -1139,6 +1139,7 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
   const [editingUnifiedData, setEditingUnifiedData] = useState({});
   const [unifiedSearch, setUnifiedSearch] = useState('');
   const [materialsViewMode, setMaterialsViewMode] = useState('grouped'); // 'grouped', 'list', 'client'
+  const [reconciliationCurrency, setReconciliationCurrency] = useState(ledgerDisplayCurrency === 'USD' ? 'USD' : 'UAH'); // 'UAH' or 'USD'
   const [agreedSums, setAgreedSums] = useState({
     usd: parseFloat(project.agreed_sum_usd) || 0,
     uah: parseFloat(project.agreed_sum_uah) || 0
@@ -2771,7 +2772,7 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
       })()}
 
       {activeTab === 'reconciliation' && (() => {
-        const displayCurrency = ledgerDisplayCurrency === 'USD' ? 'USD' : 'UAH';
+        const displayCurrency = reconciliationCurrency;
         const sym = displayCurrency === 'USD' ? '$' : '₴';
         const rate = parseFloat(exchangeRateInput) || 44.3;
 
@@ -3112,11 +3113,40 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
           <div style={{ background: '#FFFFFF', padding: '24px', maxWidth: '100%', boxSizing: 'border-box' }}>
             {/* Header & Copy Button */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '18px' }}>⚖️</span>
-                <h5 style={{ margin: 0, fontSize: '13.5px', fontWeight: 850, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Акт звірки взаєморозрахунків (валюта: {displayCurrency})
-                </h5>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '18px' }}>⚖️</span>
+                  <h5 style={{ margin: 0, fontSize: '13.5px', fontWeight: 850, color: '#2C2520', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Акт звірки взаєморозрахунків
+                  </h5>
+                </div>
+                
+                {/* Currency Toggle */}
+                <div style={{ display: 'flex', border: '1px solid #D4C5B9', borderRadius: '6px', overflow: 'hidden' }}>
+                  {[
+                    { id: 'UAH', label: '₴ UAH' },
+                    { id: 'USD', label: '$ USD' }
+                  ].map((mode, idx) => (
+                    <button
+                      key={mode.id}
+                      onClick={() => setReconciliationCurrency(mode.id)}
+                      style={{
+                        padding: '4px 12px',
+                        fontSize: '11px',
+                        fontWeight: reconciliationCurrency === mode.id ? 800 : 600,
+                        border: 'none',
+                        borderRight: idx === 0 ? '1px solid #D4C5B9' : 'none',
+                        background: reconciliationCurrency === mode.id ? '#2C2520' : '#FAF8F5',
+                        color: reconciliationCurrency === mode.id ? '#FFFFFF' : '#8B7D73',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        outline: 'none'
+                      }}
+                    >
+                      {mode.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button 

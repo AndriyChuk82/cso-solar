@@ -32,6 +32,7 @@ export const createSettingsSlice: StateCreator<
     showPrices: true,
     autoSave: true,
     showCostInCapture: false,
+    showCostPrices: true,
   },
   activeCurrency: 'USD',
 
