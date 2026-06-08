@@ -1,1 +1,0 @@
-import{l as e}from"./index--C-pAcBG.js";export{e as fetchAllData};

@@ -1,4 +1,4 @@
-import { TrendingUp, RefreshCcw, Zap, Ban, Plus, Percent } from 'lucide-react';
+import { TrendingUp, RefreshCcw, Zap, Ban, Plus, Percent, Eye, EyeOff } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { Settings, Currency } from '../../types';
 
@@ -16,6 +16,8 @@ interface SettingsPanelProps {
   onApplyMarkup: () => void;
   vatMode: 'none' | 'add' | 'extract';
   onUpdateVatMode: (mode: 'none' | 'add' | 'extract') => void;
+  showCostPrices: boolean;
+  onToggleCostPrices: () => void;
 }
 
 export function SettingsPanel({
@@ -32,6 +34,8 @@ export function SettingsPanel({
   onApplyMarkup,
   vatMode,
   onUpdateVatMode,
+  showCostPrices,
+  onToggleCostPrices,
 }: SettingsPanelProps) {
   const [localMarkup, setLocalMarkup] = useState(markup.toString());
   const [localAdjustment, setLocalAdjustment] = useState(adjustment.toString());
@@ -194,6 +198,25 @@ export function SettingsPanel({
           </button>
         ))}
       </div>
+
+      <div className="hidden sm:block w-px h-5 bg-[#e8e4d1]/80 dark:bg-slate-800/80"></div>
+
+      {/* Швидкий перемикач собівартості */}
+      <button
+        onClick={onToggleCostPrices}
+        className={`p-1.5 rounded-full transition-all duration-200 cursor-pointer flex items-center justify-center ${
+          showCostPrices
+            ? 'bg-[#f4f0df]/30 dark:bg-slate-950/40 border border-[#e8e4d1]/60 dark:border-slate-800 text-[#a89a74] hover:text-amber-600 hover:border-amber-500 active:scale-95'
+            : 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-[0_2px_6px_rgba(239,68,68,0.18)] transform scale-100 border-none active:scale-95'
+        }`}
+        title={showCostPrices ? "Приховати собівартість (режим замовника)" : "Показати собівартість"}
+      >
+        {showCostPrices ? (
+          <Eye className="w-3.5 h-3.5" />
+        ) : (
+          <EyeOff className="w-3.5 h-3.5" />
+        )}
+      </button>
     </div>
   );
 }

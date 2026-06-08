@@ -222,6 +222,8 @@ export function ProposalBuilderTable() {
           onApplyMarkup={applyProposalMarkupToItems}
           vatMode={proposal.vatMode || 'none'}
           onUpdateVatMode={(mode) => updateProposalField('vatMode', mode)}
+          showCostPrices={settings.showCostPrices !== false}
+          onToggleCostPrices={() => updateSettings({ showCostPrices: settings.showCostPrices === false })}
         />
 
         <ProposalItemsTable
