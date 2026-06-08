@@ -3009,11 +3009,11 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
 
             tableRowsHtml += `
               <tr style="border-bottom: 1px solid #FAF6F0;">
-                <td style="padding: 10px 12px; text-align: center; color: #555;">${dateStr}</td>
-                <td style="padding: 10px 12px; color: #2C2520;">${r.description}</td>
-                <td style="padding: 10px 12px; text-align: center; font-weight: 700; color: #C2410C;">${debStr}</td>
-                <td style="padding: 10px 12px; text-align: center; font-weight: 700; color: #15803D;">${credStr}</td>
-                <td style="padding: 10px 12px; text-align: center; font-weight: 800; color: ${balColor};">${balStr}</td>
+                <td style="padding: 10px 8px; text-align: center; color: #555;">${dateStr}</td>
+                <td style="padding: 10px 8px; color: #2C2520;">${r.description}</td>
+                <td style="padding: 10px 8px; text-align: center; font-weight: 700; color: #C2410C;">${debStr}</td>
+                <td style="padding: 10px 8px; text-align: center; font-weight: 700; color: #15803D;">${credStr}</td>
+                <td style="padding: 10px 8px; text-align: center; font-weight: 800; color: ${balColor};">${balStr}</td>
               </tr>
             `;
           });
@@ -3033,8 +3033,8 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
                   .title { font-size: 18px; font-weight: 800; text-transform: uppercase; margin: 0; }
                   .meta { font-size: 12px; color: #555; margin-top: 6px; }
                   table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
-                  th { background: #FAF6F0; border-bottom: 2px solid #D4C5B9; padding: 10px 12px; font-weight: 800; text-align: left; }
-                  td { padding: 10px 12px; border-bottom: 1px solid #EAE7E2; }
+                  th { background: #FAF6F0; border-bottom: 2px solid #D4C5B9; padding: 10px 8px; font-weight: 800; text-align: left; }
+                  td { padding: 10px 8px; border-bottom: 1px solid #EAE7E2; }
                   .footer-row { font-weight: bold; background: #FAF8F5; border-top: 2px solid #D4C5B9; }
                   .balance-box { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold; margin-top: 20px; border: 1px solid #D4C5B9; padding: 10px 16px; border-radius: 8px; background: #FAF6F0; }
                   @media print {
@@ -3057,11 +3057,11 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
                 <table>
                   <thead>
                     <tr>
-                      <th style="width: 90px; text-align: center;">Дата</th>
-                      <th>Опис операції</th>
-                      <th style="width: 120px; text-align: center; color: #C2410C;">Нараховано (+)</th>
-                      <th style="width: 120px; text-align: center; color: #15803D;">Сплачено (-)</th>
-                      <th style="width: 130px; text-align: center;">Залишок боргу</th>
+                      <th style="width: 80px; text-align: center; padding: 10px 8px;">Дата</th>
+                      <th style="padding: 10px 8px;">Опис операції</th>
+                      <th style="width: 95px; text-align: center; color: #C2410C; padding: 10px 8px;">Нараховано (+)</th>
+                      <th style="width: 95px; text-align: center; color: #15803D; padding: 10px 8px;">Сплачено (-)</th>
+                      <th style="width: 110px; text-align: center; padding: 10px 8px;">Залишок боргу</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -3186,29 +3186,29 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
                     <thead>
                       <tr style={{ background: '#FAF6F0', borderBottom: '1px solid #D4C5B9' }}>
-                        <th style={{ padding: '10px 12px', fontWeight: 800, color: '#2C2520', width: '95px', textAlign: 'center' }}>Дата</th>
-                        <th style={{ padding: '10px 12px', fontWeight: 800, color: '#2C2520' }}>Опис операції</th>
-                        <th style={{ padding: '10px 12px', fontWeight: 800, color: '#C2410C', width: '120px', textAlign: 'center' }}>Нараховано (+)</th>
-                        <th style={{ padding: '10px 12px', fontWeight: 800, color: '#15803D', width: '120px', textAlign: 'center' }}>Сплачено (-)</th>
-                        <th style={{ padding: '10px 12px', fontWeight: 800, color: '#2C2520', width: '130px', textAlign: 'center' }}>Залишок боргу</th>
+                        <th style={{ padding: '10px 8px', fontWeight: 800, color: '#2C2520', width: '85px', textAlign: 'center' }}>Дата</th>
+                        <th style={{ padding: '10px 8px', fontWeight: 800, color: '#2C2520' }}>Опис операції</th>
+                        <th style={{ padding: '10px 8px', fontWeight: 800, color: '#C2410C', width: '95px', textAlign: 'center' }}>Нараховано (+)</th>
+                        <th style={{ padding: '10px 8px', fontWeight: 800, color: '#15803D', width: '95px', textAlign: 'center' }}>Сплачено (-)</th>
+                        <th style={{ padding: '10px 8px', fontWeight: 800, color: '#2C2520', width: '110px', textAlign: 'center' }}>Залишок боргу</th>
                       </tr>
                     </thead>
                     <tbody>
                       {rows.map((r, idx) => (
                         <tr key={idx} style={{ borderBottom: '1px solid #FAF6F0', transition: 'background 0.15s' }}>
-                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#8B7D73' }}>
+                          <td style={{ padding: '10px 8px', textAlign: 'center', color: '#8B7D73' }}>
                             {r.date !== '—' ? new Date(r.date).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'}
                           </td>
-                          <td style={{ padding: '10px 12px', color: '#2C2520', fontWeight: r.type === 'debit' && r.description.startsWith('Угода') ? 700 : 500 }}>
+                          <td style={{ padding: '10px 8px', color: '#2C2520', fontWeight: r.type === 'debit' && r.description.startsWith('Угода') ? 700 : 500 }}>
                             {r.description}
                           </td>
-                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: '#C2410C' }}>
+                          <td style={{ padding: '10px 8px', textAlign: 'center', fontWeight: 700, color: '#C2410C' }}>
                             {r.debit > 0 ? fmtVal(r.debit) : '—'}
                           </td>
-                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: '#15803D' }}>
+                          <td style={{ padding: '10px 8px', textAlign: 'center', fontWeight: 700, color: '#15803D' }}>
                             {r.credit > 0 ? fmtVal(r.credit) : '—'}
                           </td>
-                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                          <td style={{ padding: '10px 8px', textAlign: 'center' }}>
                             {fmtBal(r.balance)}
                           </td>
                         </tr>
@@ -3216,16 +3216,16 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
                     </tbody>
                     <tfoot>
                       <tr style={{ background: '#FAF8F5', borderTop: '2px solid #D4C5B9', fontWeight: 800 }}>
-                        <td colSpan="2" style={{ padding: '12px', color: '#2C2520', textAlign: 'right', textTransform: 'uppercase' }}>
+                        <td colSpan="2" style={{ padding: '12px 8px', color: '#2C2520', textAlign: 'right', textTransform: 'uppercase' }}>
                           Всього обороти:
                         </td>
-                        <td style={{ padding: '12px', textAlign: 'center', color: '#C2410C' }}>
+                        <td style={{ padding: '12px 8px', textAlign: 'center', color: '#C2410C' }}>
                           {fmtVal(totalDebit, false)}
                         </td>
-                        <td style={{ padding: '12px', textAlign: 'center', color: '#15803D' }}>
+                        <td style={{ padding: '12px 8px', textAlign: 'center', color: '#15803D' }}>
                           {fmtVal(totalCredit, false)}
                         </td>
-                        <td style={{ padding: '12px', textAlign: 'center' }}>
+                        <td style={{ padding: '12px 8px', textAlign: 'center' }}>
                           {fmtBal(balance)}
                         </td>
                       </tr>
