@@ -1056,7 +1056,15 @@ export function CrmClientDetail({ client, onBack, onUpdate }) {
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                         {activeProjects.map(project => (
-                          <ProjectCRMCard key={project.id} project={project} client={client} onUpdate={loadProjects} isMobile={isMobile} />
+                          <ProjectCRMCard 
+                            key={project.id} 
+                            project={project} 
+                            client={client} 
+                            onUpdate={loadProjects} 
+                            isMobile={isMobile} 
+                            ledgerDisplayCurrency={ledgerDisplayCurrency}
+                            exchangeRateInput={exchangeRateInput}
+                          />
                         ))}
                       </div>
                     )}
@@ -1087,7 +1095,15 @@ export function CrmClientDetail({ client, onBack, onUpdate }) {
                       {showArchive && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '20px' }}>
                           {archivedProjects.map(project => (
-                            <ProjectCRMCard key={project.id} project={project} client={client} onUpdate={loadProjects} isMobile={isMobile} />
+                            <ProjectCRMCard 
+                              key={project.id} 
+                              project={project} 
+                              client={client} 
+                              onUpdate={loadProjects} 
+                              isMobile={isMobile} 
+                              ledgerDisplayCurrency={ledgerDisplayCurrency}
+                              exchangeRateInput={exchangeRateInput}
+                            />
                           ))}
                         </div>
                       )}
@@ -1103,7 +1119,7 @@ export function CrmClientDetail({ client, onBack, onUpdate }) {
   );
 }
 
-function ProjectCRMCard({ project, client, onUpdate, isMobile }) {
+function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurrency, exchangeRateInput }) {
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [addressInput, setAddressInput] = useState(project.address || '');
   const [noteInput, setNoteInput] = useState(project.note || '');
