@@ -3059,9 +3059,9 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
                     <tr>
                       <th style="width: 80px; text-align: center; padding: 10px 8px;">Дата</th>
                       <th style="padding: 10px 8px;">Опис операції</th>
-                      <th style="width: 95px; text-align: center; color: #C2410C; padding: 10px 8px;">Нараховано (+)</th>
-                      <th style="width: 95px; text-align: center; color: #15803D; padding: 10px 8px;">Сплачено (-)</th>
-                      <th style="width: 110px; text-align: center; padding: 10px 8px;">Залишок боргу</th>
+                      <th style="width: 80px; text-align: center; color: #C2410C; padding: 10px 8px;">Нараховано (+)</th>
+                      <th style="width: 80px; text-align: center; color: #15803D; padding: 10px 8px;">Сплачено (-)</th>
+                      <th style="width: 95px; text-align: center; padding: 10px 8px;">Залишок боргу</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -3188,9 +3188,9 @@ function ProjectCRMCard({ project, client, onUpdate, isMobile, ledgerDisplayCurr
                       <tr style={{ background: '#FAF6F0', borderBottom: '1px solid #D4C5B9' }}>
                         <th style={{ padding: '10px 8px', fontWeight: 800, color: '#2C2520', width: '85px', textAlign: 'center' }}>Дата</th>
                         <th style={{ padding: '10px 8px', fontWeight: 800, color: '#2C2520' }}>Опис операції</th>
-                        <th style={{ padding: '10px 8px', fontWeight: 800, color: '#C2410C', width: '95px', textAlign: 'center' }}>Нараховано (+)</th>
-                        <th style={{ padding: '10px 8px', fontWeight: 800, color: '#15803D', width: '95px', textAlign: 'center' }}>Сплачено (-)</th>
-                        <th style={{ padding: '10px 8px', fontWeight: 800, color: '#2C2520', width: '110px', textAlign: 'center' }}>Залишок боргу</th>
+                        <th style={{ padding: '10px 8px', fontWeight: 800, color: '#C2410C', width: '80px', textAlign: 'center' }}>Нараховано (+)</th>
+                        <th style={{ padding: '10px 8px', fontWeight: 800, color: '#15803D', width: '80px', textAlign: 'center' }}>Сплачено (-)</th>
+                        <th style={{ padding: '10px 8px', fontWeight: 800, color: '#2C2520', width: '95px', textAlign: 'center' }}>Залишок боргу</th>
                       </tr>
                     </thead>
                     <tbody>
