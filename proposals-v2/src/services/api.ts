@@ -500,6 +500,9 @@ export function extractModelCode(name: string): string | null {
     // Ensure standard format for power-hybrid models: e.g. SUN-12KSG -> SUN-12K-SG, SUN-6KSG -> SUN-6K-SG
     code = code.replace(/SUN-(\d+)K-?SG/gi, 'SUN-$1K-SG');
     
+    // Normalize missing 'K' in Deye hybrid inverters: e.g. SUN-20-SG -> SUN-20K-SG, SUN-12-SG -> SUN-12K-SG
+    code = code.replace(/SUN-(\d+(?:\.\d+)?)-SG/gi, 'SUN-$1K-SG');
+    
     return code;
   }
   
@@ -513,6 +516,7 @@ export function extractModelCode(name: string): string | null {
     }
     code = code.replace(/SUN-0+(\d+K)/gi, 'SUN-$1');
     code = code.replace(/SUN-(\d+)K-?SG/gi, 'SUN-$1K-SG');
+    code = code.replace(/SUN-(\d+(?:\.\d+)?)-SG/gi, 'SUN-$1K-SG');
     return code;
   }
   
