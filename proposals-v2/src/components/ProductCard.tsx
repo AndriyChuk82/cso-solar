@@ -6,6 +6,14 @@ import { Star, Plus, Edit2, Trash2, Check, X } from 'lucide-react';
 import { useState, memo, useMemo } from 'react';
 import { updateMaterialPrice } from '../services/api';
 
+const getSupplierDisplayName = (name: string) => {
+  if (name === 'Правильне електроживлення') return 'ПЕ';
+  if (name === 'БІЗ Солар' || name === 'БІЗ') return 'БІЗ';
+  if (name === 'Solarverse' || name === 'СВ') return 'СВ';
+  if (name === 'Хеліус' || name === 'ХЕЛ') return 'ХЕЛ';
+  return name;
+};
+
 interface ProductCardProps {
   product: Product;
 }
@@ -168,7 +176,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
               {product.description}
             </p>
           )}
-          {product.offers && product.offers.length > 1 && (
+          {product.offers && product.offers.length > 1 ? (
             <div className="flex gap-1 mt-2.5 p-0.5 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-100 dark:border-slate-700/60" onClick={(e) => e.stopPropagation()}>
               {product.offers.map(offer => {
                 const isSelected = activeSupplier === offer.supplierName;
@@ -215,11 +223,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
                     title={offer.inStock ? "В наявності" : "Немає в наявності"}
                   >
                     <span className="truncate">
-                      {offer.supplierName === 'Правильне електроживлення' 
-                        ? 'ПЕ' 
-                        : (offer.supplierName === 'БІЗ Солар' || offer.supplierName === 'БІЗ' ? 'БІЗ' 
-                        : (offer.supplierName === 'Solarverse' || offer.supplierName === 'СВ' ? 'СВ' 
-                        : (offer.supplierName === 'Хеліус' || offer.supplierName === 'ХЕЛ' ? 'ХЕЛ' : offer.supplierName.substring(0, 3).toUpperCase())))}
+                      {getSupplierDisplayName(offer.supplierName)}
                     </span>
                     <span className={`ml-1 shrink-0 ${!offer.inStock ? 'line-through opacity-70 font-normal' : (isBestPrice && isSelected ? 'text-green-500 font-extrabold' : '')}`}>
                       {useVatPrices ? (
@@ -235,6 +239,12 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
                   </button>
                 );
               })}
+            </div>
+          ) : (
+            <div className="flex mt-2 select-none">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tight bg-primary/10 dark:bg-amber-500/10 text-primary dark:text-amber-400 border border-primary/20 dark:border-amber-500/20">
+                Постачальник: {getSupplierDisplayName(activeSupplier)}
+              </span>
             </div>
           )}
           {product.inStock === false && (
