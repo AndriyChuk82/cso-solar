@@ -1,5 +1,5 @@
 import { Product, SupplierOffer } from '../types';
-import { formatCurrency } from '../utils/currency';
+import { formatCurrency, getCurrencySymbol } from '../utils/currency';
 import { useProposalStore } from '../store';
 import { selectFavorites } from '../store/selectors';
 import { Star, Plus, Edit2, Trash2, Check, X } from 'lucide-react';
@@ -228,12 +228,12 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
                     <span className={`ml-1 shrink-0 ${!offer.inStock ? 'line-through opacity-70 font-normal' : (isBestPrice && isSelected ? 'text-green-500 font-extrabold' : '')}`}>
                       {useVatPrices ? (
                         hasOfferVat ? (
-                          `$${Math.round(offer.priceVat!)}`
+                          `${getCurrencySymbol(offer.currency)}${Math.round(offer.priceVat!)}`
                         ) : (
                           <span className="text-[7px] text-rose-500 font-black">без ПДВ</span>
                         )
                       ) : (
-                        `$${Math.round(offer.price)}`
+                        `${getCurrencySymbol(offer.currency)}${Math.round(offer.price)}`
                       )}
                     </span>
                   </button>
