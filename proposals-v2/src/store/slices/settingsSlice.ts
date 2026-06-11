@@ -14,7 +14,7 @@ export interface SettingsSlice {
   // Actions
   updateSettings: (settings: Partial<Settings>) => void;
   setActiveCurrency: (currency: Currency) => void;
-  refreshRates: () => Promise<void>;
+  refreshRates: (isManual?: boolean) => Promise<void>;
 }
 
 export const createSettingsSlice: StateCreator<
@@ -46,7 +46,7 @@ export const createSettingsSlice: StateCreator<
     set({ activeCurrency: currency });
   },
 
-  refreshRates: async () => {
+  refreshRates: async (isManual?: boolean) => {
     const rates = await fetchRates();
     if (rates && rates.usd && rates.eur) {
       set((state: any) => ({
@@ -60,7 +60,7 @@ export const createSettingsSlice: StateCreator<
       // Оновлюємо курси в поточній пропозиції
       const state = get() as any;
       if (typeof state.updateProposalRates === 'function') {
-        state.updateProposalRates(rates.usd, rates.eur);
+        state.updateProposalRates(rates.usd, rates.eur, isManual);
       }
     }
   },

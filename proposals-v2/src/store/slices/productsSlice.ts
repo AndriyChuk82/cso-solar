@@ -15,7 +15,7 @@ export interface ProductsSlice {
 
   // Actions
   loadProducts: () => Promise<void>;
-  refreshRates: () => Promise<void>;
+  refreshRates: (isManual?: boolean) => Promise<void>;
 }
 
 export const createProductsSlice: StateCreator<

@@ -47,7 +47,7 @@ export interface ProposalStore {
 
   // Actions
   loadProducts: () => Promise<void>;
-  refreshRates: () => Promise<void>;
+  refreshRates: (isManual?: boolean) => Promise<void>;
   syncHistory: () => Promise<void>;
   addToProposal: (product: Product, quantity: number) => void;
   removeFromProposal: (itemId: string) => void;
@@ -391,9 +391,22 @@ export const useProposalStore = create<ProposalStore>()(
       refreshRates: async () => {
         const rates = await fetchRates();
         if (rates && rates.usd && rates.eur) {
-          set((state) => ({
-            settings: { ...state.settings, usdRate: rates.usd, eurRate: rates.eur }
-          }));
+          set((state) => {
+            const nextSettings = { ...state.settings, usdRate: rates.usd, eurRate: rates.eur };
+            const nextProposal = {
+              ...state.proposal,
+              rates: {
+                ...state.proposal.rates,
+                usdToUah: rates.usd,
+                eurToUah: rates.eur
+              },
+              updatedAt: new Date().toISOString()
+            };
+            return {
+              settings: nextSettings,
+              proposal: nextProposal
+            };
+          });
           toast.success(`Курси оновлено з Hoverla.ua: USD = ${rates.usd} грн, EUR = ${rates.eur} грн`);
         } else if (rates && rates.error) {
           toast.error(rates.error);

@@ -28,7 +28,7 @@ export interface ProposalSlice {
   setSelectedSeller: (sellerId: SellerId) => void;
   applyProposalMarkupToItems: () => void;
   updateProposalField: (field: keyof Proposal, value: any) => void;
-  updateProposalRates: (usd: number, eur: number) => void;
+  updateProposalRates: (usd: number, eur: number, isManual?: boolean) => void;
   syncHistory: () => Promise<void>;
   addManualItem: () => void;
 }
@@ -550,10 +550,11 @@ export const createProposalSlice: StateCreator<
     set({ proposal: calculateProposalTotals(updatedProposal) });
   },
 
-  updateProposalRates: (usd: number, eur: number) => {
+  updateProposalRates: (usd: number, eur: number, isManual?: boolean) => {
     const { proposal } = get();
-    // Якщо пропозиція збережена (статус 'sent'), ми не оновлюємо її курси автоматично
-    if (proposal.status === 'sent') return;
+    // Якщо пропозиція збережена (статус 'sent'), ми не оновлюємо її курси автоматично,
+    // крім випадків коли це ручне оновлення користувачем
+    if (proposal.status === 'sent' && !isManual) return;
     set({
       proposal: {
         ...proposal,

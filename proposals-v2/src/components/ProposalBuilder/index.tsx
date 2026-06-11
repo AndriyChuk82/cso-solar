@@ -135,7 +135,7 @@ export function ProposalBuilderTable() {
   const handleRefreshRates = async () => {
     setIsRefreshingRates(true);
     try {
-      await refreshRates();
+      await refreshRates(true);
     } finally {
       setIsRefreshingRates(false);
     }
