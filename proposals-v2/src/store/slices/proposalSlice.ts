@@ -104,7 +104,7 @@ function calculateProposalTotals(proposal: Proposal): Proposal {
   };
 }
 
-function createEmptyProposal(history: Proposal[] = []): Proposal {
+function createEmptyProposal(history: Proposal[] = [], rates?: { usdToUah: number; eurToUah: number }): Proposal {
   return {
     id: generateId(),
     number: getNextProposalNumber(history),
@@ -120,7 +120,7 @@ function createEmptyProposal(history: Proposal[] = []): Proposal {
     total: 0,
     currency: 'USD',
     notes: '',
-    rates: {
+    rates: rates || {
       usdToUah: 41.5,
       eurToUah: 51.0,
     },
@@ -401,16 +401,12 @@ export const createProposalSlice: StateCreator<
 
     clearProposal: () => {
       const { history, selectedSeller, settings, proposal } = get() as any;
-      const newProposal = createEmptyProposal(history);
+      const rates = settings && settings.usdRate && settings.eurRate 
+        ? { usdToUah: settings.usdRate, eurToUah: settings.eurRate } 
+        : undefined;
+      const newProposal = createEmptyProposal(history, rates);
       newProposal.id = proposal.id;
       newProposal.seller = SELLERS[selectedSeller as keyof typeof SELLERS] || SELLERS.tov_cso;
-      
-      if (settings && settings.usdRate && settings.eurRate) {
-        newProposal.rates = {
-          usdToUah: settings.usdRate,
-          eurToUah: settings.eurRate,
-        };
-      }
       
       set(state => updateActiveTabProposal(state.tabs, state.activeTabId, newProposal, state.history));
     },
@@ -586,7 +582,11 @@ export const createProposalSlice: StateCreator<
           nextActiveTabId = lastTab.id;
           nextProposal = lastTab.proposal;
         } else {
-          const newProposal = createEmptyProposal(updatedHistory);
+          const settings = (get() as any).settings;
+          const rates = settings && settings.usdRate && settings.eurRate 
+            ? { usdToUah: settings.usdRate, eurToUah: settings.eurRate } 
+            : undefined;
+          const newProposal = createEmptyProposal(updatedHistory, rates);
           nextActiveTabId = newProposal.id;
           nextProposal = newProposal;
           updatedTabs.push({
@@ -754,9 +754,14 @@ export const createProposalSlice: StateCreator<
 
     createTab: (proposal?: Proposal) => {
       const { tabs, history } = get();
+      const settings = (get() as any).settings;
+      const rates = settings && settings.usdRate && settings.eurRate 
+        ? { usdToUah: settings.usdRate, eurToUah: settings.eurRate } 
+        : undefined;
+
       const newProposal = proposal 
         ? JSON.parse(JSON.stringify(proposal))
-        : createEmptyProposal(history);
+        : createEmptyProposal(history, rates);
         
       if (!proposal) {
         newProposal.id = generateId();
@@ -781,6 +786,11 @@ export const createProposalSlice: StateCreator<
 
     closeTab: (tabId: string) => {
       const { tabs, activeTabId, history } = get();
+      const settings = (get() as any).settings;
+      const rates = settings && settings.usdRate && settings.eurRate 
+        ? { usdToUah: settings.usdRate, eurToUah: settings.eurRate } 
+        : undefined;
+
       const tabToClose = tabs.find(t => t.id === tabId);
       if (!tabToClose) return;
       
@@ -799,7 +809,7 @@ export const createProposalSlice: StateCreator<
           nextActiveTabId = lastTab.id;
           nextProposal = lastTab.proposal;
         } else {
-          const newProposal = createEmptyProposal(history);
+          const newProposal = createEmptyProposal(history, rates);
           const newTab: ProposalTab = {
             id: newProposal.id,
             title: 'Нова КП',
