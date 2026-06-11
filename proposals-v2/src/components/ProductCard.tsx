@@ -246,8 +246,13 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
                           <span className="text-[7px] text-rose-500 font-black">без ПДВ</span>
                         )
                       ) : (
-                        `${getCurrencySymbol(offer.currency)}${Math.round(offer.price)}`
+                        offer.price && offer.price > 0 ? (
+                          `${getCurrencySymbol(offer.currency)}${Math.round(offer.price)}`
+                        ) : (
+                          <span className="text-[7px] text-rose-500 font-black">тільки з ПДВ</span>
+                        )
                       )}
+
                     </span>
                   </button>
                 );
@@ -323,10 +328,19 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
                   </div>
                 )
               ) : (
-                <span className="text-[0.9rem] font-black text-amber-600 dark:text-amber-400 whitespace-nowrap tracking-tight">
-                  {formatCurrency(displayPrice, activeOffer?.currency || product.currency)}
-                </span>
+                displayPrice && displayPrice > 0 ? (
+                  <span className="text-[0.9rem] font-black text-amber-600 dark:text-amber-400 whitespace-nowrap tracking-tight">
+                    {formatCurrency(displayPrice, activeOffer?.currency || product.currency)}
+                  </span>
+                ) : (
+                  <div className="flex flex-col items-end">
+                    <span className="text-[9px] font-black text-rose-500 whitespace-nowrap tracking-tight uppercase">
+                      Тільки з ПДВ
+                    </span>
+                  </div>
+                )
               )}
+
             </div>
           )}
 

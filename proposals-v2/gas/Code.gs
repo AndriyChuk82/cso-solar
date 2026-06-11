@@ -2567,36 +2567,36 @@ function getSolarverseProducts() {
         // Clean and parse price (Column E - price without VAT)
         const cleanedPriceStr = priceStr.replace(/[^0-9.,-]/g, '').replace(',', '.');
         let price = parseFloat(cleanedPriceStr);
+        if (isNaN(price) || price <= 0) price = null;
 
         // Clean and parse priceVat (Column D - price with VAT)
         const cleanedVatPriceStr = vatPriceStr.replace(/[^0-9.,-]/g, '').replace(',', '.');
         const vatPrice = parseFloat(cleanedVatPriceStr);
         let finalVatPrice = isNaN(vatPrice) || vatPrice <= 0 ? null : vatPrice;
         
-        // If price without VAT is missing but price with VAT is present, calculate it (divide by 1.2)
-        if ((isNaN(price) || price <= 0) && finalVatPrice > 0) {
-          price = finalVatPrice / 1.2;
-        }
-        
         // If both are missing or invalid, skip
-        if (isNaN(price) || price <= 0) continue;
-
+        if (price === null && finalVatPrice === null) continue;
         
         // Conversions
         if (tab.isCable) {
-          price = Math.round((price / 500) * 100) / 100;
-          if (finalVatPrice) {
+          if (price !== null) {
+            price = Math.round((price / 500) * 100) / 100;
+          }
+          if (finalVatPrice !== null) {
             finalVatPrice = Math.round((finalVatPrice / 500) * 100) / 100;
           }
         } else if (tab.isPanel) {
           const watts = extractPanelWatts(name);
           if (watts > 0) {
-            price = Math.round((price * watts) * 100) / 100;
-            if (finalVatPrice) {
+            if (price !== null) {
+              price = Math.round((price * watts) * 100) / 100;
+            }
+            if (finalVatPrice !== null) {
               finalVatPrice = Math.round((finalVatPrice * watts) * 100) / 100;
             }
           }
         }
+
         
         // Check availability
         const inStock = !(stockStr.toLowerCase().includes('нема') || stockStr.toLowerCase().includes('відсутн') || stockStr === '0' || stockStr.toLowerCase() === 'нет' || stockStr.toLowerCase() === 'ні');

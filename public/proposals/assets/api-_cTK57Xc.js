@@ -1,1 +1,0 @@
-import{l as e}from"./index-BkaLVGMR.js";export{e as fetchAllData};

@@ -1,0 +1,1 @@
+import{l as e}from"./index-D-SD2W4d.js";export{e as fetchAllData};
