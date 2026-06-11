@@ -1,1 +1,0 @@
-import{l as e}from"./index-Ces-ocx-.js";export{e as fetchAllData};

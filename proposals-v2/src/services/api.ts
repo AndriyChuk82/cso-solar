@@ -484,7 +484,7 @@ export function extractModelCode(name: string): string | null {
     const versionMatch = lowerName.match(/(m\d+)/i);
     const version = versionMatch ? versionMatch[1].toUpperCase() : '';
     let region = 'EU'; // Default to EU as per user request
-    if (lowerName.includes('ua') && !lowerName.includes('eua')) {
+    if (/(?:^|[\s\W_])(ua|уa)(?:$|[\s\W_])/i.test(lowerName)) {
       region = 'UA';
     }
     
