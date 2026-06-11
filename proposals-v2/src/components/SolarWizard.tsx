@@ -244,7 +244,20 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
     // Helper to create proposal item
     const createItem = (product: Product, qty: number): Partial<ProposalItem> => {
       const useVat = !!proposal.useVatPrices;
-      const costPrice = useVat && product.priceVat !== undefined && product.priceVat !== null ? product.priceVat : product.price;
+      let costPrice = product.price;
+      
+      if (useVat && product.offers && product.offers.length > 0) {
+        const inStockOffers = product.offers.filter(o => o.inStock !== false);
+        const baseOffers = inStockOffers.length > 0 ? inStockOffers : product.offers;
+        const vatOffers = baseOffers.filter(o => o.priceVat !== undefined && o.priceVat !== null);
+        if (vatOffers.length > 0) {
+          const bestVat = vatOffers.reduce((min, o) => o.priceVat! < min.priceVat! ? o : min, vatOffers[0]);
+          costPrice = bestVat.priceVat!;
+        }
+      } else if (useVat && product.priceVat !== undefined && product.priceVat !== null) {
+        costPrice = product.priceVat;
+      }
+      
       const salePrice = Math.round(costPrice * (1 + markupTarget / 100) * (1 + adjustmentTarget / 100) * 10) / 10;
 
       return {

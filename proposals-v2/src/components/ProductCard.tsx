@@ -28,11 +28,18 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
     }
     
     // Otherwise, find the best offer under the current VAT mode
-    const getOfferDisplayPrice = (o: SupplierOffer) => (useVatPrices && o.priceVat !== undefined && o.priceVat !== null ? o.priceVat : o.price);
     const inStockOffers = product.offers.filter(o => o.inStock !== false);
-    const activeOffers = inStockOffers.length > 0 ? inStockOffers : product.offers;
+    const baseOffers = inStockOffers.length > 0 ? inStockOffers : product.offers;
     
-    return activeOffers.reduce((min, o) => getOfferDisplayPrice(o) < getOfferDisplayPrice(min) ? o : min, activeOffers[0]);
+    if (useVatPrices) {
+      // When VAT mode is on, prefer offers that have a VAT price
+      const vatOffers = baseOffers.filter(o => o.priceVat !== undefined && o.priceVat !== null);
+      if (vatOffers.length > 0) {
+        return vatOffers.reduce((min, o) => o.priceVat! < min.priceVat! ? o : min, vatOffers[0]);
+      }
+    }
+    
+    return baseOffers.reduce((min, o) => o.price < min.price ? o : min, baseOffers[0]);
   }, [product.offers, product.selectedSupplier, product.isManualSupplier, useVatPrices]);
 
   const activeSupplier = activeOffer ? activeOffer.supplierName : (product.selectedSupplier || 'Правильне електроживлення');
@@ -167,8 +174,17 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
                 const isSelected = activeSupplier === offer.supplierName;
                 const hasOfferVat = offer.priceVat !== undefined && offer.priceVat !== null;
                 
-                const getOfferDisplayPrice = (o: SupplierOffer) => (useVatPrices && o.priceVat !== undefined && o.priceVat !== null ? o.priceVat : o.price);
-                const isBestPrice = product.offers!.reduce((min, o) => getOfferDisplayPrice(o) < getOfferDisplayPrice(min) ? o : min, product.offers![0]).supplierName === offer.supplierName;
+                const isBestPrice = (() => {
+                  const inStock = product.offers!.filter(o => o.inStock !== false);
+                  const base = inStock.length > 0 ? inStock : product.offers!;
+                  if (useVatPrices) {
+                    const vat = base.filter(o => o.priceVat !== undefined && o.priceVat !== null);
+                    if (vat.length > 0) {
+                      return vat.reduce((min, o) => o.priceVat! < min.priceVat! ? o : min, vat[0]).supplierName === offer.supplierName;
+                    }
+                  }
+                  return base.reduce((min, o) => o.price < min.price ? o : min, base[0]).supplierName === offer.supplierName;
+                })();
                 
                 return (
                   <button

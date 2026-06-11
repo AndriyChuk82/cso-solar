@@ -159,10 +159,20 @@ export const createProposalSlice: StateCreator<
       let activeSupplier = product.selectedSupplier;
 
       if (!product.isManualSupplier && product.offers && product.offers.length > 0) {
-        const getOfferDisplayPrice = (o: SupplierOffer) => (useVat && o.priceVat !== undefined && o.priceVat !== null ? o.priceVat : o.price);
         const inStockOffers = product.offers.filter(o => o.inStock !== false);
-        const activeOffers = inStockOffers.length > 0 ? inStockOffers : product.offers;
-        const bestOffer = activeOffers.reduce((min, o) => getOfferDisplayPrice(o) < getOfferDisplayPrice(min) ? o : min, activeOffers[0]);
+        const baseOffers = inStockOffers.length > 0 ? inStockOffers : product.offers;
+        let bestOffer = baseOffers[0];
+        
+        if (useVat) {
+          const vatOffers = baseOffers.filter(o => o.priceVat !== undefined && o.priceVat !== null);
+          if (vatOffers.length > 0) {
+            bestOffer = vatOffers.reduce((min, o) => o.priceVat! < min.priceVat! ? o : min, vatOffers[0]);
+          } else {
+            bestOffer = baseOffers.reduce((min, o) => o.price < min.price ? o : min, baseOffers[0]);
+          }
+        } else {
+          bestOffer = baseOffers.reduce((min, o) => o.price < min.price ? o : min, baseOffers[0]);
+        }
         
         activePrice = bestOffer.price;
         activePriceVat = bestOffer.priceVat;
@@ -487,10 +497,20 @@ export const createProposalSlice: StateCreator<
         let activeSupplier = item.product.selectedSupplier;
 
         if (!item.product.isManualSupplier && item.product.offers && item.product.offers.length > 0) {
-          const getOfferDisplayPrice = (o: SupplierOffer) => (useVat && o.priceVat !== undefined && o.priceVat !== null ? o.priceVat : o.price);
           const inStockOffers = item.product.offers.filter(o => o.inStock !== false);
-          const activeOffers = inStockOffers.length > 0 ? inStockOffers : item.product.offers;
-          const bestOffer = activeOffers.reduce((min, o) => getOfferDisplayPrice(o) < getOfferDisplayPrice(min) ? o : min, activeOffers[0]);
+          const baseOffers = inStockOffers.length > 0 ? inStockOffers : item.product.offers;
+          let bestOffer = baseOffers[0];
+          
+          if (useVat) {
+            const vatOffers = baseOffers.filter(o => o.priceVat !== undefined && o.priceVat !== null);
+            if (vatOffers.length > 0) {
+              bestOffer = vatOffers.reduce((min, o) => o.priceVat! < min.priceVat! ? o : min, vatOffers[0]);
+            } else {
+              bestOffer = baseOffers.reduce((min, o) => o.price < min.price ? o : min, baseOffers[0]);
+            }
+          } else {
+            bestOffer = baseOffers.reduce((min, o) => o.price < min.price ? o : min, baseOffers[0]);
+          }
           
           activePrice = bestOffer.price;
           activePriceVat = bestOffer.priceVat;
