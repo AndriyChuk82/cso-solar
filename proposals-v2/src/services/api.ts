@@ -732,7 +732,8 @@ function splitGluedWords(str: string): string {
 export function mergeSupplierProducts(
   pravylneProducts: Product[],
   bizSolarProducts: Product[],
-  heliusProducts: Product[]
+  heliusProducts: Product[],
+  solarverseProducts: Product[] = []
 ): Product[] {
   const mergedMap = new Map<string, Product>();
   
@@ -761,7 +762,8 @@ export function mergeSupplierProducts(
   
   const suppliers = [
     { name: 'БІЗ Солар', products: bizSolarProducts },
-    { name: 'Хеліус', products: heliusProducts }
+    { name: 'Хеліус', products: heliusProducts },
+    { name: 'Solarverse', products: solarverseProducts }
   ];
   
   // Track which products from each supplier have been matched in Pass 1
@@ -922,9 +924,10 @@ export async function fetchAllData() {
   let rates: { usd: number; eur: number; source?: string; debug?: any[] } = { usd: 44.0, eur: 51.43, source: 'default' };
   let customMaterialsFromGAS: Product[] = [];
   let gasProducts: Product[] = [];
+  let solarverseProducts: Product[] = [];
   
   const startTime = performance.now();
-  console.log('🚀 Завантаження каталогів постачальників (ПЕ + БІЗ + ХЕЛ)...');
+  console.log('🚀 Завантаження каталогів постачальників (ПЕ + БІЗ + ХЕЛ + СВ)...');
   
   try {
     const [res, bizProducts, heliusProducts] = await Promise.all([
@@ -1067,10 +1070,28 @@ export async function fetchAllData() {
           };
         }).filter((p: any) => p.name.length > 2 && p.name !== 'Фото' && p.price > 0);
       }
+      
+      if (res.solarverseProducts && Array.isArray(res.solarverseProducts)) {
+        solarverseProducts = res.solarverseProducts.map((p: any) => {
+          return {
+            id: p.id || `sv_${Math.random().toString(36).substring(7)}`,
+            name: sanitizeString(p.name),
+            originalName: sanitizeString(p.originalName || p.name),
+            price: parseFloat(p.price) || 0,
+            currency: (p.currency || 'USD') as 'USD' | 'EUR' | 'UAH',
+            unit: sanitizeString(p.unit || 'шт'),
+            description: sanitizeString(p.description || ''),
+            mainCategory: sanitizeString(p.mainCategory || 'Інше'),
+            category: sanitizeString(p.category || p.mainCategory || 'Інше'),
+            inStock: p.inStock !== false,
+            availabilityDate: p.availabilityDate
+          };
+        }).filter((p: any) => p.name.length > 2 && p.price > 0);
+      }
     }
     
-    // Merge Pravylne Elektrozhivlenya, Biz Solar, and Helius products
-    const products = mergeSupplierProducts(gasProducts, bizProducts, heliusProducts);
+    // Merge Pravylne Elektrozhivlenya, Biz Solar, Helius, and Solarverse products
+    const products = mergeSupplierProducts(gasProducts, bizProducts, heliusProducts, solarverseProducts);
     
     const endTime = performance.now();
     console.log(`⚡ Каталоги завантажено та злито за ${Math.round(endTime - startTime)}мс! Усього згрупованих товарів: ${products.length}`);

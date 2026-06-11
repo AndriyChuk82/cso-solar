@@ -2314,6 +2314,13 @@ function getAllData() {
       }
     } catch (e) { console.warn('Failed to fetch custom materials:', e); }
 
+    try {
+      result.solarverseProducts = getSolarverseProducts();
+    } catch (e) {
+      console.warn('Failed to fetch Solarverse products:', e);
+      result.solarverseProducts = [];
+    }
+
     return result;
   } catch (err) {
     return { success: false, error: err.toString() };
@@ -2463,5 +2470,73 @@ function deleteCustomMaterial(productId) {
     return { success: false, error: 'Product not found: ' + productId };
   } catch (err) {
     return { success: false, error: err.toString() };
+  }
+}
+
+function getSolarverseProducts() {
+  try {
+    const spreadsheetId = '18BXurjbgCnWbpl4NaYoODLFXJho5JnAyZzhs6yh5NfA';
+    const ss = SpreadsheetApp.openById(spreadsheetId);
+    const tabs = [
+      { name: 'Мережеві інвертори', mainCat: 'Інвертори' },
+      { name: 'Гібридні інвертори', mainCat: 'Інвертори' },
+      { name: 'Акумулятори LV', mainCat: 'АКБ та BMS' },
+      { name: 'Акумулятори HV', mainCat: 'АКБ та BMS' }
+    ];
+    
+    const products = [];
+    
+    tabs.forEach(tab => {
+      const sheet = ss.getSheetByName(tab.name);
+      if (!sheet) {
+        console.warn('Solarverse sheet not found:', tab.name);
+        return;
+      }
+      
+      const values = sheet.getDataRange().getValues();
+      if (values.length <= 1) return;
+      
+      for (let i = 1; i < values.length; i++) {
+        const row = values[i];
+        if (row.length < 5) continue;
+        
+        const name = (row[0] || '').toString().trim();
+        const stockStr = (row[2] || '').toString().trim();
+        const priceStr = (row[4] || '').toString().trim();
+        
+        if (!name || name.length < 5 || name === 'Модель' || name === 'Назва') continue;
+        
+        // Clean and parse price
+        const cleanedPriceStr = priceStr.replace(/[^0-9.,-]/g, '').replace(',', '.');
+        const price = parseFloat(cleanedPriceStr);
+        if (isNaN(price) || price <= 0) continue;
+        
+        // Check availability
+        const inStock = !(stockStr.toLowerCase().includes('нема') || stockStr.toLowerCase().includes('відсутн') || stockStr === '0' || stockStr.toLowerCase() === 'нет' || stockStr.toLowerCase() === 'ні');
+        
+        products.push({
+          id: 'solarverse_' + generateProductId(name, tab.name),
+          name: name,
+          originalName: name,
+          price: price,
+          currency: 'USD',
+          unit: 'шт',
+          description: 'Постачальник: Solarverse',
+          manufacturer: '',
+          power: '',
+          warranty: '',
+          raw: row,
+          category: tab.name,
+          mainCategory: tab.mainCat,
+          inStock: inStock
+        });
+      }
+    });
+    
+    console.log('Successfully fetched Solarverse products count:', products.length);
+    return products;
+  } catch (err) {
+    console.warn('Failed to fetch Solarverse products:', err);
+    return [];
   }
 }
