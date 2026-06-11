@@ -1081,6 +1081,7 @@ export async function fetchAllData() {
             currency: (p.currency || 'USD') as 'USD' | 'EUR' | 'UAH',
             unit: sanitizeString(p.unit || 'шт'),
             description: sanitizeString(p.description || ''),
+            manufacturer: sanitizeString(p.manufacturer || ''),
             mainCategory: sanitizeString(p.mainCategory || 'Інше'),
             category: sanitizeString(p.category || p.mainCategory || 'Інше'),
             inStock: p.inStock !== false,

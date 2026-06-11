@@ -2501,6 +2501,7 @@ function getSolarverseProducts() {
         if (row.length < 5) continue;
         
         const name = (row[0] || '').toString().trim();
+        const descStr = (row[1] || '').toString().trim();
         const stockStr = (row[2] || '').toString().trim();
         const priceStr = (row[4] || '').toString().trim();
         
@@ -2514,6 +2515,20 @@ function getSolarverseProducts() {
         // Check availability
         const inStock = !(stockStr.toLowerCase().includes('нема') || stockStr.toLowerCase().includes('відсутн') || stockStr === '0' || stockStr.toLowerCase() === 'нет' || stockStr.toLowerCase() === 'ні');
         
+        // Extract manufacturer
+        let manufacturer = '';
+        const lowerDesc = descStr.toLowerCase();
+        const lowerName = name.toLowerCase();
+        if (lowerDesc.includes('deye') || lowerName.includes('deye')) {
+          manufacturer = 'Deye';
+        } else if (lowerDesc.includes('pylontech') || lowerName.includes('pylontech')) {
+          manufacturer = 'Pylontech';
+        } else if (lowerDesc.includes('solax') || lowerName.includes('solax')) {
+          manufacturer = 'SolaX';
+        } else if (lowerDesc.includes('longi') || lowerName.includes('longi')) {
+          manufacturer = 'Longi';
+        }
+        
         products.push({
           id: 'solarverse_' + generateProductId(name, tab.name),
           name: name,
@@ -2521,8 +2536,8 @@ function getSolarverseProducts() {
           price: price,
           currency: 'USD',
           unit: 'шт',
-          description: 'Постачальник: Solarverse',
-          manufacturer: '',
+          description: descStr || 'Постачальник: Solarverse',
+          manufacturer: manufacturer,
           power: '',
           warranty: '',
           raw: row,
