@@ -189,7 +189,7 @@ export async function fetchBizSolarProducts(): Promise<Product[]> {
         currency: 'USD',
         unit: 'шт',
         inStock,
-        description: 'Постачальник: БІЗ Солар'
+        description: ''
       });
     }
     
@@ -315,7 +315,7 @@ export async function fetchHeliusProducts(): Promise<Product[]> {
         currency: 'USD',
         unit: 'шт',
         inStock,
-        description: 'Постачальник: Хеліус'
+        description: ''
       });
     }
     

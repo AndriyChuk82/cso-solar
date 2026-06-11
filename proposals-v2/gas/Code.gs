@@ -2541,7 +2541,7 @@ function getSolarverseProducts() {
           price: price,
           currency: 'USD',
           unit: 'шт',
-          description: descStr || 'Постачальник: Solarverse',
+          description: descStr || '',
           manufacturer: manufacturer,
           power: '',
           warranty: '',
