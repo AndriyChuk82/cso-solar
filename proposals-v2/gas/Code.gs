@@ -2316,9 +2316,11 @@ function getAllData() {
 
     try {
       result.solarverseProducts = getSolarverseProducts();
+      result.solarverseDebug = getSolarverseDebugInfo();
     } catch (e) {
       console.warn('Failed to fetch Solarverse products:', e);
       result.solarverseProducts = [];
+      result.solarverseDebug = { error: e.toString() };
     }
 
     return result;
@@ -2553,5 +2555,50 @@ function getSolarverseProducts() {
   } catch (err) {
     console.warn('Failed to fetch Solarverse products:', err);
     return [];
+  }
+}
+
+function getSolarverseDebugInfo() {
+  try {
+    const spreadsheetId = '18BXurjbgCnWbpl4NaYoODLFXJho5JnAyZzhs6yh5NfA';
+    const ss = SpreadsheetApp.openById(spreadsheetId);
+    const allSheets = ss.getSheets().map(function(s) { return s.getName(); });
+    
+    const tabs = [
+      { name: 'Мережеві інвертори' },
+      { name: 'Гібридні інвертори' },
+      { name: 'Акумулятори LV' },
+      { name: 'Акумулятори HV' }
+    ];
+    
+    const debug = {
+      allSheetsInSpreadsheet: allSheets,
+      tabsDebug: []
+    };
+    
+    tabs.forEach(function(tab) {
+      const sheet = ss.getSheetByName(tab.name);
+      if (!sheet) {
+        debug.tabsDebug.push({ tab: tab.name, status: 'Not Found' });
+        return;
+      }
+      const values = sheet.getDataRange().getValues();
+      debug.tabsDebug.push({
+        tab: tab.name,
+        status: 'Found',
+        rowsCount: values.length,
+        colsCount: values[0] ? values[0].length : 0,
+        headers: values[0] || [],
+        row1: values[1] || null,
+        row2: values[2] || null,
+        row3: values[3] || null,
+        row4: values[4] || null,
+        row5: values[5] || null
+      });
+    });
+    
+    return debug;
+  } catch (err) {
+    return { error: err.toString() };
   }
 }
