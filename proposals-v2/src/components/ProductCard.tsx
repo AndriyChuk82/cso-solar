@@ -173,7 +173,9 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
                     <span className="truncate">
                       {offer.supplierName === 'Правильне електроживлення' 
                         ? 'ПЕ' 
-                        : (offer.supplierName === 'БІЗ Солар' || offer.supplierName === 'БІЗ' ? 'БІЗ' : 'ХЕЛ')}
+                        : (offer.supplierName === 'БІЗ Солар' || offer.supplierName === 'БІЗ' ? 'БІЗ' 
+                        : (offer.supplierName === 'Solarverse' || offer.supplierName === 'СВ' ? 'СВ' 
+                        : (offer.supplierName === 'Хеліус' || offer.supplierName === 'ХЕЛ' ? 'ХЕЛ' : offer.supplierName.substring(0, 3).toUpperCase())))}
                     </span>
                     <span className={`ml-1 shrink-0 ${!offer.inStock ? 'line-through opacity-70 font-normal' : (isBestPrice && isSelected ? 'text-green-500 font-extrabold' : '')}`}>
                       ${Math.round(offer.price)}
