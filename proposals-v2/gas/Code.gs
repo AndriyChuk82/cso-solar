@@ -2671,11 +2671,7 @@ function getSolarverseDebugInfo() {
         rowsCount: values.length,
         colsCount: values[0] ? values[0].length : 0,
         headers: values[0] || [],
-        row1: values[1] || null,
-        row2: values[2] || null,
-        row3: values[3] || null,
-        row4: values[4] || null,
-        row5: values[5] || null
+        rows: values.slice(0, 30) // Return first 30 rows of the sheet for thorough inspection
       });
     });
     
@@ -2684,3 +2680,4 @@ function getSolarverseDebugInfo() {
     return { error: err.toString() };
   }
 }
+
