@@ -1,1 +1,0 @@
-import{l as e}from"./index-BHAMp6qI.js";export{e as fetchAllData};

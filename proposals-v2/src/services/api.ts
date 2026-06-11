@@ -357,23 +357,29 @@ export function extractModelCode(name: string): string | null {
     /f16plus/i.test(lowerName) ||
     /f-16\b/.test(lowerName)
   ) {
-    if (lowerName.includes('rw-f16') || lowerName.includes('rw f16')) {
+    if (/\brw-f16\b|\brw\s+f16\b/i.test(lowerName)) {
       return 'RW-F16';
     }
-    if (lowerName.includes('f16plus') || lowerName.includes('f16 plus') || lowerName.includes('plus-l') || lowerName.includes('plus l')) {
+    if (/\bf16plus\b|\bf16\s+plus\b|\bplus-l\b|\bplus\s+l\b/i.test(lowerName)) {
       return 'SE-F16-PLUS-L';
     }
-    if (lowerName.includes('se-f16-l') || lowerName.includes('se-f16 l')) {
+    if (/\bse-f16-l\b|\bse-f16\s+l\b/i.test(lowerName)) {
       return 'SE-F16-L';
     }
-    if (lowerName.includes('se-f16-c') || lowerName.includes('se-f16 c') || lowerName.includes('se-f16-с') || lowerName.includes('se-f16 с')) {
+    if (/\bse-f16-c\b|\bse-f16\s+c\b/i.test(lowerName)) {
       return 'SE-F16-C';
     }
     return 'SE-F16';
   }
 
   // Deye SE-F12 family (230Ah / 51.2V)
-  if (lowerName.includes('se-f12') || lowerName.includes('f12-c') || lowerName.includes('f-12') || /\b230\s*ah\b/.test(lowerName)) {
+  if (lowerName.includes('se-f12') || lowerName.includes('f-12') || /\b230\s*ah\b/.test(lowerName)) {
+    if (/\bse-f12-l\b|\bse-f12\s+l\b/i.test(lowerName)) {
+      return 'SE-F12-L';
+    }
+    if (/\bse-f12-c\b|\bse-f12\s+c\b/i.test(lowerName)) {
+      return 'SE-F12-C';
+    }
     return 'SE-F12-C';
   }
 
@@ -629,6 +635,10 @@ export function cleanAndFormatProductName(name: string): string {
     return splitGluedWords('Deye SE-F16 LiFePO4 LV 51.2V 314Ah');
   }
 
+  if (modelCode === 'SE-F12-L') {
+    return splitGluedWords('Deye SE-F12-L LiFePO4 LV 51.2V 230Ah');
+  }
+
   if (modelCode === 'SE-F12-C') {
     return splitGluedWords('Deye SE-F12-C LiFePO4 LV 51.2V 230Ah');
   }
@@ -650,7 +660,7 @@ export function cleanAndFormatProductName(name: string): string {
   }
 
   // Known Deye battery canonical codes — always render as "Deye <model>"
-  const DEYE_BATTERY_CODES = ['SE-F16', 'SE-F16-C', 'SE-F16-L', 'SE-F16-PLUS-L', 'RW-F16', 'SE-F12-C', 'SE-F10', 'SE-G5.1-PRO-B', 'SE-F5-PRO-C', 'SE-F5-PRO-L', 'SE-G5.3', 'RW-M6.1', 'BOS-G-PRO'];
+  const DEYE_BATTERY_CODES = ['SE-F16', 'SE-F16-C', 'SE-F16-L', 'SE-F16-PLUS-L', 'RW-F16', 'SE-F12-C', 'SE-F12-L', 'SE-F10', 'SE-G5.1-PRO-B', 'SE-F5-PRO-C', 'SE-F5-PRO-L', 'SE-G5.3', 'RW-M6.1', 'BOS-G-PRO'];
   if (modelCode && DEYE_BATTERY_CODES.includes(modelCode)) {
     return splitGluedWords(`Deye ${modelCode}`);
   }
