@@ -171,7 +171,7 @@ export function PrintProposalTemplateNew(props: PrintProposalTemplateNewProps) {
                     <div className="font-bold text-slate-800 text-sm leading-snug">{item.name}</div>
                     {item.description && (
                       <div className="text-[10px] text-[#a89a74] font-normal leading-tight mt-1 whitespace-pre-wrap italic">
-                        {item.description}
+                        {item.description.replace(/\(вхідна ціна постачальника: [^\)]+\)/g, '').trim()}
                       </div>
                     )}
                   </td>

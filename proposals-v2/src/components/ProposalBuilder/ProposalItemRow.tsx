@@ -1,6 +1,7 @@
 import { memo, useState, useEffect, useRef } from 'react';
 import { formatNumber } from '../../utils/currency';
 import type { Currency } from '../../types';
+import { useProposalStore } from '../../store';
 
 interface ProposalItemRowProps {
   item: any;
@@ -29,9 +30,33 @@ export const ProposalItemRow = memo(function ProposalItemRow({
   onRemove,
   showCostPrices = true,
 }: ProposalItemRowProps) {
+  const useVatPrices = useProposalStore((state) => state.proposal.useVatPrices || false);
   const displayCostNum = item.displayCost ?? 0;
   const displayPriceNum = item.displayPrice ?? 0;
   const quantityNum = item.quantity ?? 1;
+
+  const getOriginalSupplierPrice = () => {
+    if (!item.product) return null;
+    const currency = item.product.currency;
+    if (!currency) return null;
+    
+    const price = item.product.price;
+    const priceVat = item.product.priceVat;
+    if (price === undefined || price === null) return null;
+    
+    const originalPrice = useVatPrices && priceVat !== undefined && priceVat !== null ? priceVat : price;
+    const vatSuffix = useVatPrices && priceVat !== undefined && priceVat !== null ? ' з ПДВ' : '';
+    
+    const formatted = originalPrice.toLocaleString('uk-UA', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    
+    if (currency === 'USD') return `$${formatted}${vatSuffix}`;
+    if (currency === 'EUR') return `€${formatted}${vatSuffix}`;
+    if (currency === 'UAH') return `${formatted} грн${vatSuffix}`;
+    return `${formatted} ${currency}${vatSuffix}`;
+  };
 
   const costTotal = item.displayCostSum ?? 0;
   const saleTotal = item.displayPriceSum ?? 0;
@@ -115,7 +140,7 @@ export const ProposalItemRow = memo(function ProposalItemRow({
             }}
           />
           <textarea
-            value={item.description || ''}
+            value={(item.description || '').replace(/\(вхідна ціна постачальника: [^\)]+\)/g, '').trim()}
             onChange={(e) => onUpdateField(item.id, 'description', e.target.value)}
             onInput={(e) => {
               const target = e.currentTarget;
@@ -133,10 +158,15 @@ export const ProposalItemRow = memo(function ProposalItemRow({
             }}
           />
           {item.supplierName && (
-            <div className="flex mt-1 select-none">
+            <div className="flex items-center gap-1.5 mt-1 select-none flex-wrap">
               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tight bg-primary/10 text-primary border border-primary/20">
                 Постачальник: {item.supplierName}
               </span>
+              {getOriginalSupplierPrice() && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tight bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                  Вхідна ціна: {getOriginalSupplierPrice()}
+                </span>
+              )}
             </div>
           )}
         </div>

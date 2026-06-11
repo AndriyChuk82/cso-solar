@@ -150,7 +150,7 @@ export function PrintProposalTemplate(props: PrintProposalTemplateProps) {
                     <div className="font-semibold text-slate-800">{item.name}</div>
                     {item.description && (
                       <div className="text-[10px] text-slate-400 font-normal leading-tight mt-0.5 whitespace-pre-wrap">
-                        {item.description}
+                        {item.description.replace(/\(вхідна ціна постачальника: [^\)]+\)/g, '').trim()}
                       </div>
                     )}
                   </td>

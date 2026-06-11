@@ -316,16 +316,7 @@ export const createProposalSlice: StateCreator<
         const salePrice = usdCostPrice * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
         const roundedPrice = Math.round(salePrice * 10000) / 10000;
 
-        let descriptionNote = '';
-        if (product.currency && product.currency !== 'USD') {
-          const originalPrice = useVat && activePriceVat !== undefined && activePriceVat !== null ? activePriceVat : activePrice;
-          const vatSuffix = useVat && activePriceVat !== undefined && activePriceVat !== null ? ' з ПДВ' : '';
-          descriptionNote = `(вхідна ціна постачальника: ${formatCurrencySymbol(originalPrice, product.currency)}${vatSuffix})`;
-        }
-        
-        const finalDescription = product.description 
-          ? (descriptionNote ? `${product.description} ${descriptionNote}` : product.description)
-          : descriptionNote;
+        const finalDescription = product.description || '';
 
         const newItem: ProposalItem = {
           id: generateId(),
@@ -733,19 +724,9 @@ export const createProposalSlice: StateCreator<
           const newSale = usdCost * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
           const roundedPrice = Math.round(newSale * 10000) / 10000;
 
-          let descriptionNote = '';
-          if (activeCurrency !== 'USD') {
-            const vatSuffix = useVat && activePriceVat !== undefined && activePriceVat !== null ? ' з ПДВ' : '';
-            descriptionNote = `(вхідна ціна постачальника: ${formatCurrencySymbol(basePrice, activeCurrency)}${vatSuffix})`;
-          }
-          
           let cleanDesc = item.description || '';
           const noteRegex = /\(вхідна ціна постачальника: [^\)]+\)/g;
-          cleanDesc = cleanDesc.replace(noteRegex, '').trim();
-          
-          const finalDescription = cleanDesc 
-            ? (descriptionNote ? `${cleanDesc} ${descriptionNote}` : cleanDesc)
-            : descriptionNote;
+          const finalDescription = cleanDesc.replace(noteRegex, '').trim();
           
           return {
             ...item,
