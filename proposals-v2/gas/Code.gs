@@ -2501,6 +2501,20 @@ function deleteCustomMaterial(productId) {
   }
 }
 
+function extractPanelWatts(name) {
+  if (!name) return 0;
+  const match = name.match(/(\d{3})\s*(Вт|W|w|M)/i);
+  if (match) return parseInt(match[1], 10);
+  
+  const hyphenMatch = name.match(/[-/](\d{3})\b/);
+  if (hyphenMatch) return parseInt(hyphenMatch[1], 10);
+
+  const standaloneMatch = name.match(/\b(3\d{2}|[4567]\d{2})\b/);
+  if (standaloneMatch) return parseInt(standaloneMatch[1], 10);
+
+  return 0;
+}
+
 function getSolarverseProducts() {
   try {
     const spreadsheetId = '18BXurjbgCnWbpl4NaYoODLFXJho5JnAyZzhs6yh5NfA';
@@ -2509,7 +2523,9 @@ function getSolarverseProducts() {
       { name: 'Мережеві інвертори', mainCat: 'Інвертори' },
       { name: 'Гібридні інвертори', mainCat: 'Інвертори' },
       { name: 'Акумулятори LV', mainCat: 'АКБ та BMS' },
-      { name: 'Акумулятори HV', mainCat: 'АКБ та BMS' }
+      { name: 'Акумулятори HV', mainCat: 'АКБ та BMS' },
+      { name: 'Сонячний кабель', mainCat: 'Кабель', isCable: true },
+      { name: 'Фотоелектричні модулі', mainCat: 'Сонячні батареї', isPanel: true }
     ];
     
     const products = [];
@@ -2531,23 +2547,48 @@ function getSolarverseProducts() {
         const row = values[i];
         if (row.length < 5) continue;
         
-        const name = (row[0] || '').toString().trim();
-        const descStr = (row[1] || '').toString().trim();
+        let name = '';
+        let descStr = '';
+        if (tab.isCable || tab.isPanel) {
+          name = (row[1] || '').toString().trim();
+          descStr = (row[0] || '').toString().trim();
+        } else {
+          name = (row[0] || '').toString().trim();
+          descStr = (row[1] || '').toString().trim();
+        }
+        
         const stockStr = (row[2] || '').toString().trim();
         const vatPriceStr = (row[3] || '').toString().trim();
         const priceStr = (row[4] || '').toString().trim();
         
-        if (!name || name.length < 5 || name === 'Модель' || name === 'Назва') continue;
+        const minLength = (tab.isCable || tab.isPanel) ? 3 : 5;
+        if (!name || name.length < minLength || name === 'Модель' || name === 'Назва' || name === 'Номенклатура') continue;
         
         // Clean and parse price
         const cleanedPriceStr = priceStr.replace(/[^0-9.,-]/g, '').replace(',', '.');
-        const price = parseFloat(cleanedPriceStr);
+        let price = parseFloat(cleanedPriceStr);
         if (isNaN(price) || price <= 0) continue;
 
         // Clean and parse priceVat (Column D)
         const cleanedVatPriceStr = vatPriceStr.replace(/[^0-9.,-]/g, '').replace(',', '.');
         const vatPrice = parseFloat(cleanedVatPriceStr);
-        const finalVatPrice = isNaN(vatPrice) || vatPrice <= 0 ? null : vatPrice;
+        let finalVatPrice = isNaN(vatPrice) || vatPrice <= 0 ? null : vatPrice;
+        
+        // Conversions
+        if (tab.isCable) {
+          price = Math.round((price / 500) * 100) / 100;
+          if (finalVatPrice) {
+            finalVatPrice = Math.round((finalVatPrice / 500) * 100) / 100;
+          }
+        } else if (tab.isPanel) {
+          const watts = extractPanelWatts(name);
+          if (watts > 0) {
+            price = Math.round((price * watts) * 100) / 100;
+            if (finalVatPrice) {
+              finalVatPrice = Math.round((finalVatPrice * watts) * 100) / 100;
+            }
+          }
+        }
         
         // Check availability
         const inStock = !(stockStr.toLowerCase().includes('нема') || stockStr.toLowerCase().includes('відсутн') || stockStr === '0' || stockStr.toLowerCase() === 'нет' || stockStr.toLowerCase() === 'ні');
@@ -2573,7 +2614,7 @@ function getSolarverseProducts() {
           price: price,
           priceVat: finalVatPrice || null,
           currency: 'USD',
-          unit: 'шт',
+          unit: tab.isCable ? 'м' : 'шт',
           description: descStr || '',
           manufacturer: manufacturer,
           power: '',
@@ -2604,7 +2645,9 @@ function getSolarverseDebugInfo() {
       { name: 'Мережеві інвертори' },
       { name: 'Гібридні інвертори' },
       { name: 'Акумулятори LV' },
-      { name: 'Акумулятори HV' }
+      { name: 'Акумулятори HV' },
+      { name: 'Сонячний кабель' },
+      { name: 'Фотоелектричні модулі' }
     ];
     
     const debug = {
