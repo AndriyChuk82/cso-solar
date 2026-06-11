@@ -223,6 +223,35 @@ function updateActiveTabProposal(
   };
 }
 
+function convertPriceToUsd(
+  amount: number,
+  currency: 'USD' | 'EUR' | 'UAH',
+  rates?: { usdToUah: number; eurToUah: number }
+): number {
+  if (!amount || currency === 'USD') return amount;
+  
+  const usdToUah = rates?.usdToUah || 41.5;
+  const eurToUah = rates?.eurToUah || 51.0;
+  
+  if (currency === 'UAH') {
+    return amount / usdToUah;
+  }
+  if (currency === 'EUR') {
+    return (amount * eurToUah) / usdToUah;
+  }
+  
+  return amount;
+}
+
+function formatCurrencySymbol(amount: number, currency: 'USD' | 'EUR' | 'UAH'): string {
+  const rounded = Math.round(amount * 100) / 100;
+  const formatted = rounded.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (currency === 'USD') return `$${formatted}`;
+  if (currency === 'EUR') return `€${formatted}`;
+  if (currency === 'UAH') return `${formatted} грн`;
+  return `${formatted} ${currency}`;
+}
+
 export const createProposalSlice: StateCreator<
   ProposalSlice,
   [],
@@ -278,8 +307,25 @@ export const createProposalSlice: StateCreator<
         }
 
         const costPrice = useVat && activePriceVat !== undefined && activePriceVat !== null ? activePriceVat : activePrice;
-        const salePrice = costPrice * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
+        const usdCostPrice = convertPriceToUsd(costPrice, product.currency || 'USD', proposal.rates);
+        const usdPrice = convertPriceToUsd(activePrice, product.currency || 'USD', proposal.rates);
+        const usdPriceVat = activePriceVat !== undefined && activePriceVat !== null 
+          ? convertPriceToUsd(activePriceVat, product.currency || 'USD', proposal.rates) 
+          : undefined;
+
+        const salePrice = usdCostPrice * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
         const roundedPrice = Math.round(salePrice * 10000) / 10000;
+
+        let descriptionNote = '';
+        if (product.currency && product.currency !== 'USD') {
+          const originalPrice = useVat && activePriceVat !== undefined && activePriceVat !== null ? activePriceVat : activePrice;
+          const vatSuffix = useVat && activePriceVat !== undefined && activePriceVat !== null ? ' з ПДВ' : '';
+          descriptionNote = `(вхідна ціна постачальника: ${formatCurrencySymbol(originalPrice, product.currency)}${vatSuffix})`;
+        }
+        
+        const finalDescription = product.description 
+          ? (descriptionNote ? `${product.description} ${descriptionNote}` : product.description)
+          : descriptionNote;
 
         const newItem: ProposalItem = {
           id: generateId(),
@@ -291,11 +337,11 @@ export const createProposalSlice: StateCreator<
             selectedSupplier: activeSupplier
           },
           quantity,
-          costPrice: costPrice,
+          costPrice: usdCostPrice,
           price: roundedPrice,
           total: roundedPrice * quantity,
           name: product.name,
-          description: product.description || '',
+          description: finalDescription,
           unit: product.unit,
           supplierName: activeSupplier,
         };
@@ -655,6 +701,7 @@ export const createProposalSlice: StateCreator<
           let activePrice = item.product.price;
           let activePriceVat = item.product.priceVat;
           let activeSupplier = item.product.selectedSupplier;
+          let activeCurrency = item.product.currency || 'USD';
 
           if (!item.product.isManualSupplier && item.product.offers && item.product.offers.length > 0) {
             const inStockOffers = item.product.offers.filter(o => o.inStock !== false);
@@ -675,15 +722,30 @@ export const createProposalSlice: StateCreator<
             activePrice = bestOffer.price;
             activePriceVat = bestOffer.priceVat;
             activeSupplier = bestOffer.supplierName;
+            activeCurrency = bestOffer.currency;
           }
 
           const basePrice = useVat 
             ? (activePriceVat !== undefined && activePriceVat !== null ? activePriceVat : activePrice)
             : activePrice;
             
-          const newCost = basePrice;
-          const newSale = newCost * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
+          const usdCost = convertPriceToUsd(basePrice, activeCurrency, proposal.rates);
+          const newSale = usdCost * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
           const roundedPrice = Math.round(newSale * 10000) / 10000;
+
+          let descriptionNote = '';
+          if (activeCurrency !== 'USD') {
+            const vatSuffix = useVat && activePriceVat !== undefined && activePriceVat !== null ? ' з ПДВ' : '';
+            descriptionNote = `(вхідна ціна постачальника: ${formatCurrencySymbol(basePrice, activeCurrency)}${vatSuffix})`;
+          }
+          
+          let cleanDesc = item.description || '';
+          const noteRegex = /\(вхідна ціна постачальника: [^\)]+\)/g;
+          cleanDesc = cleanDesc.replace(noteRegex, '').trim();
+          
+          const finalDescription = cleanDesc 
+            ? (descriptionNote ? `${cleanDesc} ${descriptionNote}` : cleanDesc)
+            : descriptionNote;
           
           return {
             ...item,
@@ -693,9 +755,10 @@ export const createProposalSlice: StateCreator<
               priceVat: activePriceVat,
               selectedSupplier: activeSupplier
             },
-            costPrice: newCost,
+            costPrice: usdCost,
             price: roundedPrice,
             total: roundedPrice * item.quantity,
+            description: finalDescription,
             supplierName: activeSupplier
           };
         });
