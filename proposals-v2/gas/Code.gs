@@ -2487,9 +2487,12 @@ function getSolarverseProducts() {
     ];
     
     const products = [];
+    const sheets = ss.getSheets();
     
     tabs.forEach(tab => {
-      const sheet = ss.getSheetByName(tab.name);
+      const sheet = sheets.find(function(s) {
+        return s.getName().trim().toLowerCase() === tab.name.trim().toLowerCase();
+      });
       if (!sheet) {
         console.warn('Solarverse sheet not found:', tab.name);
         return;
@@ -2576,8 +2579,11 @@ function getSolarverseDebugInfo() {
       tabsDebug: []
     };
     
+    const sheets = ss.getSheets();
     tabs.forEach(function(tab) {
-      const sheet = ss.getSheetByName(tab.name);
+      const sheet = sheets.find(function(s) {
+        return s.getName().trim().toLowerCase() === tab.name.trim().toLowerCase();
+      });
       if (!sheet) {
         debug.tabsDebug.push({ tab: tab.name, status: 'Not Found' });
         return;
