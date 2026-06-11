@@ -23,6 +23,7 @@ import { ViberModal } from '../ViberModal';
 import { SolarWizard } from '../SolarWizard';
 import { DocumentGeneratorModal } from '../DocumentGeneratorModal';
 import { PrintProposalTemplate } from './PrintProposalTemplate';
+import { TabBar } from './TabBar';
 
 export function ProposalBuilderTable() {
   const proposal = useProposalStore(selectProposal);
@@ -196,6 +197,7 @@ export function ProposalBuilderTable() {
       
       {/* 1. Інтерактивний редактор комерційної пропозиції (ховається при друці) */}
       <div id="proposal-editor-container" className="no-print space-y-4 pb-24">
+        <TabBar />
         <ClientInfoForm
           clientName={proposal.clientName}
           clientPhone={proposal.clientPhone || ''}

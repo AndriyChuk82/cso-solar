@@ -31,8 +31,35 @@ export const useProposalStore = create<ProposalStore>()(
         deletedProductIds: state.deletedProductIds,
         selectedSeller: state.selectedSeller,
         proposal: state.proposal,
+        tabs: state.tabs,
+        activeTabId: state.activeTabId,
         activeCurrency: state.activeCurrency,
       }),
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.error('❌ Помилка регідрації сховища:', error);
+          return;
+        }
+        if (state) {
+          const stateAny = state as any;
+          // Міграція: якщо табів немає, але є активна КП, створюємо перший таб
+          if ((!stateAny.tabs || stateAny.tabs.length === 0) && stateAny.proposal) {
+            console.log('🔄 Міграція: перенесення активної чернетки КП у вкладку...');
+            const legacyProposal = stateAny.proposal;
+            const title = legacyProposal.clientName 
+              ? `КП - ${legacyProposal.clientName}` 
+              : (legacyProposal.number || 'Нова КП');
+            
+            stateAny.tabs = [{
+              id: legacyProposal.id || 'draft',
+              title,
+              proposal: legacyProposal,
+              isUnsaved: false
+            }];
+            stateAny.activeTabId = legacyProposal.id || 'draft';
+          }
+        }
+      }
     }
   )
 );

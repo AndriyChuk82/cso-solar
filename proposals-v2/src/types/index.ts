@@ -138,6 +138,8 @@ export interface AppState {
   products: Product[];
   categories: Category[];
   proposal: Proposal;
+  tabs: ProposalTab[];
+  activeTabId: string;
   settings: Settings;
   history: Proposal[];
   activeCurrency: 'USD' | 'EUR' | 'UAH';
@@ -172,3 +174,11 @@ export interface CurrencyRates {
   EUR: number;
   UAH: number;
 }
+
+export interface ProposalTab {
+  id: string;
+  title: string;
+  proposal: Proposal;
+  isUnsaved?: boolean;
+}
+

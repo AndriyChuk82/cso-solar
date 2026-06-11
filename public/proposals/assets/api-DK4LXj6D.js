@@ -1,0 +1,1 @@
+import{l as e}from"./index-C14e1N6c.js";export{e as fetchAllData};
