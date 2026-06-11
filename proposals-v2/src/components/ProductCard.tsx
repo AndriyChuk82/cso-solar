@@ -14,6 +14,14 @@ const getSupplierDisplayName = (name: string) => {
   return name;
 };
 
+const getSupplierOrderIndex = (name: string) => {
+  if (name === 'Правильне електроживлення') return 0;
+  if (name === 'БІЗ Солар' || name === 'БІЗ') return 1;
+  if (name === 'Хеліус' || name === 'ХЕЛ') return 2;
+  if (name === 'Solarverse' || name === 'СВ') return 3;
+  return 99;
+};
+
 interface ProductCardProps {
   product: Product;
 }
@@ -49,6 +57,11 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
     
     return baseOffers.reduce((min, o) => o.price < min.price ? o : min, baseOffers[0]);
   }, [product.offers, product.selectedSupplier, product.isManualSupplier, useVatPrices]);
+
+  const sortedOffers = useMemo(() => {
+    if (!product.offers) return [];
+    return [...product.offers].sort((a, b) => getSupplierOrderIndex(a.supplierName) - getSupplierOrderIndex(b.supplierName));
+  }, [product.offers]);
 
   const activeSupplier = activeOffer ? activeOffer.supplierName : (product.selectedSupplier || 'Правильне електроживлення');
   const hasVat = activeOffer ? (activeOffer.priceVat !== undefined && activeOffer.priceVat !== null) : (product.priceVat !== undefined && product.priceVat !== null);
@@ -178,7 +191,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
           )}
           {product.offers && product.offers.length > 1 ? (
             <div className="flex gap-1 mt-2.5 p-0.5 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-100 dark:border-slate-700/60" onClick={(e) => e.stopPropagation()}>
-              {product.offers.map(offer => {
+              {sortedOffers.map(offer => {
                 const isSelected = activeSupplier === offer.supplierName;
                 const hasOfferVat = offer.priceVat !== undefined && offer.priceVat !== null;
                 
