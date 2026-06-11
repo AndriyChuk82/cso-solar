@@ -1,1 +1,0 @@
-import{l as e}from"./index-D-o7PUBN.js";export{e as fetchAllData};

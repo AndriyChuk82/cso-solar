@@ -1225,18 +1225,43 @@ export function searchProducts(products: Product[], query: string): Product[] {
 
   const filtered = products.filter(p => {
     const name = normalizeForSearch(p.name);
+    const desc = p.description ? normalizeForSearch(p.description) : '';
+    const manufacturer = p.manufacturer ? normalizeForSearch(p.manufacturer) : '';
+    const category = p.category ? normalizeForSearch(p.category) : '';
+    const mainCategory = p.mainCategory ? normalizeForSearch(p.mainCategory) : '';
+    
     return words.every(word => {
+      // 1. Direct match in fields
+      if (name.includes(word) || desc.includes(word) || manufacturer.includes(word) || category.includes(word) || mainCategory.includes(word)) {
+        return true;
+      }
+      
+      // 2. Exact match rules for numbers (e.g. 6 in "SUN-6K")
       if (/^\d+$/.test(word) && word.length < 3) {
         const numRegex = new RegExp(`\\b${word}\\b|\\b${word}k|\\b${word}кв|-` + word + `k|/` + word + `|\\b${word}w`, 'i');
-        return numRegex.test(name);
+        return numRegex.test(name) || numRegex.test(desc);
       }
-      return name.includes(word);
+      
+      // 3. Special manufacturer code heuristics:
+      // If searching for "deye" (or "деє"), match model codes (SE-, SUN-, SG-)
+      if (word === 'deye' || word === 'деє') {
+        return /se-|sun-|sg-/i.test(p.name);
+      }
+      
+      // If searching for "pylontech" (or "пілонтех", "пилонтех"), match US2000, US3000, US5000, Force L2
+      if (word === 'pylontech' || word === 'пілонтех' || word === 'пилонтех' || word === 'пайлонтех') {
+        return /\bus\d{4}\b|\bforce\b/i.test(p.name);
+      }
+      
+      return false;
     });
   });
 
   // Score and sort by relevancy
   return filtered.map(p => {
     const name = normalizeForSearch(p.name);
+    const desc = p.description ? normalizeForSearch(p.description) : '';
+    const manufacturer = p.manufacturer ? normalizeForSearch(p.manufacturer) : '';
     let score = 0;
     
     words.forEach(word => {
@@ -1253,6 +1278,10 @@ export function searchProducts(products: Product[], query: string): Product[] {
           score += 80;
         } else if (name.includes(word)) {
           score += 10;
+        } else if (desc.includes(word)) {
+          score += 5;
+        } else if (manufacturer.includes(word)) {
+          score += 20;
         }
       }
       
