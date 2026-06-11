@@ -2097,8 +2097,8 @@ function getAllProducts() {
           if (col0 !== "" || col1 !== "") {
             currentProduct = {
               id: generateProductId(col0 ? col0 : 'img_'+index, sheet.name),
-              name: col0 || '',
-              originalName: col1 || '',
+              name: row[0] || '',
+              originalName: row[1] || '',
               price: parsePriceFromString(row[1]),
               currency: parseCurrencyFromString(row[1]),
               unit: row[2] || 'шт',
