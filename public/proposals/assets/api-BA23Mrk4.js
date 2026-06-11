@@ -1,1 +1,0 @@
-import{l as e}from"./index-DWwrLRV3.js";export{e as fetchAllData};

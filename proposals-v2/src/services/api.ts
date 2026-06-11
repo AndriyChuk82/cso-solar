@@ -348,17 +348,34 @@ export function extractModelCode(name: string): string | null {
   // model code so that mergeSupplierProducts can group them into a single card.
   // Priority: check most-specific patterns first.
 
-  // Deye SE-F16 family  (314Ah / 51.2V LiFePO4)
-  // Covers: SE-F16, SE-F16-C, SE-F16PLUS-L, SE-F16LIFEPO4LV51.2V314AH,
-  //         RW-F16, 2B314ARW-F16  (БІЗ Солар артикул де Cyrillic В → B дає "2B314ARW-F16")
+  // Deye SE-F16 family (314Ah / 51.2V LiFePO4)
   if (
     lowerName.includes('se-f16') ||
     lowerName.includes('rw-f16') ||
     /\b314\s*ah\b/.test(lowerName) ||
-    /2b314ar/i.test(name) ||          // corrupted BIZ Solar article
+    /2b314ar/i.test(name) ||
     /f16plus/i.test(lowerName) ||
     /f-16\b/.test(lowerName)
-  ) { return 'SE-F16'; }
+  ) {
+    if (lowerName.includes('rw-f16') || lowerName.includes('rw f16')) {
+      return 'RW-F16';
+    }
+    if (lowerName.includes('f16plus') || lowerName.includes('f16 plus') || lowerName.includes('plus-l') || lowerName.includes('plus l')) {
+      return 'SE-F16-PLUS-L';
+    }
+    if (lowerName.includes('se-f16-l') || lowerName.includes('se-f16 l')) {
+      return 'SE-F16-L';
+    }
+    if (lowerName.includes('se-f16-c') || lowerName.includes('se-f16 c') || lowerName.includes('se-f16-с') || lowerName.includes('se-f16 с')) {
+      return 'SE-F16-C';
+    }
+    return 'SE-F16';
+  }
+
+  // Deye SE-F12 family (230Ah / 51.2V)
+  if (lowerName.includes('se-f12') || lowerName.includes('f12-c') || lowerName.includes('f-12') || /\b230\s*ah\b/.test(lowerName)) {
+    return 'SE-F12-C';
+  }
 
   // Deye SE-F10 family  (100Ah / 51.2V)
   if (lowerName.includes('se-f10') || lowerName.includes('rw-f10') || /f10plus/i.test(lowerName)) {
@@ -592,8 +609,28 @@ export function cleanAndFormatProductName(name: string): string {
     return 'Deye BMS Контролер Bos-G 120-750V (HVB750V/100A-EU)';
   }
 
+  if (modelCode === 'RW-F16') {
+    return splitGluedWords('Deye RW-F16 LiFePO4 LV 51.2V 314Ah');
+  }
+
+  if (modelCode === 'SE-F16-C') {
+    return splitGluedWords('Deye SE-F16-C LiFePO4 LV 51.2V 314Ah');
+  }
+
+  if (modelCode === 'SE-F16-L') {
+    return splitGluedWords('Deye SE-F16-L LiFePO4 LV 51.2V 314Ah');
+  }
+
+  if (modelCode === 'SE-F16-PLUS-L') {
+    return splitGluedWords('Deye SE-F16 Plus-L LiFePO4 LV 51.2V 314Ah');
+  }
+
   if (modelCode === 'SE-F16') {
     return splitGluedWords('Deye SE-F16 LiFePO4 LV 51.2V 314Ah');
+  }
+
+  if (modelCode === 'SE-F12-C') {
+    return splitGluedWords('Deye SE-F12-C LiFePO4 LV 51.2V 230Ah');
   }
 
   if (modelCode === 'SE-F10') {
@@ -613,7 +650,7 @@ export function cleanAndFormatProductName(name: string): string {
   }
 
   // Known Deye battery canonical codes — always render as "Deye <model>"
-  const DEYE_BATTERY_CODES = ['SE-F16', 'SE-F10', 'SE-G5.1-PRO-B', 'SE-F5-PRO-C', 'SE-F5-PRO-L', 'SE-G5.3', 'RW-M6.1', 'BOS-G-PRO'];
+  const DEYE_BATTERY_CODES = ['SE-F16', 'SE-F16-C', 'SE-F16-L', 'SE-F16-PLUS-L', 'RW-F16', 'SE-F12-C', 'SE-F10', 'SE-G5.1-PRO-B', 'SE-F5-PRO-C', 'SE-F5-PRO-L', 'SE-G5.3', 'RW-M6.1', 'BOS-G-PRO'];
   if (modelCode && DEYE_BATTERY_CODES.includes(modelCode)) {
     return splitGluedWords(`Deye ${modelCode}`);
   }
