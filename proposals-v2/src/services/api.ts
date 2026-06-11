@@ -38,6 +38,32 @@ function parsePrice(str: string): { value: number; currency: 'USD' | 'EUR' | 'UA
   return { value: isNaN(val) ? 0 : val, currency };
 }
 
+function parseVatPrice(str: string): number | undefined {
+  if (!str) return undefined;
+  let s = str.toString().trim().toLowerCase();
+  
+  if (!s.includes('пдв')) {
+    return undefined;
+  }
+  
+  // Remove unit slashes first
+  s = s.replace(/\$\s*\/\s*(вт|w|шт)/g, '');
+  s = s.replace(/(грн|дол)\s*\/\s*(вт|w|шт)/g, '');
+  
+  let targetStr = s;
+  if (s.includes('/')) {
+    const parts = s.split('/');
+    const vatPart = parts.find(p => p.includes('пдв'));
+    if (vatPart) {
+      targetStr = vatPart;
+    }
+  }
+  
+  const cleaned = targetStr.replace(/[^0-9.,]/g, '').replace(',', '.');
+  const val = parseFloat(cleaned);
+  return isNaN(val) || val <= 0 ? undefined : val;
+}
+
 function generateStableId(base: string): string {
   let hash = 0;
   for (let i = 0; i < base.length; i++) {
@@ -1121,10 +1147,72 @@ export async function fetchAllData() {
             priceObj = parsePrice(col3 || col4);
             desc = col4 || col3;
           }
+          // Parse priceVat
+          let priceVat: number | undefined = undefined;
+          if (mainCat === 'Інвертори') {
+            let valStr = '';
+            if (p.raw && p.raw[4] !== undefined) {
+              valStr = String(p.raw[4]).trim();
+            }
+            if (!valStr && p.subRows && p.subRows.length > 0) {
+              const sub = p.subRows.find((r: any) => r[4] !== undefined && String(r[4]).trim() !== '');
+              if (sub) {
+                valStr = String(sub[4]).trim();
+              }
+            }
+            if (valStr) {
+              const parsed = parsePrice(valStr);
+              if (parsed.value > 0) {
+                priceVat = parsed.value;
+              }
+            }
+          } 
+          else if (mainCat === 'АКБ та BMS') {
+            let valStr = '';
+            if (p.raw && p.raw[1] !== undefined) {
+              valStr = String(p.raw[1]).trim();
+            }
+            if (!valStr && p.subRows && p.subRows.length > 0) {
+              const sub = p.subRows.find((r: any) => r[1] !== undefined && String(r[1]).trim() !== '');
+              if (sub) {
+                valStr = String(sub[1]).trim();
+              }
+            }
+            if (valStr) {
+              priceVat = parseVatPrice(valStr);
+            }
+          } 
+          else if (mainCat === 'Сонячні батареї') {
+            const match = exactName.match(/\d+(?=\s*Вт|\s*W)/i) || exactName.match(/\d{3}/);
+            const watts = match ? parseInt(match[0]) : 0;
+            
+            let valStr = '';
+            if (p.raw && p.raw[6] !== undefined) {
+              valStr = String(p.raw[6]).trim();
+            }
+            if (!valStr.toLowerCase().includes('пдв') && p.subRows && p.subRows.length > 0) {
+              const sub = p.subRows.find((r: any) => r[6] !== undefined && String(r[6]).toLowerCase().includes('пдв'));
+              if (sub) {
+                valStr = String(sub[6]).trim();
+              }
+            }
+            if (valStr) {
+              const parsedVat = parseVatPrice(valStr);
+              if (parsedVat !== undefined) {
+                const isPerWatt = parsedVat > 0 && parsedVat < 2;
+                if (isPerWatt && watts > 0) {
+                  priceVat = Math.round(parsedVat * watts * 100) / 100;
+                } else {
+                  priceVat = parsedVat;
+                }
+              }
+            }
+          }
           
           return {
             id: generateStableId(mainCat + name + priceObj.value),
             name, description: desc, price: priceObj.value, currency: priceObj.currency,
+            priceVat,
             unit: 'шт', mainCategory: mainCat, category: sanitizeString(p.category) || mainCat, 
             inStock: p.inStock !== undefined ? p.inStock : true,
             availabilityDate: p.availabilityDate

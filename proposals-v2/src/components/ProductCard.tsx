@@ -168,7 +168,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
               {product.description}
             </p>
           )}
-          {product.offers && product.offers.length > 1 ? (
+          {product.offers && product.offers.length > 1 && (
             <div className="flex gap-1 mt-2.5 p-0.5 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-100 dark:border-slate-700/60" onClick={(e) => e.stopPropagation()}>
               {product.offers.map(offer => {
                 const isSelected = activeSupplier === offer.supplierName;
@@ -235,12 +235,6 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
                   </button>
                 );
               })}
-            </div>
-          ) : (
-            <div className="mt-2">
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold text-[#8b7e5e] dark:text-[#c4b88a] bg-[#f5f0e1]/70 dark:bg-slate-800/70 border border-[#e8e0c8]/60 dark:border-slate-700/50">
-                {activeSupplier}
-              </span>
             </div>
           )}
           {product.inStock === false && (

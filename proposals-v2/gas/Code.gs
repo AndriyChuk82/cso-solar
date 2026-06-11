@@ -2087,25 +2087,40 @@ function getAllProducts() {
       const sheetData = getSheetDataForProposals(sheet.name, spreadsheetId, sheet.gid);
 
       if (sheetData.success && sheetData.data) {
+        let currentProduct = null;
         sheetData.data.forEach((row, index) => {
-          if (!row[0] || row[0].toString().trim() === "" || row[0] === "Модель") return;
+          const col0 = row[0] ? row[0].toString().trim() : "";
+          const col1 = row[1] ? row[1].toString().trim() : "";
+          
+          if (col0 === "Модель" || col1 === "Модель" || col0 === "Фото" || col1 === "Фото") return;
 
-          allProducts.push({
-            id: generateProductId(row[0] && typeof row[0] === 'string' ? row[0] : 'img_'+index, sheet.name),
-            name: row[0] || '',
-            originalName: row[1] || '',
-            price: parsePriceFromString(row[1]),
-            currency: parseCurrencyFromString(row[1]),
-            unit: row[2] || 'шт',
-            description: row[3] || '',
-            manufacturer: row[4] || '',
-            power: row[5] || '',
-            warranty: row[6] || '',
-            raw: row,
-            category: sheet.name,
-            mainCategory: sheet.mainCat,
-            inStock: true
-          });
+          if (col0 !== "" || col1 !== "") {
+            currentProduct = {
+              id: generateProductId(col0 ? col0 : 'img_'+index, sheet.name),
+              name: col0 || '',
+              originalName: col1 || '',
+              price: parsePriceFromString(row[1]),
+              currency: parseCurrencyFromString(row[1]),
+              unit: row[2] || 'шт',
+              description: row[3] || '',
+              manufacturer: row[4] || '',
+              power: row[5] || '',
+              warranty: row[6] || '',
+              raw: row,
+              category: sheet.name,
+              mainCategory: sheet.mainCat,
+              inStock: true
+            };
+            allProducts.push(currentProduct);
+          } else if (currentProduct) {
+            const hasContent = row.some(cell => cell !== null && cell !== undefined && cell.toString().trim() !== "");
+            if (hasContent) {
+              if (!currentProduct.subRows) {
+                currentProduct.subRows = [];
+              }
+              currentProduct.subRows.push(row);
+            }
+          }
         });
       }
     });
@@ -2146,7 +2161,7 @@ function getSheetDataForProposals(sheetName, spreadsheetId, gid) {
       return { success: false, error: 'No data or empty sheet' };
     }
 
-    const rows = data.slice(1).filter(row => row[0] && row[1]);
+    const rows = data.slice(1).filter(row => row.some(cell => cell !== null && cell !== undefined && cell.toString().trim() !== ""));
     return { success: true, data: rows };
   } catch (err) {
     return { success: false, error: err.toString() };
