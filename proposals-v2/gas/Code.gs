@@ -2564,15 +2564,23 @@ function getSolarverseProducts() {
         const minLength = (tab.isCable || tab.isPanel) ? 3 : 5;
         if (!name || name.length < minLength || name === 'Модель' || name === 'Назва' || name === 'Номенклатура') continue;
         
-        // Clean and parse price
+        // Clean and parse price (Column E - price without VAT)
         const cleanedPriceStr = priceStr.replace(/[^0-9.,-]/g, '').replace(',', '.');
         let price = parseFloat(cleanedPriceStr);
-        if (isNaN(price) || price <= 0) continue;
 
-        // Clean and parse priceVat (Column D)
+        // Clean and parse priceVat (Column D - price with VAT)
         const cleanedVatPriceStr = vatPriceStr.replace(/[^0-9.,-]/g, '').replace(',', '.');
         const vatPrice = parseFloat(cleanedVatPriceStr);
         let finalVatPrice = isNaN(vatPrice) || vatPrice <= 0 ? null : vatPrice;
+        
+        // If price without VAT is missing but price with VAT is present, calculate it (divide by 1.2)
+        if ((isNaN(price) || price <= 0) && finalVatPrice > 0) {
+          price = finalVatPrice / 1.2;
+        }
+        
+        // If both are missing or invalid, skip
+        if (isNaN(price) || price <= 0) continue;
+
         
         // Conversions
         if (tab.isCable) {
