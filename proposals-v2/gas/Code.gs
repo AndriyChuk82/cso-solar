@@ -2140,7 +2140,18 @@ function getSheetDataForProposals(sheetName, spreadsheetId, gid) {
       const ss = SpreadsheetApp.openById(spreadsheetId);
       const sheet = ss.getSheetByName(sheetName);
       if (sheet) {
-        data = sheet.getDataRange().getValues();
+        const range = sheet.getDataRange();
+        const values = range.getValues();
+        const displayValues = range.getDisplayValues();
+        
+        data = values.map(function(row, rIdx) {
+          return row.map(function(cell, cIdx) {
+            if (cell && typeof cell === 'object' && cell.valueType) {
+              return cell;
+            }
+            return displayValues[rIdx][cIdx] !== undefined ? displayValues[rIdx][cIdx] : cell;
+          });
+        });
       } else {
         throw new Error('Sheet not found by name');
       }
