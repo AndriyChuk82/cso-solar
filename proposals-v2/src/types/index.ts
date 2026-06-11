@@ -33,6 +33,7 @@ export interface Product {
   availabilityDate?: string; // Дата очікування (для панелей)
   offers?: SupplierOffer[]; // Список пропозицій від постачальників
   selectedSupplier?: string; // Вибраний постачальник для КП
+  isManualSupplier?: boolean; // Чи вибрав користувач постачальника вручну
 }
 
 export interface ProposalItem {

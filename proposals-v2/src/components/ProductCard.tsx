@@ -3,7 +3,7 @@ import { formatCurrency } from '../utils/currency';
 import { useProposalStore } from '../store';
 import { selectFavorites } from '../store/selectors';
 import { Star, Plus, Edit2, Trash2, Check, X } from 'lucide-react';
-import { useState, memo } from 'react';
+import { useState, memo, useMemo } from 'react';
 import { updateMaterialPrice } from '../services/api';
 
 interface ProductCardProps {
@@ -19,8 +19,27 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
   const favorites = useProposalStore(selectFavorites);
   const useVatPrices = useProposalStore((state) => state.proposal.useVatPrices || false);
 
-  const hasVat = product.priceVat !== undefined && product.priceVat !== null;
-  const displayPrice = useVatPrices && hasVat ? product.priceVat! : product.price;
+  // Dynamically select best offer if supplier choice was not manually overridden
+  const activeOffer = useMemo(() => {
+    if (!product.offers || product.offers.length === 0) return null;
+    if (product.isManualSupplier) {
+      // Find the offer corresponding to the selected supplier
+      return product.offers.find(o => o.supplierName === product.selectedSupplier) || product.offers[0];
+    }
+    
+    // Otherwise, find the best offer under the current VAT mode
+    const getOfferDisplayPrice = (o: SupplierOffer) => (useVatPrices && o.priceVat !== undefined && o.priceVat !== null ? o.priceVat : o.price);
+    const inStockOffers = product.offers.filter(o => o.inStock !== false);
+    const activeOffers = inStockOffers.length > 0 ? inStockOffers : product.offers;
+    
+    return activeOffers.reduce((min, o) => getOfferDisplayPrice(o) < getOfferDisplayPrice(min) ? o : min, activeOffers[0]);
+  }, [product.offers, product.selectedSupplier, product.isManualSupplier, useVatPrices]);
+
+  const activeSupplier = activeOffer ? activeOffer.supplierName : (product.selectedSupplier || 'Правильне електроживлення');
+  const hasVat = activeOffer ? (activeOffer.priceVat !== undefined && activeOffer.priceVat !== null) : (product.priceVat !== undefined && product.priceVat !== null);
+  const displayPrice = useVatPrices && hasVat 
+    ? (activeOffer ? activeOffer.priceVat! : product.priceVat!) 
+    : (activeOffer ? activeOffer.price : product.price);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editPrice, setEditPrice] = useState((displayPrice ?? 0).toString());
@@ -145,7 +164,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
           {product.offers && product.offers.length > 1 && (
             <div className="flex gap-1 mt-2.5 p-0.5 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-100 dark:border-slate-700/60" onClick={(e) => e.stopPropagation()}>
               {product.offers.map(offer => {
-                const isSelected = (product.selectedSupplier || 'Правильне електроживлення') === offer.supplierName;
+                const isSelected = activeSupplier === offer.supplierName;
                 const hasOfferVat = offer.priceVat !== undefined && offer.priceVat !== null;
                 
                 const getOfferDisplayPrice = (o: SupplierOffer) => (useVatPrices && o.priceVat !== undefined && o.priceVat !== null ? o.priceVat : o.price);
@@ -161,6 +180,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
                           return {
                             ...p,
                             selectedSupplier: offer.supplierName,
+                            isManualSupplier: true,
                             price: offer.price,
                             priceVat: offer.priceVat,
                             currency: offer.currency,
@@ -315,5 +335,6 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
          prevProps.product.price === nextProps.product.price &&
          prevProps.product.priceVat === nextProps.product.priceVat &&
          prevProps.product.name === nextProps.product.name &&
-         prevProps.product.selectedSupplier === nextProps.product.selectedSupplier;
+         prevProps.product.selectedSupplier === nextProps.product.selectedSupplier &&
+         prevProps.product.isManualSupplier === nextProps.product.isManualSupplier;
 });

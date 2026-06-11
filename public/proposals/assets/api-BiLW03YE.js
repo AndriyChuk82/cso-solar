@@ -1,1 +1,0 @@
-import{l as e}from"./index-Ckeud2n9.js";export{e as fetchAllData};

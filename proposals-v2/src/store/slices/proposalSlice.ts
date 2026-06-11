@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { Proposal, ProposalItem, Product, SellerId } from '../../types';
+import { Proposal, ProposalItem, Product, SellerId, SupplierOffer } from '../../types';
 import { CONFIG, SELLERS } from '../../config';
 import { saveProposalToSheet, fetchProposalsHistory, deleteProposalFromSheet } from '../../services/api';
 
@@ -153,14 +153,35 @@ export const createProposalSlice: StateCreator<
     } else {
       // Додаємо новий товар
       const useVat = !!proposal.useVatPrices;
-      const costPrice = useVat && product.priceVat !== undefined ? product.priceVat : product.price;
+      
+      let activePrice = product.price;
+      let activePriceVat = product.priceVat;
+      let activeSupplier = product.selectedSupplier;
+
+      if (!product.isManualSupplier && product.offers && product.offers.length > 0) {
+        const getOfferDisplayPrice = (o: SupplierOffer) => (useVat && o.priceVat !== undefined && o.priceVat !== null ? o.priceVat : o.price);
+        const inStockOffers = product.offers.filter(o => o.inStock !== false);
+        const activeOffers = inStockOffers.length > 0 ? inStockOffers : product.offers;
+        const bestOffer = activeOffers.reduce((min, o) => getOfferDisplayPrice(o) < getOfferDisplayPrice(min) ? o : min, activeOffers[0]);
+        
+        activePrice = bestOffer.price;
+        activePriceVat = bestOffer.priceVat;
+        activeSupplier = bestOffer.supplierName;
+      }
+
+      const costPrice = useVat && activePriceVat !== undefined && activePriceVat !== null ? activePriceVat : activePrice;
       const salePrice = costPrice * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
       const roundedPrice = Math.round(salePrice * 10000) / 10000;
 
       const newItem: ProposalItem = {
         id: generateId(),
         productId: product.id,
-        product,
+        product: {
+          ...product,
+          price: activePrice,
+          priceVat: activePriceVat,
+          selectedSupplier: activeSupplier
+        },
         quantity,
         costPrice: costPrice,
         price: roundedPrice,
@@ -168,7 +189,7 @@ export const createProposalSlice: StateCreator<
         name: product.name,
         description: product.description || '',
         unit: product.unit,
-        supplierName: product.selectedSupplier,
+        supplierName: activeSupplier,
       };
 
       const updatedProposal = calculateProposalTotals({
@@ -460,10 +481,25 @@ export const createProposalSlice: StateCreator<
     if (field === 'useVatPrices') {
       const useVat = !!value;
       updatedItems = proposal.items.map(item => {
-        // Fallback to product.price if priceVat is not defined
+        // Find the active supplier price dynamically if it wasn't manually selected
+        let activePrice = item.product.price;
+        let activePriceVat = item.product.priceVat;
+        let activeSupplier = item.product.selectedSupplier;
+
+        if (!item.product.isManualSupplier && item.product.offers && item.product.offers.length > 0) {
+          const getOfferDisplayPrice = (o: SupplierOffer) => (useVat && o.priceVat !== undefined && o.priceVat !== null ? o.priceVat : o.price);
+          const inStockOffers = item.product.offers.filter(o => o.inStock !== false);
+          const activeOffers = inStockOffers.length > 0 ? inStockOffers : item.product.offers;
+          const bestOffer = activeOffers.reduce((min, o) => getOfferDisplayPrice(o) < getOfferDisplayPrice(min) ? o : min, activeOffers[0]);
+          
+          activePrice = bestOffer.price;
+          activePriceVat = bestOffer.priceVat;
+          activeSupplier = bestOffer.supplierName;
+        }
+
         const basePrice = useVat 
-          ? (item.product.priceVat !== undefined ? item.product.priceVat : item.product.price)
-          : item.product.price;
+          ? (activePriceVat !== undefined && activePriceVat !== null ? activePriceVat : activePrice)
+          : activePrice;
           
         const newCost = basePrice;
         const newSale = newCost * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
@@ -471,9 +507,16 @@ export const createProposalSlice: StateCreator<
         
         return {
           ...item,
+          product: {
+            ...item.product,
+            price: activePrice,
+            priceVat: activePriceVat,
+            selectedSupplier: activeSupplier
+          },
           costPrice: newCost,
           price: roundedPrice,
-          total: roundedPrice * item.quantity
+          total: roundedPrice * item.quantity,
+          supplierName: activeSupplier
         };
       });
     }
