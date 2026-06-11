@@ -822,11 +822,13 @@ export function mergeSupplierProducts(
   // 1. Load Pravylne (Primary) products
   pravylneProducts.forEach(p => {
     const adjustedPrice = adjustSolarPanelPrice(p.name, p.price, p.mainCategory);
+    const adjustedPriceVat = p.priceVat !== undefined ? adjustSolarPanelPrice(p.name, p.priceVat, p.mainCategory) : undefined;
     const key = p.id;
     const offers: SupplierOffer[] = [
       {
         supplierName: 'Правильне електроживлення',
         price: adjustedPrice,
+        priceVat: adjustedPriceVat,
         currency: p.currency,
         inStock: p.inStock !== false,
         originalName: p.name,
@@ -836,6 +838,7 @@ export function mergeSupplierProducts(
     mergedMap.set(key, {
       ...p,
       price: adjustedPrice,
+      priceVat: adjustedPriceVat,
       name: cleanAndFormatProductName(p.name),
       offers,
       selectedSupplier: 'Правильне електроживлення'
