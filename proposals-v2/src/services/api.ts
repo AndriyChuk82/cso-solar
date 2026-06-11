@@ -327,19 +327,21 @@ export async function fetchHeliusProducts(): Promise<Product[]> {
 }
 
 export function extractModelCode(name: string): string | null {
-  const lowerName = normalizeForSearch(name);
+  const originalLower = name.toLowerCase();
 
   // ── EXCLUDE KITS / SETS FROM NORMALIZATION ────────────────────────────────
   // Kits/Sets should never be normalized as individual battery modules or inverters.
   if (
-    lowerName.includes('комплект') ||
-    lowerName.includes('набір') ||
-    lowerName.includes('набори') ||
-    /\bkit\b/i.test(lowerName) ||
-    /\bset\b/i.test(lowerName)
+    originalLower.includes('комплект') ||
+    originalLower.includes('набір') ||
+    originalLower.includes('набори') ||
+    /\bkit\b/i.test(originalLower) ||
+    /\bset\b/i.test(originalLower)
   ) {
     return null;
   }
+
+  const lowerName = normalizeForSearch(name);
 
   // ── BATTERY MODEL NORMALIZATION ──────────────────────────────────────────
   // All name variants of the same physical battery are mapped to one canonical

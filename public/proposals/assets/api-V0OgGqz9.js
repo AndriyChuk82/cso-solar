@@ -1,1 +1,0 @@
-import{l as e}from"./index-DAC1Glu5.js";export{e as fetchAllData};
