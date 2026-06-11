@@ -210,6 +210,9 @@ export const useGTStore = create<GTStoreState>((set, get) => ({
         } else {
           set({ isLoading: false });
         }
+
+        // Live refresh the equipment catalog to include newly added items
+        get().loadEquipment();
       } else {
         // Server rejected or returned fail
         console.error('GAS Save Project Fail:', res.error);
@@ -376,31 +379,36 @@ export const useGTStore = create<GTStoreState>((set, get) => ({
     };
 
     try {
-      // 1. Specific GT local cache
+      let cacheLoaded = false;
+
+      // 1. Try specific GT local cache first
       const gtRaw = localStorage.getItem(GT_CACHE_KEY);
       if (gtRaw) {
         const data = JSON.parse(gtRaw);
         const products = data.products || [];
-        if (products.length > 0 && buildAndSet(products) > 0) return;
+        if (products.length > 0 && buildAndSet(products) > 0) {
+          cacheLoaded = true;
+        }
       }
 
-      // 2. Shared KP catalog cache
-      const kpRaw = localStorage.getItem(KP_CACHE_KEY);
-      if (kpRaw) {
-        const kpData = JSON.parse(kpRaw);
-        const kpProducts: any[] = kpData.products || [];
-        if (kpProducts.length > 0) {
-          const remapped = kpProducts
-            .map(p => ({ ...p, mainCategory: p.mainCategory || classifyKp(p) }))
-            .filter(p => p.mainCategory);
-          if (remapped.length > 0 && buildAndSet(remapped) > 0) {
-            localStorage.setItem(GT_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), products: remapped }));
-            return;
+      // 2. If no specific GT cache, try shared KP catalog cache
+      if (!cacheLoaded) {
+        const kpRaw = localStorage.getItem(KP_CACHE_KEY);
+        if (kpRaw) {
+          const kpData = JSON.parse(kpRaw);
+          const kpProducts: any[] = kpData.products || [];
+          if (kpProducts.length > 0) {
+            const remapped = kpProducts
+              .map(p => ({ ...p, mainCategory: p.mainCategory || classifyKp(p) }))
+              .filter(p => p.mainCategory);
+            if (remapped.length > 0 && buildAndSet(remapped) > 0) {
+              localStorage.setItem(GT_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), products: remapped }));
+            }
           }
         }
       }
 
-      // 3. Fallback database endpoint
+      // 3. Always run live fetch to get the absolute latest equipment registered in Google Sheets
       try {
         const res = await gtApi.fetchEquipment();
         if (res.success && res.equipment) {
@@ -415,7 +423,6 @@ export const useGTStore = create<GTStoreState>((set, get) => ({
           if (allProducts.length > 0) {
             localStorage.setItem(GT_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), products: allProducts }));
             buildAndSet(allProducts);
-            return;
           }
         }
       } catch (e) {
