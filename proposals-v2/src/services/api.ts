@@ -139,7 +139,6 @@ export async function fetchBizSolarProducts(): Promise<Product[]> {
       
       const name = (row[2] || '').trim();
       const priceStr = (row[17] || '').trim(); // Column R (Wholesale)
-      const priceVatStr = (row[3] || '').trim(); // Column D (Price with VAT)
       const stockStr = (row[14] || '').trim(); // Column O (Availability)
       
       if (!name || name === 'Номенклатура' || name === 'Артикул' || name.length < 5) continue;
@@ -147,11 +146,6 @@ export async function fetchBizSolarProducts(): Promise<Product[]> {
       const cleanedPriceStr = priceStr.replace(/\u00a0/g, '').replace(/\s/g, '').replace(',', '.');
       const price = parseFloat(cleanedPriceStr);
       if (isNaN(price) || price <= 0) continue;
-
-      // Parse VAT price from Column D
-      const cleanedPriceVatStr = priceVatStr.replace(/\u00a0/g, '').replace(/\s/g, '').replace(',', '.');
-      const priceVatVal = parseFloat(cleanedPriceVatStr);
-      const finalPriceVatRaw = isNaN(priceVatVal) || priceVatVal <= 0 ? undefined : priceVatVal;
       
       const inStock = !(stockStr.toLowerCase().includes('нема') || stockStr.toLowerCase().includes('відсутн') || stockStr === '0');
       
@@ -185,7 +179,6 @@ export async function fetchBizSolarProducts(): Promise<Product[]> {
       }
       
       const finalPrice = adjustSolarPanelPrice(name, price, mainCategory);
-      const finalPriceVat = finalPriceVatRaw !== undefined ? adjustSolarPanelPrice(name, finalPriceVatRaw, mainCategory) : undefined;
       
       products.push({
         id: `biz_${generateStableId(name + finalPrice)}`,
@@ -193,7 +186,6 @@ export async function fetchBizSolarProducts(): Promise<Product[]> {
         category: mainCategory,
         mainCategory,
         price: finalPrice,
-        priceVat: finalPriceVat,
         currency: 'USD',
         unit: 'шт',
         inStock,
