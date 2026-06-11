@@ -287,21 +287,21 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
                 hasVat ? (
                   <div className="flex flex-col items-end">
                     <span className="text-[0.9rem] font-black text-amber-600 dark:text-amber-400 whitespace-nowrap tracking-tight">
-                      {formatCurrency(product.priceVat!, product.currency)}
+                      {formatCurrency(displayPrice, activeOffer?.currency || product.currency)}
                     </span>
                     <span className="text-[8px] font-bold text-[#10b981] uppercase tracking-tight -mt-0.5">з ПДВ</span>
                   </div>
                 ) : (
                   <div className="flex flex-col items-end">
                     <span className="text-[0.9rem] font-black text-slate-400 dark:text-slate-500 whitespace-nowrap tracking-tight">
-                      {formatCurrency(product.price, product.currency)}
+                      {formatCurrency(displayPrice, activeOffer?.currency || product.currency)}
                     </span>
                     <span className="text-[8px] font-bold text-rose-500 uppercase tracking-tight -mt-0.5">ПДВ відсутнє</span>
                   </div>
                 )
               ) : (
                 <span className="text-[0.9rem] font-black text-amber-600 dark:text-amber-400 whitespace-nowrap tracking-tight">
-                  {formatCurrency(product.price, product.currency)}
+                  {formatCurrency(displayPrice, activeOffer?.currency || product.currency)}
                 </span>
               )}
             </div>
