@@ -236,12 +236,17 @@ export async function fetchHeliusProducts(): Promise<Product[]> {
       const name = colA;
       const stockStr = (row[2] || '').trim(); // Column C (Availability)
       const priceStr = (row[4] || '').trim(); // Column E (Price)
+      const priceVatStr = (row[5] || '').trim(); // Column F (Price VAT)
       
       if (!name || name.length < 5 || name === 'Модель') continue;
       
       const cleanedPriceStr = priceStr.replace(/[^0-9.,]/g, '').replace(',', '.');
       const price = parseFloat(cleanedPriceStr);
       if (isNaN(price) || price <= 0) continue;
+
+      const cleanedPriceVatStr = priceVatStr.replace(/[^0-9.,]/g, '').replace(',', '.');
+      const priceVatVal = parseFloat(cleanedPriceVatStr);
+      const finalPriceVatRaw = isNaN(priceVatVal) || priceVatVal <= 0 ? undefined : priceVatVal;
       
       const inStock = !(stockStr.toLowerCase().includes('нема') || stockStr.toLowerCase().includes('відсутн') || stockStr === '0' || stockStr.toLowerCase() === 'нет');
       
@@ -305,6 +310,7 @@ export async function fetchHeliusProducts(): Promise<Product[]> {
       }
       
       const finalPrice = adjustSolarPanelPrice(name, price, mainCategory);
+      const finalPriceVat = finalPriceVatRaw !== undefined ? adjustSolarPanelPrice(name, finalPriceVatRaw, mainCategory) : undefined;
       
       products.push({
         id: `helius_${generateStableId(name + finalPrice)}`,
@@ -312,6 +318,7 @@ export async function fetchHeliusProducts(): Promise<Product[]> {
         category: mainCategory,
         mainCategory,
         price: finalPrice,
+        priceVat: finalPriceVat,
         currency: 'USD',
         unit: 'шт',
         inStock,
@@ -838,6 +845,7 @@ export function mergeSupplierProducts(
               p.offers.push({
                 supplierName: supplier.name,
                 price: supP.price,
+                priceVat: supP.priceVat,
                 currency: supP.currency,
                 inStock: supP.inStock !== false,
                 originalName: supP.name,
@@ -847,6 +855,7 @@ export function mergeSupplierProducts(
               // Auto-select lowest price that is in stock
               if (supP.price < p.price && supP.inStock !== false) {
                 p.price = supP.price;
+                p.priceVat = supP.priceVat;
                 p.currency = supP.currency;
                 p.selectedSupplier = supplier.name;
               }
@@ -907,6 +916,7 @@ export function mergeSupplierProducts(
       const offer: SupplierOffer = {
         supplierName: supplier.name,
         price: supP.price,
+        priceVat: supP.priceVat,
         currency: supP.currency,
         inStock: supP.inStock !== false,
         originalName: supP.name,
@@ -921,6 +931,7 @@ export function mergeSupplierProducts(
         
         if (supP.price < matchedProduct.price && supP.inStock !== false) {
           matchedProduct.price = supP.price;
+          matchedProduct.priceVat = supP.priceVat;
           matchedProduct.currency = supP.currency;
           matchedProduct.selectedSupplier = supplier.name;
         }
@@ -953,6 +964,7 @@ export function mergeSupplierProducts(
       
       p.selectedSupplier = bestOffer.supplierName;
       p.price = bestOffer.price;
+      p.priceVat = bestOffer.priceVat;
       p.currency = bestOffer.currency;
       p.inStock = bestOffer.inStock !== false;
       p.availabilityDate = bestOffer.availabilityDate;
@@ -1127,6 +1139,7 @@ export async function fetchAllData() {
             name: sanitizeString(p.name),
             originalName: sanitizeString(p.originalName || p.name),
             price: parseFloat(p.price) || 0,
+            priceVat: p.priceVat ? parseFloat(p.priceVat) : undefined,
             currency: (p.currency || 'USD') as 'USD' | 'EUR' | 'UAH',
             unit: sanitizeString(p.unit || 'шт'),
             description: sanitizeString(p.description || ''),

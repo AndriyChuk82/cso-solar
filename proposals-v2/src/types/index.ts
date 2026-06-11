@@ -3,6 +3,7 @@
 export interface SupplierOffer {
   supplierName: string;
   price: number;
+  priceVat?: number; // Ціна з ПДВ від постачальника
   currency: 'USD' | 'EUR' | 'UAH';
   inStock: boolean;
   originalName: string;
@@ -16,6 +17,7 @@ export interface Product {
   mainCategory: string;
   subCategory?: string;
   price: number;
+  priceVat?: number; // Ціна з ПДВ
   currency: 'USD' | 'EUR' | 'UAH';
   unit: string;
   description?: string;
@@ -74,6 +76,7 @@ export interface Proposal {
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
   vatMode: 'none' | 'add' | 'extract';
   vatAmount: number;
+  useVatPrices?: boolean; // Чи підбирати вхідні ціни постачальників з ПДВ
   createdAt: string;
   updatedAt: string;
 }

@@ -1,4 +1,4 @@
-import { Product } from '../types';
+import { Product, SupplierOffer } from '../types';
 import { formatCurrency } from '../utils/currency';
 import { useProposalStore } from '../store';
 import { selectFavorites } from '../store/selectors';
@@ -17,9 +17,13 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
   const products = useProposalStore((state) => state.products);
   const customMaterials = useProposalStore((state) => state.customMaterials);
   const favorites = useProposalStore(selectFavorites);
+  const useVatPrices = useProposalStore((state) => state.proposal.useVatPrices || false);
+
+  const hasVat = product.priceVat !== undefined && product.priceVat !== null;
+  const displayPrice = useVatPrices && hasVat ? product.priceVat! : product.price;
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editPrice, setEditPrice] = useState((product.price ?? 0).toString());
+  const [editPrice, setEditPrice] = useState((displayPrice ?? 0).toString());
   const [isSaving, setIsSaving] = useState(false);
   const isFavorite = favorites.includes(product.id);
 
@@ -67,7 +71,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsEditing(true);
-    setEditPrice((product.price ?? 0).toString());
+    setEditPrice((displayPrice ?? 0).toString());
   };
 
   const handleSavePrice = async (e: React.MouseEvent) => {
@@ -142,7 +146,10 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
             <div className="flex gap-1 mt-2.5 p-0.5 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-100 dark:border-slate-700/60" onClick={(e) => e.stopPropagation()}>
               {product.offers.map(offer => {
                 const isSelected = (product.selectedSupplier || 'Правильне електроживлення') === offer.supplierName;
-                const isBestPrice = product.offers!.reduce((min, o) => o.price < min.price ? o : min, product.offers![0]).supplierName === offer.supplierName;
+                const hasOfferVat = offer.priceVat !== undefined && offer.priceVat !== null;
+                
+                const getOfferDisplayPrice = (o: SupplierOffer) => (useVatPrices && o.priceVat !== undefined && o.priceVat !== null ? o.priceVat : o.price);
+                const isBestPrice = product.offers!.reduce((min, o) => getOfferDisplayPrice(o) < getOfferDisplayPrice(min) ? o : min, product.offers![0]).supplierName === offer.supplierName;
                 
                 return (
                   <button
@@ -155,6 +162,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
                             ...p,
                             selectedSupplier: offer.supplierName,
                             price: offer.price,
+                            priceVat: offer.priceVat,
                             currency: offer.currency,
                             inStock: offer.inStock
                           };
@@ -178,7 +186,15 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
                         : (offer.supplierName === 'Хеліус' || offer.supplierName === 'ХЕЛ' ? 'ХЕЛ' : offer.supplierName.substring(0, 3).toUpperCase())))}
                     </span>
                     <span className={`ml-1 shrink-0 ${!offer.inStock ? 'line-through opacity-70 font-normal' : (isBestPrice && isSelected ? 'text-green-500 font-extrabold' : '')}`}>
-                      ${Math.round(offer.price)}
+                      {useVatPrices ? (
+                        hasOfferVat ? (
+                          `$${Math.round(offer.priceVat!)}`
+                        ) : (
+                          <span className="text-[7px] text-rose-500 font-black">без ПДВ</span>
+                        )
+                      ) : (
+                        `$${Math.round(offer.price)}`
+                      )}
                     </span>
                   </button>
                 );
@@ -231,9 +247,27 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
             </div>
           ) : (
             <div className="flex flex-col items-end">
-              <span className="text-[0.9rem] font-black text-amber-600 dark:text-amber-400 whitespace-nowrap tracking-tight">
-                {formatCurrency(product.price, product.currency)}
-              </span>
+              {useVatPrices ? (
+                hasVat ? (
+                  <div className="flex flex-col items-end">
+                    <span className="text-[0.9rem] font-black text-amber-600 dark:text-amber-400 whitespace-nowrap tracking-tight">
+                      {formatCurrency(product.priceVat!, product.currency)}
+                    </span>
+                    <span className="text-[8px] font-bold text-[#10b981] uppercase tracking-tight -mt-0.5">з ПДВ</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-end">
+                    <span className="text-[0.9rem] font-black text-slate-400 dark:text-slate-500 whitespace-nowrap tracking-tight">
+                      {formatCurrency(product.price, product.currency)}
+                    </span>
+                    <span className="text-[8px] font-bold text-rose-500 uppercase tracking-tight -mt-0.5">ПДВ відсутнє</span>
+                  </div>
+                )
+              ) : (
+                <span className="text-[0.9rem] font-black text-amber-600 dark:text-amber-400 whitespace-nowrap tracking-tight">
+                  {formatCurrency(product.price, product.currency)}
+                </span>
+              )}
             </div>
           )}
 
@@ -279,6 +313,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
   // Ререндерити тільки якщо змінився продукт
   return prevProps.product.id === nextProps.product.id &&
          prevProps.product.price === nextProps.product.price &&
+         prevProps.product.priceVat === nextProps.product.priceVat &&
          prevProps.product.name === nextProps.product.name &&
          prevProps.product.selectedSupplier === nextProps.product.selectedSupplier;
 });

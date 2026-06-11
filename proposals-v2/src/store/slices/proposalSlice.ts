@@ -123,6 +123,7 @@ function createEmptyProposal(history: Proposal[] = []): Proposal {
     status: 'draft',
     vatMode: 'none',
     vatAmount: 0,
+    useVatPrices: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -151,8 +152,10 @@ export const createProposalSlice: StateCreator<
       get().updateQuantity(existingItem.id, existingItem.quantity + quantity);
     } else {
       // Додаємо новий товар
-      const costPrice = product.price;
+      const useVat = !!proposal.useVatPrices;
+      const costPrice = useVat && product.priceVat !== undefined ? product.priceVat : product.price;
       const salePrice = costPrice * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
+      const roundedPrice = Math.round(salePrice * 10000) / 10000;
 
       const newItem: ProposalItem = {
         id: generateId(),
@@ -160,8 +163,8 @@ export const createProposalSlice: StateCreator<
         product,
         quantity,
         costPrice: costPrice,
-        price: salePrice,
-        total: salePrice * quantity,
+        price: roundedPrice,
+        total: roundedPrice * quantity,
         name: product.name,
         description: product.description || '',
         unit: product.unit,
@@ -452,7 +455,35 @@ export const createProposalSlice: StateCreator<
 
   updateProposalField: (field: keyof Proposal, value: any) => {
     const { proposal } = get();
-    const updatedProposal = { ...proposal, [field]: value, updatedAt: new Date().toISOString() };
+    let updatedItems = proposal.items;
+    
+    if (field === 'useVatPrices') {
+      const useVat = !!value;
+      updatedItems = proposal.items.map(item => {
+        // Fallback to product.price if priceVat is not defined
+        const basePrice = useVat 
+          ? (item.product.priceVat !== undefined ? item.product.priceVat : item.product.price)
+          : item.product.price;
+          
+        const newCost = basePrice;
+        const newSale = newCost * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
+        const roundedPrice = Math.round(newSale * 10000) / 10000;
+        
+        return {
+          ...item,
+          costPrice: newCost,
+          price: roundedPrice,
+          total: roundedPrice * item.quantity
+        };
+      });
+    }
+
+    const updatedProposal = { 
+      ...proposal, 
+      [field]: value, 
+      items: updatedItems, 
+      updatedAt: new Date().toISOString() 
+    };
     set({ proposal: calculateProposalTotals(updatedProposal) });
   },
 

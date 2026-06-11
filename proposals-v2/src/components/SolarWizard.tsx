@@ -243,7 +243,8 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
 
     // Helper to create proposal item
     const createItem = (product: Product, qty: number): Partial<ProposalItem> => {
-      const costPrice = product.price;
+      const useVat = !!proposal.useVatPrices;
+      const costPrice = useVat && product.priceVat !== undefined && product.priceVat !== null ? product.priceVat : product.price;
       const salePrice = Math.round(costPrice * (1 + markupTarget / 100) * (1 + adjustmentTarget / 100) * 10) / 10;
 
       return {

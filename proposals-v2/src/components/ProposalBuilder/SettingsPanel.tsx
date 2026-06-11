@@ -18,6 +18,8 @@ interface SettingsPanelProps {
   onUpdateVatMode: (mode: 'none' | 'add' | 'extract') => void;
   showCostPrices: boolean;
   onToggleCostPrices: () => void;
+  useVatPrices: boolean;
+  onToggleUseVatPrices: () => void;
 }
 
 export function SettingsPanel({
@@ -36,6 +38,8 @@ export function SettingsPanel({
   onUpdateVatMode,
   showCostPrices,
   onToggleCostPrices,
+  useVatPrices,
+  onToggleUseVatPrices,
 }: SettingsPanelProps) {
   const [localMarkup, setLocalMarkup] = useState(markup.toString());
   const [localAdjustment, setLocalAdjustment] = useState(adjustment.toString());
@@ -97,6 +101,17 @@ export function SettingsPanel({
           title="Оновити курси з Goverla"
         >
           <RefreshCcw className={`w-3 h-3 ${isRefreshingRates ? 'animate-spin' : ''}`} />
+        </button>
+        <button
+          onClick={onToggleUseVatPrices}
+          className={`px-2.5 py-0.5 text-[9px] font-extrabold rounded-full transition-all duration-200 border cursor-pointer select-none whitespace-nowrap active:scale-95 ${
+            useVatPrices
+              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-transparent shadow-[0_2px_6_rgba(245,158,11,0.18)]'
+              : 'bg-[#f4f0df]/30 dark:bg-slate-950/40 border-[#e8e4d1]/60 dark:border-slate-800 text-[#a89a74] hover:text-amber-600 dark:hover:text-[#fbbf24] hover:border-amber-500/50'
+          }`}
+          title="Використовувати вхідні ціни постачальників з ПДВ"
+        >
+          з ПДВ
         </button>
       </div>
 

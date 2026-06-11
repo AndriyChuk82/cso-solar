@@ -224,6 +224,8 @@ export function ProposalBuilderTable() {
           onUpdateVatMode={(mode) => updateProposalField('vatMode', mode)}
           showCostPrices={settings.showCostPrices !== false}
           onToggleCostPrices={() => updateSettings({ showCostPrices: settings.showCostPrices === false })}
+          useVatPrices={proposal.useVatPrices || false}
+          onToggleUseVatPrices={() => updateProposalField('useVatPrices', !proposal.useVatPrices)}
         />
 
         <ProposalItemsTable

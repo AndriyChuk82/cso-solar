@@ -2508,6 +2508,7 @@ function getSolarverseProducts() {
         const name = (row[0] || '').toString().trim();
         const descStr = (row[1] || '').toString().trim();
         const stockStr = (row[2] || '').toString().trim();
+        const vatPriceStr = (row[3] || '').toString().trim();
         const priceStr = (row[4] || '').toString().trim();
         
         if (!name || name.length < 5 || name === 'Модель' || name === 'Назва') continue;
@@ -2516,6 +2517,11 @@ function getSolarverseProducts() {
         const cleanedPriceStr = priceStr.replace(/[^0-9.,-]/g, '').replace(',', '.');
         const price = parseFloat(cleanedPriceStr);
         if (isNaN(price) || price <= 0) continue;
+
+        // Clean and parse priceVat (Column D)
+        const cleanedVatPriceStr = vatPriceStr.replace(/[^0-9.,-]/g, '').replace(',', '.');
+        const vatPrice = parseFloat(cleanedVatPriceStr);
+        const finalVatPrice = isNaN(vatPrice) || vatPrice <= 0 ? null : vatPrice;
         
         // Check availability
         const inStock = !(stockStr.toLowerCase().includes('нема') || stockStr.toLowerCase().includes('відсутн') || stockStr === '0' || stockStr.toLowerCase() === 'нет' || stockStr.toLowerCase() === 'ні');
@@ -2539,6 +2545,7 @@ function getSolarverseProducts() {
           name: name,
           originalName: name,
           price: price,
+          priceVat: finalVatPrice || null,
           currency: 'USD',
           unit: 'шт',
           description: descStr || '',
