@@ -327,7 +327,7 @@ export async function fetchHeliusProducts(): Promise<Product[]> {
 }
 
 export function extractModelCode(name: string): string | null {
-  const lowerName = name.toLowerCase();
+  const lowerName = normalizeForSearch(name);
 
   // ── EXCLUDE KITS / SETS FROM NORMALIZATION ────────────────────────────────
   // Kits/Sets should never be normalized as individual battery modules or inverters.
