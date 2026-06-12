@@ -192,10 +192,10 @@ export function PrintProposalTemplate(props: PrintProposalTemplateProps) {
             <div className="p-3 bg-slate-50/50 border-b border-[#e8e4d1]/65 space-y-1.5 text-slate-500 text-xs font-semibold">
               <div className="flex justify-between">
                 <span>Сума без ПДВ:</span>
-                <span className="whitespace-nowrap">{displaySubtotal.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencySymbol}</span>
+                <span className="whitespace-nowrap">{(displayTotal - displayVat).toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencySymbol}</span>
               </div>
               <div className="flex justify-between">
-                <span>ПДВ (20%):</span>
+                <span>{proposal.vatMode === 'add' ? 'ПДВ (20%):' : 'в т.ч. ПДВ (20%):'}</span>
                 <span className="whitespace-nowrap">{displayVat.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencySymbol}</span>
               </div>
             </div>

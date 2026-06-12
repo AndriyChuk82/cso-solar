@@ -1,0 +1,1 @@
+import{t as e}from"./index-CG1f_gJQ.js";export default e();

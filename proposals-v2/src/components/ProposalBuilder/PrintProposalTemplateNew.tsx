@@ -221,7 +221,7 @@ export function PrintProposalTemplateNew(props: PrintProposalTemplateNewProps) {
             <div className="p-4 bg-slate-50/30 border-b border-[#e8e4d1]/50 space-y-2 text-slate-500 text-xs font-bold">
               <div className="flex justify-between items-center">
                 <span>Сума без ПДВ:</span>
-                <span className="font-mono text-slate-700">{displaySubtotal.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencySymbol}</span>
+                <span className="font-mono text-slate-700">{(displayTotal - displayVat).toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencySymbol}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="italic">{proposal.vatMode === 'add' ? 'ПДВ (+20%):' : 'в т.ч. ПДВ (20%):'}</span>
