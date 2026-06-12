@@ -58,16 +58,38 @@ export default function Backups() {
     try {
       showToast('Збір даних з бази...', 'info');
       
+      const fetchAllOperations = async () => {
+        let allOps = [];
+        let page = 0;
+        const pageSize = 1000;
+        let hasMore = true;
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('operations')
+            .select('*')
+            .range(page * pageSize, (page + 1) * pageSize - 1);
+          if (error) throw error;
+          if (data && data.length > 0) {
+            allOps = allOps.concat(data);
+            if (data.length < pageSize) hasMore = false;
+            else page++;
+          } else {
+            hasMore = false;
+          }
+        }
+        return allOps;
+      };
+
       // Завантажуємо всі основні таблиці паралельно
       const [
         { data: products },
         { data: warehouses },
-        { data: operations },
+        operations,
         { data: categories }
       ] = await Promise.all([
         supabase.from('products').select('*'),
         supabase.from('warehouses').select('*'),
-        supabase.from('operations').select('*'),
+        fetchAllOperations(),
         supabase.from('categories').select('*')
       ]);
 

@@ -145,11 +145,35 @@ export async function updateWarehouse(warehouse) {
 export async function getOperations(filters = {}) {
   if (!supabase) return { success: true, operations: [] };
   
-  const { data: ops, error: opsErr } = await supabase.from('operations').select('*').order('date', { ascending: true }).order('created_at', { ascending: true });
+  let ops = [];
+  let page = 0;
+  const pageSize = 1000;
+  let hasMore = true;
+  
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from('operations')
+      .select('*')
+      .order('date', { ascending: true })
+      .order('created_at', { ascending: true })
+      .range(page * pageSize, (page + 1) * pageSize - 1);
+      
+    if (error) throw error;
+    
+    if (data && data.length > 0) {
+      ops = ops.concat(data);
+      if (data.length < pageSize) {
+        hasMore = false;
+      } else {
+        page++;
+      }
+    } else {
+      hasMore = false;
+    }
+  }
+
   const { data: prods } = await supabase.from('products').select('*');
   const { data: whs } = await supabase.from('warehouses').select('*');
-
-  if (opsErr) throw opsErr;
 
   const prodMap = {}; prods?.forEach(p => prodMap[String(p.id).trim()] = p);
   const whMap = {}; 
