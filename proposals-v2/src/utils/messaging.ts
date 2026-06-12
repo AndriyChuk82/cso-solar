@@ -278,30 +278,52 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
   }
 
   clonedDoc.body.classList.add('is-exporting');
+  
+  // Стилізуємо зовнішній контейнер як сучасну картку з верхньою фірмовою лінією
   el.style.width = '1150px';
-  el.style.padding = '40px 50px';
+  el.style.padding = '50px 60px';
   el.style.background = '#ffffff';
   el.style.fontFamily = "'Inter', -apple-system, sans-serif";
   el.style.color = '#1e293b';
+  el.style.borderRadius = '24px';
+  el.style.border = '1px solid rgba(232, 228, 209, 0.6)';
+  el.style.boxShadow = '0 10px 40px rgba(0, 0, 0, 0.03)';
+  el.style.position = 'relative';
+  el.style.overflow = 'hidden';
+
+  // Декоративна градієнтна лінія у верхній частині документа (як у друкованому КП)
+  let topStrip = el.querySelector('.export-top-strip') as HTMLElement;
+  if (!topStrip) {
+    topStrip = clonedDoc.createElement('div');
+    topStrip.className = 'export-top-strip';
+    topStrip.style.position = 'absolute';
+    topStrip.style.top = '0';
+    topStrip.style.left = '0';
+    topStrip.style.right = '0';
+    topStrip.style.height = '6px';
+    topStrip.style.background = 'linear-gradient(to right, #fbbf24, #f97316, #f59e0b)';
+    el.appendChild(topStrip);
+  }
 
   const allElements = el.querySelectorAll('*');
   allElements.forEach((node: any) => {
     node.style.fontFamily = "'Inter', -apple-system, sans-serif";
   });
 
-  // 1. СТИЛІЗАЦІЯ БЛОКУ КЛІЄНТА (БЕЖЕВИЙ)
+  // 1. СТИЛІЗАЦІЯ БЛОКУ КЛІЄНТА (СВІТЛО-СЛАНЦЕВИЙ, КЛАСИЧНИЙ)
   const clientBlock = el.querySelector('.client-info-block') as HTMLElement;
   if (clientBlock) {
-    clientBlock.style.background = '#faf5ec';
-    clientBlock.style.borderRadius = '8px';
-    clientBlock.style.border = 'none';
-    clientBlock.style.padding = '15px 20px';
+    clientBlock.style.background = '#f8fafc';
+    clientBlock.style.borderRadius = '16px';
+    clientBlock.style.border = '1px solid #e8e4d1';
+    clientBlock.style.padding = '16px 20px';
     clientBlock.style.marginBottom = '25px';
     
     const h3 = clientBlock.querySelector('h3');
     if (h3) {
-      h3.style.color = '#1e293b';
-      h3.style.fontSize = '12px';
+      h3.style.color = '#475569';
+      h3.style.fontSize = '11px';
+      h3.style.fontWeight = '700';
       h3.style.marginBottom = '10px';
     }
   }
@@ -391,13 +413,29 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
     }
   });
 
-  // Profit row visibility
+  // Стилізація та відображення рядка прибутку (Маржинальності) — у зелених тонах
   el.querySelectorAll('.profit-row').forEach(node => {
     const htmlNode = node as HTMLElement;
     if (showCost) {
       htmlNode.style.setProperty('display', 'table-row', 'important');
       htmlNode.classList.remove('no-print');
-      htmlNode.style.background = '#faf5ec'; // Beige for profit too
+      
+      const cells = htmlNode.querySelectorAll('td');
+      cells.forEach(c => {
+        c.style.background = '#f0fdf4'; // М'яке зелене тло
+        c.style.color = '#166534'; // Темно-зелений текст
+        c.style.padding = '12px 12px';
+        c.style.borderTop = '1px solid #bbf7d0';
+        c.style.borderBottom = 'none';
+      });
+      
+      // Стилізація тексту всередині рядка прибутку
+      const spanBadge = htmlNode.querySelector('span');
+      if (spanBadge) {
+        spanBadge.style.background = 'transparent';
+        spanBadge.style.padding = '0';
+        spanBadge.style.color = '#166534';
+      }
     } else {
       htmlNode.style.setProperty('display', 'none', 'important');
     }
@@ -415,7 +453,13 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
       cell.style.fontSize = '11.5px';
       cell.style.padding = '10px 12px';
       cell.style.color = '#1e293b';
-      cell.style.borderBottom = '1px solid #f1f5f9';
+      cell.style.borderBottom = '1px solid rgba(232, 228, 209, 0.6)'; // Вишукані піщані межі
+
+      // Стовпчик номерів рядків (#)
+      if (cell.cellIndex === 0 && cell.tagName === 'TD') {
+        cell.style.color = '#a89a74';
+        cell.style.fontWeight = '750';
+      }
 
       if (cell.cellIndex === 1) {
         const spans = cell.querySelectorAll('span');
@@ -443,32 +487,60 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
 
     const tableHeaders = el.querySelectorAll('th');
     tableHeaders.forEach((th: any) => {
-      th.style.backgroundColor = '#faf5ec'; // BEIGE HEADERS
+      th.style.backgroundColor = '#f1f5f9'; // Сучасне світло-сіре тло
       th.style.color = '#1e293b';
-      th.style.fontWeight = '700';
+      th.style.fontWeight = '800';
       th.style.textTransform = 'uppercase';
       th.style.fontSize = '10px';
       th.style.letterSpacing = '0.05em';
       th.style.padding = '12px 10px';
-      th.style.border = 'none';
+      th.style.borderBottom = '2px solid #e8e4d1'; // Чітка піщана лінія знизу
     });
 
-    // Special treatment for tfoot (Summary)
+    // Детальна стилізація підсумкового футера (tfoot)
     const tfoot = table.querySelector('tfoot');
     if (tfoot) {
       const rows = tfoot.querySelectorAll('tr');
-      rows.forEach((row, idx) => {
+      rows.forEach((row) => {
         const cells = row.querySelectorAll('td');
         
-        // Final total row (usually the last or penultimate)
-        if (row.classList.contains('font-bold') || idx === rows.length - 2) {
-          row.style.background = '#faf5ec'; // BEIGE TOTAL
+        if (row.classList.contains('profit-row')) {
+          // Вже оброблено вище
+          return;
+        }
+        
+        if (row.classList.contains('font-bold')) {
+          // Рядок "Всього до сплати": яскравий бурштиново-оранжевий градієнт
+          row.style.background = 'linear-gradient(to right, #f59e0b, #ea580c)';
           cells.forEach(c => {
-            c.style.padding = '15px 12px';
+            c.style.background = 'transparent';
+            c.style.color = '#ffffff';
+            c.style.padding = '16px 12px';
             c.style.border = 'none';
+            c.style.fontWeight = '900';
+            
+            if (c.className.includes('text-primary') || c.cellIndex === cells.length - 2) {
+              c.style.fontSize = '16px';
+            } else {
+              c.style.fontSize = '12px';
+              c.style.textTransform = 'uppercase';
+              c.style.letterSpacing = '0.05em';
+            }
           });
         } else {
+          // Проміжні рядки (Сума без ПДВ, ПДВ)
           row.style.background = '#ffffff';
+          cells.forEach(c => {
+            c.style.background = '#ffffff';
+            c.style.color = '#475569';
+            c.style.padding = '10px 12px';
+            c.style.borderBottom = '1px solid rgba(232, 228, 209, 0.5)';
+            
+            if (c.cellIndex === cells.length - 2 || c.cellIndex === 4) {
+              c.style.color = '#1e293b';
+              c.style.fontWeight = '700';
+            }
+          });
         }
       });
     }
@@ -481,10 +553,10 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
       headersArray[3].style.width = '85px';
       
       if (showCost) {
-        headersArray[4].style.width = '100px'; // Cost Price
-        headersArray[5].style.width = '110px'; // Total Cost
-        headersArray[6].style.width = '110px'; // Sale Price
-        headersArray[7].style.width = '130px'; // Total Sale
+        headersArray[4].style.width = '100px'; // Собівартість
+        headersArray[5].style.width = '110px'; // Сума соб.
+        headersArray[6].style.width = '110px'; // Ціна продажу
+        headersArray[7].style.width = '130px'; // Сума продажу
         
         [4, 5].forEach(idx => {
           if (headersArray[idx]) {
@@ -505,14 +577,81 @@ function prepareElementForCapture(clonedDoc: Document, elementId: string, showCo
     }
   }
 
-  // Notes area (Beige)
+  // Охайне оформлення бейджів постачальників та вхідних цін
+  const spans = el.querySelectorAll('span');
+  spans.forEach((span: any) => {
+    if (span.textContent?.includes('Постачальник:')) {
+      span.style.background = '#f1f5f9';
+      span.style.color = '#475569';
+      span.style.border = '1px solid #cbd5e1';
+      span.style.borderRadius = '4px';
+      span.style.padding = '2px 6px';
+      span.style.fontSize = '8px';
+      span.style.fontWeight = '800';
+      span.style.textTransform = 'uppercase';
+      span.style.display = 'inline-flex';
+      span.style.alignItems = 'center';
+    }
+    if (span.textContent?.includes('Вхідна ціна:')) {
+      span.style.background = '#fef3c7';
+      span.style.color = '#b45309';
+      span.style.border = '1px solid #fde68a';
+      span.style.borderRadius = '4px';
+      span.style.padding = '2px 6px';
+      span.style.fontSize = '8px';
+      span.style.fontWeight = '800';
+      span.style.textTransform = 'uppercase';
+      span.style.display = 'inline-flex';
+      span.style.alignItems = 'center';
+    }
+  });
+
+  // Стилізація блоку приміток (Примітки) під загальний стиль друку
   const allContainers = el.querySelectorAll('div');
   allContainers.forEach((div: any) => {
-    if (div.textContent?.includes('Примітки') && div.querySelector('span')) {
-      div.style.background = '#faf5ec';
-      div.style.padding = '15px 20px';
-      div.style.borderRadius = '8px';
-      div.style.marginTop = '20px';
+    const label = div.querySelector('label');
+    if (label && label.textContent?.includes('Примітки')) {
+      div.style.background = '#fdfbf7'; // М'який теплий крем
+      div.style.border = '1px solid #e8e4d1'; // Піщана межа
+      div.style.padding = '16px 20px';
+      div.style.borderRadius = '12px';
+      div.style.marginTop = '24px';
+      div.style.boxShadow = 'none';
+      
+      label.style.color = '#a89a74';
+      label.style.fontWeight = '800';
+      label.style.textTransform = 'uppercase';
+      label.style.fontSize = '9px';
+      label.style.letterSpacing = '0.05em';
+      label.style.marginBottom = '6px';
+      label.style.display = 'block';
+
+      const textareaSpan = div.querySelector('span');
+      if (textareaSpan) {
+        textareaSpan.style.color = '#475569';
+        textareaSpan.style.fontSize = '11.5px';
+        textareaSpan.style.lineHeight = '1.5';
+        textareaSpan.style.fontStyle = 'italic';
+        textareaSpan.style.fontWeight = '600';
+        textareaSpan.style.whiteSpace = 'pre-wrap';
+      }
+    }
+
+    // Стилізація тексту про розрахунок курсу валют
+    if (div.textContent?.includes('* Розрахунок проведено за курсом:')) {
+      div.style.color = '#64748b';
+      div.style.fontSize = '10px';
+      div.style.fontWeight = '500';
+      div.style.fontStyle = 'italic';
+      div.style.borderTop = '1px solid #e2e8f0';
+      div.style.paddingTop = '10px';
+      div.style.marginTop = '15px';
+      
+      const cursSpans = div.querySelectorAll('span');
+      cursSpans.forEach((s: any) => {
+        s.style.color = '#475569';
+        s.style.fontWeight = '700';
+      });
     }
   });
 

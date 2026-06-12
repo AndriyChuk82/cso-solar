@@ -689,26 +689,29 @@ body.is-exporting select {
 }
 
 body.is-exporting th {
-  background: #faf5ec !important;
+  background: #f1f5f9 !important;
   color: #1e293b !important;
+  border-bottom: 2px solid #e8e4d1 !important;
 }
 
 body.is-exporting td {
-  background: #faf5ec !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  border-bottom: 1px solid rgba(232, 228, 209, 0.6) !important;
 }
 
 body.is-exporting .client-info-block,
 body.is-exporting .client-info-block * {
-  background: #faf5ec !important;
+  background: #f8fafc !important;
   border-color: #e8e4d1 !important;
 }
 
 body.is-exporting tfoot tr {
-  background: #faf5ec !important;
+  background: #ffffff !important;
 }
 
 body.is-exporting tfoot td {
-  background: #faf5ec !important;
+  background: #ffffff !important;
 }
 
 /* ==========================================================================
