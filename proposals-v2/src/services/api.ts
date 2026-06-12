@@ -1364,7 +1364,12 @@ function normalizeForSearch(str: string): string {
     .replace(/с/g, 'c')
     .replace(/х/g, 'x')
     .replace(/р/g, 'p')
-    .replace(/і/g, 'i');
+    .replace(/і/g, 'i')
+    .replace(/к/g, 'k')
+    .replace(/н/g, 'h')
+    .replace(/м/g, 'm')
+    .replace(/т/g, 't')
+    .replace(/у/g, 'y');
 }
 
 export function normalizeForComparison(str: string): string {
@@ -1384,9 +1389,26 @@ export function searchProducts(products: Product[], query: string): Product[] {
     const category = p.category ? normalizeForSearch(p.category) : '';
     const mainCategory = p.mainCategory ? normalizeForSearch(p.mainCategory) : '';
     
+    // Normalize and group supplier names for easy searching (e.g. typing "СВ" or "ПЕ")
+    const supplierNames = p.offers ? normalizeForSearch(p.offers.map(o => {
+      const sName = o.supplierName.toLowerCase();
+      if (sName.includes('solarverse')) return 'solarverse св sv';
+      if (sName.includes('правильне')) return 'правильне електроживлення пе pe';
+      if (sName.includes('біз')) return 'біз солар біз biz';
+      if (sName.includes('хеліус')) return 'хеліус хел helius';
+      return sName;
+    }).join(' ')) : '';
+    
     return words.every(word => {
       // 1. Direct match in fields
-      if (name.includes(word) || desc.includes(word) || manufacturer.includes(word) || category.includes(word) || mainCategory.includes(word)) {
+      if (
+        name.includes(word) || 
+        desc.includes(word) || 
+        manufacturer.includes(word) || 
+        category.includes(word) || 
+        mainCategory.includes(word) ||
+        supplierNames.includes(word)
+      ) {
         return true;
       }
       

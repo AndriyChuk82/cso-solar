@@ -1,0 +1,1 @@
+import{l as e}from"./index-5vgEdVaV.js";export{e as fetchAllData};
