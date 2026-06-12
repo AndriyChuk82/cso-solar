@@ -684,71 +684,10 @@ export const createProposalSlice: StateCreator<
 
     updateProposalField: (field: keyof Proposal, value: any) => {
       const { proposal } = get();
-      let updatedItems = proposal.items;
       
-      if (field === 'useVatPrices') {
-        const useVat = !!value;
-        updatedItems = proposal.items.map(item => {
-          let activePrice = item.product.price;
-          let activePriceVat = item.product.priceVat;
-          let activeSupplier = item.product.selectedSupplier;
-          let activeCurrency = item.product.currency || 'USD';
-
-          if (!item.product.isManualSupplier && item.product.offers && item.product.offers.length > 0) {
-            const inStockOffers = item.product.offers.filter(o => o.inStock !== false);
-            const baseOffers = inStockOffers.length > 0 ? inStockOffers : item.product.offers;
-            let bestOffer = baseOffers[0];
-            
-            if (useVat) {
-              const vatOffers = baseOffers.filter(o => o.priceVat !== undefined && o.priceVat !== null);
-              if (vatOffers.length > 0) {
-                bestOffer = vatOffers.reduce((min, o) => o.priceVat! < min.priceVat! ? o : min, vatOffers[0]);
-              } else {
-                bestOffer = baseOffers.reduce((min, o) => o.price < min.price ? o : min, baseOffers[0]);
-              }
-            } else {
-              bestOffer = baseOffers.reduce((min, o) => o.price < min.price ? o : min, baseOffers[0]);
-            }
-            
-            activePrice = bestOffer.price;
-            activePriceVat = bestOffer.priceVat;
-            activeSupplier = bestOffer.supplierName;
-            activeCurrency = bestOffer.currency;
-          }
-
-          const basePrice = useVat 
-            ? (activePriceVat !== undefined && activePriceVat !== null ? activePriceVat : activePrice)
-            : activePrice;
-            
-          const usdCost = convertPriceToUsd(basePrice, activeCurrency, proposal.rates);
-          const newSale = usdCost * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
-          const roundedPrice = Math.round(newSale * 10000) / 10000;
-
-          let cleanDesc = item.description || '';
-          const noteRegex = /\(вхідна ціна постачальника: [^\)]+\)/g;
-          const finalDescription = cleanDesc.replace(noteRegex, '').trim();
-          
-          return {
-            ...item,
-            product: {
-              ...item.product,
-              price: activePrice,
-              priceVat: activePriceVat,
-              selectedSupplier: activeSupplier
-            },
-            costPrice: usdCost,
-            price: roundedPrice,
-            total: roundedPrice * item.quantity,
-            description: finalDescription,
-            supplierName: activeSupplier
-          };
-        });
-      }
-
       const updatedProposal = { 
         ...proposal, 
         [field]: value, 
-        items: updatedItems, 
         updatedAt: new Date().toISOString() 
       };
       set(state => updateActiveTabProposal(state.tabs, state.activeTabId, updatedProposal, state.history));
