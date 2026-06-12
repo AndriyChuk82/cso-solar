@@ -211,19 +211,41 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
           <div className="w-1/2 overflow-y-auto">
             {selectedProposal ? (
               <div className="p-6 space-y-4">
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-slate-100 mb-2">
-                    {selectedProposal.number}
-                  </h3>
-                  <div className="text-sm text-gray-600 dark:text-slate-400 space-y-1">
-                    <div>Клієнт: {selectedProposal.clientName}</div>
-                    {selectedProposal.clientPhone && (
-                      <div>Телефон: {selectedProposal.clientPhone}</div>
-                    )}
-                    {selectedProposal.clientEmail && (
-                      <div>Email: {selectedProposal.clientEmail}</div>
-                    )}
-                    <div>Дата: {formatDateTime(selectedProposal.date)}</div>
+                <div className="flex justify-between items-start gap-4 border-b border-gray-200 dark:border-slate-800 pb-4">
+                  <div>
+                    <h3 className="font-bold text-base text-gray-900 dark:text-slate-100 mb-1">
+                      {selectedProposal.number}
+                    </h3>
+                    <div className="text-sm text-gray-600 dark:text-slate-400 space-y-1">
+                      <div className="font-semibold text-gray-800 dark:text-slate-200">Клієнт: {selectedProposal.clientName}</div>
+                      {selectedProposal.clientPhone && (
+                        <div>Телефон: {selectedProposal.clientPhone}</div>
+                      )}
+                      {selectedProposal.clientEmail && (
+                        <div>Email: {selectedProposal.clientEmail}</div>
+                      )}
+                      <div className="text-xs text-gray-400 dark:text-slate-500">Дата: {formatDateTime(selectedProposal.date)}</div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 shrink-0">
+                    <button
+                      onClick={() => handleLoad(selectedProposal.id)}
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition font-semibold text-sm cursor-pointer"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Відкрити
+                    </button>
+                    <button
+                      onClick={() => handleDelete(selectedProposal.id)}
+                      className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition font-semibold text-sm cursor-pointer ${
+                        deleteConfirmId === selectedProposal.id
+                          ? 'bg-red-700 text-white animate-pulse'
+                          : 'bg-red-600 text-white hover:bg-red-700'
+                      }`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {deleteConfirmId === selectedProposal.id ? 'Підтвердити?' : 'Видалити'}
+                    </button>
                   </div>
                 </div>
 
@@ -286,27 +308,6 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                     <p className="text-sm text-gray-600">{selectedProposal.notes}</p>
                   </div>
                 )}
-
-                <div className="flex gap-2 pt-4">
-                  <button
-                    onClick={() => handleLoad(selectedProposal.id)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition font-semibold"
-                  >
-                    <Eye className="w-4 h-4" />
-                    Відкрити
-                  </button>
-                  <button
-                    onClick={() => handleDelete(selectedProposal.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition font-semibold ${
-                      deleteConfirmId === selectedProposal.id
-                        ? 'bg-red-700 text-white animate-pulse'
-                        : 'bg-red-600 text-white hover:bg-red-700'
-                    }`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    {deleteConfirmId === selectedProposal.id ? 'Підтвердити видалення?' : 'Видалити'}
-                  </button>
-                </div>
               </div>
             ) : (
               <div className="flex items-center justify-center h-full text-gray-400">
