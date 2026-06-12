@@ -131,8 +131,7 @@ export function ProposalBuilderTable() {
   }
 
   const displayProfit = displaySaleSubtotal - displayCostSubtotal;
-  const displayMarkupPercent = displayCostSubtotal > 0 ? (displayProfit / displayCostSubtotal) * 100 : 0;
-  const displayMarginPercent = displaySaleSubtotal > 0 ? (displayProfit / displaySaleSubtotal) * 100 : 0;
+  const displayProfitPercent = displaySaleSubtotal > 0 ? (displayProfit / displaySaleSubtotal) * 100 : 0;
 
   const handleRefreshRates = async () => {
     setIsRefreshingRates(true);
@@ -252,8 +251,7 @@ export function ProposalBuilderTable() {
           vatAmount={displayVat}
           total={displayTotal}
           profit={displayProfit}
-          profitPercent={displayMarkupPercent}
-          marginPercent={displayMarginPercent}
+          profitPercent={displayProfitPercent}
           activeCurrency={activeCurrency}
           usdRate={proposal.rates?.usdToUah || settings.usdRate}
           eurRate={proposal.rates?.eurToUah || settings.eurRate}

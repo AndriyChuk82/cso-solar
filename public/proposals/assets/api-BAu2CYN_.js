@@ -1,0 +1,1 @@
+import{l as e}from"./index-V_U0wrLI.js";export{e as fetchAllData};

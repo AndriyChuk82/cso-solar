@@ -8,8 +8,7 @@ interface ProposalSummaryProps {
   vatAmount: number;
   total: number;
   profit: number;
-  profitPercent: number; // Націнка
-  marginPercent: number; // Маржа
+  profitPercent: number;
   activeCurrency: Currency;
   usdRate: number;
   eurRate: number;
@@ -26,7 +25,6 @@ export function ProposalSummary({
   total,
   profit,
   profitPercent,
-  marginPercent,
   activeCurrency,
   usdRate,
   eurRate,
@@ -105,11 +103,11 @@ export function ProposalSummary({
             {showCostPrices && (
               <tr className="text-xs bg-white dark:bg-slate-900 no-print profit-row">
                 <td colSpan={3} className="px-3 py-2 text-right text-gray-400 dark:text-slate-500 font-medium">
-                  Маржинальність та націнка:
+                  Маржинальність пропозиції:
                 </td>
                 <td colSpan={5} className="px-3 py-2 text-right font-bold">
                   <span className="text-green-600 dark:text-green-400 px-3 py-1 bg-green-50 dark:bg-green-900/20 rounded">
-                    Прибуток: {formatCurrency(profit, activeCurrency)} (націнка: {profitPercent.toFixed(1)}%, маржа: {marginPercent.toFixed(1)}%)
+                    Прибуток: {formatCurrency(profit, activeCurrency)} ({profitPercent.toFixed(1)}%)
                   </span>
                 </td>
                 <td className="no-print"></td>
