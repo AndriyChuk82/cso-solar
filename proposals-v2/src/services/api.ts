@@ -483,9 +483,9 @@ export function extractModelCode(name: string): string | null {
     const power = powerMatch ? powerMatch[1].toUpperCase() : '';
     const versionMatch = lowerName.match(/(m\d+)/i);
     const version = versionMatch ? versionMatch[1].toUpperCase() : '';
-    let region = 'EU'; // Default to EU as per user request
-    if (/(?:^|[\s\W_])(ua|уa)(?:$|[\s\W_])/i.test(lowerName)) {
-      region = 'UA';
+    let region = 'UA'; // Default to UA
+    if (/(?:^|[\s\W_])(eu|еu)(?:$|[\s\W_])/i.test(lowerName)) {
+      region = 'EU';
     }
     
     if (power && version) {

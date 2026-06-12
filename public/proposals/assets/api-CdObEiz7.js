@@ -1,1 +1,0 @@
-import{l as e}from"./index-BexY14Uu.js";export{e as fetchAllData};
