@@ -31,6 +31,15 @@ export const ProposalItemRow = memo(function ProposalItemRow({
   showCostPrices = true,
 }: ProposalItemRowProps) {
   const useVatPrices = useProposalStore((state) => state.proposal.useVatPrices || false);
+  const activeCurrency = useProposalStore((state) => state.activeCurrency || 'USD');
+  const supplierCurrency = item.product?.currency;
+
+  const showOriginalPrice = !!(
+    supplierCurrency &&
+    ((activeCurrency === 'USD' && supplierCurrency === 'EUR') ||
+     (activeCurrency === 'EUR' && supplierCurrency === 'USD'))
+  );
+
   const displayCostNum = item.displayCost ?? 0;
   const displayPriceNum = item.displayPrice ?? 0;
   const quantityNum = item.quantity ?? 1;
@@ -162,7 +171,7 @@ export const ProposalItemRow = memo(function ProposalItemRow({
               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tight bg-primary/10 text-primary border border-primary/20">
                 Постачальник: {item.supplierName}
               </span>
-              {getOriginalSupplierPrice() && (
+              {showOriginalPrice && getOriginalSupplierPrice() && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tight bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                   Вхідна ціна: {getOriginalSupplierPrice()}
                 </span>
