@@ -67,6 +67,7 @@ export interface ProposalStore {
   removeCustomMaterial: (productId: string) => void;
   deleteProduct: (productId: string) => void;
   updateProduct: (productId: string, updates: Partial<Product>) => void;
+  restoreDeletedProducts: () => void;
   setActiveCurrency: (currency: Currency) => void;
   setSelectedSeller: (sellerId: SellerId) => void;
   applyProposalMarkupToItems: () => void;
@@ -636,6 +637,10 @@ export const useProposalStore = create<ProposalStore>()(
           customMaterials: customMaterials.filter(p => p.id !== productId),
           deletedProductIds: [...deletedProductIds, productId]
         });
+      },
+
+      restoreDeletedProducts: () => {
+        set({ deletedProductIds: [] });
       },
 
       updateProduct: (productId: string, updates: Partial<Product>) => {

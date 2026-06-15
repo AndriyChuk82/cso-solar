@@ -15,6 +15,7 @@ export interface FavoritesSlice {
   addCustomMaterial: (product: Product) => void;
   removeCustomMaterial: (productId: string) => void;
   deleteProduct: (productId: string) => void;
+  restoreDeletedProducts: () => void;
 }
 
 export const createFavoritesSlice: StateCreator<
@@ -55,5 +56,9 @@ export const createFavoritesSlice: StateCreator<
       customMaterials: customMaterials.filter(p => p.id !== productId),
       deletedProductIds: [...deletedProductIds, productId]
     });
+  },
+
+  restoreDeletedProducts: () => {
+    set({ deletedProductIds: [] });
   },
 });

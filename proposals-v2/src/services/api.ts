@@ -1000,13 +1000,7 @@ export function mergeSupplierProducts(
     }
   });
   
-  return Array.from(mergedMap.values()).filter(p => {
-    const model = extractModelCode(p.name);
-    if (model && /SUN-\d+K-G/i.test(model)) {
-      return false; // Exclude Deye grid inverters
-    }
-    return true;
-  });
+  return Array.from(mergedMap.values());
 }
 
 // --- ОСНОВНА ФУНКЦІЯ (АВТОРИЗОВАНА ЧЕРЕЗ GAS, ГАРАНТІЯ ПРАВИЛЬНИХ ЦІН) ---

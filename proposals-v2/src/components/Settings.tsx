@@ -11,7 +11,7 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { theme, toggleTheme, fontScale, setFontScale } = useTheme();
-  const { settings, updateSettings, loadProducts, loading, refreshRates } = useProposalStore();
+  const { settings, updateSettings, loadProducts, loading, refreshRates, restoreDeletedProducts } = useProposalStore();
   const [localSettings, setLocalSettings] = useState(settings);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUpdatingRates, setIsUpdatingRates] = useState(false);
@@ -380,6 +380,23 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               >
                 <RefreshCw size={14} />
                 Оновити каталог
+              </button>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mt-3">
+              <div>
+                <div className="text-sm font-medium text-gray-700">Приховані товари</div>
+                <div className="text-xs text-gray-500">Відновити всі видалені/приховані з каталогу товари</div>
+              </div>
+              <button
+                onClick={() => {
+                  restoreDeletedProducts();
+                  alert('✅ Всі приховані товари успішно відновлено в каталозі!');
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors shadow-sm"
+              >
+                <RefreshCw size={14} />
+                Відновити товари
               </button>
             </div>
           </div>
