@@ -1,0 +1,1 @@
+import{l as e}from"./index-JOQBBnsd.js";export{e as fetchAllData};

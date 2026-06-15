@@ -1,7 +1,7 @@
 import { StateCreator } from 'zustand';
 import { Proposal, ProposalItem, Product, SellerId, SupplierOffer, ProposalTab } from '../../types';
 import { CONFIG, SELLERS } from '../../config';
-import { saveProposalToSheet, fetchProposalsHistory, deleteProposalFromSheet } from '../../services/api';
+import { saveProposalToSheet, fetchProposalsHistory, deleteProposalFromSheet, normalizeProposal } from '../../services/api';
 
 /**
  * Proposal Slice - управління пропозиціями та товарами
@@ -497,7 +497,7 @@ export const createProposalSlice: StateCreator<
       const { history, tabs } = get();
       const found = history.find(p => p.id === id);
       if (found) {
-        const proposalCopy = JSON.parse(JSON.stringify(found));
+        const proposalCopy = normalizeProposal(JSON.parse(JSON.stringify(found)));
         const existingTab = tabs.find(t => t.proposal.id === id);
         
         if (existingTab) {
@@ -570,7 +570,7 @@ export const createProposalSlice: StateCreator<
         }
       });
 
-      const validatedHistory = Array.from(mergedMap.values()).map(p => calculateProposalTotals(p));
+      const validatedHistory = Array.from(mergedMap.values()).map(p => calculateProposalTotals(normalizeProposal(p)));
 
       validatedHistory.sort((a, b) => {
         const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();

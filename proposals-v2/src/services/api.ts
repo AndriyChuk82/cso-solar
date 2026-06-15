@@ -1324,12 +1324,52 @@ export async function saveProposalToSheet(proposal: any) {
   return gasRequest('saveProposal', { proposal });
 }
 
+export function normalizeProposal(proposal: any): any {
+  if (!proposal) return proposal;
+  
+  const items = Array.isArray(proposal.items) ? proposal.items.map((item: any, idx: number) => {
+    const name = item.name || item.productName || 'Без назви';
+    const productId = item.productId || `legacy_${item.id || idx}`;
+    const unit = item.unit || 'шт';
+    const costPrice = item.costPrice !== undefined ? item.costPrice : (item.price || 0);
+    const description = item.description || '';
+    
+    const product = item.product || {
+      id: productId,
+      name: name,
+      category: 'Інше',
+      mainCategory: 'Інше',
+      price: item.price || 0,
+      currency: proposal.currency || 'USD',
+      unit: unit,
+      description: description,
+      inStock: true
+    };
+    
+    return {
+      ...item,
+      name,
+      productId,
+      unit,
+      costPrice,
+      description,
+      product
+    };
+  }) : [];
+  
+  return {
+    ...proposal,
+    items
+  };
+}
+
 export async function fetchProposalsHistory() {
   const res = await gasRequest('getProposals');
   if (!res || !res.success) {
     throw new Error(res?.error || 'Не вдалося завантажити історію з Google Sheets');
   }
-  return res.proposals || [];
+  const proposals = res.proposals || [];
+  return proposals.map((p: any) => normalizeProposal(p));
 }
 
 export async function deleteProposalFromSheet(proposalId: string) {

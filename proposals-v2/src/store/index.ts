@@ -4,6 +4,7 @@ import { createProductsSlice, ProductsSlice } from './slices/productsSlice';
 import { createSettingsSlice, SettingsSlice } from './slices/settingsSlice';
 import { createFavoritesSlice, FavoritesSlice } from './slices/favoritesSlice';
 import { createProposalSlice, ProposalSlice } from './slices/proposalSlice';
+import { normalizeProposal } from '../services/api';
 
 /**
  * Комбінований тип стору - об'єднання всіх слайсів
@@ -42,6 +43,21 @@ export const useProposalStore = create<ProposalStore>()(
         }
         if (state) {
           const stateAny = state as any;
+          
+          // Міграція: нормалізація старих КП у локальній історії та активному стані
+          if (stateAny.history && Array.isArray(stateAny.history)) {
+            stateAny.history = stateAny.history.map(normalizeProposal);
+          }
+          if (stateAny.proposal) {
+            stateAny.proposal = normalizeProposal(stateAny.proposal);
+          }
+          if (stateAny.tabs && Array.isArray(stateAny.tabs)) {
+            stateAny.tabs = stateAny.tabs.map((tab: any) => ({
+              ...tab,
+              proposal: normalizeProposal(tab.proposal)
+            }));
+          }
+
           // Міграція: якщо табів немає, але є активна КП, створюємо перший таб
           if ((!stateAny.tabs || stateAny.tabs.length === 0) && stateAny.proposal) {
             console.log('🔄 Міграція: перенесення активної чернетки КП у вкладку...');
