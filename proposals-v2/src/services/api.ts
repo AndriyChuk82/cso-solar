@@ -1328,8 +1328,9 @@ export function normalizeProposal(proposal: any): any {
   if (!proposal) return proposal;
   
   const items = Array.isArray(proposal.items) ? proposal.items.map((item: any, idx: number) => {
+    const id = item.id || `legacy_item_${proposal.id || 'draft'}_${idx}`;
     const name = item.name || item.productName || 'Без назви';
-    const productId = item.productId || `legacy_${item.id || idx}`;
+    const productId = item.productId || `legacy_prod_${proposal.id || 'draft'}_${idx}`;
     const unit = item.unit || 'шт';
     const costPrice = item.costPrice !== undefined ? item.costPrice : (item.price || 0);
     const description = item.description || '';
@@ -1348,6 +1349,7 @@ export function normalizeProposal(proposal: any): any {
     
     return {
       ...item,
+      id,
       name,
       productId,
       unit,
