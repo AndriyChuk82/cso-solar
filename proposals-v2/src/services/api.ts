@@ -1394,10 +1394,11 @@ export function searchProducts(products: Product[], query: string): Product[] {
     }).join(' ')) : '';
     
     return words.every(word => {
-      // 1. Direct match in fields
+      const isShortNumber = /^\d+$/.test(word) && word.length < 3;
+
+      // 1. Direct match in fields (bypass name/desc substring matching for short numbers to prevent false positives like 230V matching 30)
       if (
-        name.includes(word) || 
-        desc.includes(word) || 
+        (!isShortNumber && (name.includes(word) || desc.includes(word))) ||
         manufacturer.includes(word) || 
         category.includes(word) || 
         mainCategory.includes(word) ||
@@ -1407,15 +1408,15 @@ export function searchProducts(products: Product[], query: string): Product[] {
       }
       
       // 2. Exact match rules for numbers (e.g. 6 in "SUN-6K")
-      if (/^\d+$/.test(word) && word.length < 3) {
+      if (isShortNumber) {
         const numRegex = new RegExp(`\\b${word}\\b|\\b${word}k|\\b${word}кв|-` + word + `k|/` + word + `|\\b${word}w`, 'i');
         return numRegex.test(name) || numRegex.test(desc);
       }
       
       // 3. Special manufacturer code heuristics:
-      // If searching for "deye" (or "деє"), match model codes (SE-, SUN-, SG-)
+      // If searching for "deye" (or "деє"), match Deye model codes (SE-, SUN-\d, SG-\d, SG\d) while excluding Huawei SUN2000
       if (word === 'deye' || word === 'деє') {
-        return /se-|sun-|sg-/i.test(p.name);
+        return /se-|sun-\d|sg-\d|sg\d/i.test(p.name);
       }
       
       // If searching for "pylontech" (or "пілонтех", "пилонтех"), match US2000, US3000, US5000, Force L2
