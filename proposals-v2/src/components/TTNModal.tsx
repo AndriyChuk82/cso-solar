@@ -37,13 +37,21 @@ export interface TTNData {
 export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTNModalProps) {
   const [items, setItems] = useState<ProposalItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [sender, setSender] = useState('');
+  const [receiver, setReceiver] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       setItems([...proposal.items]);
       setSelectedItems(proposal.items.map(item => item.id));
+      setSender(
+        proposal.seller 
+          ? `${proposal.seller.fullName}, ${proposal.seller.taxIdType} ${proposal.seller.taxId}` 
+          : ''
+      );
+      setReceiver(proposal.clientName || '');
     }
-  }, [isOpen, proposal.items, proposal.seller]);
+  }, [isOpen, proposal.items, proposal.seller, proposal.clientName]);
 
   const [editedItems, setEditedItems] = useState<Record<string, { name?: string; quantity?: number }>>({});
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -118,10 +126,8 @@ export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTN
       trailer,
       carrier,
       driver,
-      sender: proposal.seller 
-        ? `${proposal.seller.fullName}, ${proposal.seller.taxIdType} ${proposal.seller.taxId}` 
-        : '',
-      receiver: proposal.clientName || '',
+      sender,
+      receiver,
       loadPoint,
       unloadPoint,
       place,
@@ -232,13 +238,9 @@ export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTN
               </label>
               <input
                 type="text"
-                value={
-                  proposal.seller 
-                    ? `${proposal.seller.fullName}, ${proposal.seller.taxIdType} ${proposal.seller.taxId}` 
-                    : ''
-                }
-                readOnly
-                className="w-full px-2 py-1.5 text-xs border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50 rounded text-gray-600 dark:text-slate-400 cursor-not-allowed"
+                value={sender}
+                onChange={(e) => setSender(e.target.value)}
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded focus:ring-1 focus:ring-primary transition-colors"
               />
             </div>
             <div>
@@ -247,9 +249,9 @@ export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTN
               </label>
               <input
                 type="text"
-                value={proposal.clientName || ''}
-                readOnly
-                className="w-full px-2 py-1.5 text-xs border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50 rounded text-gray-600 dark:text-slate-400 cursor-not-allowed"
+                value={receiver}
+                onChange={(e) => setReceiver(e.target.value)}
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded focus:ring-1 focus:ring-primary transition-colors"
               />
             </div>
           </div>
