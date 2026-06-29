@@ -282,6 +282,11 @@
 
                 // Специфічна логіка для Акту тех. вимог (doc6)
                 if (docId === '6') {
+                    const batteryInfo = formData.field36
+                        ? `<li style="margin-bottom:3px;">Акумуляторної батареї: <strong>${formData.field36} (${formData.field37} кВт·год)</strong></li>`
+                        : '';
+                    template = template.split('{{batteryListItem}}').join(batteryInfo);
+
                     // Форматуємо інвертор: Модель (с/н Номер)
                     const inverterFull = formData.field27 + (formData.field29 ? ` (с/н ${formData.field29})` : '');
                     template = template.split('{{field27_with_sn}}').join(inverterFull);

@@ -1393,6 +1393,7 @@ const GT_TEMPLATES = {
           <ul style="margin:0 0 10px 1.2cm; padding:0; list-style-type:disc; font-size:12pt;">
             <li style="margin-bottom:3px;">Інвертора: <strong>{{field27}}</strong></li>
             <li style="margin-bottom:3px;">Фотоелектричних модулів: <strong>{{field34}}</strong></li>
+            {{batteryListItem}}
             {{zubrListItem}}
           </ul>
          
