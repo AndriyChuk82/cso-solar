@@ -106,6 +106,19 @@ function syncHeaders(sheet, currentHeaders) {
       toAdd.push(name);
     }
   }
+
+  // Також перевіряємо спеціальні службові колонки: id, Folder URL, Created At
+  var specialFields = [
+    { key: 'id', name: 'id' },
+    { key: 'folderurl', name: 'Folder URL' },
+    { key: 'createdat', name: 'Created At' }
+  ];
+  
+  specialFields.forEach(function(f) {
+    if (!normHeaders.includes(f.key)) {
+      toAdd.push(f.name);
+    }
+  });
   
   if (toAdd.length > 0) {
     const maxCols = sheet.getMaxColumns();
@@ -266,6 +279,35 @@ function saveProjectWithFiles(data) {
         }
       }
     }
+
+    // 3. Резервний пошук за номером проєкту (Field 3), якщо за ID нічого не знайдено
+    if (fRow === -1) {
+      var projNumIdx = normHeaders.indexOf(normalizeHeader("Field 3"));
+      if (projNumIdx === -1 && FIELD_MAPPING["field3"]) {
+        for (var aliasIdx = 0; aliasIdx < FIELD_MAPPING["field3"].length; aliasIdx++) {
+          var alias = FIELD_MAPPING["field3"][aliasIdx];
+          var aIdx = normHeaders.indexOf(normalizeHeader(alias));
+          if (aIdx !== -1) {
+            projNumIdx = aIdx;
+            break;
+          }
+        }
+      }
+      
+      var targetProjNum = pData.field3;
+      if (targetProjNum && projNumIdx !== -1) {
+        for (var i = 1; i < dValues.length; i++) {
+          if (dValues[i].length > projNumIdx && dValues[i][projNumIdx] === targetProjNum) {
+            fRow = i + 1;
+            // Якщо знайшли за номером проєкту, запишемо йому цей UUID, щоб наступні рази шукало за ID
+            if (idIdx !== -1) {
+              sheet.getRange(fRow, idIdx + 1).setValue(id);
+            }
+            break;
+          }
+        }
+      }
+    }
     
     // Перевірка що Range в межах MaxColumns (на всяк випадок)
     const range = sheet.getRange(fRow > 0 ? fRow : dValues.length + 1, 1, 1, rowData.length);
@@ -282,9 +324,11 @@ function deleteProjectRow(data) {
   const id = data.id;
   if (!id) throw new Error("No project ID specified for deletion");
   
+  var headers = sheet.getDataRange().getValues()[0];
+  headers = syncHeaders(sheet, headers);
   const dValues = sheet.getDataRange().getValues();
-  const headers = dValues[0].map(normalizeHeader);
-  const idIdx = headers.indexOf("id");
+  const normHeaders = headers.map(normalizeHeader);
+  const idIdx = normHeaders.indexOf("id");
   
   if (idIdx === -1) throw new Error("ID column not found in sheet");
   
