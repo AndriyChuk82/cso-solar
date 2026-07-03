@@ -11,6 +11,7 @@ interface ProposalItemsTableProps {
   onUpdateField: (itemId: string, field: string, value: string) => void;
   onMoveUp: (itemId: string) => void;
   onMoveDown: (itemId: string) => void;
+  onReorder: (startIndex: number, endIndex: number) => void;
   onRemove: (itemId: string) => void;
   onAddManualItem: () => void;
   showCostPrices?: boolean;
@@ -25,6 +26,7 @@ export function ProposalItemsTable({
   onUpdateField,
   onMoveUp,
   onMoveDown,
+  onReorder,
   onRemove,
   onAddManualItem,
   showCostPrices = true,
@@ -35,7 +37,7 @@ export function ProposalItemsTable({
         <table className="w-full text-base">
           <thead className="bg-[#faf5ec]/90 dark:bg-slate-900/80 border-b border-[#e8e4d1]/65 dark:border-slate-800/50" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as any}>
             <tr>
-              <th className="px-3 py-3 text-center font-bold text-[#a89a74] dark:text-slate-400 text-[10px] uppercase tracking-wider w-10">#</th>
+              <th className="px-3 py-3 text-center font-bold text-[#a89a74] dark:text-slate-400 text-[10px] uppercase tracking-wider w-16">#</th>
               <th className="px-3 py-3 text-left font-bold text-slate-600 dark:text-slate-300 text-[10px] uppercase tracking-wider">Назва / Опис товару</th>
               <th className="px-2 py-3 text-center font-bold text-[#a89a74] dark:text-slate-400 text-[10px] uppercase tracking-wider w-14">Од.</th>
               <th className="px-3 py-3 text-center font-bold text-[#a89a74] dark:text-slate-400 text-[10px] uppercase tracking-wider w-20">Кіл.</th>
@@ -63,6 +65,7 @@ export function ProposalItemsTable({
                 onUpdateField={onUpdateField}
                 onMoveUp={onMoveUp}
                 onMoveDown={onMoveDown}
+                onReorder={onReorder}
                 onRemove={onRemove}
                 showCostPrices={showCostPrices}
               />

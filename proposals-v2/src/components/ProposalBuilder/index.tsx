@@ -39,6 +39,7 @@ export function ProposalBuilderTable() {
   const updateItemField = useProposalStore((state) => state.updateItemField);
   const moveItemUp = useProposalStore((state) => state.moveItemUp);
   const moveItemDown = useProposalStore((state) => state.moveItemDown);
+  const reorderItems = useProposalStore((state) => state.reorderItems);
   const removeFromProposal = useProposalStore((state) => state.removeFromProposal);
   const updateProposalField = useProposalStore((state) => state.updateProposalField);
   const saveProposal = useProposalStore((state) => state.saveProposal);
@@ -239,6 +240,7 @@ export function ProposalBuilderTable() {
           onUpdateField={(itemId, field, value) => updateItemField(itemId, field as any, value)}
           onMoveUp={moveItemUp}
           onMoveDown={moveItemDown}
+          onReorder={reorderItems}
           onRemove={removeFromProposal}
           onAddManualItem={() => useProposalStore.getState().addManualItem()}
           showCostPrices={settings.showCostPrices !== false}

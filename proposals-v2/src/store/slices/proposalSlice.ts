@@ -23,6 +23,7 @@ export interface ProposalSlice {
   updateItemField: (itemId: string, field: 'name' | 'description' | 'unit', value: string) => void;
   moveItemUp: (itemId: string) => void;
   moveItemDown: (itemId: string) => void;
+  reorderItems: (startIndex: number, endIndex: number) => void;
   clearProposal: () => void;
   saveProposal: () => Promise<boolean>;
   loadProposal: (id: string) => void;
@@ -434,6 +435,15 @@ export const createProposalSlice: StateCreator<
         const updatedProposal = { ...proposal, items: newItems };
         set(state => updateActiveTabProposal(state.tabs, state.activeTabId, updatedProposal, state.history));
       }
+    },
+
+    reorderItems: (startIndex: number, endIndex: number) => {
+      const { proposal } = get();
+      const newItems = [...proposal.items];
+      const [removed] = newItems.splice(startIndex, 1);
+      newItems.splice(endIndex, 0, removed);
+      const updatedProposal = { ...proposal, items: newItems };
+      set(state => updateActiveTabProposal(state.tabs, state.activeTabId, updatedProposal, state.history));
     },
 
     clearProposal: () => {

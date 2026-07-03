@@ -1,4 +1,5 @@
 import { memo, useState, useEffect, useRef } from 'react';
+import { GripVertical } from 'lucide-react';
 import { formatNumber } from '../../utils/currency';
 import type { Currency } from '../../types';
 import { useProposalStore } from '../../store';
@@ -13,6 +14,7 @@ interface ProposalItemRowProps {
   onUpdateField: (itemId: string, field: string, value: string) => void;
   onMoveUp: (itemId: string) => void;
   onMoveDown: (itemId: string) => void;
+  onReorder: (startIndex: number, endIndex: number) => void;
   onRemove: (itemId: string) => void;
   showCostPrices?: boolean;
 }
@@ -27,6 +29,7 @@ export const ProposalItemRow = memo(function ProposalItemRow({
   onUpdateField,
   onMoveUp,
   onMoveDown,
+  onReorder,
   onRemove,
   showCostPrices = true,
 }: ProposalItemRowProps) {
@@ -103,10 +106,73 @@ export const ProposalItemRow = memo(function ProposalItemRow({
     }
   }, [item.unit, isEditingUnit]);
 
+  const [isDraggable, setIsDraggable] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('text/plain', index.toString());
+    e.dataTransfer.effectAllowed = 'move';
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = '0.4';
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = '1';
+    setIsDraggable(false);
+    setIsDragOver(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const draggedIndexStr = e.dataTransfer.getData('text/plain');
+    if (draggedIndexStr !== '') {
+      const draggedIndex = parseInt(draggedIndexStr, 10);
+      if (!isNaN(draggedIndex) && draggedIndex !== index) {
+        onReorder(draggedIndex, index);
+      }
+    }
+  };
+
   return (
-    <tr className="border-b border-[#e8e4d1]/40 dark:border-slate-800/30 hover:bg-[#faf5ec]/50 dark:hover:bg-slate-800/15 transition-all duration-200 bg-white/20 dark:bg-transparent">
+    <tr
+      draggable={isDraggable}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`border-b border-[#e8e4d1]/40 dark:border-slate-800/30 hover:bg-[#faf5ec]/50 dark:hover:bg-slate-800/15 transition-all duration-200 bg-white/20 dark:bg-transparent ${
+        isDragOver ? 'border-t-2 border-amber-500 dark:border-amber-400 bg-amber-50/20 dark:bg-slate-800/50' : ''
+      }`}
+    >
       <td className="px-2 py-2 text-center align-middle" style={{ whiteSpace: 'nowrap' }}>
-        <div style={{ display: 'inline-flex', flexDirection: 'column', verticalAlign: 'middle', marginRight: '4px' }} className="no-print">
+        <div 
+          className="inline-flex items-center justify-center p-1 mr-1 text-[#a89a74] dark:text-slate-500 hover:text-amber-500 dark:hover:text-amber-400 cursor-grab active:cursor-grabbing no-print opacity-40 hover:opacity-100 transition-all select-none align-middle"
+          onMouseDown={() => setIsDraggable(true)}
+          onMouseUp={() => setIsDraggable(false)}
+          onMouseLeave={() => setIsDraggable(false)}
+          title="Перетягніть для зміни порядку"
+        >
+          <GripVertical className="w-3.5 h-3.5" />
+        </div>
+        <div style={{ display: 'inline-flex', flexDirection: 'column', verticalAlign: 'middle', marginRight: '4px' }} className="no-print align-middle">
           <button
             onClick={() => onMoveUp(item.id)}
             disabled={index === 0}
