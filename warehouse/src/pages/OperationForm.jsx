@@ -31,7 +31,8 @@ export default function OperationForm({ type = 'income' }) {
   // Стан для автокомпліту пошуку товарів у рядках
   const [activeRowSearch, setActiveRowSearch] = useState(null); // Індекс рядка, де зараз активний пошук
   const [searchText, setSearchText] = useState('');
-  const dropdownRefs = useRef([]);
+  const desktopDropdownRefs = useRef([]);
+  const mobileDropdownRefs = useRef([]);
 
   const [formData, setFormData] = useState({
     warehouseId: '',
@@ -94,8 +95,13 @@ export default function OperationForm({ type = 'income' }) {
   useEffect(() => {
     function handleClickOutside(event) {
       if (activeRowSearch !== null) {
-        const currentRef = dropdownRefs.current[activeRowSearch];
-        if (currentRef && !currentRef.contains(event.target)) {
+        const desktopRef = desktopDropdownRefs.current[activeRowSearch];
+        const mobileRef = mobileDropdownRefs.current[activeRowSearch];
+        
+        const clickedInsideDesktop = desktopRef && desktopRef.contains(event.target);
+        const clickedInsideMobile = mobileRef && mobileRef.contains(event.target);
+        
+        if (!clickedInsideDesktop && !clickedInsideMobile) {
           setActiveRowSearch(null);
         }
       }
@@ -290,7 +296,7 @@ export default function OperationForm({ type = 'income' }) {
                       <td className="p-2 text-center text-[var(--text-secondary)] font-mono">{index + 1}</td>
 
                       {/* Товар (Пошук/Автокомпліт в один рядок) */}
-                      <td className="p-2 relative overflow-visible" ref={el => dropdownRefs.current[index] = el}>
+                      <td className="p-2 relative overflow-visible" ref={el => desktopDropdownRefs.current[index] = el}>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
                           <div className="flex-1">
                             {activeRowSearch === index ? (
@@ -426,7 +432,7 @@ export default function OperationForm({ type = 'income' }) {
                   </div>
 
                   {/* Товар */}
-                  <div className="relative overflow-visible" ref={el => dropdownRefs.current[index] = el}>
+                  <div className="relative overflow-visible" ref={el => mobileDropdownRefs.current[index] = el}>
                     <label className="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1 uppercase tracking-wider">Товар</label>
                     {activeRowSearch === index ? (
                       <>
