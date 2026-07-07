@@ -53,7 +53,10 @@ export function printDeliveryNote(formData, buyer, showPrices, txId) {
         <title>Видаткова накладна ${dnNumber}</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-          body { font-family: 'Inter', sans-serif; color: #1F2937; padding: 40px 50px; background: #fff; }
+          @page {
+            margin: 10mm 15mm;
+          }
+          body { font-family: 'Inter', sans-serif; color: #1F2937; padding: 0; margin: 0; background: #fff; }
           .header { display: flex; justify-content: space-between; align-items: center; }
           .doc-title { color: #F59E0B; font-weight: 700; font-size: 18px; text-transform: uppercase; letter-spacing: 1px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
