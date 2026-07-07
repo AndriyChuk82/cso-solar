@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Button } from '@cso/design-system';
 import { matchesSearch } from '../utils/searchUtils';
+import { printDeliveryNote } from '../utils/printUtils';
 
 export default function BuyerIssueForm() {
   const { user } = useAuth();
@@ -25,6 +26,10 @@ export default function BuyerIssueForm() {
   const [activeRowSearch, setActiveRowSearch] = useState(null); // Індекс рядка, де зараз активний пошук
   const [searchText, setSearchText] = useState('');
   const dropdownRefs = useRef([]);
+
+  // Стан для друку видаткової накладної
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [printWithPrices, setPrintWithPrices] = useState(true);
 
   const [formData, setFormData] = useState({
     buyerId: queryBuyerId || '',
@@ -770,6 +775,14 @@ export default function BuyerIssueForm() {
               </button>
               <button
                 type="button"
+                onClick={() => setShowPrintModal(true)}
+                disabled={saving}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-amber-500/20 text-amber-600 bg-amber-500/5 hover:bg-amber-500/10 transition-colors flex items-center gap-1.5"
+              >
+                📄 Видаткова накладна
+              </button>
+              <button
+                type="button"
                 onClick={handleDelete}
                 disabled={saving}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-red-500/20 text-red-500 bg-red-500/5 hover:bg-red-500/10 transition-colors flex items-center gap-1.5"
@@ -796,6 +809,69 @@ export default function BuyerIssueForm() {
           </Button>
         </div>
       </form>
+
+      {/* Модальне вікно вибору параметрів друку видаткової накладної */}
+      {showPrintModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-2xl max-w-sm w-full overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 flex items-center justify-between">
+              <h3 className="font-bold text-sm">Друк видаткової накладної</h3>
+              <button 
+                type="button"
+                onClick={() => setShowPrintModal(false)}
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <p className="text-xs text-[var(--text-secondary)]">
+                Оберіть формат друкованої форми накладної для видачі клієнту:
+              </p>
+              <label className="flex items-center gap-2.5 cursor-pointer p-2 rounded bg-[var(--bg)] border border-[var(--border)] hover:bg-[var(--border-light)] transition-colors">
+                <input 
+                  type="checkbox"
+                  checked={printWithPrices}
+                  onChange={(e) => setPrintWithPrices(e.target.checked)}
+                  className="rounded text-blue-600 focus:ring-blue-500 cursor-pointer w-4 h-4"
+                />
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-[var(--text)]">Показувати ціни та суму</span>
+                  <span className="text-[10px] text-[var(--text-secondary)]">Якщо вимкнено — буде надруковано лише кількість товарів</span>
+                </div>
+              </label>
+              
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded p-2.5 text-center">
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                  Накладна буде сформована від імені ФОП Пастушок М. В.
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 p-3 bg-[var(--bg)] border-t border-[var(--border)]">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowPrintModal(false)}
+              >
+                Скасувати
+              </Button>
+              <Button 
+                type="button" 
+                variant="primary" 
+                size="sm"
+                onClick={() => {
+                  const currentBuyer = buyers.find(b => b.id === formData.buyerId);
+                  printDeliveryNote(formData, currentBuyer, printWithPrices, txId);
+                  setShowPrintModal(false);
+                }}
+              >
+                🖨️ Друкувати
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
