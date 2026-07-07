@@ -243,7 +243,7 @@ export default function OperationForm({ type = 'income' }) {
                 ))}
               </select>
             </div>
-            <div className="flex flex-col gap-0.5 w-[110px] sm:w-28">
+            <div className="flex flex-col gap-0.5 flex-1 min-w-[130px] sm:flex-initial sm:w-28">
               <label className="font-semibold text-[var(--text-secondary)] text-[10px] pl-0.5">Дата</label>
               <input
                 type="date"
