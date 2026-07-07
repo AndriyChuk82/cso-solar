@@ -19,12 +19,14 @@ export default function Sidebar({ isOpen, onClose }) {
         { path: '/expense', label: 'Новий розхід', icon: '📤' },
         { path: '/transfer', label: 'Переміщення', icon: '🔄' },
         { path: '/daily-balance', label: 'Підсумок дня', icon: '📊' },
+        { path: '/buyers', label: 'Баланси клієнтів', icon: '⚖️' },
       ]
     },
     {
       section: 'Звіти',
       items: [
         { path: '/reports', label: 'Звіти', icon: '📈' },
+        { path: '/buyers/report', label: 'Звіти по клієнтах', icon: '👥' },
       ]
     },
 

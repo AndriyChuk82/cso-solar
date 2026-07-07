@@ -337,11 +337,40 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== Глобальне заборонення горизонтального скроллу ===== */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* ===== Мобільні input/select не виходять за межі контейнера ===== */
+@media (max-width: 639px) {
+  input, select, textarea {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  input[type="date"] {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
 /* ===== Базова розмітка (Layout) ===== */
+.app-header {
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
 .app-layout {
   display: flex;
   min-height: calc(100vh - var(--header-height));
   position: relative;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
 }
 
 .app-sidebar {
@@ -362,6 +391,8 @@
   padding: 24px;
   background: var(--bg);
   min-width: 0; /* Важливо для flex-контейнерів */
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* ===== Навігація в сайдбарі ===== */
@@ -431,7 +462,10 @@
   }
 
   .app-main {
-    padding: 16px;
+    padding: 12px;
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
   }
 }
 

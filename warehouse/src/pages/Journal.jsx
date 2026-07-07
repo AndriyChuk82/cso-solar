@@ -193,6 +193,67 @@ export default function Journal() {
 
   return (
     <div>
+      {/* Спеціальні стилі адаптивності */}
+      <style>{`
+        @media (max-width: 767px) {
+          .desktop-report-table {
+            display: none !important;
+          }
+          .mobile-report-cards {
+            display: block !important;
+          }
+        }
+        @media (min-width: 768px) {
+          .desktop-report-table {
+            display: table !important;
+          }
+          .mobile-report-cards {
+            display: none !important;
+          }
+        }
+        /* Більш компактний вигляд десктопної таблиці */
+        .desktop-report-table th,
+        .desktop-report-table td {
+          padding: 6px 8px !important;
+          font-size: 12px !important;
+          line-height: 1.3 !important;
+        }
+        /* Кнопки дій у таблиці */
+        .btn-action-edit,
+        .btn-action-delete {
+          padding: 4px 6px !important;
+          font-size: 0.85rem !important;
+          border-radius: 4px !important;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          height: 26px;
+          width: 26px;
+        }
+        .btn-action-edit {
+          background: rgba(245, 158, 11, 0.08) !important;
+          color: #d97706 !important;
+          border: 1px solid rgba(245, 158, 11, 0.2) !important;
+        }
+        .btn-action-edit:hover {
+          background: rgba(245, 158, 11, 0.2) !important;
+          color: #b45309 !important;
+          border-color: rgba(245, 158, 11, 0.4) !important;
+        }
+        .btn-action-delete {
+          background: rgba(239, 68, 68, 0.08) !important;
+          color: #dc2626 !important;
+          border: 1px solid rgba(239, 68, 68, 0.2) !important;
+        }
+        .btn-action-delete:hover {
+          background: rgba(239, 68, 68, 0.2) !important;
+          color: #b91c1c !important;
+          border-color: rgba(239, 68, 68, 0.4) !important;
+        }
+      `}</style>
+
       <div className="page-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
           <div>
@@ -219,15 +280,14 @@ export default function Journal() {
       </div>
 
       {/* Фільтри */}
-      <div className="card" style={{ marginBottom: '12px', padding: '10px' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '10px' }}>
-          <div className="form-group" style={{ marginBottom: 0, flex: '1 1 180px' }}>
-            <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Склад</label>
+      <div className="card p-2 sm:p-2.5 border border-[var(--border)] bg-[var(--bg-card)] rounded-xl mb-3 no-print">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-end gap-2 text-xs">
+          <div className="flex flex-col gap-0.5 col-span-1 sm:w-40">
+            <label className="text-[10px] text-[var(--text-secondary)] font-semibold pl-0.5">Склад</label>
             <select
-              className="form-select"
+              className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none w-full h-[32px]"
               value={filters.warehouseId}
               onChange={(e) => updateFilter('warehouseId', e.target.value)}
-              style={{ padding: '6px 10px', height: '36px' }}
             >
               <option value="">Всі склади</option>
               {warehouses.map((w) => (
@@ -236,13 +296,12 @@ export default function Journal() {
             </select>
           </div>
 
-          <div className="form-group" style={{ marginBottom: 0, flex: '0 0 140px' }}>
-            <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Тип операції</label>
+          <div className="flex flex-col gap-0.5 col-span-1 sm:w-32">
+            <label className="text-[10px] text-[var(--text-secondary)] font-semibold pl-0.5">Тип операції</label>
             <select
-              className="form-select"
+              className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none w-full h-[32px]"
               value={filters.type}
               onChange={(e) => updateFilter('type', e.target.value)}
-              style={{ padding: '6px 10px', height: '36px' }}
             >
               <option value="">Всі типи</option>
               {Object.entries(CONFIG.OPERATION_LABELS).map(([key, label]) => (
@@ -251,53 +310,51 @@ export default function Journal() {
             </select>
           </div>
 
-          <div className="form-group" style={{ marginBottom: 0, flex: '0 0 130px' }}>
-            <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Від</label>
+          <div className="flex flex-col gap-0.5 col-span-1 sm:w-28">
+            <label className="text-[10px] text-[var(--text-secondary)] font-semibold pl-0.5">Від</label>
             <input
               type="date"
-              className="form-input"
+              className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none w-full h-[32px]"
               value={filters.dateFrom}
               onChange={(e) => updateFilter('dateFrom', e.target.value)}
-              style={{ padding: '6px 10px', height: '36px' }}
             />
           </div>
 
-          <div className="form-group" style={{ marginBottom: 0, flex: '0 0 130px' }}>
-            <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>До</label>
+          <div className="flex flex-col gap-0.5 col-span-1 sm:w-28">
+            <label className="text-[10px] text-[var(--text-secondary)] font-semibold pl-0.5">До</label>
             <input
               type="date"
-              className="form-input"
+              className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none w-full h-[32px]"
               value={filters.dateTo}
               onChange={(e) => updateFilter('dateTo', e.target.value)}
-              style={{ padding: '6px 10px', height: '36px' }}
             />
           </div>
 
-          <div className="form-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
-            <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>
+          <div className="flex flex-col gap-0.5 col-span-2 sm:flex-1 sm:min-w-[160px]">
+            <label className="text-[10px] text-[var(--text-secondary)] font-semibold pl-0.5">
               Пошук товару
               {debouncedSearch !== deferredSearch && (
-                <span style={{ marginLeft: '8px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                  ⏳ Пошук...
-                </span>
+                <span className="ml-1.5 text-[9px] text-[var(--text-secondary)]">⏳</span>
               )}
             </label>
             <input
               type="text"
-              className="form-input"
+              className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none w-full h-[32px]"
               placeholder="Назва або артикул..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ padding: '6px 10px', height: '36px' }}
             />
           </div>
           
-          <div>
+          <div className="col-span-2 sm:col-span-1 flex justify-end sm:w-auto">
             <button 
-              className={`btn btn-sm ${sortAsc ? 'btn-primary' : 'btn-outline'}`}
+              className={`p-1.5 rounded border text-xs font-semibold h-[32px] px-3 transition-colors ${
+                sortAsc 
+                  ? 'bg-blue-500 text-white border-blue-500' 
+                  : 'bg-[var(--bg)] text-[var(--text)] border-[var(--border)] hover:bg-[var(--border-light)]'
+              }`}
               onClick={() => setSortAsc(!sortAsc)}
               title="Сортувати від А до Я за назвою"
-              style={{ height: '36px', padding: '0 12px', fontSize: '0.78rem', color: sortAsc ? 'white' : undefined }}
             >
               {sortAsc ? 'А-Я' : 'Сортувати А-Я'}
             </button>
@@ -322,69 +379,156 @@ export default function Journal() {
               </p>
             </div>
           ) : (
-            <table className="data-table compact-table">
-              <thead>
-                 <tr>
-                  <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="date">Дата</ResizableHeader></th>
-                  <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="warehouse">Склад</ResizableHeader></th>
-                  <th style={{ width: '100%' }}><ResizableHeader pageId="journal" columnId="product">Товар</ResizableHeader></th>
-                  <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="type">Тип</ResizableHeader></th>
-                  <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="unit">Од.</ResizableHeader></th>
-                  <th style={{ textAlign: 'center', width: '1px' }}><ResizableHeader pageId="journal" columnId="qty">К-сть</ResizableHeader></th>
-                  <th style={{ textAlign: 'center', width: '1px' }}><ResizableHeader pageId="journal" columnId="balance">Залишок</ResizableHeader></th>
-                  <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="comment">Коментар</ResizableHeader></th>
-                  <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="user">Автор</ResizableHeader></th>
-                  {user?.isAdmin && <th style={{ width: '1px' }}>Дії</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedOperations.map((op) => (
-                  <tr key={op.id} className={`row-${op.type}`}>
-                    <td style={{ fontSize: '0.8rem', width: '1px' }}>{formatDate(op.date)}</td>
-                    <td style={{ fontSize: '0.8rem', width: '1px' }}>{op.warehouse_name}</td>
-                    <td style={{ fontSize: '0.85rem', width: '100%' }}>{op.product_name || '—'}</td>
-                    <td style={{ width: '1px' }}>
-                      <span className={`badge badge-${op.type}`} style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
-                        {CONFIG.OPERATION_LABELS[op.type] || op.type}
-                      </span>
-                    </td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem', width: '1px' }}>{op.unit || '—'}</td>
-                    <td style={{ fontSize: '0.85rem', whiteSpace: 'pre-line', textAlign: 'center', width: '1px' }}>
-                      {formatQuantity(op.quantity, op.product_category, op.product_name)}
-                    </td>
-                    <td style={{ fontSize: '0.82rem', whiteSpace: 'pre-line', textAlign: 'center', width: '1px' }}>
-                      {op.balance_after != null ? formatQuantity(op.balance_after, op.product_category, op.product_name) : '—'}
-                    </td>
-                    <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', maxWidth: '200px', whiteSpace: 'normal', lineHeight: '1.2', width: '1px' }}>
-                      {typeof (op.comment || op.note || op.primitka) === 'object' ? JSON.stringify(op.comment || op.note || op.primitka) : String(op.comment || op.note || op.primitka || '—')}
-                    </td>
-                    <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '1px' }}>{op.user_name || op.user || '—'}</td>
-                    {user?.isAdmin && (
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', position: 'relative', zIndex: 100 }}>
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={(e) => { e.stopPropagation(); handleOpenEdit(op); }}
-                            title="Редагувати"
-                            style={{ background: 'var(--primary)', color: '#000', padding: '6px 8px', border: 'none', cursor: 'pointer', fontSize: '1rem', borderRadius: '6px' }}
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            className="btn btn-ghost btn-sm"
-                            onClick={(e) => { e.stopPropagation(); handleDelete(op.id); }}
-                            title="Видалити"
-                            style={{ color: 'var(--danger)', padding: '6px 8px', border: '1px solid #ef444433', background: 'transparent', cursor: 'pointer', fontSize: '1rem', borderRadius: '6px' }}
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </td>
-                    )}
+            <>
+              {/* Десктопна версія (таблиця) */}
+              <table className="desktop-report-table data-table compact-table">
+                <thead>
+                   <tr>
+                    <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="date">Дата</ResizableHeader></th>
+                    <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="warehouse">Склад</ResizableHeader></th>
+                    <th style={{ width: '100%' }}><ResizableHeader pageId="journal" columnId="product">Товар</ResizableHeader></th>
+                    <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="type">Тип</ResizableHeader></th>
+                    <th style={{ textAlign: 'center', width: '1px' }}><ResizableHeader pageId="journal" columnId="unit">Од.</ResizableHeader></th>
+                    <th style={{ textAlign: 'right', width: '1px' }}><ResizableHeader pageId="journal" columnId="qty">К-сть</ResizableHeader></th>
+                    <th style={{ textAlign: 'right', width: '1px' }}><ResizableHeader pageId="journal" columnId="balance">Залишок</ResizableHeader></th>
+                    <th style={{ minWidth: '220px' }}><ResizableHeader pageId="journal" columnId="comment">Коментар</ResizableHeader></th>
+                    <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="user">Автор</ResizableHeader></th>
+                    {user?.isAdmin && <th style={{ width: '1px', textAlign: 'center', textTransform: 'uppercase' }}>Дії</th>}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {paginatedOperations.map((op) => (
+                    <tr key={op.id} className={`row-${op.type}`}>
+                      <td style={{ fontSize: '0.8rem', width: '1px' }}>{formatDate(op.date)}</td>
+                      <td style={{ fontSize: '0.8rem', width: '1px' }}>{op.warehouse_name}</td>
+                      <td style={{ fontSize: '0.85rem', width: '100%' }}>{op.product_name || '—'}</td>
+                      <td style={{ width: '1px' }}>
+                        <span className={`badge badge-${op.type}`} style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
+                          {CONFIG.OPERATION_LABELS[op.type] || op.type}
+                        </span>
+                      </td>
+                      <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem', width: '1px', textAlign: 'center' }}>{op.unit || '—'}</td>
+                      <td style={{ fontSize: '0.85rem', whiteSpace: 'pre-line', textAlign: 'right', width: '1px' }}>
+                        {formatQuantity(op.quantity, op.product_category, op.product_name)}
+                      </td>
+                      <td style={{ fontSize: '0.82rem', whiteSpace: 'pre-line', textAlign: 'right', width: '1px' }}>
+                        {op.balance_after != null ? formatQuantity(op.balance_after, op.product_category, op.product_name) : '—'}
+                      </td>
+                      <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', minWidth: '220px', maxWidth: '350px', whiteSpace: 'normal', lineHeight: '1.2' }}>
+                        {typeof (op.comment || op.note || op.primitka) === 'object' ? JSON.stringify(op.comment || op.note || op.primitka) : String(op.comment || op.note || op.primitka || '—')}
+                      </td>
+                      <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '1px' }}>{op.user_name || op.user || '—'}</td>
+                      {user?.isAdmin && (
+                        <td>
+                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', position: 'relative', zIndex: 100 }}>
+                            <button
+                              className="btn-action-edit"
+                              onClick={(e) => { e.stopPropagation(); handleOpenEdit(op); }}
+                              title="Редагувати"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              className="btn-action-delete"
+                              onClick={(e) => { e.stopPropagation(); handleDelete(op.id); }}
+                              title="Видалити"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Мобільна версія (список карток) */}
+              <div className="mobile-report-cards space-y-3">
+                {paginatedOperations.map((op) => {
+                  const isIssue = op.type === 'issue' || op.type === 'expense';
+                  const isIncome = op.type === 'income';
+                  const isTransfer = op.type === 'transfer';
+                  const isAdj = op.type === 'adjustment';
+                  const amt = parseFloat(op.quantity) || 0;
+
+                  return (
+                    <div key={op.id} className="p-3 border border-[var(--border)] rounded-xl bg-[var(--bg-card)] space-y-2 text-xs">
+                      {/* Шапка: дата та тип */}
+                      <div className="flex justify-between items-center text-xs font-semibold">
+                        <span className="text-[var(--text-secondary)]">📅 {formatDate(op.date)}</span>
+                        <span className={`badge badge-${op.type}`} style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
+                          {CONFIG.OPERATION_LABELS[op.type] || op.type}
+                        </span>
+                      </div>
+
+                      {/* Склад */}
+                      <div className="text-[11px] text-[var(--text-secondary)]">
+                        🏢 Склад: <span className="font-semibold text-[var(--text)]">{op.warehouse_name}</span>
+                      </div>
+
+                      {/* Товар */}
+                      <div className="text-[12px] font-semibold text-[var(--text)]">
+                        📦 {op.product_name || '—'}
+                      </div>
+
+                      {/* Деталі */}
+                      {(op.comment || op.note || op.primitka) && (
+                        <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg)]/50 p-2 rounded border border-[var(--border)]/40 italic">
+                          {typeof (op.comment || op.note || op.primitka) === 'object' 
+                            ? JSON.stringify(op.comment || op.note || op.primitka) 
+                            : String(op.comment || op.note || op.primitka)}
+                        </div>
+                      )}
+
+                      {/* Кількість, залишок, автор та дії */}
+                      <div className="flex justify-between items-center pt-2 border-t border-[var(--border)]/40 text-[11px]">
+                        <div className="flex gap-4">
+                          <div>
+                            <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">К-сть</span>
+                            <span className={`${isIncome ? 'text-green-600' : isIssue ? 'text-red-500' : 'text-[var(--text)]'} font-bold`}>
+                              {isIssue ? '-' : isIncome ? '+' : ''}{formatQuantity(op.quantity, op.product_category, op.product_name)} {op.unit || ''}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Залишок</span>
+                            <span className="font-bold text-[var(--text)]">
+                              {op.balance_after != null ? formatQuantity(op.balance_after, op.product_category, op.product_name) : '—'} {op.unit || ''}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Автор</span>
+                            <span className="text-[var(--text-muted)]">
+                              {op.user_name || op.user || '—'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Дії */}
+                        {user?.isAdmin && (
+                          <div className="flex gap-1.5 no-print">
+                            <button
+                              className="p-1 px-2 rounded border border-amber-500/20 bg-amber-500/10 text-amber-600 text-[10px] font-semibold"
+                              onClick={(e) => { e.stopPropagation(); handleOpenEdit(op); }}
+                              title="Редагувати"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              className="p-1 px-2 rounded border border-red-500/20 bg-red-500/10 text-red-500 text-[10px] font-semibold"
+                              onClick={(e) => { e.stopPropagation(); handleDelete(op.id); }}
+                              title="Видалити"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       </div>

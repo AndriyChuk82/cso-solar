@@ -18,6 +18,13 @@ const Categories = lazy(() => import('./pages/Categories'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Backups = lazy(() => import('./pages/Backups'));
 
+// Нові сторінки для модуля «Баланси клієнтів»
+const BuyersDashboard = lazy(() => import('./pages/BuyersDashboard'));
+const BuyerDetails = lazy(() => import('./pages/BuyerDetails'));
+const BuyerIssueForm = lazy(() => import('./pages/BuyerIssueForm'));
+const BuyerPaymentForm = lazy(() => import('./pages/BuyerPaymentForm'));
+const BuyersReport = lazy(() => import('./pages/BuyersReport'));
+
 
 function AppContent() {
   const { user, loading, error } = useAuth();
@@ -80,6 +87,14 @@ function AppContent() {
             <Route path="/daily-balance" element={<DailyBalance />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/catalog" element={<Catalog />} />
+
+            {/* Баланси клієнтів */}
+            <Route path="/buyers" element={<BuyersDashboard />} />
+            <Route path="/buyers/report" element={<BuyersReport />} />
+            <Route path="/buyers/:id" element={<BuyerDetails />} />
+            <Route path="/buyers/issue" element={<BuyerIssueForm />} />
+            <Route path="/buyers/issue/edit/:txId" element={<BuyerIssueForm />} />
+            <Route path="/buyers/payment" element={<BuyerPaymentForm />} />
 
             {/* Лише адміністратор */}
             {user.isAdmin && (

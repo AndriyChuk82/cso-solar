@@ -74,3 +74,69 @@ ALTER TABLE public.warehouses DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.operations DISABLE ROW LEVEL SECURITY;
 */
+
+--------------------------------------------------------------------------------
+-- 4. ТАБЛИЦІ ТА ПОЛІТИКИ ДЛЯ МОДУЛЯ «БАЛАНСИ КЛІЄНТІВ»
+--------------------------------------------------------------------------------
+
+-- Покупці (клієнти)
+CREATE TABLE IF NOT EXISTS public.buyers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    phone TEXT,
+    notes TEXT,
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Фінансові транзакції покупців
+CREATE TABLE IF NOT EXISTS public.buyer_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    buyer_id UUID NOT NULL REFERENCES public.buyers(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    type TEXT NOT NULL, -- 'issue', 'payment', 'adjustment'
+    amount NUMERIC, -- null якщо ціна невідома (очікує оцінки)
+    currency TEXT, -- 'UAH', 'USD', or null
+    converted_amount NUMERIC, -- сума зарахування (якщо була конвертація)
+    conversion_rate NUMERIC, -- курс конвертації
+    status TEXT NOT NULL DEFAULT 'completed', -- 'pending_price', 'completed'
+    comment TEXT,
+    user_email TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Елементи видачі (специфікація товарів)
+CREATE TABLE IF NOT EXISTS public.buyer_transaction_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    transaction_id UUID NOT NULL REFERENCES public.buyer_transactions(id) ON DELETE CASCADE,
+    product_id TEXT NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+    warehouse_id TEXT NOT NULL REFERENCES public.warehouses(id) ON DELETE CASCADE,
+    quantity NUMERIC NOT NULL,
+    price NUMERIC, -- null якщо ціна невідома
+    currency TEXT, -- 'UAH' або 'USD'
+    operation_id TEXT -- зв'язок зі складським списанням в operations.id (зазвичай text)
+);
+
+-- Права доступу
+GRANT ALL ON TABLE public.buyers TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.buyer_transactions TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.buyer_transaction_items TO anon, authenticated, service_role;
+
+-- Вмикаємо RLS
+ALTER TABLE public.buyers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.buyer_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.buyer_transaction_items ENABLE ROW LEVEL SECURITY;
+
+-- Створюємо політики повного доступу для anon
+DROP POLICY IF EXISTS "Allow anon access to buyers" ON public.buyers;
+CREATE POLICY "Allow anon access to buyers" ON public.buyers FOR ALL TO anon USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon access to buyer_transactions" ON public.buyer_transactions;
+CREATE POLICY "Allow anon access to buyer_transactions" ON public.buyer_transactions FOR ALL TO anon USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon access to buyer_transaction_items" ON public.buyer_transaction_items;
+CREATE POLICY "Allow anon access to buyer_transaction_items" ON public.buyer_transaction_items FOR ALL TO anon USING (true) WITH CHECK (true);
+
+-- Додаємо підтримку архівування накладних
+ALTER TABLE public.buyer_transactions ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT false;
+

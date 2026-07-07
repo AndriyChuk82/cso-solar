@@ -161,7 +161,9 @@ export default function DailyBalance() {
                 <span className="badge badge-balance">{changedCount} відхилень</span>
               )}
             </div>
-            <div className="data-table-wrap">
+
+            {/* Десктопна версія: Таблиця (sm: і більше) */}
+            <div className="hidden sm:block data-table-wrap">
               <table className="data-table compact-table">
                 <thead>
                   <tr>
@@ -202,7 +204,7 @@ export default function DailyBalance() {
                         </td>
                         <td style={{ paddingTop: '2px', paddingBottom: '2px' }}>
                           <input
-                             type="number"
+                            type="number"
                             className="form-input"
                             value={item.factQuantity}
                             onChange={(e) => updateFact(originalIndex, e.target.value)}
@@ -245,17 +247,98 @@ export default function DailyBalance() {
                 </tbody>
               </table>
             </div>
+
+            {/* Мобільна версія: Список карток (менше sm) */}
+            <div className="block sm:hidden p-2 space-y-2">
+              {sortedItems.map((item, idx) => {
+                const originalIndex = items.findIndex(i => i.product_id === item.product_id);
+                const showCategoryHeader = idx === 0 || sortedItems[idx-1].category !== item.category;
+
+                return (
+                  <Fragment key={item.product_id}>
+                    {showCategoryHeader && (
+                      <div className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider pt-2 pb-1">
+                        📁 {item.category || 'Без категорії'}
+                      </div>
+                    )}
+                    <div
+                      className="p-2.5 rounded-lg border border-[var(--border)] relative space-y-2 text-xs"
+                      style={{
+                        background: item.diff > 0
+                          ? 'var(--income-bg)'
+                          : item.diff < 0
+                            ? 'var(--expense-bg)'
+                            : 'var(--bg-card)'
+                      }}
+                    >
+                      {/* Назва товару */}
+                      <div className="font-semibold text-[13px] text-[var(--text)]">{item.product_name}</div>
+
+                      {/* Дані в один рядок для максимальної компактності */}
+                      <div className="grid grid-cols-3 gap-2 items-center text-xs pt-1">
+                        {/* Облік */}
+                        <div>
+                          <span className="text-[9px] text-[var(--text-secondary)] block tracking-wider uppercase font-semibold">Облік</span>
+                          <span className="font-semibold text-xs text-[var(--text)]">
+                            {formatQuantity(item.quantity, item.product_category)} {item.unit}
+                          </span>
+                        </div>
+
+                        {/* Введення факту */}
+                        <div>
+                          <span className="text-[9px] text-[var(--text-secondary)] block tracking-wider uppercase font-semibold">Факт</span>
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="number"
+                              className="w-16 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs text-center font-bold"
+                              value={item.factQuantity}
+                              onChange={(e) => updateFact(originalIndex, e.target.value)}
+                              onFocus={(e) => {
+                                const target = e.target;
+                                setTimeout(() => target.select(), 0);
+                              }}
+                              min="0"
+                              step="1"
+                            />
+                            <span className="text-[10px] text-[var(--text-secondary)]">{item.unit}</span>
+                          </div>
+                        </div>
+
+                        {/* Різниця */}
+                        <div className="text-right">
+                          <span className="text-[9px] text-[var(--text-secondary)] block tracking-wider uppercase font-semibold">Різниця</span>
+                          <span
+                            className="font-bold text-xs"
+                            style={{
+                              color: item.diff > 0
+                                ? 'var(--income)'
+                                : item.diff < 0
+                                  ? 'var(--expense)'
+                                  : 'var(--text-muted)'
+                            }}
+                          >
+                            {item.diff > 0 ? `+${item.diff.toLocaleString('uk-UA')}` : item.diff === 0 ? '—' : item.diff.toLocaleString('uk-UA')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Fragment>
+                );
+              })}
+            </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <Button type="button" variant="ghost" onClick={() => navigate('/')}>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
+            <Button type="button" variant="ghost" size="md" onClick={() => navigate('/')} className="w-full sm:w-auto">
               Скасувати
             </Button>
             <Button
               type="submit"
               variant="primary"
+              size="md"
               disabled={saving || changedCount === 0}
               loading={saving}
+              className="w-full sm:w-auto"
             >
               {saving ? 'Збереження...' : `📊 Зберегти підсумок (${changedCount} відхилень)`}
             </Button>

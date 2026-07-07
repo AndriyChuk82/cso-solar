@@ -392,3 +392,357 @@ export async function getProposals() { return gasRequest('getProposals', {}, 'PO
 export async function saveProposal(proposal, user) { return gasRequest('saveProposal', { proposal, user }, 'POST'); }
 export async function deleteProposal(proposalId) { return gasRequest('deleteProposal', { proposalId }, 'POST'); }
 export async function exportProposalsAsCSV() { return gasRequest('exportProposalsAsCSV', {}, 'POST'); }
+
+// --- МОДУЛЬ «БАЛАНСИ КЛІЄНТІВ» ---
+
+export async function getBuyers() {
+  if (!supabase) return { success: true, buyers: [] };
+  const { data, error } = await supabase.from('buyers').select('*').order('name');
+  if (error) throw error;
+  return { success: true, buyers: data };
+}
+
+export async function getBuyersWithBalances() {
+  if (!supabase) return { success: true, buyers: [] };
+  const { data: buyers, error: bErr } = await supabase.from('buyers').select('*').order('name');
+  if (bErr) throw bErr;
+
+  const { data: txs, error: tErr } = await supabase.from('buyer_transactions').select('buyer_id, type, amount, currency, status, is_archived');
+  if (tErr) throw tErr;
+
+  const balanceMap = {};
+  buyers.forEach(b => {
+    balanceMap[b.id] = { uah: 0, usd: 0, pendingCount: 0 };
+  });
+
+  txs.forEach(t => {
+    if (!balanceMap[t.buyer_id]) return;
+    if (t.is_archived === true) return; // Ігноруємо архівні транзакції для активного балансу
+    if (t.status === 'pending_price') {
+      balanceMap[t.buyer_id].pendingCount += 1;
+    }
+    const amt = parseFloat(t.amount) || 0;
+    const cur = String(t.currency).toUpperCase();
+    if (t.type === 'issue') {
+      // Видача збільшує борг (зменшує баланс клієнта)
+      if (cur === 'UAH') balanceMap[t.buyer_id].uah -= amt;
+      if (cur === 'USD') balanceMap[t.buyer_id].usd -= amt;
+    } else if (t.type === 'payment') {
+      // Оплата зменшує борг (збільшує баланс клієнта)
+      if (cur === 'UAH') balanceMap[t.buyer_id].uah += amt;
+      if (cur === 'USD') balanceMap[t.buyer_id].usd += amt;
+    } else if (t.type === 'adjustment') {
+      // Коригування
+      if (cur === 'UAH') balanceMap[t.buyer_id].uah += amt;
+      if (cur === 'USD') balanceMap[t.buyer_id].usd += amt;
+    }
+  });
+
+  return {
+    success: true,
+    buyers: buyers.map(b => ({
+      ...b,
+      balanceUah: balanceMap[b.id].uah,
+      balanceUsd: balanceMap[b.id].usd,
+      pendingCount: balanceMap[b.id].pendingCount
+    }))
+  };
+}
+
+export async function addBuyer(buyer) {
+  if (!supabase) throw new Error('База даних не підключена');
+  const { data, error } = await supabase.from('buyers').insert([{
+    name: buyer.name,
+    phone: buyer.phone || '',
+    notes: buyer.notes || '',
+    active: true
+  }]).select();
+  if (error) throw error;
+  return { success: true, buyer: data[0] };
+}
+
+export async function updateBuyer(buyer) {
+  if (!supabase) throw new Error('База даних не підключена');
+  const { error } = await supabase.from('buyers').update({
+    name: buyer.name,
+    phone: buyer.phone || '',
+    notes: buyer.notes || '',
+    active: buyer.active !== undefined ? buyer.active : true
+  }).eq('id', buyer.id);
+  if (error) throw error;
+  return { success: true };
+}
+
+export async function getBuyerTransactions(buyerId) {
+  if (!supabase) return { success: true, transactions: [] };
+  const { data, error } = await supabase
+    .from('buyer_transactions')
+    .select(`
+      *,
+      items:buyer_transaction_items(
+        *,
+        product:products(name, article, unit)
+      )
+    `)
+    .eq('buyer_id', buyerId)
+    .order('date', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+
+  // Форматуємо для відображення деталей товарів у кожній транзакції
+  const formatted = data.map(tx => ({
+    ...tx,
+    items: (tx.items || []).map(item => ({
+      ...item,
+      product_name: item.product?.name || '?',
+      product_article: item.product?.article || '',
+      unit: item.product?.unit || ''
+    }))
+  }));
+
+  return { success: true, transactions: formatted };
+}
+
+export async function getAllBuyerTransactions() {
+  if (!supabase) return { success: true, transactions: [] };
+  const { data, error } = await supabase
+    .from('buyer_transactions')
+    .select(`
+      *,
+      items:buyer_transaction_items(
+        *,
+        product:products(name, article, unit)
+      )
+    `)
+    .order('date', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+
+  const formatted = data.map(tx => ({
+    ...tx,
+    items: (tx.items || []).map(item => ({
+      ...item,
+      product_name: item.product?.name || '?',
+      product_article: item.product?.article || '',
+      unit: item.product?.unit || ''
+    }))
+  }));
+
+  return { success: true, transactions: formatted };
+}
+
+export async function addBuyerTransaction(transaction) {
+  if (!supabase) throw new Error('База даних не підключена');
+  const timestamp = new Date().toISOString();
+
+  // 1. Створюємо основну фінансову транзакцію
+  const { data: tx, error: txErr } = await supabase.from('buyer_transactions').insert([{
+    buyer_id: transaction.buyerId,
+    date: transaction.date,
+    type: transaction.type,
+    amount: transaction.amount,
+    currency: transaction.currency,
+    converted_amount: transaction.convertedAmount || null,
+    conversion_rate: transaction.conversionRate || null,
+    status: transaction.status || 'completed',
+    comment: transaction.comment,
+    user_email: transaction.user
+  }]).select();
+
+  if (txErr) throw txErr;
+  const transactionId = tx[0].id;
+
+  // 2. Якщо це видача, створюємо складські списання (operations) та прив'язуємо деталі
+  if (transaction.type === 'issue' && transaction.items && transaction.items.length > 0) {
+    const opItems = transaction.items.map(item => ({
+      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+      date: transaction.date,
+      type: 'expense',
+      product_id: item.productId,
+      warehouse_id: item.warehouseId,
+      quantity: item.quantity,
+      comment: `Видача клієнту: ${transaction.buyerName || 'Клієнт'}. ${transaction.comment || ''}`,
+      user_email: transaction.user,
+      created_at: timestamp
+    }));
+
+    const { error: opErr } = await supabase.from('operations').insert(opItems);
+    if (opErr) throw opErr;
+
+    const txItems = transaction.items.map((item, idx) => ({
+      transaction_id: transactionId,
+      product_id: item.productId,
+      warehouse_id: item.warehouseId,
+      quantity: item.quantity,
+      price: item.price !== undefined ? item.price : null,
+      currency: item.currency || null,
+      operation_id: opItems[idx].id
+    }));
+
+    const { error: itemErr } = await supabase.from('buyer_transaction_items').insert(txItems);
+    if (itemErr) throw itemErr;
+  }
+
+  return { success: true, transactionId };
+}
+
+export async function updateBuyerTransaction(transaction) {
+  if (!supabase) throw new Error('База даних не підключена');
+  const timestamp = new Date().toISOString();
+
+  // 1. Оновлюємо фінансову транзакцію
+  const { error: txErr } = await supabase.from('buyer_transactions').update({
+    date: transaction.date,
+    amount: transaction.amount,
+    currency: transaction.currency,
+    converted_amount: transaction.convertedAmount || null,
+    conversion_rate: transaction.conversionRate || null,
+    status: transaction.status || 'completed',
+    comment: transaction.comment,
+    user_email: transaction.user
+  }).eq('id', transaction.id);
+
+  if (txErr) throw txErr;
+
+  // 2. Якщо це видача, оновлюємо специфікацію та складські записи
+  if (transaction.type === 'issue') {
+    // Отримуємо старі деталі для видалення складських операцій
+    const { data: oldItems, error: getErr } = await supabase
+      .from('buyer_transaction_items')
+      .select('operation_id')
+      .eq('transaction_id', transaction.id);
+
+    if (getErr) throw getErr;
+    const oldOpIds = oldItems?.map(oi => oi.operation_id).filter(Boolean) || [];
+
+    // Видаляємо деталі транзакції покупця
+    const { error: delItemsErr } = await supabase.from('buyer_transaction_items').delete().eq('transaction_id', transaction.id);
+    if (delItemsErr) throw delItemsErr;
+
+    // Видаляємо зв'язані складські операції списання
+    if (oldOpIds.length > 0) {
+      const { error: delOpsErr } = await supabase.from('operations').delete().in('id', oldOpIds);
+      if (delOpsErr) throw delOpsErr;
+    }
+
+    // Записуємо нові складські операції та нові деталі
+    if (transaction.items && transaction.items.length > 0) {
+      const opItems = transaction.items.map(item => ({
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+        date: transaction.date,
+        type: 'expense',
+        product_id: item.productId,
+        warehouse_id: item.warehouseId,
+        quantity: item.quantity,
+        comment: `Видача клієнту: ${transaction.buyerName || 'Клієнт'}. ${transaction.comment || ''}`,
+        user_email: transaction.user,
+        created_at: timestamp
+      }));
+
+      const { error: opErr } = await supabase.from('operations').insert(opItems);
+      if (opErr) throw opErr;
+
+      const txItems = transaction.items.map((item, idx) => ({
+        transaction_id: transaction.id,
+        product_id: item.productId,
+        warehouse_id: item.warehouseId,
+        quantity: item.quantity,
+        price: item.price !== undefined ? item.price : null,
+        currency: item.currency || null,
+        operation_id: opItems[idx].id
+      }));
+
+      const { error: itemErr } = await supabase.from('buyer_transaction_items').insert(txItems);
+      if (itemErr) throw itemErr;
+    }
+  }
+
+  return { success: true };
+}
+
+export async function toggleArchiveTransaction(id, isArchived) {
+  if (!supabase) throw new Error('База даних не підключена');
+  const { error } = await supabase
+    .from('buyer_transactions')
+    .update({ is_archived: isArchived })
+    .eq('id', id);
+  if (error) throw error;
+  return { success: true };
+}
+
+export async function deleteBuyerTransaction(transactionId) {
+  if (!supabase) throw new Error('База даних не підключена');
+
+  // 1. Зчитуємо старі операції списання для їх видалення
+  const { data: items, error: getErr } = await supabase
+    .from('buyer_transaction_items')
+    .select('operation_id')
+    .eq('transaction_id', transactionId);
+
+  if (getErr) throw getErr;
+  const opIds = items?.map(i => i.operation_id).filter(Boolean) || [];
+
+  // 2. Видаляємо основну транзакцію (це каскадно очистить buyer_transaction_items)
+  const { error: txErr } = await supabase.from('buyer_transactions').delete().eq('id', transactionId);
+  if (txErr) throw txErr;
+
+  // 3. Видаляємо операції списання зі складу
+  if (opIds.length > 0) {
+    const { error: opErr } = await supabase.from('operations').delete().in('id', opIds);
+    if (opErr) throw opErr;
+  }
+
+  return { success: true };
+}
+
+export async function getBuyerTransactionById(txId) {
+  if (!supabase) throw new Error('База даних не підключена');
+
+  // 1. Отримуємо основні реквізити транзакції
+  const { data: tx, error: txErr } = await supabase
+    .from('buyer_transactions')
+    .select('*')
+    .eq('id', txId)
+    .single();
+
+  if (txErr) throw txErr;
+
+  // 2. Отримуємо специфікацію товарів
+  const { data: items, error: itemsErr } = await supabase
+    .from('buyer_transaction_items')
+    .select('*, product:products(*)')
+    .eq('transaction_id', txId);
+
+  if (itemsErr) throw itemsErr;
+
+  return {
+    success: true,
+    transaction: {
+      id: tx.id,
+      buyerId: tx.buyer_id,
+      date: tx.date,
+      type: tx.type,
+      amount: tx.amount,
+      currency: tx.currency,
+      comment: tx.comment,
+      status: tx.status,
+      user_email: tx.user_email,
+      is_archived: tx.is_archived,
+      items: items.map(item => ({
+        id: item.id,
+        productId: item.product_id,
+        productName: item.product?.name || '',
+        productArticle: item.product?.article || '',
+        unit: item.product?.unit || '',
+        quantity: item.quantity,
+        price: item.price !== null ? item.price : '',
+        currency: item.currency || 'UAH',
+        warehouseId: item.warehouse_id,
+        operationId: item.operation_id
+      }))
+    }
+  };
+}
+
