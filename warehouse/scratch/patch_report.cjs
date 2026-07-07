@@ -250,9 +250,8 @@ const newDesktopColumns = `<td className="p-2 align-top">
                                             const lpAmt = parseFloat(lp.amount) || 0;
                                             const formattedLpAmt = lp.currency === 'UAH' ? \`\${lpAmt.toLocaleString('uk-UA')} грн\` : \`$\${lpAmt.toLocaleString('uk-UA')}\`;
                                             return (
-                                              <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5">
-                                                <span>💰 {displayComment} ({lp.date})</span>
-                                                <span className="font-semibold">{formattedLpAmt}</span>
+                                              <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+                                                <span>💰 {displayComment} ({lp.date}) — <span className="font-semibold">{formattedLpAmt}</span></span>
                                               </div>
                                             );
                                           })}
@@ -333,9 +332,8 @@ const newMobileCards = `{isIssue ? (
                                           const lpAmt = parseFloat(lp.amount) || 0;
                                           const formattedLpAmt = lp.currency === 'UAH' ? \`\${lpAmt.toLocaleString('uk-UA')} грн\` : \`$\${lpAmt.toLocaleString('uk-UA')}\`;
                                           return (
-                                            <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5">
-                                              <span>💰 {displayComment} ({lp.date})</span>
-                                              <span className="font-semibold">{formattedLpAmt}</span>
+                                            <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+                                              <span>💰 {displayComment} ({lp.date}) — <span className="font-semibold">{formattedLpAmt}</span></span>
                                             </div>
                                           );
                                         })}
@@ -440,9 +438,8 @@ const newTBDesktopColumns = `<td className="p-2 align-top">
                                                         const lpAmt = parseFloat(lp.amount) || 0;
                                                         const formattedLpAmt = lp.currency === 'UAH' ? \`\${lpAmt.toLocaleString('uk-UA')} грн\` : \`$\${lpAmt.toLocaleString('uk-UA')}\`;
                                                         return (
-                                                          <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5 animate-fadeIn">
-                                                            <span>💰 {displayComment} ({lp.date})</span>
-                                                            <span className="font-semibold">{formattedLpAmt}</span>
+                                                          <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center gap-1 animate-fadeIn">
+                                                            <span>💰 {displayComment} ({lp.date}) — <span className="font-semibold">{formattedLpAmt}</span></span>
                                                           </div>
                                                         );
                                                       })}
@@ -537,9 +534,8 @@ const newTBMobileCards = `{isIssue ? (
                                                         const lpAmt = parseFloat(lp.amount) || 0;
                                                         const formattedLpAmt = lp.currency === 'UAH' ? \`\${lpAmt.toLocaleString('uk-UA')} грн\` : \`$\${lpAmt.toLocaleString('uk-UA')}\`;
                                                         return (
-                                                          <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5">
-                                                            <span>💰 {displayComment} ({lp.date})</span>
-                                                            <span className="font-semibold">{formattedLpAmt}</span>
+                                                          <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+                                                            <span>💰 {displayComment} ({lp.date}) — <span className="font-semibold">{formattedLpAmt}</span></span>
                                                           </div>
                                                         );
                                                       })}
