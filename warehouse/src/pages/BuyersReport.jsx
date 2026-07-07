@@ -252,6 +252,11 @@ export default function BuyersReport() {
       usdClosing,
       items: periodItems
     };
+  }).filter(row => {
+    const hasOpening = Math.abs(row.uahOpening) > 0.01 || Math.abs(row.usdOpening) > 0.01;
+    const hasTurnover = Math.abs(row.uahIssued) > 0.01 || Math.abs(row.usdIssued) > 0.01 || Math.abs(row.uahPaid) > 0.01 || Math.abs(row.usdPaid) > 0.01;
+    const hasClosing = Math.abs(row.uahClosing) > 0.01 || Math.abs(row.usdClosing) > 0.01;
+    return hasOpening || hasTurnover || hasClosing;
   });
 
   // Підрахунок загальних сум для підвалу відомості
@@ -266,7 +271,6 @@ export default function BuyersReport() {
     totalUahIssued += row.uahIssued;
     totalUsdIssued += row.usdIssued;
     totalUahPaid += row.uahPaid;
-    totalUsdPaid += row.usdPaid;
     totalUahClosing += row.uahClosing;
     totalUsdClosing += row.usdClosing;
   });
