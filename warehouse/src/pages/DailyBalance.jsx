@@ -290,7 +290,7 @@ export default function DailyBalance() {
                           <div className="flex items-center gap-1.5">
                             <input
                               type="number"
-                              className="w-16 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs text-center font-bold"
+                              className="w-16 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] text-center font-bold"
                               value={item.factQuantity}
                               onChange={(e) => updateFact(originalIndex, e.target.value)}
                               onFocus={(e) => {
