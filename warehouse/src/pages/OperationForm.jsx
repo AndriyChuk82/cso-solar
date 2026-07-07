@@ -232,7 +232,7 @@ export default function OperationForm({ type = 'income' }) {
             <div className="flex flex-col gap-0.5 flex-1 min-w-[140px] sm:flex-initial sm:w-48">
               <label className="font-semibold text-[var(--text-secondary)] text-[10px] pl-0.5">Склад *</label>
               <select
-                className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none w-full"
+                className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none w-full"
                 value={formData.warehouseId}
                 onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
                 required
@@ -247,7 +247,7 @@ export default function OperationForm({ type = 'income' }) {
               <label className="font-semibold text-[var(--text-secondary)] text-[10px] pl-0.5">Дата</label>
               <input
                 type="date"
-                className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none w-full"
+                className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none w-full"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 required
@@ -258,7 +258,7 @@ export default function OperationForm({ type = 'income' }) {
               <input
                 type="text"
                 placeholder={isIncome ? 'Поставка від...' : 'Причина...'}
-                className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none w-full"
+                className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none w-full"
                 value={formData.comment}
                 onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
               />
@@ -298,7 +298,7 @@ export default function OperationForm({ type = 'income' }) {
                                 <input
                                   type="text"
                                   autoFocus
-                                  className="w-full p-1.5 rounded border border-blue-500 bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                                  className="w-full p-1.5 rounded border border-blue-500 bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none"
                                   placeholder="Введіть назву або артикул..."
                                   value={searchText}
                                   onChange={(e) => setSearchText(e.target.value)}
@@ -433,7 +433,7 @@ export default function OperationForm({ type = 'income' }) {
                         <input
                           type="text"
                           autoFocus
-                          className="w-full p-2 rounded border border-blue-500 bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                          className="w-full p-2 rounded border border-blue-500 bg-[var(--bg)] text-[var(--text)] text-[16px] focus:outline-none"
                           placeholder="Введіть назву або артикул..."
                           value={searchText}
                           onChange={(e) => setSearchText(e.target.value)}

@@ -422,7 +422,7 @@ export default function BuyerIssueForm() {
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-[var(--text-secondary)]">Покупець *</label>
               <select
-                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none"
                 value={formData.buyerId}
                 onChange={(e) => {
                   setFormData({ ...formData, buyerId: e.target.value, pickedUpBy: '' });
@@ -441,7 +441,7 @@ export default function BuyerIssueForm() {
               <label className="font-semibold text-[var(--text-secondary)]">Представник</label>
               {selectedBuyerRepresentatives.length > 0 && !isCustomRepresentative ? (
                 <select
-                  className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                  className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none"
                   value={formData.pickedUpBy || ''}
                   onChange={(e) => {
                     if (e.target.value === '__custom__') {
@@ -463,7 +463,7 @@ export default function BuyerIssueForm() {
                   <input
                     type="text"
                     placeholder="ПІБ (необов'язково)"
-                    className="h-[32px] py-1 pr-10 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none w-full"
+                    className="h-[32px] py-1 pr-10 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none w-full"
                     value={formData.pickedUpBy || ''}
                     onChange={(e) => setFormData({ ...formData, pickedUpBy: e.target.value })}
                   />
@@ -486,7 +486,7 @@ export default function BuyerIssueForm() {
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-[var(--text-secondary)]">Склад *</label>
               <select
-                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none"
                 value={formData.warehouseId}
                 onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
                 required
@@ -501,7 +501,7 @@ export default function BuyerIssueForm() {
               <label className="font-semibold text-[var(--text-secondary)]">Дата</label>
               <input
                 type="date"
-                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 required
@@ -511,7 +511,7 @@ export default function BuyerIssueForm() {
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-[var(--text-secondary)]">Валюта</label>
               <select
-                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none"
                 value={formData.currency}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
               >
@@ -525,7 +525,7 @@ export default function BuyerIssueForm() {
               <input
                 type="text"
                 placeholder="напр. під звіт"
-                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none"
                 value={formData.comment}
                 onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
               />
@@ -566,7 +566,7 @@ export default function BuyerIssueForm() {
                                 <input
                                   type="text"
                                   autoFocus
-                                  className="w-full p-1.5 rounded border border-blue-500 bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                                  className="w-full p-1.5 rounded border border-blue-500 bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none"
                                   placeholder="Введіть назву або артикул..."
                                   value={searchText}
                                   onChange={(e) => setSearchText(e.target.value)}
@@ -603,7 +603,7 @@ export default function BuyerIssueForm() {
                                   setActiveRowSearch(index);
                                   setSearchText(item.productName || '');
                                 }}
-                                className="w-full p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] cursor-pointer text-xs min-h-[30px] flex items-center justify-between"
+                                className="w-full p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] cursor-pointer text-[16px] sm:text-xs min-h-[30px] flex items-center justify-between"
                               >
                                 <span className={item.productName ? 'text-[var(--text)] font-medium' : 'text-[var(--text-secondary)] italic'}>
                                   {item.productName || 'Клацніть для вибору товару...'}
@@ -643,7 +643,7 @@ export default function BuyerIssueForm() {
                             min="0.001"
                             required={!!item.productId}
                             disabled={!item.productId}
-                            className="w-20 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none disabled:opacity-40 text-center font-semibold"
+                            className="w-20 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none disabled:opacity-40 text-center font-semibold"
                             value={item.quantity}
                             onChange={(e) => updateRowField(index, 'quantity', e.target.value)}
                             onFocus={(e) => e.target.select()}
@@ -660,7 +660,7 @@ export default function BuyerIssueForm() {
                             step="any"
                             min="0"
                             disabled={!item.productId}
-                            className="w-20 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none disabled:opacity-40 text-center font-semibold"
+                            className="w-20 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none disabled:opacity-40 text-center font-semibold"
                             placeholder="неоцінено"
                             value={item.price}
                             onChange={(e) => updateRowField(index, 'price', e.target.value)}
@@ -668,7 +668,7 @@ export default function BuyerIssueForm() {
                           />
                           <select
                             disabled={!item.productId}
-                            className="w-14 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none disabled:opacity-40 cursor-pointer"
+                            className="w-14 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none disabled:opacity-40 cursor-pointer"
                             value={item.currency || 'UAH'}
                             onChange={(e) => updateRowField(index, 'currency', e.target.value)}
                           >
