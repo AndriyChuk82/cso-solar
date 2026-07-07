@@ -31,6 +31,18 @@ export default function BuyerIssueForm() {
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [printWithPrices, setPrintWithPrices] = useState(true);
 
+  // Стан для безпечного підтвердження дій
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    type: '', // 'delete' | 'archive'
+    title: '',
+    message: '',
+    confirmWord: '',
+    userTypedWord: '',
+    isCheckboxChecked: false,
+    onConfirm: null
+  });
+
   const [formData, setFormData] = useState({
     buyerId: queryBuyerId || '',
     warehouseId: '',
@@ -356,26 +368,40 @@ export default function BuyerIssueForm() {
     }
   }
 
-  async function handleArchiveToggle() {
+  function closeConfirmModal() {
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+  }
+
+  function triggerArchiveToggle() {
     if (!txId) return;
-    const msg = isArchived 
-      ? 'Ви впевнені, що хочете відкрити цю накладну з архіву?' 
-      : 'Ви впевнені, що хочете закрити цю накладну та перемістити її в архів?';
-    if (!window.confirm(msg)) return;
-    setSaving(true);
-    try {
-      const targetState = !isArchived;
-      const res = await toggleArchiveTransaction(txId, targetState);
-      if (res.success) {
-        showToast(targetState ? 'Накладну закрито та переміщено в архів' : 'Накладну відновлено з архіву', 'success');
-        navigate(-1);
+    const targetState = !isArchived;
+    setConfirmModal({
+      isOpen: true,
+      type: 'archive',
+      title: targetState ? '🗄️ Закриття накладної' : '🔄 Розархівування накладної',
+      message: targetState 
+        ? 'Ви дійсно хочете закрити цю накладну та перемістити її в архів? Архівні накладні фіксуються для обліку і не підлягають подальшому випадковому редагуванню.'
+        : 'Ви дійсно хочете розархівувати та знову відкрити цю накладну для редагування?',
+      confirmWord: '',
+      userTypedWord: '',
+      isCheckboxChecked: false,
+      onConfirm: async () => {
+        setSaving(true);
+        try {
+          const res = await toggleArchiveTransaction(txId, targetState);
+          if (res.success) {
+            showToast(targetState ? 'Накладну закрито та переміщено в архів' : 'Накладну відновлено з архіву', 'success');
+            navigate(-1);
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Не вдалося змінити статус архівування', 'error');
+        } finally {
+          setSaving(false);
+          closeConfirmModal();
+        }
       }
-    } catch (err) {
-      console.error(err);
-      showToast('Не вдалося змінити статус архівування', 'error');
-    } finally {
-      setSaving(false);
-    }
+    });
   }
 
   function handlePrintAct() {
@@ -383,22 +409,33 @@ export default function BuyerIssueForm() {
     navigate(`/buyers/${formData.buyerId}?tab=reconciliation&act=${txId}`);
   }
 
-  async function handleDelete() {
+  function triggerDelete() {
     if (!txId) return;
-    if (!window.confirm('Ви впевнені, що хочете видалити цю транзакцію? Це автоматично скасує списання товару на складі.')) return;
-    setSaving(true);
-    try {
-      const res = await deleteBuyerTransaction(txId);
-      if (res.success) {
-        showToast('Транзакцію успішно видалено', 'success');
-        navigate(-1);
+    setConfirmModal({
+      isOpen: true,
+      type: 'delete',
+      title: '⚠️ Видалення накладної',
+      message: 'УВАГА: Ви збираєтеся остаточно видалити цю накладну. Це автоматично анулює списання товарів на складі, і вони повернуться в загальний залишок. Цю дію неможливо скасувати.',
+      confirmWord: 'ВИДАЛИТИ',
+      userTypedWord: '',
+      isCheckboxChecked: false,
+      onConfirm: async () => {
+        setSaving(true);
+        try {
+          const res = await deleteBuyerTransaction(txId);
+          if (res.success) {
+            showToast('Транзакцію успішно видалено', 'success');
+            navigate(-1);
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Не вдалося видалити транзакцію', 'error');
+        } finally {
+          setSaving(false);
+          closeConfirmModal();
+        }
       }
-    } catch (err) {
-      console.error(err);
-      showToast('Не вдалося видалити транзакцію', 'error');
-    } finally {
-      setSaving(false);
-    }
+    });
   }
 
   const selectedBuyer = buyers.find(b => b.id === formData.buyerId);
@@ -742,7 +779,7 @@ export default function BuyerIssueForm() {
             <div className="flex gap-2 mr-auto">
               <button
                 type="button"
-                onClick={handleArchiveToggle}
+                onClick={triggerArchiveToggle}
                 disabled={saving}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] hover:bg-[var(--border-light)] transition-colors flex items-center gap-1.5"
               >
@@ -783,7 +820,7 @@ export default function BuyerIssueForm() {
               </button>
               <button
                 type="button"
-                onClick={handleDelete}
+                onClick={triggerDelete}
                 disabled={saving}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-red-500/20 text-red-500 bg-red-500/5 hover:bg-red-500/10 transition-colors flex items-center gap-1.5"
               >
@@ -868,6 +905,85 @@ export default function BuyerIssueForm() {
               >
                 🖨️ Друкувати
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Модальне вікно безпеки підтвердження (видалення / закриття) */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[110] p-4 backdrop-blur-sm">
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-2xl max-w-sm w-full overflow-hidden flex flex-col">
+            <div className={`p-4 text-white flex items-center justify-between ${
+              confirmModal.type === 'delete' ? 'bg-red-600' : 'bg-amber-600'
+            }`}>
+              <h3 className="font-bold text-sm">{confirmModal.title}</h3>
+              <button 
+                type="button"
+                onClick={closeConfirmModal}
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <p className="text-xs text-[var(--text)] leading-relaxed">
+                {confirmModal.message}
+              </p>
+
+              {confirmModal.type === 'delete' && (
+                <div className="space-y-2">
+                  <label className="block text-[10px] text-[var(--text-secondary)] font-semibold uppercase">
+                    Введіть слово <span className="text-red-500 font-bold font-mono">ВИДАЛИТИ</span> для підтвердження:
+                  </label>
+                  <input 
+                    type="text"
+                    className="w-full p-2 text-xs rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] focus:outline-none focus:ring-1 focus:ring-red-500"
+                    placeholder="Введіть слово великими літерами"
+                    value={confirmModal.userTypedWord}
+                    onChange={(e) => setConfirmModal(prev => ({ ...prev, userTypedWord: e.target.value }))}
+                  />
+                </div>
+              )}
+
+              {confirmModal.type === 'archive' && (
+                <label className="flex items-start gap-2.5 cursor-pointer p-2 rounded bg-[var(--bg)] border border-[var(--border)] hover:bg-[var(--border-light)] transition-colors">
+                  <input 
+                    type="checkbox"
+                    checked={confirmModal.isCheckboxChecked}
+                    onChange={(e) => setConfirmModal(prev => ({ ...prev, isCheckboxChecked: e.target.checked }))}
+                    className="rounded text-amber-600 focus:ring-amber-500 cursor-pointer w-4 h-4 mt-0.5"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-semibold text-[var(--text)]">Я підтверджую виконання дії</span>
+                    <span className="text-[9px] text-[var(--text-secondary)]">Змінити статус архівування документа</span>
+                  </div>
+                </label>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 p-3 bg-[var(--bg)] border-t border-[var(--border)]">
+              <button 
+                type="button" 
+                onClick={closeConfirmModal}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg text-[var(--text-secondary)] bg-[var(--bg-card)] hover:bg-[var(--border-light)] border border-[var(--border)] transition-colors"
+              >
+                Скасувати
+              </button>
+              <button 
+                type="button"
+                disabled={
+                  confirmModal.type === 'delete' 
+                    ? confirmModal.userTypedWord !== 'ВИДАЛИТИ'
+                    : !confirmModal.isCheckboxChecked
+                }
+                onClick={confirmModal.onConfirm}
+                className={`px-4 py-1.5 text-xs font-bold rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  confirmModal.type === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'
+                }`}
+              >
+                {confirmModal.type === 'delete' ? '🗑️ Остаточно видалити' : '✔️ Підтвердити'}
+              </button>
             </div>
           </div>
         </div>
