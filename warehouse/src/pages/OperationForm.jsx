@@ -229,10 +229,10 @@ export default function OperationForm({ type = 'income' }) {
         {/* Компактні поля шапки (1С стиль) */}
         <div className="card p-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
           <div className="flex flex-wrap gap-2 text-xs">
-            <div className="flex flex-col gap-0.5 flex-1 min-w-[140px] sm:flex-initial sm:w-48">
+            <div className="flex flex-col gap-0.5 w-full sm:w-48">
               <label className="font-semibold text-[var(--text-secondary)] text-[10px] pl-0.5">Склад *</label>
               <select
-                className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none w-full"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none w-full"
                 value={formData.warehouseId}
                 onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
                 required
@@ -243,11 +243,11 @@ export default function OperationForm({ type = 'income' }) {
                 ))}
               </select>
             </div>
-            <div className="flex flex-col gap-0.5 flex-1 min-w-[130px] sm:flex-initial sm:w-28">
+            <div className="flex flex-col gap-0.5 w-full sm:w-32">
               <label className="font-semibold text-[var(--text-secondary)] text-[10px] pl-0.5">Дата</label>
               <input
                 type="date"
-                className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none w-full"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none w-full"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 required
@@ -258,7 +258,7 @@ export default function OperationForm({ type = 'income' }) {
               <input
                 type="text"
                 placeholder={isIncome ? 'Поставка від...' : 'Причина...'}
-                className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none w-full"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none w-full"
                 value={formData.comment}
                 onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
               />
