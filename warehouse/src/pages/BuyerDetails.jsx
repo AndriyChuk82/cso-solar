@@ -611,12 +611,13 @@ export default function BuyerDetails() {
                                   {t.linkedPayments.map((lp, lIdx) => {
                                     const displayComment = (lp.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/, '');
                                     const lpAmt = parseFloat(lp.amount) || 0;
-                                    const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `$${lpAmt.toLocaleString('uk-UA')}`;
+                                    const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `${lpAmt.toLocaleString('uk-UA')}`;
+                                    const showAmt = t.linkedPayments.length > 1;
                                     return (
                                       <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
                                         <span>💰 {displayComment} ({lp.date})</span>
                                         <div className="flex gap-1.5 items-center">
-                                          <span className="font-semibold">{formattedLpAmt}</span>
+                                          {showAmt && <span className="font-semibold">{formattedLpAmt}</span>}
                                           <button 
                                             onClick={(e) => { e.stopPropagation(); startEdit(lp); }} 
                                             className="text-amber-500 hover:underline text-[9px]"
@@ -815,11 +816,12 @@ export default function BuyerDetails() {
                                   {t.linkedPayments.map((lp, lIdx) => {
                                     const displayComment = (lp.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/, '');
                                     const lpAmt = parseFloat(lp.amount) || 0;
-                                    const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `$${lpAmt.toLocaleString('uk-UA')}`;
+                                    const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `${lpAmt.toLocaleString('uk-UA')}`;
+                                    const showAmt = t.linkedPayments.length > 1;
                                     return (
                                       <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5 opacity-75" onClick={(e) => e.stopPropagation()}>
                                         <span>💰 {displayComment} ({lp.date})</span>
-                                        <span className="font-semibold">{formattedLpAmt}</span>
+                                        {showAmt && <span className="font-semibold">{formattedLpAmt}</span>}
                                       </div>
                                     );
                                   })}
@@ -1152,12 +1154,13 @@ export default function BuyerDetails() {
                                       {t.linkedPayments.map((lp, lIdx) => {
                                         const displayComment = (lp.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/, '');
                                         const lpAmt = parseFloat(lp.amount) || 0;
-                                        const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `$${lpAmt.toLocaleString('uk-UA')}`;
+                                        const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `${lpAmt.toLocaleString('uk-UA')}`;
+                                        const showAmt = t.linkedPayments.length > 1;
                                         return (
                                           <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
                                             <span>💰 {displayComment} ({lp.date})</span>
                                             <div className="flex gap-1.5 items-center no-print">
-                                              <span className="font-semibold">{formattedLpAmt}</span>
+                                              {showAmt && <span className="font-semibold">{formattedLpAmt}</span>}
                                               <button 
                                                 onClick={(e) => { e.stopPropagation(); startEdit(lp); }} 
                                                 className="text-amber-500 hover:underline text-[9px]"

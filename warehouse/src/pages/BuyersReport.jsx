@@ -560,9 +560,10 @@ export default function BuyersReport() {
                                                         const displayComment = (lp.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/, '');
                                                         const lpAmt = parseFloat(lp.amount) || 0;
                                                         const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `$${lpAmt.toLocaleString('uk-UA')}`;
+                                                        const showAmt = t.linkedPayments.length > 1;
                                                         return (
                                                           <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center gap-1 animate-fadeIn">
-                                                            <span>💰 {displayComment} ({lp.date}) — <span className="font-semibold">{formattedLpAmt}</span></span>
+                                                            <span>💰 {displayComment} ({lp.date}){showAmt ? ` — ${formattedLpAmt}` : ''}</span>
                                                           </div>
                                                         );
                                                       })}
@@ -718,9 +719,10 @@ export default function BuyersReport() {
                                                         const displayComment = (lp.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/, '');
                                                         const lpAmt = parseFloat(lp.amount) || 0;
                                                         const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `$${lpAmt.toLocaleString('uk-UA')}`;
+                                                        const showAmt = t.linkedPayments.length > 1;
                                                         return (
                                                           <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
-                                                            <span>💰 {displayComment} ({lp.date}) — <span className="font-semibold">{formattedLpAmt}</span></span>
+                                                            <span>💰 {displayComment} ({lp.date}){showAmt ? ` — ${formattedLpAmt}` : ''}</span>
                                                           </div>
                                                         );
                                                       })}
@@ -1044,9 +1046,10 @@ export default function BuyersReport() {
                                             const displayComment = (lp.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/, '');
                                             const lpAmt = parseFloat(lp.amount) || 0;
                                             const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `$${lpAmt.toLocaleString('uk-UA')}`;
+                                            const showAmt = t.linkedPayments.length > 1;
                                             return (
                                               <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
-                                                <span>💰 {displayComment} ({lp.date}) — <span className="font-semibold">{formattedLpAmt}</span></span>
+                                                <span>💰 {displayComment} ({lp.date}){showAmt ? ` — ${formattedLpAmt}` : ''}</span>
                                               </div>
                                             );
                                           })}
@@ -1158,9 +1161,10 @@ export default function BuyersReport() {
                                           const displayComment = (lp.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/, '');
                                           const lpAmt = parseFloat(lp.amount) || 0;
                                           const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `$${lpAmt.toLocaleString('uk-UA')}`;
+                                          const showAmt = t.linkedPayments.length > 1;
                                           return (
                                             <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
-                                              <span>💰 {displayComment} ({lp.date}) — <span className="font-semibold">{formattedLpAmt}</span></span>
+                                              <span>💰 {displayComment} ({lp.date}){showAmt ? ` — ${formattedLpAmt}` : ''}</span>
                                             </div>
                                           );
                                         })}
