@@ -37,7 +37,29 @@ export function matchesSearch(content, query) {
   const normalizedContent = normalizeForSearch(content);
   
   return searchWords.every(word => {
-    return normalizedContent.includes(normalizeForSearch(word));
+    const normalizedWord = normalizeForSearch(word);
+    
+    // Якщо пошукове слово складається лише з цифр, воно має збігатися як окреме число
+    // (без сусідніх цифр, тобто не бути частиною чисел на кшталт 80, 180 або 038)
+    if (/^\d+$/.test(normalizedWord)) {
+      let index = normalizedContent.indexOf(normalizedWord);
+      while (index !== -1) {
+        const prevChar = index > 0 ? normalizedContent[index - 1] : '';
+        const nextChar = index + normalizedWord.length < normalizedContent.length 
+          ? normalizedContent[index + normalizedWord.length] 
+          : '';
+        const isPrevDigit = prevChar >= '0' && prevChar <= '9';
+        const isNextDigit = nextChar >= '0' && nextChar <= '9';
+        
+        if (!isPrevDigit && !isNextDigit) {
+          return true;
+        }
+        index = normalizedContent.indexOf(normalizedWord, index + 1);
+      }
+      return false;
+    }
+    
+    return normalizedContent.includes(normalizedWord);
   });
 }
 
