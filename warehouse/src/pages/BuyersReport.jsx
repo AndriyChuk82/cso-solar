@@ -97,9 +97,54 @@ export default function BuyersReport() {
   }
 
   // Розрахунок оборотної відомості (Trial Balance) по кожному покупцю
+  // 1. Попередній аналіз та групування пов'язаних платежів
+  const processedTransactions = [];
+  const linkedPaymentsMap = {}; // invoiceId -> array of payments
+
+  // Спочатку збираємо всі пов'язані платежі (які не архівні)
+  transactions.forEach(t => {
+    if (t.is_archived === true) return;
+    if (t.type === 'payment') {
+      const match = t.comment?.match(/\[invoice_id:([\w-]+)\]/);
+      if (match) {
+        const invoiceId = match[1];
+        linkedPaymentsMap[invoiceId] = linkedPaymentsMap[invoiceId] || [];
+        linkedPaymentsMap[invoiceId].push(t);
+      }
+    }
+  });
+
+  // Будуємо список оброблених транзакцій (виключаючи зв'язані платежі як окремі документи)
+  transactions.forEach(t => {
+    if (t.type === 'payment') {
+      const match = t.comment?.match(/\[invoice_id:([\w-]+)\]/);
+      if (match) {
+        const invoiceId = match[1];
+        const invoiceExists = transactions.some(inv => inv.id === invoiceId && inv.is_archived !== true);
+        if (invoiceExists) {
+          // Якщо накладна існує, не додаємо цей платіж як окремий рядок
+          return;
+        }
+      }
+    }
+    
+    // Якщо це накладна (issue), додаємо до неї зв'язані платежі
+    if (t.type === 'issue') {
+      const linked = linkedPaymentsMap[t.id] || [];
+      processedTransactions.push({
+        ...t,
+        linkedPayments: linked,
+        paidAmount: linked.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)
+      });
+    } else {
+      processedTransactions.push({ ...t, linkedPayments: [], paidAmount: 0 });
+    }
+  });
+
+  // Розрахунок оборотної відомості (Trial Balance) по кожному покупцю
   const trialBalanceRows = buyers.map(buyer => {
     // Сортуємо транзакції клієнта хронологічно для правильного розрахунку накопичувального підсумку
-    const buyerTx = [...transactions]
+    const buyerTx = [...processedTransactions]
       .filter(t => t.buyer_id === buyer.id && t.is_archived !== true)
       .sort((a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at));
     
@@ -120,6 +165,20 @@ export default function BuyersReport() {
           if (cur === 'UAH') uahOpening += amt;
           if (cur === 'USD') usdOpening += amt;
         }
+        
+        // Враховуємо лінковані платежі до періоду
+        if (t.type === 'issue' && t.linkedPayments) {
+          t.linkedPayments.forEach(lp => {
+            const lpAmt = parseFloat(lp.amount) || 0;
+            if (lp.date < dateFrom) {
+              if (lp.currency === 'UAH') uahOpening += lpAmt;
+              if (lp.currency === 'USD') usdOpening += lpAmt;
+            } else if (lp.date >= dateFrom && lp.date <= dateTo) {
+              if (lp.currency === 'UAH') uahPaid += lpAmt;
+              if (lp.currency === 'USD') usdPaid += lpAmt;
+            }
+          });
+        }
       }
     });
 
@@ -137,9 +196,30 @@ export default function BuyersReport() {
       if (t.type === 'issue') {
         if (cur === 'UAH') { uahDeb = amt; currentUahRunning -= amt; uahIssued += amt; }
         if (cur === 'USD') { usdDeb = amt; currentUsdRunning -= amt; usdIssued += amt; }
+        
+        // Враховуємо лінковані платежі в межах періоду
+        if (t.linkedPayments) {
+          t.linkedPayments.forEach(lp => {
+            const lpAmt = parseFloat(lp.amount) || 0;
+            if (lp.currency === 'UAH') {
+              uahCred += lpAmt;
+              currentUahRunning += lpAmt;
+              if (lp.date >= dateFrom && lp.date <= dateTo) {
+                uahPaid += lpAmt;
+              }
+            }
+            if (lp.currency === 'USD') {
+              usdCred += lpAmt;
+              currentUsdRunning += lpAmt;
+              if (lp.date >= dateFrom && lp.date <= dateTo) {
+                usdPaid += lpAmt;
+              }
+            }
+          });
+        }
       } else {
-        if (cur === 'UAH') { uahCred = amt; currentUahRunning += amt; uahPaid += amt; }
-        if (cur === 'USD') { usdCred = amt; currentUsdRunning += amt; usdPaid += amt; }
+        if (cur === 'UAH') { uahCred = amt; currentUahRunning += amt; if (t.date >= dateFrom && t.date <= dateTo) uahPaid += amt; }
+        if (cur === 'USD') { usdCred = amt; currentUsdRunning += amt; if (t.date >= dateFrom && t.date <= dateTo) usdPaid += amt; }
       }
 
       if (t.date >= dateFrom && t.date <= dateTo) {
@@ -192,7 +272,7 @@ export default function BuyersReport() {
   });
 
   // Фільтрування загального журналу операцій (вкладка 2)
-  const filteredJournalTransactions = transactions
+  const filteredJournalTransactions = processedTransactions
     .filter(t => t.is_archived !== true)
     .filter(t => t.date >= dateFrom && t.date <= dateTo)
     .filter(t => currencyFilter === 'ALL' || t.currency === currencyFilter)
@@ -922,12 +1002,28 @@ export default function BuyersReport() {
                                         )}
                                       </div>
                                       {t.comment && (
-                                        <div className="text-[10px] text-[var(--text-secondary)] italic mt-1">Коментар: {t.comment}</div>
+                                        <div className="text-[10px] text-[var(--text-secondary)] italic mt-1">Коментар: {(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}</div>
+                                      )}
+                                      {/* Вкладені лінковані платежі */}
+                                      {t.linkedPayments && t.linkedPayments.length > 0 && (
+                                        <div className="mt-2 pt-2 border-t border-[var(--border)]/40 space-y-1">
+                                          {t.linkedPayments.map((lp, lIdx) => {
+                                            const displayComment = (lp.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/, '');
+                                            const lpAmt = parseFloat(lp.amount) || 0;
+                                            const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `$${lpAmt.toLocaleString('uk-UA')}`;
+                                            return (
+                                              <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5">
+                                                <span>💰 {displayComment} ({lp.date})</span>
+                                                <span className="font-semibold">{formattedLpAmt}</span>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
                                       )}
                                     </div>
                                   ) : (
                                     <div>
-                                      <span className="font-medium text-[var(--text)] block">{t.comment || '—'}</span>
+                                      <span className="font-medium text-[var(--text)] block">{(t.comment || '—').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}</span>
                                       {t.converted_amount && (
                                         <span className="text-[10px] text-green-600 block mt-0.5">
                                           Зараховано: {t.converted_amount.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'USD' : 'UAH'} за курсом {t.conversion_rate}
@@ -944,8 +1040,9 @@ export default function BuyersReport() {
                                 <td className="p-2 text-center align-top text-green-500 font-medium">
                                   {(!isIssue && !(isAdj && amt < 0)) && amt > 0 ? (
                                     `${amt.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
-                                  ) : '—'}
-                                </td>
+                                  ) : isIssue && t.paidAmount > 0 ? (
+                                    `${t.paidAmount.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
+                                  ) : '—'}</td>
                                 <td className="p-2 text-right align-top no-print">
                                   <div className="flex justify-end gap-1.5">
                                     {isIssue && (
@@ -1003,77 +1100,75 @@ export default function BuyersReport() {
 
                               {/* Деталі */}
                               {isIssue ? (
-                                <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg)]/50 p-2 rounded border border-[var(--border)]/40 space-y-1">
-                                  {t.items?.map((item, idx) => {
-                                    const priceTxt = item.price !== null && item.price !== undefined && item.price !== ''
-                                      ? ` × ${item.price} ${item.currency || t.currency}`
-                                      : '';
-                                    return (
-                                      <div key={idx} className="leading-tight">
-                                        • {item.product_name} — <span className="font-semibold text-[var(--text)]">{item.quantity} {item.unit}</span>{priceTxt}
+                                  <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg)]/50 p-2 rounded border border-[var(--border)]/40 space-y-1">
+                                    {t.items?.map((item, idx) => {
+                                      const priceTxt = item.price !== null && item.price !== undefined && item.price !== ''
+                                        ? ` × ${item.price} ${item.currency || t.currency}`
+                                        : '';
+                                      return (
+                                        <div key={idx} className="leading-tight">
+                                          • {item.product_name} — <span className="font-semibold text-[var(--text)]">{item.quantity} {item.unit}</span>{priceTxt}
+                                        </div>
+                                      );
+                                    })}
+                                    {t.status === 'pending_price' && (
+                                      <div className="text-yellow-600 font-semibold mt-1">⚠️ (Ціна очікується)</div>
+                                    )}
+                                    {t.comment && (
+                                      <div className="text-[10px] text-[var(--text-secondary)] italic border-t border-[var(--border)]/40 pt-1 mt-1">
+                                        Коментар: {(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}
                                       </div>
-                                    );
-                                  })}
-                                  {t.status === 'pending_price' && (
-                                    <div className="text-yellow-600 font-semibold mt-1">⚠️ (Ціна очікується)</div>
-                                  )}
-                                  {t.comment && (
-                                    <div className="text-[10px] text-[var(--text-secondary)] italic border-t border-[var(--border)]/40 pt-1 mt-1">
-                                      Коментар: {t.comment}
-                                    </div>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg)]/50 p-2 rounded border border-[var(--border)]/40 space-y-1">
-                                  <div className="leading-tight font-medium">{t.comment || '—'}</div>
-                                  {t.converted_amount && (
-                                    <div className="text-green-600 font-semibold text-[10px]">
-                                      Зараховано: {t.converted_amount.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'USD' : 'UAH'} за курсом {t.conversion_rate}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* Суми та дії */}
-                              <div className="flex justify-between items-center pt-1 border-t border-[var(--border)]/40 text-[11px]">
-                                <div className="flex gap-4">
-                                  <div>
-                                    <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Нараховано</span>
-                                    <span className="text-red-500 font-bold">
-                                      {(isIssue || (isAdj && amt < 0)) && amt > 0
-                                        ? `${Math.abs(amt).toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
-                                        : '—'}
-                                    </span>
+                                    )}
+                                    {/* Вкладені лінковані платежі мобільна версія */}
+                                    {t.linkedPayments && t.linkedPayments.length > 0 && (
+                                      <div className="mt-2 pt-2 border-t border-[var(--border)]/40 space-y-1">
+                                        {t.linkedPayments.map((lp, lIdx) => {
+                                          const displayComment = (lp.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/, '');
+                                          const lpAmt = parseFloat(lp.amount) || 0;
+                                          const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `$${lpAmt.toLocaleString('uk-UA')}`;
+                                          return (
+                                            <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5">
+                                              <span>💰 {displayComment} ({lp.date})</span>
+                                              <span className="font-semibold">{formattedLpAmt}</span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
                                   </div>
-                                  <div>
-                                    <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Сплачено</span>
-                                    <span className="text-green-600 font-bold">
-                                      {(!isIssue && !(isAdj && amt < 0)) && amt > 0
-                                        ? `${amt.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
-                                        : '—'}
-                                    </span>
+                                ) : (
+                                  <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg)]/50 p-2 rounded border border-[var(--border)]/40 space-y-1">
+                                    <div className="leading-tight font-medium">{(t.comment || '—').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}</div>
+                                    {t.converted_amount && (
+                                      <div className="text-green-600 font-semibold text-[10px]">
+                                        Зараховано: {t.converted_amount.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'USD' : 'UAH'} за курсом {t.conversion_rate}
+                                      </div>
+                                    )}
                                   </div>
-                                </div>
+                                )}
 
-                                {/* Дії */}
-                                <div className="flex gap-2 no-print">
-                                  {isIssue && (
-                                    <button 
-                                      onClick={() => startEdit(t)} 
-                                      className="text-amber-500 hover:bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20 text-xs font-semibold"
-                                      title="Редагувати"
-                                    >
-                                      ✏️ Редагувати
-                                    </button>
-                                  )}
-                                  <button 
-                                    onClick={() => handleDeleteTransaction(t.id)} 
-                                    className="text-red-500 hover:bg-red-500/10 px-2 py-1 rounded border border-red-500/20 text-xs font-semibold"
-                                    title="Видалити"
-                                  >
-                                    ❌ Видалити
-                                  </button>
-                                </div>
+                                {/* Суми та дії */}
+                                <div className="flex justify-between items-center pt-1 border-t border-[var(--border)]/40 text-[11px]">
+                                  <div className="flex gap-4">
+                                    <div>
+                                      <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Нараховано</span>
+                                      <span className="text-red-500 font-bold">
+                                        {(isIssue || (isAdj && amt < 0)) && amt > 0
+                                          ? `${Math.abs(amt).toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
+                                          : '—'}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Сплачено</span>
+                                      <span className="text-green-600 font-bold">
+                                        {(!isIssue && !(isAdj && amt < 0)) && amt > 0
+                                          ? `${amt.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
+                                          : isIssue && t.paidAmount > 0 ? (
+                                            `${t.paidAmount.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
+                                          ) : '—'}
+                                      </span>
+                                    </div>
+                                  </div>
                               </div>
                             </div>
                           );

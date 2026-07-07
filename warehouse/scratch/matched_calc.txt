@@ -1,0 +1,101 @@
+// Розрахунок оборотної відомості (Trial Balance) по кожному покупцю
+  const trialBalanceRows = buyers.map(buyer => {
+    // Сортуємо транзакції клієнта хронологічно для правильного розрахунку накопичувального підсумку
+    const buyerTx = [...transactions]
+      .filter(t => t.buyer_id === buyer.id && t.is_archived !== true)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at));
+    
+    let uahOpening = 0, usdOpening = 0;
+    let uahIssued = 0, usdIssued = 0;
+    let uahPaid = 0, usdPaid = 0;
+
+    // 1. Початковий баланс до початку періоду
+    buyerTx.forEach(t => {
+      const amt = parseFloat(t.amount) || 0;
+      const cur = t.currency;
+
+      if (t.date < dateFrom) {
+        if (t.type === 'issue') {
+          if (cur === 'UAH') uahOpening -= amt;
+          if (cur === 'USD') usdOpening -= amt;
+        } else {
+          if (cur === 'UAH') uahOpening += amt;
+          if (cur === 'USD') usdOpening += amt;
+        }
+      }
+    });
+
+    let currentUahRunning = uahOpening;
+    let currentUsdRunning = usdOpening;
+    const periodItems = [];
+
+    // 2. Обходимо транзакції періоду та розраховуємо накопичувальний підсумок для кожної операції
+    buyerTx.forEach(t => {
+      const amt = parseFloat(t.amount) || 0;
+      const cur = t.currency;
+
+      let uahDeb = 0, uahCred = 0, usdDeb = 0, usdCred = 0;
+
+      if (t.type === 'issue') {
+        if (cur === 'UAH') { uahDeb = amt; currentUahRunning -= amt; uahIssued += amt; }
+        if (cur === 'USD') { usdDeb = amt; currentUsdRunning -= amt; usdIssued += amt; }
+      } else {
+        if (cur === 'UAH') { uahCred = amt; currentUahRunning += amt; uahPaid += amt; }
+        if (cur === 'USD') { usdCred = amt; currentUsdRunning += amt; usdPaid += amt; }
+      }
+
+      if (t.date >= dateFrom && t.date <= dateTo) {
+        periodItems.push({
+          ...t,
+          uahDeb,
+          uahCred,
+          usdDeb,
+          usdCred,
+          uahRunning: currentUahRunning,
+          usdRunning: currentUsdRunning
+        });
+      }
+    });
+
+    const uahClosing = uahOpening - uahIssued + uahPaid;
+    const usdClosing = usdOpening - usdIssued + usdPaid;
+
+    return {
+      id: buyer.id,
+      name: buyer.name,
+      phone: buyer.phone,
+      uahOpening,
+      usdOpening,
+      uahIssued,
+      usdIssued,
+      uahPaid,
+      usdPaid,
+      uahClosing,
+      usdClosing,
+      items: periodItems
+    };
+  });
+
+  // Підрахунок загальних сум для підвалу відомості
+  let totalUahOpening = 0, totalUsdOpening = 0;
+  let totalUahIssued = 0, totalUsdIssued = 0;
+  let totalUahPaid = 0, totalUsdPaid = 0;
+  let totalUahClosing = 0, totalUsdClosing = 0;
+
+  trialBalanceRows.forEach(row => {
+    totalUahOpening += row.uahOpening;
+    totalUsdOpening += row.usdOpening;
+    totalUahIssued += row.uahIssued;
+    totalUsdIssued += row.usdIssued;
+    totalUahPaid += row.uahPaid;
+    totalUsdPaid += row.usdPaid;
+    totalUahClosing += row.uahClosing;
+    totalUsdClosing += row.usdClosing;
+  });
+
+  // Фільтрування загального журналу операцій (вкладка 2)
+  const filteredJournalTransactions = transactions
+    .filter(t => t.is_archived !== true)
+    .filter(t => t.date >= dateFrom && t.date <= dateTo)
+    .filter(t => currencyFilter === 'ALL' || t.currency === currencyFilter)
+    .sort((a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at)); // Новіші спочатку
