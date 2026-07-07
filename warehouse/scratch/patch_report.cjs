@@ -2,7 +2,9 @@ const fs = require('fs');
 const filepath = 'warehouse/src/pages/BuyersReport.jsx';
 let content = fs.readFileSync(filepath, 'utf8').replace(/\r\n/g, '\n');
 
+// ==========================================
 // 1. Calculations block replacement
+// ==========================================
 const calcStartMarker = "// Розрахунок оборотної відомості (Trial Balance) по кожному покупцю";
 const calcEndMarker = "sort((a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at)); // Новіші спочатку";
 
@@ -199,7 +201,11 @@ const newCalcBlock = `// Розрахунок оборотної відомос�
     .filter(t => currencyFilter === 'ALL' || t.currency === currencyFilter)
     .sort((a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at)); // Новіші спочатку`;
 
-// 2. Desktop table columns replacement
+content = content.substring(0, calcStart) + newCalcBlock + content.substring(calcEndIndex);
+
+// ==========================================
+// 2. Desktop Journal table columns replacement
+// ==========================================
 const firstMapIndex = content.indexOf("filteredJournalTransactions.map(t => {");
 if (firstMapIndex === -1) {
   console.error("Error: Could not locate desktop table map function!");
@@ -213,7 +219,7 @@ if (tdStartIndex === -1 || tdEndIndex === -1) {
   console.error("Error: Could not locate desktop table column boundaries!", { tdStartIndex, tdEndIndex });
   process.exit(1);
 }
-console.log("Desktop table columns boundaries found successfully!");
+console.log("Desktop Journal table columns boundaries found successfully!");
 
 const newDesktopColumns = `<td className="p-2 align-top">
                                   {isIssue ? (
@@ -276,14 +282,18 @@ const newDesktopColumns = `<td className="p-2 align-top">
                                     \`\${t.paidAmount.toLocaleString('uk-UA')} \${t.currency === 'UAH' ? 'грн' : '$'}\`
                                   ) : '—'}</td>`;
 
-// 3. Mobile cards replacement
-const secondMapIndex = content.indexOf("filteredJournalTransactions.map(t => {", firstMapIndex + 1);
-if (secondMapIndex === -1) {
+content = content.substring(0, tdStartIndex) + newDesktopColumns + content.substring(tdEndIndex);
+
+// ==========================================
+// 3. Mobile Journal cards replacement
+// ==========================================
+const newSecondMapIndex = content.indexOf("filteredJournalTransactions.map(t => {", firstMapIndex + 1);
+if (newSecondMapIndex === -1) {
   console.error("Error: Could not locate mobile card map function!");
   process.exit(1);
 }
 
-const mobileDetailsStartIndex = content.indexOf("{isIssue ? (", secondMapIndex);
+const mobileDetailsStartIndex = content.indexOf("{isIssue ? (", newSecondMapIndex);
 const splatanoIndex = content.indexOf('text-green-600 font-bold', mobileDetailsStartIndex);
 const div1 = content.indexOf('</div>', splatanoIndex) + 6;
 const div2 = content.indexOf('</div>', div1) + 6;
@@ -293,7 +303,7 @@ if (mobileDetailsStartIndex === -1 || splatanoIndex === -1 || div3 === -1) {
   console.error("Error: Could not locate mobile card boundaries!", { mobileDetailsStartIndex, splatanoIndex, div3 });
   process.exit(1);
 }
-console.log("Mobile cards boundaries found successfully!");
+console.log("Mobile Journal cards boundaries found successfully!");
 
 const newMobileCards = `{isIssue ? (
                                   <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg)]/50 p-2 rounded border border-[var(--border)]/40 space-y-1">
@@ -364,27 +374,218 @@ const newMobileCards = `{isIssue ? (
                                           ) : '—'}
                                       </span>
                                     </div>
-                                  </div>`;
+                                  </div>
+                                </div>`;
 
-// Apply substring insertions
-let newContent = content.substring(0, calcStart) + newCalcBlock + content.substring(calcEndIndex);
+content = content.substring(0, mobileDetailsStartIndex) + newMobileCards + content.substring(div3);
 
-// Re-calculate mobile/desktop offsets since line counts changed!
-// We'll search in the newly generated newContent:
-const newContentFirstMapIndex = newContent.indexOf("filteredJournalTransactions.map(t => {");
-const newContentTdStartIndex = newContent.indexOf('<td className="p-2 align-top">', newContentFirstMapIndex);
-const newContentTdEndIndex = newContent.indexOf('</td>', newContent.indexOf('text-green-500 font-medium', newContentTdStartIndex)) + '</td>'.length;
+// ==========================================
+// 4. Detailed Statement desktop columns replacement
+// ==========================================
+// Find first map of trialBalanceRows
+const firstTBMapIndex = content.indexOf("trialBalanceRows.map(row => (");
+if (firstTBMapIndex === -1) {
+  console.error("Error: Could not locate trialBalanceRows map in desktop detailed report!");
+  process.exit(1);
+}
 
-newContent = newContent.substring(0, newContentTdStartIndex) + newDesktopColumns + newContent.substring(newContentTdEndIndex);
+const desktopItemsMapIndex = content.indexOf("row.items.map(t => {", firstTBMapIndex);
+if (desktopItemsMapIndex === -1) {
+  console.error("Error: Could not locate row.items map in desktop detailed report!");
+  process.exit(1);
+}
 
-const newContentSecondMapIndex = newContent.indexOf("filteredJournalTransactions.map(t => {", newContentFirstMapIndex + 1);
-const newContentMobileStartIndex = newContent.indexOf("{isIssue ? (", newContentSecondMapIndex);
-const newContentSplatanoIndex = newContent.indexOf('text-green-600 font-bold', newContentMobileStartIndex);
-const newContentDiv1 = newContent.indexOf('</div>', newContentSplatanoIndex) + 6;
-const newContentDiv2 = newContent.indexOf('</div>', newContentDiv1) + 6;
-const newContentDiv3 = newContent.indexOf('</div>', newContentDiv2) + 6;
+const tbTdStartIndex = content.indexOf('<td className="p-2 align-top pl-6 text-[var(--text-secondary)]">', desktopItemsMapIndex);
+const tbDetailsStartIndex = content.indexOf('<td className="p-2 align-top">', tbTdStartIndex);
+const tbDetailsEndIndex = content.indexOf('</td>', content.indexOf('text-green-500 font-medium', tbDetailsStartIndex)) + '</td>'.length;
 
-newContent = newContent.substring(0, newContentMobileStartIndex) + newMobileCards + newContent.substring(newContentDiv3);
+if (tbDetailsStartIndex === -1 || tbDetailsEndIndex === -1) {
+  console.error("Error: Could not locate desktop detailed statement column boundaries!", { tbDetailsStartIndex, tbDetailsEndIndex });
+  process.exit(1);
+}
+console.log("Desktop Detailed Statement columns boundaries found successfully!");
 
-fs.writeFileSync(filepath, newContent, 'utf8');
-console.log("SUCCESS: BuyersReport.jsx successfully patched and verified!");
+const newTBDesktopColumns = `<td className="p-2 align-top">
+                                              {isIssue ? (
+                                                <div className="space-y-0.5">
+                                                  <span className="font-semibold text-[var(--text)] block">Видача матеріалів:</span>
+                                                  <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 pl-1.5">
+                                                    {t.items?.map((item, idx) => {
+                                                      const priceTxt = item.price !== null && item.price !== undefined && item.price !== ''
+                                                        ? \` × \${item.price} \${item.currency || t.currency}\`
+                                                        : '';
+                                                      return (
+                                                        <div key={idx} className="leading-tight">
+                                                          • {item.product_name} — <span className="font-semibold text-[var(--text)]">{item.quantity} {item.unit}</span>{priceTxt}
+                                                        </div>
+                                                      );
+                                                    })}
+                                                    {t.status === 'pending_price' && (
+                                                      <div className="text-yellow-600 font-semibold mt-1">⚠️ (Ціна очікується)</div>
+                                                    )}
+                                                  </div>
+                                                  {t.picked_up_by && (
+                                                    <div className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold mt-1">
+                                                      👤 Отримав: {t.picked_up_by}
+                                                    </div>
+                                                  )}
+                                                  {t.comment && (
+                                                    <div className="text-[10px] text-[var(--text-secondary)] italic mt-1">Коментар: {(t.comment || '').replace(/\\s*\\[invoice_id:[\\w-]+\\]/g, '')}</div>
+                                                  )}
+                                                  {/* Вкладені лінковані платежі у відомості взаєморозрахунків */}
+                                                  {t.linkedPayments && t.linkedPayments.length > 0 && (
+                                                    <div className="mt-2 pt-2 border-t border-[var(--border)]/40 space-y-1">
+                                                      {t.linkedPayments.map((lp, lIdx) => {
+                                                        const displayComment = (lp.comment || '').replace(/\\s*\\[invoice_id:[\\w-]+\\]/, '');
+                                                        const lpAmt = parseFloat(lp.amount) || 0;
+                                                        const formattedLpAmt = lp.currency === 'UAH' ? \`\${lpAmt.toLocaleString('uk-UA')} грн\` : \`$\${lpAmt.toLocaleString('uk-UA')}\`;
+                                                        return (
+                                                          <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5 animate-fadeIn">
+                                                            <span>💰 {displayComment} ({lp.date})</span>
+                                                            <span className="font-semibold">{formattedLpAmt}</span>
+                                                          </div>
+                                                        );
+                                                      })}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              ) : (
+                                                <div>
+                                                  <span className="font-semibold text-[var(--text)] block">
+                                                    {t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
+                                                  </span>
+                                                  <span className="text-[var(--text-secondary)] block mt-0.5">{(t.comment || '—').replace(/\\s*\\[invoice_id:[\\w-]+\\]/g, '')}</span>
+                                                  {t.converted_amount && (
+                                                    <span className="text-[10px] text-green-600 block mt-0.5">
+                                                      Зараховано: {t.converted_amount.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'USD' : 'UAH'} за курсом {t.conversion_rate}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              )}
+                                            </td>
+                                            <td className="p-2 text-center align-top text-red-500 font-medium">
+                                              {(isIssue || (isAdj && amt < 0)) && amt > 0 ? (
+                                                \`\${Math.abs(amt).toLocaleString('uk-UA')} \${t.currency === 'UAH' ? 'грн' : '$'}\`
+                                              ) : '—'}
+                                            </td>
+                                            <td className="p-2 text-center align-top text-green-500 font-medium">
+                                              {(!isIssue && !(isAdj && amt < 0)) && amt > 0 ? (
+                                                \`\${amt.toLocaleString('uk-UA')} \${t.currency === 'UAH' ? 'грн' : '$'}\`
+                                              ) : isIssue && t.paidAmount > 0 ? (
+                                                \`\${t.paidAmount.toLocaleString('uk-UA')} \${t.currency === 'UAH' ? 'грн' : '$'}\`
+                                              ) : '—'}</td>`;
+
+content = content.substring(0, tbDetailsStartIndex) + newTBDesktopColumns + content.substring(tbDetailsEndIndex);
+
+// ==========================================
+// 5. Detailed Statement mobile cards replacement
+// ==========================================
+const secondTBMapIndex = content.indexOf("trialBalanceRows.map(row => (", firstTBMapIndex + 1);
+if (secondTBMapIndex === -1) {
+  console.error("Error: Could not locate mobile trialBalanceRows map!");
+  process.exit(1);
+}
+
+const mobileItemsMapIndex = content.indexOf("row.items.map(t => {", secondTBMapIndex);
+if (mobileItemsMapIndex === -1) {
+  console.error("Error: Could not locate mobile items map!");
+  process.exit(1);
+}
+
+const tbMobileDetailsStartIndex = content.indexOf("{isIssue ? (", mobileItemsMapIndex);
+const tbMobileSplatanoIndex = content.indexOf('text-green-600 font-bold', tbMobileDetailsStartIndex);
+const tbMobileDiv1 = content.indexOf('</div>', tbMobileSplatanoIndex) + 6;
+const tbMobileDiv2 = content.indexOf('</div>', tbMobileDiv1) + 6;
+const tbMobileDiv3 = content.indexOf('</div>', tbMobileDiv2) + 6;
+
+if (tbMobileDetailsStartIndex === -1 || tbMobileSplatanoIndex === -1 || tbMobileDiv3 === -1) {
+  console.error("Error: Could not locate mobile detailed statement boundaries!", { tbMobileDetailsStartIndex, tbMobileSplatanoIndex, tbMobileDiv3 });
+  process.exit(1);
+}
+console.log("Mobile Detailed Statement cards boundaries found successfully!");
+
+const newTBMobileCards = `{isIssue ? (
+                                                <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg)]/50 p-2 rounded border border-[var(--border)]/40 space-y-1">
+                                                  {t.items?.map((item, idx) => {
+                                                    const priceTxt = item.price !== null && item.price !== undefined && item.price !== ''
+                                                      ? \` × \${item.price} \${item.currency || t.currency}\`
+                                                      : '';
+                                                    return (
+                                                      <div key={idx} className="leading-tight">
+                                                        • {item.product_name} — <span className="font-semibold text-[var(--text)]">{item.quantity} {item.unit}</span>{priceTxt}
+                                                      </div>
+                                                    );
+                                                  })}
+                                                  {t.status === 'pending_price' && (
+                                                    <div className="text-yellow-600 font-semibold mt-1">⚠️ (Ціна очікується)</div>
+                                                  )}
+                                                  {t.picked_up_by && (
+                                                    <div className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold mt-1">
+                                                      👤 Отримав: {t.picked_up_by}
+                                                    </div>
+                                                  )}
+                                                  {t.comment && (
+                                                    <div className="text-[10px] text-[var(--text-secondary)] italic border-t border-[var(--border)]/40 pt-1 mt-1">
+                                                      Коментар: {(t.comment || '').replace(/\\s*\\[invoice_id:[\\w-]+\\]/g, '')}
+                                                    </div>
+                                                  )}
+                                                  {/* Вкладені лінковані платежі мобільна версія */}
+                                                  {t.linkedPayments && t.linkedPayments.length > 0 && (
+                                                    <div className="mt-2 pt-2 border-t border-[var(--border)]/40 space-y-1">
+                                                      {t.linkedPayments.map((lp, lIdx) => {
+                                                        const displayComment = (lp.comment || '').replace(/\\s*\\[invoice_id:[\\w-]+\\]/, '');
+                                                        const lpAmt = parseFloat(lp.amount) || 0;
+                                                        const formattedLpAmt = lp.currency === 'UAH' ? \`\${lpAmt.toLocaleString('uk-UA')} грн\` : \`$\${lpAmt.toLocaleString('uk-UA')}\`;
+                                                        return (
+                                                          <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5">
+                                                            <span>💰 {displayComment} ({lp.date})</span>
+                                                            <span className="font-semibold">{formattedLpAmt}</span>
+                                                          </div>
+                                                        );
+                                                      })}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              ) : (
+                                                <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg)]/50 p-2 rounded border border-[var(--border)]/40 space-y-1">
+                                                  <div className="leading-tight font-medium">{(t.comment || '—').replace(/\\s*\\[invoice_id:[\\w-]+\\]/g, '')}</div>
+                                                  {t.converted_amount && (
+                                                    <div className="text-green-600 font-semibold text-[10px]">
+                                                      Зараховано: {t.converted_amount.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'USD' : 'UAH'} за курсом {t.conversion_rate}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              )}
+
+                                              {/* Суми */}
+                                              <div className="grid grid-cols-3 gap-2 pt-1 text-[11px] items-center">
+                                                <div>
+                                                  <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Нараховано</span>
+                                                  <span className="text-red-500 font-bold">
+                                                    {(isIssue || (isAdj && amt < 0)) && amt > 0
+                                                      ? \`\${Math.abs(amt).toLocaleString('uk-UA')} \${t.currency === 'UAH' ? 'грн' : '$'}\`
+                                                      : '—'}
+                                                  </span>
+                                                </div>
+                                                <div>
+                                                  <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Сплачено</span>
+                                                  <span className="text-green-600 font-bold">
+                                                    {(!isIssue && !(isAdj && amt < 0)) && amt > 0
+                                                      ? \`\${amt.toLocaleString('uk-UA')} \${t.currency === 'UAH' ? 'грн' : '$'}\`
+                                                      : isIssue && t.paidAmount > 0 ? (
+                                                        \`\${t.paidAmount.toLocaleString('uk-UA')} \${t.currency === 'UAH' ? 'грн' : '$'}\`
+                                                      ) : '—'}
+                                                  </span>
+                                                </div>
+                                                <div className="text-right">
+                                                  <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Баланс</span>
+                                                  <span className="font-bold text-[var(--text)]">
+                                                    {\`\${formatMoney(Math.abs(t.uahRunning), 'грн')} / \${formatMoney(Math.abs(t.usdRunning))}\`}
+                                                  </span>
+                                                </div>
+                                              </div>`;
+
+content = content.substring(0, tbMobileDetailsStartIndex) + newTBMobileCards + content.substring(tbMobileDiv3);
+
+fs.writeFileSync(filepath, content, 'utf8');
+console.log("SUCCESS: BuyersReport.jsx successfully patched!");

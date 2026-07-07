@@ -551,7 +551,23 @@ export default function BuyersReport() {
                                                     </div>
                                                   )}
                                                   {t.comment && (
-                                                    <div className="text-[10px] text-[var(--text-secondary)] italic mt-1">Коментар: {t.comment}</div>
+                                                    <div className="text-[10px] text-[var(--text-secondary)] italic mt-1">Коментар: {(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}</div>
+                                                  )}
+                                                  {/* Вкладені лінковані платежі у відомості взаєморозрахунків */}
+                                                  {t.linkedPayments && t.linkedPayments.length > 0 && (
+                                                    <div className="mt-2 pt-2 border-t border-[var(--border)]/40 space-y-1">
+                                                      {t.linkedPayments.map((lp, lIdx) => {
+                                                        const displayComment = (lp.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/, '');
+                                                        const lpAmt = parseFloat(lp.amount) || 0;
+                                                        const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `$${lpAmt.toLocaleString('uk-UA')}`;
+                                                        return (
+                                                          <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5 animate-fadeIn">
+                                                            <span>💰 {displayComment} ({lp.date})</span>
+                                                            <span className="font-semibold">{formattedLpAmt}</span>
+                                                          </div>
+                                                        );
+                                                      })}
+                                                    </div>
                                                   )}
                                                 </div>
                                               ) : (
@@ -559,7 +575,7 @@ export default function BuyersReport() {
                                                   <span className="font-semibold text-[var(--text)] block">
                                                     {t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                                                   </span>
-                                                  <span className="text-[var(--text-secondary)] block mt-0.5">{t.comment || '—'}</span>
+                                                  <span className="text-[var(--text-secondary)] block mt-0.5">{(t.comment || '—').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}</span>
                                                   {t.converted_amount && (
                                                     <span className="text-[10px] text-green-600 block mt-0.5">
                                                       Зараховано: {t.converted_amount.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'USD' : 'UAH'} за курсом {t.conversion_rate}
@@ -576,8 +592,9 @@ export default function BuyersReport() {
                                             <td className="p-2 text-center align-top text-green-500 font-medium">
                                               {(!isIssue && !(isAdj && amt < 0)) && amt > 0 ? (
                                                 `${amt.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
-                                              ) : '—'}
-                                            </td>
+                                              ) : isIssue && t.paidAmount > 0 ? (
+                                                `${t.paidAmount.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
+                                              ) : '—'}</td>
                                             <td className="p-2 text-right align-top text-[var(--text)] font-semibold whitespace-nowrap">
                                               {`${formatMoney(Math.abs(t.uahRunning), 'грн')} / ${formatMoney(Math.abs(t.usdRunning))}`}
                                             </td>
@@ -671,67 +688,85 @@ export default function BuyersReport() {
 
                                             {/* Деталі */}
                                             {isIssue ? (
-                                              <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg)]/50 p-2 rounded border border-[var(--border)]/40 space-y-1">
-                                                {t.items?.map((item, idx) => {
-                                                  const priceTxt = item.price !== null && item.price !== undefined && item.price !== ''
-                                                    ? ` × ${item.price} ${item.currency || t.currency}`
-                                                    : '';
-                                                  return (
-                                                    <div key={idx} className="leading-tight">
-                                                      • {item.product_name} — <span className="font-semibold text-[var(--text)]">{item.quantity} {item.unit}</span>{priceTxt}
+                                                <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg)]/50 p-2 rounded border border-[var(--border)]/40 space-y-1">
+                                                  {t.items?.map((item, idx) => {
+                                                    const priceTxt = item.price !== null && item.price !== undefined && item.price !== ''
+                                                      ? ` × ${item.price} ${item.currency || t.currency}`
+                                                      : '';
+                                                    return (
+                                                      <div key={idx} className="leading-tight">
+                                                        • {item.product_name} — <span className="font-semibold text-[var(--text)]">{item.quantity} {item.unit}</span>{priceTxt}
+                                                      </div>
+                                                    );
+                                                  })}
+                                                  {t.status === 'pending_price' && (
+                                                    <div className="text-yellow-600 font-semibold mt-1">⚠️ (Ціна очікується)</div>
+                                                  )}
+                                                  {t.picked_up_by && (
+                                                    <div className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold mt-1">
+                                                      👤 Отримав: {t.picked_up_by}
                                                     </div>
-                                                  );
-                                                })}
-                                                {t.status === 'pending_price' && (
-                                                  <div className="text-yellow-600 font-semibold mt-1">⚠️ (Ціна очікується)</div>
-                                                )}
-                                                {t.picked_up_by && (
-                                                  <div className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold mt-1">
-                                                    👤 Отримав: {t.picked_up_by}
-                                                  </div>
-                                                )}
-                                                {t.comment && (
-                                                  <div className="text-[10px] text-[var(--text-secondary)] italic border-t border-[var(--border)]/40 pt-1 mt-1">
-                                                    Коментар: {t.comment}
-                                                  </div>
-                                                )}
-                                              </div>
-                                            ) : (
-                                              <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg)]/50 p-2 rounded border border-[var(--border)]/40 space-y-1">
-                                                <div className="leading-tight font-medium">{t.comment || '—'}</div>
-                                                {t.converted_amount && (
-                                                  <div className="text-green-600 font-semibold text-[10px]">
-                                                    Зараховано: {t.converted_amount.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'USD' : 'UAH'} за курсом {t.conversion_rate}
-                                                  </div>
-                                                )}
-                                              </div>
-                                            )}
+                                                  )}
+                                                  {t.comment && (
+                                                    <div className="text-[10px] text-[var(--text-secondary)] italic border-t border-[var(--border)]/40 pt-1 mt-1">
+                                                      Коментар: {(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}
+                                                    </div>
+                                                  )}
+                                                  {/* Вкладені лінковані платежі мобільна версія */}
+                                                  {t.linkedPayments && t.linkedPayments.length > 0 && (
+                                                    <div className="mt-2 pt-2 border-t border-[var(--border)]/40 space-y-1">
+                                                      {t.linkedPayments.map((lp, lIdx) => {
+                                                        const displayComment = (lp.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/, '');
+                                                        const lpAmt = parseFloat(lp.amount) || 0;
+                                                        const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `$${lpAmt.toLocaleString('uk-UA')}`;
+                                                        return (
+                                                          <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5">
+                                                            <span>💰 {displayComment} ({lp.date})</span>
+                                                            <span className="font-semibold">{formattedLpAmt}</span>
+                                                          </div>
+                                                        );
+                                                      })}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              ) : (
+                                                <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg)]/50 p-2 rounded border border-[var(--border)]/40 space-y-1">
+                                                  <div className="leading-tight font-medium">{(t.comment || '—').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}</div>
+                                                  {t.converted_amount && (
+                                                    <div className="text-green-600 font-semibold text-[10px]">
+                                                      Зараховано: {t.converted_amount.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'USD' : 'UAH'} за курсом {t.conversion_rate}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              )}
 
-                                            {/* Суми */}
-                                            <div className="grid grid-cols-3 gap-2 pt-1 text-[11px] items-center">
-                                              <div>
-                                                <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Нараховано</span>
-                                                <span className="text-red-500 font-bold">
-                                                  {(isIssue || (isAdj && amt < 0)) && amt > 0
-                                                    ? `${Math.abs(amt).toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
-                                                    : '—'}
-                                                </span>
+                                              {/* Суми */}
+                                              <div className="grid grid-cols-3 gap-2 pt-1 text-[11px] items-center">
+                                                <div>
+                                                  <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Нараховано</span>
+                                                  <span className="text-red-500 font-bold">
+                                                    {(isIssue || (isAdj && amt < 0)) && amt > 0
+                                                      ? `${Math.abs(amt).toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
+                                                      : '—'}
+                                                  </span>
+                                                </div>
+                                                <div>
+                                                  <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Сплачено</span>
+                                                  <span className="text-green-600 font-bold">
+                                                    {(!isIssue && !(isAdj && amt < 0)) && amt > 0
+                                                      ? `${amt.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
+                                                      : isIssue && t.paidAmount > 0 ? (
+                                                        `${t.paidAmount.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
+                                                      ) : '—'}
+                                                  </span>
+                                                </div>
+                                                <div className="text-right">
+                                                  <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Баланс</span>
+                                                  <span className="font-bold text-[var(--text)]">
+                                                    {`${formatMoney(Math.abs(t.uahRunning), 'грн')} / ${formatMoney(Math.abs(t.usdRunning))}`}
+                                                  </span>
+                                                </div>
                                               </div>
-                                              <div>
-                                                <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Сплачено</span>
-                                                <span className="text-green-600 font-bold">
-                                                  {(!isIssue && !(isAdj && amt < 0)) && amt > 0
-                                                    ? `${amt.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
-                                                    : '—'}
-                                                </span>
-                                              </div>
-                                              <div className="text-right">
-                                                <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Баланс</span>
-                                                <span className="font-bold text-[var(--text)]">
-                                                  {`${formatMoney(Math.abs(t.uahRunning), 'грн')} / ${formatMoney(Math.abs(t.usdRunning))}`}
-                                                </span>
-                                              </div>
-                                            </div>
                                           </div>
                                         );
                                       })
@@ -1169,7 +1204,7 @@ export default function BuyersReport() {
                                       </span>
                                     </div>
                                   </div>
-                              </div>
+                                </div>
                             </div>
                           );
                         })
