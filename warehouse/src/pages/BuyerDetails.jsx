@@ -464,10 +464,10 @@ export default function BuyerDetails() {
                   <p className="text-[11px] text-[var(--text-secondary)]">Виберіть потрібну накладну або оплату для перегляду акту, редагування чи видалення.</p>
                 </div>
                 <div className="flex gap-2">
-                  <Link to="/buyers/issue" className="btn btn-primary btn-sm px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1">
+                  <Link to={`/buyers/issue?buyerId=${id}`} className="btn btn-primary btn-sm px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1">
                     📤 Видати товар
                   </Link>
-                  <Link to="/buyers/payment" className="btn btn-secondary btn-sm px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1 border border-[var(--border)]">
+                  <Link to={`/buyers/payment?buyerId=${id}`} className="btn btn-secondary btn-sm px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1 border border-[var(--border)]">
                     📥 Прийняти оплату
                   </Link>
                 </div>

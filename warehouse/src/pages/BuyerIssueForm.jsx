@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { getWarehouses, getCatalog, getBuyers, getBalances, addBuyerTransaction, getBuyerTransactionById, deleteBuyerTransaction, toggleArchiveTransaction, updateBuyerTransaction } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -11,6 +11,8 @@ export default function BuyerIssueForm() {
   const { showToast } = useToast();
   const navigate = useNavigate();
   const { txId } = useParams();
+  const [searchParams] = useSearchParams();
+  const queryBuyerId = searchParams.get('buyerId');
 
   const [buyers, setBuyers] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
@@ -25,7 +27,7 @@ export default function BuyerIssueForm() {
   const dropdownRefs = useRef([]);
 
   const [formData, setFormData] = useState({
-    buyerId: '',
+    buyerId: queryBuyerId || '',
     warehouseId: '',
     date: new Date().toISOString().split('T')[0],
     currency: 'UAH', // за замовчуванням для нових рядків
