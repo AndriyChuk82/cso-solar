@@ -783,7 +783,7 @@ export default function BuyerIssueForm() {
                       return sum + (price * (parseFloat(item.quantity) || 0));
                     }, 0);
                   const commentPrefill = `Оплата за накладну від ${formData.date} на суму ${invoiceAmount.toLocaleString('uk-UA')} ${formData.currency}`;
-                  navigate(`/buyers/payment?buyerId=${formData.buyerId}&amount=${invoiceAmount}&currency=${formData.currency}&comment=${encodeURIComponent(commentPrefill)}`);
+                  navigate(`/buyers/payment?buyerId=${formData.buyerId}&amount=${invoiceAmount}&currency=${formData.currency}&comment=${encodeURIComponent(commentPrefill)}&invoiceId=${txId}`);
                 }}
                 disabled={saving}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-green-500/20 text-green-600 bg-green-500/5 hover:bg-green-500/10 transition-colors flex items-center gap-1.5"

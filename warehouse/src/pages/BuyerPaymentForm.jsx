@@ -15,6 +15,7 @@ export default function BuyerPaymentForm() {
   const preAmount = searchParams.get('amount') || '';
   const preCurrency = searchParams.get('currency') || 'UAH';
   const preComment = searchParams.get('comment') || '';
+  const preInvoiceId = searchParams.get('invoiceId') || '';
 
   const [buyers, setBuyers] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -73,6 +74,12 @@ export default function BuyerPaymentForm() {
     try {
       const selectedBuyer = buyers.find(b => b.id === formData.buyerId);
       
+      const baseComment = formData.comment || (formData.useConversion 
+        ? `Оплата: ${receivedAmount} ${formData.currency} (зараховано за курсом ${rate})`
+        : `Оплата: ${receivedAmount} ${formData.currency}`
+      );
+      const tagComment = preInvoiceId ? `${baseComment} [invoice_id:${preInvoiceId}]` : baseComment;
+
       const payload = {
         buyerId: formData.buyerId,
         buyerName: selectedBuyer?.name,
@@ -84,10 +91,7 @@ export default function BuyerPaymentForm() {
         convertedAmount: formData.useConversion ? receivedAmount : null,
         conversionRate: formData.useConversion ? rate : null,
         status: 'completed',
-        comment: formData.comment || (formData.useConversion 
-          ? `Оплата: ${receivedAmount} ${formData.currency} (зараховано за курсом ${rate})`
-          : `Оплата: ${receivedAmount} ${formData.currency}`
-        ),
+        comment: tagComment,
         user: user?.email
       };
 

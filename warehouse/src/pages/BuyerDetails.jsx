@@ -207,8 +207,53 @@ export default function BuyerDetails() {
     }
   }
 
-  const activeTransactions = transactions.filter(t => t.is_archived !== true);
-  const archivedTransactions = transactions.filter(t => t.is_archived === true);
+  // 1. Попередній аналіз та групування пов'язаних платежів
+  const processedTransactions = [];
+  const linkedPaymentsMap = {}; // invoiceId -> array of payments
+
+  // Спочатку збираємо всі пов'язані платежі (які не архівні)
+  transactions.forEach(t => {
+    if (t.is_archived === true) return;
+    if (t.type === 'payment') {
+      const match = t.comment?.match(/\[invoice_id:([\w-]+)\]/);
+      if (match) {
+        const invoiceId = match[1];
+        linkedPaymentsMap[invoiceId] = linkedPaymentsMap[invoiceId] || [];
+        linkedPaymentsMap[invoiceId].push(t);
+      }
+    }
+  });
+
+  // Будуємо список оброблених транзакцій (виключаючи зв'язані платежі як окремі документи)
+  transactions.forEach(t => {
+    if (t.type === 'payment') {
+      const match = t.comment?.match(/\[invoice_id:([\w-]+)\]/);
+      if (match) {
+        const invoiceId = match[1];
+        // Перевіряємо, чи існує накладна (вона має бути не архівна)
+        const invoiceExists = transactions.some(inv => inv.id === invoiceId && inv.is_archived !== true);
+        if (invoiceExists) {
+          // Якщо накладна існує, не додаємо цей платіж як окремий рядок
+          return;
+        }
+      }
+    }
+    
+    // Якщо це накладна (issue), додаємо до неї зв'язані платежі
+    if (t.type === 'issue') {
+      const linked = linkedPaymentsMap[t.id] || [];
+      processedTransactions.push({
+        ...t,
+        linkedPayments: linked,
+        paidAmount: linked.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)
+      });
+    } else {
+      processedTransactions.push({ ...t, linkedPayments: [], paidAmount: 0 });
+    }
+  });
+
+  const activeTransactions = processedTransactions.filter(t => t.is_archived !== true);
+  const archivedTransactions = processedTransactions.filter(t => t.is_archived === true);
 
   // Обчислення початкового та кінцевого балансу для звіту
   let uahOpening = 0;
@@ -219,16 +264,13 @@ export default function BuyerDetails() {
   let usdPeriodPayment = 0;
   const isSingleDoc = selectedTxFilter !== 'ALL';
 
-  transactions.forEach(t => {
+  processedTransactions.forEach(t => {
     if (t.is_archived === true) return;
-    // Враховуємо транзакції, включаючи проміжні суми для неоцінених
     
     const amt = parseFloat(t.amount) || 0;
     const cur = t.currency;
 
     if (isSingleDoc) {
-      // Для акту звірки по ОДНІЙ накладній:
-      // Початкове сальдо завжди 0. Враховуємо суму лише для цієї накладної.
       if (t.id === selectedTxFilter) {
         if (t.type === 'issue') {
           if (cur === 'UAH') uahPeriodIssue += amt;
@@ -238,10 +280,17 @@ export default function BuyerDetails() {
           if (cur === 'USD') usdPeriodPayment += amt;
         }
       }
+      
+      // Враховуємо лінковані платежі для вибраної накладної
+      if (t.type === 'issue' && t.id === selectedTxFilter && t.linkedPayments) {
+        t.linkedPayments.forEach(lp => {
+          const lpAmt = parseFloat(lp.amount) || 0;
+          if (lp.currency === 'UAH') uahPeriodPayment += lpAmt;
+          if (lp.currency === 'USD') usdPeriodPayment += lpAmt;
+        });
+      }
     } else {
-      // Для повного акту звірки (за період):
       if (t.date < dateFrom) {
-        // Початковий баланс до періоду
         if (t.type === 'issue') {
           if (cur === 'UAH') uahOpening -= amt;
           if (cur === 'USD') usdOpening -= amt;
@@ -249,14 +298,41 @@ export default function BuyerDetails() {
           if (cur === 'UAH') uahOpening += amt;
           if (cur === 'USD') usdOpening += amt;
         }
+        
+        // Враховуємо лінковані платежі до періоду
+        if (t.type === 'issue' && t.linkedPayments) {
+          t.linkedPayments.forEach(lp => {
+            const lpAmt = parseFloat(lp.amount) || 0;
+            if (lp.date < dateFrom) {
+              if (lp.currency === 'UAH') uahOpening += lpAmt;
+              if (lp.currency === 'USD') usdOpening += lpAmt;
+            } else if (lp.date >= dateFrom && lp.date <= dateTo) {
+              if (lp.currency === 'UAH') uahPeriodPayment += lpAmt;
+              if (lp.currency === 'USD') usdPeriodPayment += lpAmt;
+            }
+          });
+        }
       } else if (t.date >= dateFrom && t.date <= dateTo) {
-        // Протягом періоду
         if (t.type === 'issue') {
           if (cur === 'UAH') uahPeriodIssue += amt;
           if (cur === 'USD') usdPeriodIssue += amt;
         } else {
           if (cur === 'UAH') uahPeriodPayment += amt;
           if (cur === 'USD') usdPeriodPayment += amt;
+        }
+        
+        // Враховуємо лінковані платежі в період
+        if (t.type === 'issue' && t.linkedPayments) {
+          t.linkedPayments.forEach(lp => {
+            const lpAmt = parseFloat(lp.amount) || 0;
+            if (lp.date < dateFrom) {
+              if (lp.currency === 'UAH') uahOpening += lpAmt;
+              if (lp.currency === 'USD') usdOpening += lpAmt;
+            } else if (lp.date >= dateFrom && lp.date <= dateTo) {
+              if (lp.currency === 'UAH') uahPeriodPayment += lpAmt;
+              if (lp.currency === 'USD') usdPeriodPayment += lpAmt;
+            }
+          });
         }
       }
     }
@@ -269,7 +345,7 @@ export default function BuyerDetails() {
   let currentUahRunning = uahOpening;
   let currentUsdRunning = usdOpening;
 
-  const reportItems = [...transactions]
+  const reportItems = [...processedTransactions]
     .filter(t => {
       if (t.is_archived === true && selectedTxFilter === 'ALL') return false;
       return !isSingleDoc ? (t.date >= dateFrom && t.date <= dateTo) : t.id === selectedTxFilter;
@@ -283,12 +359,21 @@ export default function BuyerDetails() {
       if (t.type === 'issue') {
         if (cur === 'UAH') { uahDeb = amt; currentUahRunning -= amt; }
         if (cur === 'USD') { usdDeb = amt; currentUsdRunning -= amt; }
+        
+        // Додаємо суми зв'язаних платежів до кредиту накладної
+        if (t.linkedPayments) {
+          t.linkedPayments.forEach(lp => {
+            const lpAmt = parseFloat(lp.amount) || 0;
+            if (lp.currency === 'UAH') { uahCred += lpAmt; currentUahRunning += lpAmt; }
+            if (lp.currency === 'USD') { usdCred += lpAmt; currentUsdRunning += lpAmt; }
+          });
+        }
       } else {
         if (cur === 'UAH') { uahCred = amt; currentUahRunning += amt; }
         if (cur === 'USD') { usdCred = amt; currentUsdRunning += amt; }
       }
 
-      // Генерація текстового опису операції
+      // Генерація текстового опису опеарції
       let desc = '';
       if (t.type === 'issue') {
         const itemDescs = t.items.map(item => {
@@ -515,6 +600,38 @@ export default function BuyerDetails() {
                                   </div>
                                 ))}
                               </div>
+                              {/* Відображення пов'язаних оплат */}
+                              {t.linkedPayments && t.linkedPayments.length > 0 && (
+                                <div className="mt-2 pt-2 border-t border-[var(--border)]/40 space-y-1">
+                                  {t.linkedPayments.map((lp, lIdx) => {
+                                    const displayComment = (lp.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/, '');
+                                    const lpAmt = parseFloat(lp.amount) || 0;
+                                    const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `$${lpAmt.toLocaleString('uk-UA')}`;
+                                    return (
+                                      <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
+                                        <span>💰 {displayComment} ({lp.date})</span>
+                                        <div className="flex gap-1.5 items-center">
+                                          <span className="font-semibold">{formattedLpAmt}</span>
+                                          <button 
+                                            onClick={(e) => { e.stopPropagation(); startEdit(lp); }} 
+                                            className="text-amber-500 hover:underline text-[9px]"
+                                            title="Редагувати платіж"
+                                          >
+                                            ред.
+                                          </button>
+                                          <button 
+                                            onClick={(e) => { e.stopPropagation(); handleDeleteTransaction(lp.id); }} 
+                                            className="text-red-500 hover:underline text-[9px]"
+                                            title="Видалити платіж"
+                                          >
+                                            вид.
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
                           );
                         } else if (t.type === 'payment' && t.converted_amount) {
@@ -557,6 +674,8 @@ export default function BuyerDetails() {
                                 <span className="text-green-600">{amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
                               ) : isAdj && amt > 0 ? (
                                 <span className="text-green-600">{amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
+                              ) : isIssue && t.paidAmount > 0 ? (
+                                <span className="text-green-600">{t.paidAmount.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
                               ) : (
                                 <span className="text-[var(--text-secondary)] opacity-50">—</span>
                               )}
@@ -685,6 +804,22 @@ export default function BuyerDetails() {
                                   </div>
                                 ))}
                               </div>
+                              {/* Відображення пов'язаних оплат в архіві */}
+                              {t.linkedPayments && t.linkedPayments.length > 0 && (
+                                <div className="mt-2 pt-2 border-t border-[var(--border)]/40 space-y-1">
+                                  {t.linkedPayments.map((lp, lIdx) => {
+                                    const displayComment = (lp.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/, '');
+                                    const lpAmt = parseFloat(lp.amount) || 0;
+                                    const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `$${lpAmt.toLocaleString('uk-UA')}`;
+                                    return (
+                                      <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5 opacity-75" onClick={(e) => e.stopPropagation()}>
+                                        <span>💰 {displayComment} ({lp.date})</span>
+                                        <span className="font-semibold">{formattedLpAmt}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
                           );
                         } else if (t.type === 'payment' && t.converted_amount) {
@@ -727,6 +862,8 @@ export default function BuyerDetails() {
                                 <span className="text-green-600">{amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
                               ) : isAdj && amt > 0 ? (
                                 <span className="text-green-600">{amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
+                              ) : isIssue && t.paidAmount > 0 ? (
+                                <span className="text-green-600">{t.paidAmount.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
                               ) : (
                                 <span className="text-[var(--text-secondary)] opacity-50">—</span>
                               )}
@@ -1004,6 +1141,38 @@ export default function BuyerDetails() {
                                       <div className="text-yellow-600 font-semibold mt-1">⚠️ (Ціна очікується)</div>
                                     )}
                                   </div>
+                                  {/* Відображення пов'язаних оплат в акті звірки */}
+                                  {t.linkedPayments && t.linkedPayments.length > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-[var(--border)]/40 space-y-1">
+                                      {t.linkedPayments.map((lp, lIdx) => {
+                                        const displayComment = (lp.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/, '');
+                                        const lpAmt = parseFloat(lp.amount) || 0;
+                                        const formattedLpAmt = lp.currency === 'UAH' ? `${lpAmt.toLocaleString('uk-UA')} грн` : `$${lpAmt.toLocaleString('uk-UA')}`;
+                                        return (
+                                          <div key={lIdx} className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center justify-between gap-1.5 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
+                                            <span>💰 {displayComment} ({lp.date})</span>
+                                            <div className="flex gap-1.5 items-center no-print">
+                                              <span className="font-semibold">{formattedLpAmt}</span>
+                                              <button 
+                                                onClick={(e) => { e.stopPropagation(); startEdit(lp); }} 
+                                                className="text-amber-500 hover:underline text-[9px]"
+                                                title="Редагувати платіж"
+                                              >
+                                                ред.
+                                              </button>
+                                              <button 
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteTransaction(lp.id); }} 
+                                                className="text-red-500 hover:underline text-[9px]"
+                                                title="Видалити платіж"
+                                              >
+                                                вид.
+                                              </button>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
                                 </div>
                               ) : (
                                 <span className="font-medium text-[var(--text)] block">{t.desc}</span>
