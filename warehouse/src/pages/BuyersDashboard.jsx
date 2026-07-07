@@ -19,6 +19,7 @@ export default function BuyersDashboard() {
     name: '',
     phone: '',
     notes: '',
+    representatives: '',
     active: true
   });
 
@@ -45,7 +46,7 @@ export default function BuyersDashboard() {
 
   function openAdd() {
     setEditItem(null);
-    setFormData({ name: '', phone: '', notes: '', active: true });
+    setFormData({ name: '', phone: '', notes: '', representatives: '', active: true });
     setShowModal(true);
   }
 
@@ -57,6 +58,7 @@ export default function BuyersDashboard() {
       name: item.name,
       phone: item.phone || '',
       notes: item.notes || '',
+      representatives: item.representatives || '',
       active: item.active !== false
     });
     setShowModal(true);
@@ -320,6 +322,16 @@ export default function BuyersDashboard() {
                     placeholder="Додаткова інформація..."
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  />
+                </div>
+                <div className="form-group flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-[var(--text-secondary)]">Представники (через кому)</label>
+                  <input
+                    type="text"
+                    className="form-input w-full p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-sm focus:outline-none focus:border-blue-500"
+                    placeholder="Напр.: Водій Іван, Менеджер Марія"
+                    value={formData.representatives}
+                    onChange={(e) => setFormData({ ...formData, representatives: e.target.value })}
                   />
                 </div>
                 {editItem && (

@@ -465,6 +465,11 @@ export default function BuyersReport() {
                                                       <div className="text-yellow-600 font-semibold mt-1">⚠️ (Ціна очікується)</div>
                                                     )}
                                                   </div>
+                                                  {t.picked_up_by && (
+                                                    <div className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold mt-1">
+                                                      👤 Отримав: {t.picked_up_by}
+                                                    </div>
+                                                  )}
                                                   {t.comment && (
                                                     <div className="text-[10px] text-[var(--text-secondary)] italic mt-1">Коментар: {t.comment}</div>
                                                   )}
@@ -599,6 +604,11 @@ export default function BuyersReport() {
                                                 })}
                                                 {t.status === 'pending_price' && (
                                                   <div className="text-yellow-600 font-semibold mt-1">⚠️ (Ціна очікується)</div>
+                                                )}
+                                                {t.picked_up_by && (
+                                                  <div className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold mt-1">
+                                                    👤 Отримав: {t.picked_up_by}
+                                                  </div>
                                                 )}
                                                 {t.comment && (
                                                   <div className="text-[10px] text-[var(--text-secondary)] italic border-t border-[var(--border)]/40 pt-1 mt-1">

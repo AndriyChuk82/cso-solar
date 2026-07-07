@@ -30,11 +30,27 @@ export default function BuyerIssueForm() {
     date: new Date().toISOString().split('T')[0],
     currency: 'UAH', // за замовчуванням для нових рядків
     comment: '',
+    pickedUpBy: '',
     items: [
       // Починаємо з одного порожнього рядка для швидкості роботи (як в 1С)
       { productId: '', productName: '', productArticle: '', unit: '', quantity: 1, price: '', currency: 'UAH' }
     ]
   });
+
+  const [isCustomRepresentative, setIsCustomRepresentative] = useState(false);
+
+  useEffect(() => {
+    if (formData.buyerId && buyers.length > 0) {
+      const buyer = buyers.find(b => b.id === formData.buyerId);
+      const reps = buyer?.representatives
+        ? buyer.representatives.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+      
+      if (formData.pickedUpBy && reps.length > 0 && !reps.includes(formData.pickedUpBy)) {
+        setIsCustomRepresentative(true);
+      }
+    }
+  }, [formData.buyerId, buyers]);
 
   useEffect(() => {
     async function loadData() {
@@ -79,6 +95,7 @@ export default function BuyerIssueForm() {
               date: tx.date,
               currency: tx.currency || 'UAH',
               comment: tx.comment || '',
+              pickedUpBy: tx.pickedUpBy || '',
               items: tx.items.map(item => ({
                 productId: item.productId,
                 productName: item.productName,
@@ -253,6 +270,7 @@ export default function BuyerIssueForm() {
           currency: 'UAH',
           status,
           comment: formData.comment,
+          pickedUpBy: formData.pickedUpBy,
           user: user?.email,
           items: uahItems.map(item => ({
             productId: item.productId,
@@ -288,6 +306,7 @@ export default function BuyerIssueForm() {
           currency: 'USD',
           status,
           comment: formData.comment,
+          pickedUpBy: formData.pickedUpBy,
           user: user?.email,
           items: usdItems.map(item => ({
             productId: item.productId,
@@ -375,6 +394,11 @@ export default function BuyerIssueForm() {
     }
   }
 
+  const selectedBuyer = buyers.find(b => b.id === formData.buyerId);
+  const selectedBuyerRepresentatives = selectedBuyer?.representatives
+    ? selectedBuyer.representatives.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
   return (
     <div className="pb-12 max-w-5xl mx-auto px-2 md:px-4">
       {/* Заголовок */}
@@ -394,13 +418,16 @@ export default function BuyerIssueForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Компактні поля шапки (1С стиль) */}
         <div className="card p-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-[var(--text-secondary)]">Покупець *</label>
               <select
-                className="p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
                 value={formData.buyerId}
-                onChange={(e) => setFormData({ ...formData, buyerId: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, buyerId: e.target.value, pickedUpBy: '' });
+                  setIsCustomRepresentative(false);
+                }}
                 required
               >
                 <option value="">-- Виберіть клієнта --</option>
@@ -411,9 +438,55 @@ export default function BuyerIssueForm() {
             </div>
 
             <div className="flex flex-col gap-1">
+              <label className="font-semibold text-[var(--text-secondary)]">Представник</label>
+              {selectedBuyerRepresentatives.length > 0 && !isCustomRepresentative ? (
+                <select
+                  className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                  value={formData.pickedUpBy || ''}
+                  onChange={(e) => {
+                    if (e.target.value === '__custom__') {
+                      setIsCustomRepresentative(true);
+                      setFormData({ ...formData, pickedUpBy: '' });
+                    } else {
+                      setFormData({ ...formData, pickedUpBy: e.target.value });
+                    }
+                  }}
+                >
+                  <option value="">-- Оберіть представника --</option>
+                  {selectedBuyerRepresentatives.map((name, idx) => (
+                    <option key={idx} value={name}>{name}</option>
+                  ))}
+                  <option value="__custom__">➕ Вписати іншого...</option>
+                </select>
+              ) : (
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="ПІБ (необов'язково)"
+                    className="h-[32px] py-1 pr-10 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none w-full"
+                    value={formData.pickedUpBy || ''}
+                    onChange={(e) => setFormData({ ...formData, pickedUpBy: e.target.value })}
+                  />
+                  {selectedBuyerRepresentatives.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCustomRepresentative(false);
+                        setFormData({ ...formData, pickedUpBy: '' });
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-blue-600 hover:underline font-semibold"
+                    >
+                      список
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1">
               <label className="font-semibold text-[var(--text-secondary)]">Склад *</label>
               <select
-                className="p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
                 value={formData.warehouseId}
                 onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
                 required
@@ -428,7 +501,7 @@ export default function BuyerIssueForm() {
               <label className="font-semibold text-[var(--text-secondary)]">Дата</label>
               <input
                 type="date"
-                className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 required
@@ -438,7 +511,7 @@ export default function BuyerIssueForm() {
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-[var(--text-secondary)]">Валюта</label>
               <select
-                className="p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
                 value={formData.currency}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
               >
@@ -452,7 +525,7 @@ export default function BuyerIssueForm() {
               <input
                 type="text"
                 placeholder="напр. під звіт"
-                className="p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
                 value={formData.comment}
                 onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
               />
@@ -667,6 +740,23 @@ export default function BuyerIssueForm() {
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] hover:bg-[var(--border-light)] transition-colors flex items-center gap-1.5"
               >
                 {isArchived ? '🔄 Розархівувати' : '🗄️ Закрити накладну'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const invoiceAmount = formData.items
+                    .filter(item => item.currency === formData.currency)
+                    .reduce((sum, item) => {
+                      const price = item.price !== '' && item.price !== null ? parseFloat(item.price) : 0;
+                      return sum + (price * (parseFloat(item.quantity) || 0));
+                    }, 0);
+                  const commentPrefill = `Оплата за накладну від ${formData.date} на суму ${invoiceAmount.toLocaleString('uk-UA')} ${formData.currency}`;
+                  navigate(`/buyers/payment?buyerId=${formData.buyerId}&amount=${invoiceAmount}&currency=${formData.currency}&comment=${encodeURIComponent(commentPrefill)}`);
+                }}
+                disabled={saving}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-green-500/20 text-green-600 bg-green-500/5 hover:bg-green-500/10 transition-colors flex items-center gap-1.5"
+              >
+                📥 Оплатити накладну
               </button>
               <button
                 type="button"

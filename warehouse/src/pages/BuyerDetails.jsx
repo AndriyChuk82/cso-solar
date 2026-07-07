@@ -502,6 +502,11 @@ export default function BuyerDetails() {
                         if (isIssue) {
                           details = (
                             <div className="space-y-0.5">
+                              {t.picked_up_by && (
+                                <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium mb-0.5">
+                                  👤 Отримав: {t.picked_up_by}
+                                </div>
+                              )}
                               {t.comment && <div className="font-semibold mb-1 text-[var(--text)]">{t.comment}</div>}
                               <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5">
                                 {t.items.map((i, idx) => (
@@ -591,6 +596,11 @@ export default function BuyerDetails() {
                           </span>
                         </div>
                         <div>
+                          {t.picked_up_by && (
+                            <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium mb-1">
+                              👤 Отримав: {t.picked_up_by}
+                            </div>
+                          )}
                           {isIssue ? (
                             <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 mt-1">
                               {t.items.map((i, idx) => (
@@ -598,6 +608,7 @@ export default function BuyerDetails() {
                                   • {i.product_name} — <span className="font-semibold text-[var(--text)]">{i.quantity} {i.unit}</span>
                                 </div>
                               ))}
+                              {t.comment && <div className="mt-1 italic">{t.comment}</div>}
                             </div>
                           ) : (
                             <span className="block text-[var(--text-secondary)]">{t.comment || '—'}</span>
@@ -661,6 +672,11 @@ export default function BuyerDetails() {
                         if (isIssue) {
                           details = (
                             <div className="space-y-0.5">
+                              {t.picked_up_by && (
+                                <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium mb-0.5">
+                                  👤 Отримав: {t.picked_up_by}
+                                </div>
+                              )}
                               {t.comment && <div className="font-semibold mb-1 text-[var(--text)]">{t.comment}</div>}
                               <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5">
                                 {t.items.map((i, idx) => (
@@ -750,6 +766,11 @@ export default function BuyerDetails() {
                           </span>
                         </div>
                         <div>
+                          {t.picked_up_by && (
+                            <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium mb-1">
+                              👤 Отримав: {t.picked_up_by}
+                            </div>
+                          )}
                           {isIssue ? (
                             <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 mt-1">
                               {t.items.map((i, idx) => (
@@ -987,6 +1008,9 @@ export default function BuyerDetails() {
                               ) : (
                                 <span className="font-medium text-[var(--text)] block">{t.desc}</span>
                               )}
+                              {t.picked_up_by && (
+                                <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium block mt-0.5">👤 Отримав: {t.picked_up_by}</span>
+                              )}
                               {t.comment && t.type !== 'payment' && (
                                 <span className="text-[10px] text-[var(--text-secondary)] block mt-0.5">{t.comment}</span>
                               )}
@@ -1072,6 +1096,9 @@ export default function BuyerDetails() {
                             </div>
                           ) : (
                             <span className="font-semibold text-[var(--text)] block">{t.desc}</span>
+                          )}
+                          {t.picked_up_by && (
+                            <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium block mt-0.5">👤 Отримав: {t.picked_up_by}</span>
                           )}
                           {t.comment && t.type !== 'payment' && (
                             <span className="text-[10px] text-[var(--text-secondary)] block mt-0.5">{t.comment}</span>

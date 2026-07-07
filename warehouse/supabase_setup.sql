@@ -140,3 +140,9 @@ CREATE POLICY "Allow anon access to buyer_transaction_items" ON public.buyer_tra
 -- Додаємо підтримку архівування накладних
 ALTER TABLE public.buyer_transactions ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT false;
 
+-- Додаємо колонку представників до таблиці покупців (список імен через кому)
+ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS representatives TEXT;
+
+-- Додаємо колонку отримувача до фінансових транзакцій (хто саме забирав дане списання)
+ALTER TABLE public.buyer_transactions ADD COLUMN IF NOT EXISTS picked_up_by TEXT;
+

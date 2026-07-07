@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getBuyers, addBuyerTransaction } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -9,16 +9,22 @@ export default function BuyerPaymentForm() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const preBuyerId = searchParams.get('buyerId') || '';
+  const preAmount = searchParams.get('amount') || '';
+  const preCurrency = searchParams.get('currency') || 'UAH';
+  const preComment = searchParams.get('comment') || '';
 
   const [buyers, setBuyers] = useState([]);
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
-    buyerId: '',
+    buyerId: preBuyerId,
     date: new Date().toISOString().split('T')[0],
-    amount: '',
-    currency: 'UAH',
-    comment: '',
+    amount: preAmount,
+    currency: preCurrency,
+    comment: preComment,
     useConversion: false,
     conversionRate: '',
   });
@@ -28,7 +34,8 @@ export default function BuyerPaymentForm() {
       try {
         const res = await getBuyers();
         if (res?.success) {
-          setBuyers(res.buyers?.filter(b => b.active) || []);
+          const allBuyers = res.buyers || [];
+          setBuyers(allBuyers.filter(b => b.active || b.id === preBuyerId));
         }
       } catch (err) {
         console.error('Помилка завантаження покупців:', err);
@@ -36,7 +43,7 @@ export default function BuyerPaymentForm() {
       }
     }
     loadData();
-  }, []);
+  }, [preBuyerId]);
 
   // Розрахунок суми зарахування при конвертації
   const receivedAmount = parseFloat(formData.amount) || 0;

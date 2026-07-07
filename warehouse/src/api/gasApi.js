@@ -455,6 +455,7 @@ export async function addBuyer(buyer) {
     name: buyer.name,
     phone: buyer.phone || '',
     notes: buyer.notes || '',
+    representatives: buyer.representatives || '',
     active: true
   }]).select();
   if (error) throw error;
@@ -467,6 +468,7 @@ export async function updateBuyer(buyer) {
     name: buyer.name,
     phone: buyer.phone || '',
     notes: buyer.notes || '',
+    representatives: buyer.representatives || '',
     active: buyer.active !== undefined ? buyer.active : true
   }).eq('id', buyer.id);
   if (error) throw error;
@@ -548,6 +550,7 @@ export async function addBuyerTransaction(transaction) {
     conversion_rate: transaction.conversionRate || null,
     status: transaction.status || 'completed',
     comment: transaction.comment,
+    picked_up_by: transaction.pickedUpBy || null,
     user_email: transaction.user
   }]).select();
 
@@ -563,7 +566,7 @@ export async function addBuyerTransaction(transaction) {
       product_id: item.productId,
       warehouse_id: item.warehouseId,
       quantity: item.quantity,
-      comment: `Видача клієнту: ${transaction.buyerName || 'Клієнт'}. ${transaction.comment || ''}`,
+      comment: `Видача клієнту: ${transaction.buyerName || 'Клієнт'}.${transaction.pickedUpBy ? ` (Представник: ${transaction.pickedUpBy})` : ''} ${transaction.comment || ''}`,
       user_email: transaction.user,
       created_at: timestamp
     }));
@@ -601,6 +604,7 @@ export async function updateBuyerTransaction(transaction) {
     conversion_rate: transaction.conversionRate || null,
     status: transaction.status || 'completed',
     comment: transaction.comment,
+    picked_up_by: transaction.pickedUpBy || null,
     user_email: transaction.user
   }).eq('id', transaction.id);
 
@@ -636,7 +640,7 @@ export async function updateBuyerTransaction(transaction) {
         product_id: item.productId,
         warehouse_id: item.warehouseId,
         quantity: item.quantity,
-        comment: `Видача клієнту: ${transaction.buyerName || 'Клієнт'}. ${transaction.comment || ''}`,
+        comment: `Видача клієнту: ${transaction.buyerName || 'Клієнт'}.${transaction.pickedUpBy ? ` (Представник: ${transaction.pickedUpBy})` : ''} ${transaction.comment || ''}`,
         user_email: transaction.user,
         created_at: timestamp
       }));
@@ -728,6 +732,7 @@ export async function getBuyerTransactionById(txId) {
       currency: tx.currency,
       comment: tx.comment,
       status: tx.status,
+      pickedUpBy: tx.picked_up_by,
       user_email: tx.user_email,
       is_archived: tx.is_archived,
       items: items.map(item => ({
