@@ -113,7 +113,7 @@ export default function BuyerDetails() {
         date: tx.date,
         amount: tx.converted_amount || tx.amount, // збережена сума отримання
         currency: tx.converted_amount ? (tx.currency === 'UAH' ? 'USD' : 'UAH') : tx.currency, // валюта отримання
-        comment: tx.comment,
+        comment: (tx.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, ''),
         useConversion: !!tx.converted_amount,
         conversionRate: tx.conversion_rate || '',
       });
@@ -142,6 +142,11 @@ export default function BuyerDetails() {
           creditedAmount = editForm.currency === 'UAH' ? (receivedAmount / rate) : (receivedAmount * rate);
         }
 
+        const match = editTx.comment?.match(/\[invoice_id:([\w-]+)\]/);
+        const tag = match ? ` [invoice_id:${match[1]}]` : '';
+        const cleanComment = editForm.comment || '';
+        const commentWithTag = tag ? `${cleanComment}${tag}` : cleanComment;
+
         const payload = {
           id: editTx.id,
           date: editForm.date,
@@ -151,7 +156,7 @@ export default function BuyerDetails() {
           convertedAmount: editForm.useConversion ? receivedAmount : null,
           conversionRate: editForm.useConversion ? rate : null,
           status: 'completed',
-          comment: editForm.comment,
+          comment: commentWithTag,
           user: user?.email
         };
 
@@ -385,9 +390,9 @@ export default function BuyerDetails() {
           desc += ' ⚠️ (Ціна очікується)';
         }
       } else if (t.type === 'payment') {
-        desc = t.comment || 'Оплата від покупця';
+        desc = (t.comment || 'Оплата від покупця').replace(/\s*\[invoice_id:[\w-]+\]/g, '');
       } else if (t.type === 'adjustment') {
-        desc = `Коригування: ${t.comment || ''}`;
+        desc = `Коригування: ${(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}`;
       }
 
       return {
@@ -583,7 +588,7 @@ export default function BuyerDetails() {
                         const isAdj = t.type === 'adjustment';
                         const amt = parseFloat(t.amount) || 0;
                         
-                        let details = t.comment || '';
+                        let details = (t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '');
                         if (isIssue) {
                           details = (
                             <div className="space-y-0.5">
@@ -592,7 +597,7 @@ export default function BuyerDetails() {
                                   👤 Отримав: {t.picked_up_by}
                                 </div>
                               )}
-                              {t.comment && <div className="font-semibold mb-1 text-[var(--text)]">{t.comment}</div>}
+                              {t.comment && <div className="font-semibold mb-1 text-[var(--text)]">{(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}</div>}
                               <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5">
                                 {t.items.map((i, idx) => (
                                   <div key={idx} className="leading-tight">
@@ -637,7 +642,7 @@ export default function BuyerDetails() {
                         } else if (t.type === 'payment' && t.converted_amount) {
                           details = (
                             <div>
-                              {t.comment && <div className="mb-0.5">{t.comment}</div>}
+                              {t.comment && <div className="mb-0.5">{(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}</div>}
                               <div className="text-[10px] text-green-600">
                                 Отримано: {t.converted_amount.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'USD' : 'UAH'} за курсом {t.conversion_rate}
                               </div>
@@ -787,7 +792,7 @@ export default function BuyerDetails() {
                         const isAdj = t.type === 'adjustment';
                         const amt = parseFloat(t.amount) || 0;
                         
-                        let details = t.comment || '';
+                        let details = (t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '');
                         if (isIssue) {
                           details = (
                             <div className="space-y-0.5">
@@ -796,7 +801,7 @@ export default function BuyerDetails() {
                                   👤 Отримав: {t.picked_up_by}
                                 </div>
                               )}
-                              {t.comment && <div className="font-semibold mb-1 text-[var(--text)]">{t.comment}</div>}
+                              {t.comment && <div className="font-semibold mb-1 text-[var(--text)]">{(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}</div>}
                               <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5">
                                 {t.items.map((i, idx) => (
                                   <div key={idx} className="leading-tight">
@@ -825,7 +830,7 @@ export default function BuyerDetails() {
                         } else if (t.type === 'payment' && t.converted_amount) {
                           details = (
                             <div>
-                              {t.comment && <div className="mb-0.5">{t.comment}</div>}
+                              {t.comment && <div className="mb-0.5">{(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}</div>}
                               <div className="text-[10px] text-green-600">
                                 Отримано: {t.converted_amount.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'USD' : 'UAH'} за курсом {t.conversion_rate}
                               </div>
@@ -1181,7 +1186,7 @@ export default function BuyerDetails() {
                                 <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium block mt-0.5">👤 Отримав: {t.picked_up_by}</span>
                               )}
                               {t.comment && t.type !== 'payment' && (
-                                <span className="text-[10px] text-[var(--text-secondary)] block mt-0.5">{t.comment}</span>
+                                <span className="text-[10px] text-[var(--text-secondary)] block mt-0.5">{(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}</span>
                               )}
                               {t.user_email && (
                                 <span className="text-[9px] text-[var(--text-secondary)] opacity-60 block mt-0.5">Вніс: {t.user_email}</span>
