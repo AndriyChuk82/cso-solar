@@ -552,19 +552,7 @@ export default function BuyerIssueForm() {
               />
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="font-semibold text-[var(--text-secondary)]">Валюта</label>
-              <select
-                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none"
-                value={formData.currency}
-                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-              >
-                <option value="UAH">грн (UAH)</option>
-                <option value="USD">$ (USD)</option>
-              </select>
-            </div>
-
-            <div className="col-span-2 md:col-span-1 flex flex-col gap-1">
+            <div className="col-span-2 md:col-span-2 flex flex-col gap-1">
               <label className="font-semibold text-[var(--text-secondary)]">Коментар</label>
               <input
                 type="text"
