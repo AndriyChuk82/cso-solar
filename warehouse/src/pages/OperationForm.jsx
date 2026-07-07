@@ -377,7 +377,7 @@ export default function OperationForm({ type = 'income' }) {
                             min="0.001"
                             required={!!item.productId}
                             disabled={!item.productId}
-                            className="w-24 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none disabled:opacity-40 text-center font-semibold"
+                            className="w-24 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none disabled:opacity-40 text-center font-semibold"
                             value={item.quantity}
                             onChange={(e) => updateRowField(index, 'quantity', e.target.value)}
                             onFocus={(e) => e.target.select()}
@@ -498,7 +498,7 @@ export default function OperationForm({ type = 'income' }) {
                           min="0.001"
                           required={!!item.productId}
                           disabled={!item.productId}
-                          className="w-20 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none disabled:opacity-40 text-center font-semibold"
+                          className="w-20 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] focus:outline-none disabled:opacity-40 text-center font-semibold"
                           value={item.quantity}
                           onChange={(e) => updateRowField(index, 'quantity', e.target.value)}
                           onFocus={(e) => e.target.select()}
@@ -517,7 +517,7 @@ export default function OperationForm({ type = 'income' }) {
                               min="0.001"
                               required={!!item.productId}
                               disabled={!item.productId}
-                              className="w-16 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none disabled:opacity-40 text-center font-semibold"
+                              className="w-16 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] focus:outline-none disabled:opacity-40 text-center font-semibold"
                               value={item.quantity}
                               onChange={(e) => updateRowField(index, 'quantity', e.target.value)}
                               onFocus={(e) => e.target.select()}
