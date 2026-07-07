@@ -373,7 +373,7 @@ export default function BuyerIssueForm() {
 
   function handlePrintAct() {
     if (!txId || !formData.buyerId) return;
-    navigate(`/buyers/details/${formData.buyerId}?tab=reconciliation&act=${txId}`);
+    navigate(`/buyers/${formData.buyerId}?tab=reconciliation&act=${txId}`);
   }
 
   async function handleDelete() {
