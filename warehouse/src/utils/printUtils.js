@@ -32,16 +32,15 @@ export function printDeliveryNote(formData, buyer, showPrices, txId) {
 
     return `
       <tr>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px;">
+        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
+        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px;">
           <strong>${itemName}</strong>
-          ${item.productArticle ? `<span style="font-size: 9px; color: #6B7280; display: block; margin-top: 2px; font-family: monospace;">Арт: ${item.productArticle}</span>` : ''}
         </td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${itemUnit}</td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 600;">${itemQty}</td>
+        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${itemUnit}</td>
+        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 600;">${itemQty}</td>
         ${showPrices ? `
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${itemPrice.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap; font-weight: 600;">${itemSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${itemPrice.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap; font-weight: 600;">${itemSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
         ` : ''}
       </tr>
     `;
@@ -58,8 +57,8 @@ export function printDeliveryNote(formData, buyer, showPrices, txId) {
           .header { display: flex; justify-content: space-between; align-items: center; }
           .doc-title { color: #F59E0B; font-weight: 700; font-size: 18px; text-transform: uppercase; letter-spacing: 1px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background: #F9FAFB; padding: 10px; text-align: center; border: 1px solid #E5E7EB; font-size: 9px; text-transform: uppercase; color: #4B5563; font-weight: 700; }
-          td { padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; }
+          th { background: #F9FAFB; padding: 6px 8px; text-align: center; border: 1px solid #E5E7EB; font-size: 9px; text-transform: uppercase; color: #4B5563; font-weight: 700; }
+          td { padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; }
           .total-row td { background-color: #FFFDF2; font-weight: 700; color: #F59E0B; border: 1px solid #E5E7EB; }
         </style>
       </head>
@@ -93,13 +92,13 @@ export function printDeliveryNote(formData, buyer, showPrices, txId) {
         <table>
           <thead>
             <tr>
-              <th style="width: 35px">№</th>
+              <th style="width: 30px">№</th>
               <th style="text-align: left;">Найменування</th>
-              <th style="width: 60px">Од.</th>
-              <th style="width: 60px">К-сть</th>
+              <th style="width: 40px">Од.</th>
+              <th style="width: 40px">К-сть</th>
               ${showPrices ? `
-              <th style="width: 85px">Ціна (${currencySymbol})</th>
-              <th style="width: 85px">Сума (${currencySymbol})</th>
+              <th style="width: 80px">Ціна (${currencySymbol})</th>
+              <th style="width: 80px">Сума (${currencySymbol})</th>
               ` : ''}
             </tr>
           </thead>
@@ -108,8 +107,8 @@ export function printDeliveryNote(formData, buyer, showPrices, txId) {
             ${showPrices ? `
             <tr class="total-row">
               <td colspan="4" style="border: none; background: none;"></td>
-              <td style="padding: 10px; text-align: right; text-transform: uppercase; font-size: 11px;">Разом:</td>
-              <td style="padding: 10px; text-align: center; font-size: 11px; white-space: nowrap;">${totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
+              <td style="padding: 6px 8px; text-align: right; text-transform: uppercase; font-size: 11px;">Разом:</td>
+              <td style="padding: 6px 8px; text-align: center; font-size: 11px; white-space: nowrap;">${totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
             </tr>
             ` : ''}
           </tbody>
