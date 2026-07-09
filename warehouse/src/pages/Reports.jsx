@@ -283,7 +283,7 @@ export default function Reports() {
               </Button>
             </div>
           </div>
-          <div className="data-table-wrap">
+          <div className="data-table-wrap" style={{ maxHeight: 'calc(100vh - 320px)', overflowY: 'auto' }}>
             {sortedItems && sortedItems.length > 0 ? (
               <table className="data-table compact-table">
                 <thead>
