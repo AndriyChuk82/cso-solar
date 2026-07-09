@@ -163,6 +163,39 @@ export default function BuyerDetails() {
         const res = await updateBuyerTransaction(payload);
         if (res.success) {
           showToast('Оплату оновлено', 'success');
+          
+          if (invoiceId) {
+            try {
+              const allTxRes = await getBuyerTransactions(id);
+              if (allTxRes?.success) {
+                const txs = allTxRes.transactions || [];
+                const invoice = txs.find(t => t.id === invoiceId);
+                if (invoice) {
+                  const invoiceAmt = parseFloat(invoice.amount) || 0;
+                  const linkedPayments = txs.filter(t => 
+                    t.type === 'payment' && 
+                    t.is_archived !== true && 
+                    t.comment?.includes(`[invoice_id:${invoiceId}]`)
+                  );
+                  const totalPaid = linkedPayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+                  
+                  if (totalPaid >= invoiceAmt && !invoice.is_archived) {
+                    const closeInvoice = window.confirm("Ця накладна повністю оплачена. Бажаєте закрити її (перенести в архів)?");
+                    if (closeInvoice) {
+                      await updateBuyerTransaction({
+                        id: invoiceId,
+                        is_archived: true
+                      });
+                      showToast('Накладну перенесено в архів', 'success');
+                    }
+                  }
+                }
+              }
+            } catch (err) {
+              console.error('Помилка при перевірці оплати накладної:', err);
+            }
+          }
+          
           setEditTx(null);
           loadData();
         }

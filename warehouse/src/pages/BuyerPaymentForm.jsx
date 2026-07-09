@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { getBuyers, addBuyerTransaction } from '../api/gasApi';
+import { getBuyers, addBuyerTransaction, getBuyerTransactionById, getBuyerTransactions, updateBuyerTransaction } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Button } from '@cso/design-system';
@@ -98,6 +98,41 @@ export default function BuyerPaymentForm() {
       const result = await addBuyerTransaction(payload);
       if (result?.success) {
         showToast('Оплату успішно зареєстровано', 'success');
+        
+        if (preInvoiceId) {
+          try {
+            const [invoiceRes, allTxRes] = await Promise.all([
+              getBuyerTransactionById(preInvoiceId),
+              getBuyerTransactions(formData.buyerId)
+            ]);
+            
+            if (invoiceRes?.success && invoiceRes.transaction && allTxRes?.success) {
+              const invoice = invoiceRes.transaction;
+              const invoiceAmt = parseFloat(invoice.amount) || 0;
+              
+              const linkedPayments = (allTxRes.transactions || []).filter(t => 
+                t.type === 'payment' && 
+                t.is_archived !== true && 
+                t.comment?.includes(`[invoice_id:${preInvoiceId}]`)
+              );
+              const totalPaid = linkedPayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+              
+              if (totalPaid >= invoiceAmt && !invoice.is_archived) {
+                const closeInvoice = window.confirm("Ця накладна повністю оплачена. Бажаєте закрити її (перенести в архів)?");
+                if (closeInvoice) {
+                  await updateBuyerTransaction({
+                    id: preInvoiceId,
+                    is_archived: true
+                  });
+                  showToast('Накладну перенесено в архів', 'success');
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Помилка при перевірці оплати накладної:', err);
+          }
+        }
+        
         navigate('/buyers');
       } else {
         showToast(result?.error || 'Помилка збереження', 'error');
