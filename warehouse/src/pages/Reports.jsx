@@ -147,109 +147,75 @@ export default function Reports() {
   }
 
   const tabs = [
-    { key: 'stock', label: '📦 Залишки по складу', icon: '📦' },
-    { key: 'compare', label: '📊 Порівняння складів', icon: '📊' },
-    { key: 'move', label: '🔄 Рух товару', icon: '🔄' },
+    { key: 'stock', label: 'Залишки по складу' },
+    { key: 'compare', label: 'Порівняння складів' },
   ];
 
   return (
     <div style={{ padding: '0 4px' }}>
-      {/* Панель керування: Вкладки + Фільтри + Сформувати в один ряд */}
-      <div className="card" style={{ marginBottom: '8px', padding: '6px 12px' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-          
-          {/* Ліва частина: Вкладки + Фільтри */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px', flexGrow: 1 }}>
-            {/* Вкладки */}
-            <div style={{
-              display: 'flex',
-              gap: '2px',
-              background: 'var(--border-light)',
-              borderRadius: 'var(--radius-md)',
-              padding: '2px',
-              width: 'fit-content'
-            }}>
-              {tabs.map((tab) => (
-                <Button
-                  key={tab.key}
-                  variant="ghost"
-                  style={{
-                    background: activeTab === tab.key ? 'var(--bg-card)' : 'transparent',
-                    color: activeTab === tab.key ? 'var(--primary)' : 'var(--text-secondary)',
-                    fontWeight: activeTab === tab.key ? 700 : 500,
-                    boxShadow: activeTab === tab.key ? 'var(--shadow-sm)' : 'none',
-                    border: 'none',
-                    borderRadius: 'var(--radius)',
-                    fontSize: '0.75rem',
-                    padding: '4px 10px',
-                    height: '26px'
-                  }}
-                  onClick={() => { setActiveTab(tab.key); setReportData(null); }}
-                >
-                  {tab.label.replace(/^[^\s]+\s+/, '')}
-                </Button>
-              ))}
-            </div>
-
-            {/* Фільтри (без лейблів зверху, компактний інлайн-вигляд) */}
-            {activeTab === 'stock' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Склад:</span>
-                  <select className="form-select" value={stockFilter.warehouseId} onChange={(e) => setStockFilter({ ...stockFilter, warehouseId: e.target.value })} style={{ padding: '2px 6px', height: '28px', fontSize: '0.75rem', width: '130px' }}>
-                    <option value="">Всі склади</option>
-                    {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-                  </select>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Дата:</span>
-                  <input type="date" className="form-input" value={stockFilter.date} onChange={(e) => setStockFilter({ ...stockFilter, date: e.target.value })} style={{ padding: '2px 6px', height: '28px', fontSize: '0.75rem', width: '115px' }} />
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'move' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Склад:</span>
-                  <select className="form-select" value={moveFilter.warehouseId} onChange={(e) => setMoveFilter({ ...moveFilter, warehouseId: e.target.value })} style={{ padding: '2px 6px', height: '28px', fontSize: '0.75rem', width: '110px' }}>
-                    <option value="">Всі</option>
-                    {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-                  </select>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Товар:</span>
-                  <select className="form-select" value={moveFilter.productId} onChange={(e) => setMoveFilter({ ...moveFilter, productId: e.target.value })} style={{ padding: '2px 6px', height: '28px', fontSize: '0.75rem', width: '150px' }}>
-                    <option value="">Всі</option>
-                    {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 600 }}>З:</span>
-                  <input type="date" className="form-input" value={moveFilter.dateFrom} onChange={(e) => setMoveFilter({ ...moveFilter, dateFrom: e.target.value })} style={{ padding: '2px 6px', height: '28px', fontSize: '0.75rem', width: '115px' }} />
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 600 }}>По:</span>
-                  <input type="date" className="form-input" value={moveFilter.dateTo} onChange={(e) => setMoveFilter({ ...moveFilter, dateTo: e.target.value })} style={{ padding: '2px 6px', height: '28px', fontSize: '0.75rem', width: '115px' }} />
-                </div>
-              </div>
-            )}
+      {/* Панель керування: Вкладки + Сформувати поруч */}
+      <div className="card" style={{ marginBottom: '8px', padding: '8px 12px' }}>
+        {/* Рядок 1: Вкладки та Кнопка Сформувати поруч */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: activeTab === 'stock' ? '8px' : '0' }}>
+          {/* Вкладки */}
+          <div style={{
+            display: 'flex',
+            gap: '2px',
+            background: 'var(--border-light)',
+            borderRadius: 'var(--radius-md)',
+            padding: '2px',
+            width: 'fit-content'
+          }}>
+            {tabs.map((tab) => (
+              <Button
+                key={tab.key}
+                variant="ghost"
+                style={{
+                  background: activeTab === tab.key ? 'var(--bg-card)' : 'transparent',
+                  color: activeTab === tab.key ? 'var(--primary)' : 'var(--text-secondary)',
+                  fontWeight: activeTab === tab.key ? 700 : 500,
+                  boxShadow: activeTab === tab.key ? 'var(--shadow-sm)' : 'none',
+                  border: 'none',
+                  borderRadius: 'var(--radius)',
+                  fontSize: '0.75rem',
+                  padding: '4px 10px',
+                  height: '26px'
+                }}
+                onClick={() => { setActiveTab(tab.key); setReportData(null); }}
+              >
+                {tab.label}
+              </Button>
+            ))}
           </div>
 
-          {/* Права частина: Кнопка дії */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <Button variant="primary" onClick={generateReport} disabled={loading} loading={loading} style={{ height: '28px', padding: '0 12px', fontSize: '0.75rem', fontWeight: 600 }}>
-              {loading ? 'Формування...' : '📊 Сформувати'}
-            </Button>
-          </div>
-
+          {/* Кнопка дії поруч */}
+          <Button variant="primary" onClick={generateReport} disabled={loading} loading={loading} style={{ height: '28px', padding: '0 12px', fontSize: '0.75rem', fontWeight: 600 }}>
+            {loading ? 'Формування...' : '📊 Сформувати'}
+          </Button>
         </div>
+
+        {/* Рядок 2: Фільтри (під кнопкою Залишки по складу) */}
+        {activeTab === 'stock' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '6px', borderTop: '1px solid var(--border-light)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Склад:</span>
+              <select className="form-select" value={stockFilter.warehouseId} onChange={(e) => setStockFilter({ ...stockFilter, warehouseId: e.target.value })} style={{ padding: '2px 6px', height: '28px', fontSize: '0.75rem', width: '150px' }}>
+                <option value="">Всі склади</option>
+                {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+              </select>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Дата:</span>
+              <input type="date" className="form-input" value={stockFilter.date} onChange={(e) => setStockFilter({ ...stockFilter, date: e.target.value })} style={{ padding: '2px 6px', height: '28px', fontSize: '0.75rem', width: '115px' }} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Результат */}
       {reportData && (
         <div className="card" style={{ padding: '4px', borderTop: 'none' }}>
-          <div className="data-table-wrap" style={{ maxHeight: 'calc(100vh - 150px)', overflowY: 'auto' }}>
+          <div className="data-table-wrap" style={{ maxHeight: 'calc(100vh - 170px)', overflowY: 'auto' }}>
             {sortedItems && sortedItems.length > 0 ? (
               <table className="data-table compact-table">
                 <thead>
