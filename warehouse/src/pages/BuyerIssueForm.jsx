@@ -653,14 +653,9 @@ export default function BuyerIssueForm() {
                           {item.productId && (
                             <div className="flex items-center justify-center gap-1.5 text-[11px] whitespace-nowrap bg-[var(--border-light)] px-2 py-1 rounded w-32 shrink-0">
                               <span className="text-[var(--text-secondary)] font-medium">Залишок:</span>
-                              <span className={isOver ? 'text-red-500 font-bold' : 'text-green-600 font-semibold'}>
+                              <span className="text-green-600 font-semibold">
                                 {stock} {item.unit}
                               </span>
-                              {isOver && (
-                                <span className="text-[9px] text-amber-500 font-bold bg-amber-500/10 px-1 rounded ml-1">
-                                  ⚠️ Недостатньо
-                                </span>
-                              )}
                             </div>
                           )}
                         </div>
@@ -682,6 +677,11 @@ export default function BuyerIssueForm() {
                           />
                           {item.unit && <span className="text-[10px] text-[var(--text-secondary)] w-8 text-left truncate" title={item.unit}>{item.unit}</span>}
                         </div>
+                        {isOver && (
+                          <div className="text-[10px] text-red-500 font-semibold mt-1">
+                            ⚠️ Недостатньо
+                          </div>
+                        )}
                       </td>
 
                       {/* Ціна */}

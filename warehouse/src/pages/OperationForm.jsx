@@ -361,14 +361,9 @@ export default function OperationForm({ type = 'income' }) {
                           {!isIncome && item.productId && (
                             <div className="flex items-center justify-center gap-1.5 text-[11px] whitespace-nowrap bg-[var(--border-light)] px-2 py-1 rounded w-32 shrink-0">
                               <span className="text-[var(--text-secondary)] font-medium">Залишок:</span>
-                              <span className={isOver ? 'text-red-500 font-bold' : 'text-green-600 font-semibold'}>
+                              <span className="text-green-600 font-semibold">
                                 {stock} {item.unit}
                               </span>
-                              {isOver && (
-                                <span className="text-[9px] text-amber-500 font-bold bg-amber-500/10 px-1 rounded ml-1">
-                                  ⚠️ Недостатньо
-                                </span>
-                              )}
                             </div>
                           )}
                         </div>
@@ -390,6 +385,11 @@ export default function OperationForm({ type = 'income' }) {
                           />
                           {item.unit && <span className="text-[10px] text-[var(--text-secondary)] w-10 text-left truncate" title={item.unit}>{item.unit}</span>}
                         </div>
+                        {isOver && (
+                          <div className="text-[10px] text-red-500 font-semibold mt-1">
+                            ⚠️ Недостатньо
+                          </div>
+                        )}
                       </td>
 
                       {/* Кнопка видалення */}
@@ -516,33 +516,35 @@ export default function OperationForm({ type = 'income' }) {
                       <div className="grid grid-cols-2 gap-2 items-center">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-[var(--text-secondary)] shrink-0">Кількість:</span>
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <input
-                              type="number"
-                              step="any"
-                              min="0.001"
-                              required={!!item.productId}
-                              disabled={!item.productId}
-                              className="w-16 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] focus:outline-none disabled:opacity-40 text-center font-semibold"
-                              value={item.quantity}
-                              onChange={(e) => updateRowField(index, 'quantity', e.target.value)}
-                              onFocus={(e) => e.target.select()}
-                            />
-                            {item.unit && <span className="text-xs text-[var(--text-secondary)] font-medium truncate" title={item.unit}>{item.unit}</span>}
+                          <div className="flex flex-col items-start gap-0.5 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <input
+                                type="number"
+                                step="any"
+                                min="0.001"
+                                required={!!item.productId}
+                                disabled={!item.productId}
+                                className="w-16 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] focus:outline-none disabled:opacity-40 text-center font-semibold"
+                                value={item.quantity}
+                                onChange={(e) => updateRowField(index, 'quantity', e.target.value)}
+                                onFocus={(e) => e.target.select()}
+                              />
+                              {item.unit && <span className="text-xs text-[var(--text-secondary)] font-medium truncate" title={item.unit}>{item.unit}</span>}
+                            </div>
+                            {isOver && (
+                              <span className="text-[9px] text-red-500 font-bold mt-0.5">
+                                ⚠️ Недостатньо
+                              </span>
+                            )}
                           </div>
                         </div>
 
                         {item.productId && (
                           <div className="flex items-center gap-1 text-[11px] justify-end">
                             <span className="text-[var(--text-secondary)] font-medium">Доступно:</span>
-                            <span className={isOver ? 'text-red-500 font-bold' : 'text-green-600 font-semibold'}>
+                            <span className="text-green-600 font-semibold">
                               {stock} {item.unit}
                             </span>
-                            {isOver && (
-                              <span className="text-[9px] text-amber-500 font-bold bg-amber-500/10 px-1 rounded">
-                                ⚠️ Недостатньо
-                              </span>
-                            )}
                           </div>
                         )}
                       </div>
