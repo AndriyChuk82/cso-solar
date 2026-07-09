@@ -1374,7 +1374,7 @@ export default function BuyerDetails() {
       {/* Модалка редагування транзакції */}
       {editTx && editForm && (
         <div className="modal-overlay no-print" onClick={() => setEditTx(null)}>
-          <div className="modal max-w-sm" onClick={(e) => e.stopPropagation()}>
+          <div className={`modal ${editForm?.items ? 'max-w-xl' : 'max-w-sm'}`} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="font-bold text-[var(--text)]">✏️ Редагування операції ({editTx.type === 'payment' ? 'Оплата' : 'Видача'})</h3>
               <button className="modal-close" onClick={() => setEditTx(null)}>×</button>
@@ -1491,7 +1491,7 @@ export default function BuyerDetails() {
                   </div>
                 ) : (
                   // Видача товарів (редагування цін та кількості)
-                  <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                  <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
                     <label className="text-xs font-semibold text-[var(--text-secondary)]">Товари у видачі</label>
                     {editForm.items?.map((item, idx) => (
                       <div key={item.id} className="p-2 border border-[var(--border)] rounded bg-[var(--bg)] space-y-2 text-xs">

@@ -310,7 +310,7 @@ export default function OperationForm({ type = 'income' }) {
                                   onChange={(e) => setSearchText(e.target.value)}
                                 />
                                 {/* Випадаючий список пошуку */}
-                                <div className="absolute left-2 right-2 top-11 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-xl max-h-48 overflow-y-auto z-50 text-xs divide-y divide-[var(--border)]">
+                                <div className="absolute left-2 right-2 top-11 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-xl max-h-80 overflow-y-auto z-50 text-xs divide-y divide-[var(--border)]">
                                   {filteredProducts.length === 0 ? (
                                     <div className="p-2 text-[var(--text-secondary)] text-center">Нічого не знайдено</div>
                                   ) : (
@@ -445,7 +445,7 @@ export default function OperationForm({ type = 'income' }) {
                           onChange={(e) => setSearchText(e.target.value)}
                         />
                         {/* Випадаючий список пошуку */}
-                        <div className="absolute left-0 right-0 top-12 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-xl max-h-48 overflow-y-auto z-50 text-xs divide-y divide-[var(--border)]">
+                        <div className="absolute left-0 right-0 top-12 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-xl max-h-80 overflow-y-auto z-50 text-xs divide-y divide-[var(--border)]">
                           {filteredProducts.length === 0 ? (
                             <div className="p-2 text-[var(--text-secondary)] text-center">Нічого не знайдено</div>
                           ) : (
