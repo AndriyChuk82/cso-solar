@@ -6,6 +6,7 @@ import { formatQuantity } from '../utils/formatUtils';
 import CONFIG from '../config';
 import ResizableHeader from '../components/ResizableHeader';
 import { Button } from '@cso/design-system';
+import { Boxes, Scale, Play } from 'lucide-react';
 
 /**
  * Звіти та аналітика — 3 типи звітів з експортом Excel/PDF.
@@ -179,18 +180,28 @@ export default function Reports() {
                   borderRadius: 'var(--radius)',
                   fontSize: '0.75rem',
                   padding: '4px 10px',
-                  height: '26px'
+                  height: '26px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}
                 onClick={() => { setActiveTab(tab.key); setReportData(null); }}
               >
+                {tab.key === 'stock' && <Boxes size={14} />}
+                {tab.key === 'compare' && <Scale size={14} />}
                 {tab.label}
               </Button>
             ))}
           </div>
 
           {/* Кнопка дії поруч */}
-          <Button variant="primary" onClick={generateReport} disabled={loading} loading={loading} style={{ height: '28px', padding: '0 12px', fontSize: '0.75rem', fontWeight: 600 }}>
-            {loading ? 'Формування...' : '📊 Сформувати'}
+          <Button variant="primary" onClick={generateReport} disabled={loading} loading={loading} style={{ height: '28px', padding: '0 12px', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            {loading ? 'Формування...' : (
+              <>
+                <Play size={12} fill="currentColor" />
+                Сформувати
+              </>
+            )}
           </Button>
         </div>
 
