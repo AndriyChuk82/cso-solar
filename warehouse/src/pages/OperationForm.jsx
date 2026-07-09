@@ -366,7 +366,7 @@ export default function OperationForm({ type = 'income' }) {
                               </span>
                               {isOver && (
                                 <span className="text-[9px] text-amber-500 font-bold bg-amber-500/10 px-1 rounded ml-1">
-                                  ⚠️ Мінус
+                                  ⚠️ Недостатньо
                                 </span>
                               )}
                             </div>
@@ -540,7 +540,7 @@ export default function OperationForm({ type = 'income' }) {
                             </span>
                             {isOver && (
                               <span className="text-[9px] text-amber-500 font-bold bg-amber-500/10 px-1 rounded">
-                                ⚠️ Мінус
+                                ⚠️ Недостатньо
                               </span>
                             )}
                           </div>
