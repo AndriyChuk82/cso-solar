@@ -505,8 +505,10 @@ export default function BuyersReport() {
                                     {row.phone && <span className="text-[10px] text-[var(--text-secondary)] font-normal ml-2">({row.phone})</span>}
                                   </td>
                                   <td colSpan="2" className="p-2 text-right text-[var(--text-secondary)] font-normal text-[10px]">Вхідне сальдо:</td>
-                                  <td className="p-2 text-right whitespace-nowrap font-bold text-[var(--text)]">
-                                    {`${formatMoney(row.uahOpening, 'грн')} / ${formatMoney(row.usdOpening)}`}
+                                  <td className="p-2 text-right whitespace-nowrap font-bold text-xs">
+                                    <span className={getBalanceClass(row.uahOpening)}>{formatMoney(row.uahOpening, 'грн')}</span>
+                                    <span className="text-[var(--text-secondary)] opacity-60"> / </span>
+                                    <span className={getBalanceClass(row.usdOpening)}>{formatMoney(row.usdOpening)}</span>
                                   </td>
                                 </tr>
 
@@ -599,8 +601,10 @@ export default function BuyersReport() {
                                               ) : isIssue && t.paidAmount > 0 ? (
                                                 `${t.paidAmount.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
                                               ) : '—'}</td>
-                                            <td className="p-2 text-right align-top text-[var(--text)] font-semibold whitespace-nowrap">
-                                              {`${formatMoney(Math.abs(t.uahRunning), 'грн')} / ${formatMoney(Math.abs(t.usdRunning))}`}
+                                            <td className="p-2 text-right align-top font-semibold whitespace-nowrap text-xs">
+                                              <span className={getBalanceClass(t.uahRunning)}>{formatMoney(t.uahRunning, 'грн')}</span>
+                                              <span className="text-[var(--text-secondary)] opacity-60"> / </span>
+                                              <span className={getBalanceClass(t.usdRunning)}>{formatMoney(t.usdRunning)}</span>
                                             </td>
                                           </tr>
                                         );
@@ -622,9 +626,11 @@ export default function BuyersReport() {
                                         {row.usdPaid > 0 ? ` / $${row.usdPaid.toLocaleString('uk-UA')}` : ''}
                                         {row.uahPaid === 0 && row.usdPaid === 0 ? '—' : ''}
                                       </td>
-                                      <td className={`p-2 text-right ${getBalanceClass(row.uahClosing)}`}>
-                                        {`${formatMoney(row.uahClosing, 'грн')} / ${formatMoney(row.usdClosing)}`}
-                                      </td>
+                                      <td className="p-2 text-right font-bold whitespace-nowrap text-xs">
+                                         <span className={getBalanceClass(row.uahClosing)}>{formatMoney(row.uahClosing, 'грн')}</span>
+                                         <span className="text-[var(--text-secondary)] opacity-60"> / </span>
+                                         <span className={getBalanceClass(row.usdClosing)}>{formatMoney(row.usdClosing)}</span>
+                                       </td>
                                     </tr>
                                   </Fragment>
                                 )}
@@ -660,8 +666,10 @@ export default function BuyersReport() {
                                 </div>
                                 <div className="flex justify-between items-center mt-1 text-[11px]">
                                   <span className="text-[var(--text-secondary)]">Вхідне сальдо:</span>
-                                  <span className="font-semibold text-[var(--text)]">
-                                    {`${formatMoney(row.uahOpening, 'грн')} / ${formatMoney(row.usdOpening)}`}
+                                  <span className="font-semibold">
+                                    <span className={getBalanceClass(row.uahOpening)}>{formatMoney(row.uahOpening, 'грн')}</span>
+                                    <span className="text-[var(--text-secondary)] opacity-60"> / </span>
+                                    <span className={getBalanceClass(row.usdOpening)}>{formatMoney(row.usdOpening)}</span>
                                   </span>
                                 </div>
                               </div>
@@ -766,8 +774,10 @@ export default function BuyersReport() {
                                                 </div>
                                                 <div className="text-right">
                                                   <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Баланс</span>
-                                                  <span className="font-bold text-[var(--text)]">
-                                                    {`${formatMoney(Math.abs(t.uahRunning), 'грн')} / ${formatMoney(Math.abs(t.usdRunning))}`}
+                                                  <span className="font-bold">
+                                                    <span className={getBalanceClass(t.uahRunning)}>{formatMoney(t.uahRunning, 'грн')}</span>
+                                                    <span className="text-[var(--text-secondary)] opacity-60"> / </span>
+                                                    <span className={getBalanceClass(t.usdRunning)}>{formatMoney(t.usdRunning)}</span>
                                                   </span>
                                                 </div>
                                               </div>
@@ -793,11 +803,13 @@ export default function BuyersReport() {
                                       </span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                      <span>Вихідне сальдо:</span>
-                                      <span className={getBalanceClass(row.uahClosing)}>
-                                        {`${formatMoney(row.uahClosing, 'грн')} / ${formatMoney(row.usdClosing)}`}
-                                      </span>
-                                    </div>
+                                       <span>Вихідне сальдо:</span>
+                                       <span className="font-semibold text-xs">
+                                         <span className={getBalanceClass(row.uahClosing)}>{formatMoney(row.uahClosing, 'грн')}</span>
+                                         <span className="text-[var(--text-secondary)] opacity-60"> / </span>
+                                         <span className={getBalanceClass(row.usdClosing)}>{formatMoney(row.usdClosing)}</span>
+                                       </span>
+                                     </div>
                                   </div>
                                 </Fragment>
                               )}
