@@ -283,6 +283,7 @@ export default function Transfer() {
               </thead>
               <tbody className="divide-y divide-[var(--border)]">
                 {formData.items.map((item, index) => {
+                  const isLastRows = index >= formData.items.length - 2 && formData.items.length >= 3;
                   const stock = balances[item.productId] || 0;
                   const isOver = item.productId && parseFloat(item.quantity) > stock;
 
@@ -303,7 +304,7 @@ export default function Transfer() {
                                   value={searchText}
                                   onChange={(e) => setSearchText(e.target.value)}
                                 />
-                                <div className="absolute left-2 right-2 top-11 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-xl max-h-80 overflow-y-auto z-50 text-xs divide-y divide-[var(--border)]">
+                                <div className={`absolute left-2 right-2 ${isLastRows ? 'bottom-full mb-1' : 'top-11'} bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-xl max-h-80 overflow-y-auto z-50 text-xs divide-y divide-[var(--border)]`}>
                                   {filteredProducts.length === 0 ? (
                                     <div className="p-2 text-[var(--text-secondary)] text-center">Нічого не знайдено</div>
                                   ) : (
