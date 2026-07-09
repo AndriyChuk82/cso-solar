@@ -5,6 +5,20 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Button } from '@cso/design-system';
 
+
+function updateCommentAmount(comment, amount, currency) {
+  if (!comment) return comment;
+  const num = parseFloat(amount) || 0;
+  const formattedAmount = num.toLocaleString('uk-UA');
+  const currencyLabel = currency === 'UAH' ? 'UAH' : 'USD';
+  
+  const regex = /(на суму\s+)[\d\s,.\u00A0]+(\s*(?:UAH|USD|грн|\$))/i;
+  if (regex.test(comment)) {
+    return comment.replace(regex, `$1${formattedAmount} ${currencyLabel}`);
+  }
+  return comment;
+}
+
 export default function BuyerPaymentForm() {
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -19,6 +33,7 @@ export default function BuyerPaymentForm() {
 
   const [buyers, setBuyers] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [isCommentDirty, setIsCommentDirty] = useState(false);
 
   const [formData, setFormData] = useState({
     buyerId: preBuyerId,
@@ -202,7 +217,14 @@ export default function BuyerPaymentForm() {
                 className="form-input w-full p-2.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-sm focus:outline-none"
                 placeholder="0.00"
                 value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData(prev => ({
+                    ...prev,
+                    amount: val,
+                    comment: isCommentDirty ? prev.comment : updateCommentAmount(prev.comment, val, prev.currency)
+                  }));
+                }}
                 required
               />
             </div>
@@ -212,7 +234,12 @@ export default function BuyerPaymentForm() {
                 className="form-select w-full p-2.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-sm focus:outline-none focus:border-blue-500"
                 value={formData.currency}
                 onChange={(e) => {
-                  setFormData({ ...formData, currency: e.target.value });
+                  const val = e.target.value;
+                  setFormData(prev => ({
+                    ...prev,
+                    currency: val,
+                    comment: isCommentDirty ? prev.comment : updateCommentAmount(prev.comment, prev.amount, val)
+                  }));
                 }}
               >
                 <option value="UAH">UAH (грн)</option>
@@ -273,7 +300,10 @@ export default function BuyerPaymentForm() {
               className="form-input w-full p-2.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-sm focus:outline-none focus:border-blue-500"
               placeholder="Наприклад: Готівка на складі, безготівковий переказ..."
               value={formData.comment}
-              onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+              onChange={(e) => {
+                setIsCommentDirty(true);
+                setFormData({ ...formData, comment: e.target.value });
+              }}
             />
           </div>
         </div>

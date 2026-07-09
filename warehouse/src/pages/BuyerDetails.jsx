@@ -5,6 +5,20 @@ import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@cso/design-system';
 
+
+function updateCommentAmount(comment, amount, currency) {
+  if (!comment) return comment;
+  const num = parseFloat(amount) || 0;
+  const formattedAmount = num.toLocaleString('uk-UA');
+  const currencyLabel = currency === 'UAH' ? 'UAH' : 'USD';
+  
+  const regex = /(на суму\s+)[\d\s,.\u00A0]+(\s*(?:UAH|USD|грн|\$))/i;
+  if (regex.test(comment)) {
+    return comment.replace(regex, `$1${formattedAmount} ${currencyLabel}`);
+  }
+  return comment;
+}
+
 export default function BuyerDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -29,6 +43,7 @@ export default function BuyerDetails() {
   const [editTx, setEditTx] = useState(null);
   const [editForm, setEditForm] = useState(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [isEditCommentDirty, setIsEditCommentDirty] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -109,6 +124,7 @@ export default function BuyerDetails() {
     }
     setEditTx(tx);
     if (tx.type === 'payment') {
+      setIsEditCommentDirty(false);
       setEditForm({
         date: tx.date,
         amount: tx.converted_amount || tx.amount, // збережена сума отримання
@@ -1388,7 +1404,14 @@ export default function BuyerDetails() {
                           min="0.01"
                           className="p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-[var(--text)] focus:outline-none"
                           value={editForm.amount}
-                          onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setEditForm(prev => ({
+                              ...prev,
+                              amount: val,
+                              comment: isEditCommentDirty ? prev.comment : updateCommentAmount(prev.comment, val, prev.currency)
+                            }));
+                          }}
                           required
                         />
                       </div>
@@ -1397,7 +1420,14 @@ export default function BuyerDetails() {
                         <select
                           className="p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-[var(--text)] focus:outline-none"
                           value={editForm.currency}
-                          onChange={(e) => setEditForm({ ...editForm, currency: e.target.value })}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setEditForm(prev => ({
+                              ...prev,
+                              currency: val,
+                              comment: isEditCommentDirty ? prev.comment : updateCommentAmount(prev.comment, prev.amount, val)
+                            }));
+                          }}
                         >
                           <option value="UAH">UAH</option>
                           <option value="USD">USD</option>
@@ -1509,7 +1539,10 @@ export default function BuyerDetails() {
                     type="text"
                     className="p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-[var(--text)] focus:outline-none"
                     value={editForm.comment}
-                    onChange={(e) => setEditForm({ ...editForm, comment: e.target.value })}
+                    onChange={(e) => {
+                      setIsEditCommentDirty(true);
+                      setEditForm({ ...editForm, comment: e.target.value });
+                    }}
                   />
                 </div>
 
