@@ -153,137 +153,154 @@ export default function Reports() {
   ];
 
   return (
-    <div>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">📈 Звіти та аналітика</h1>
-          <p className="page-subtitle">Аналіз залишків та руху товарів</p>
+    <div style={{ padding: '0 4px' }}>
+      {/* Шапка та Вкладки в один рядок */}
+      <div className="page-header" style={{ 
+        display: 'flex', 
+        flexWrap: 'wrap', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        gap: '12px', 
+        marginBottom: '12px',
+        paddingBottom: '8px'
+      }}>
+        <h1 className="page-title" style={{ fontSize: '1.25rem', margin: 0 }}>📈 Звіти та аналітика</h1>
+        
+        {/* Вкладки */}
+        <div style={{
+          display: 'flex',
+          gap: '2px',
+          background: 'var(--border-light)',
+          borderRadius: 'var(--radius-md)',
+          padding: '3px',
+          width: 'fit-content'
+        }}>
+          {tabs.map((tab) => (
+            <Button
+              key={tab.key}
+              variant="ghost"
+              style={{
+                background: activeTab === tab.key ? 'var(--bg-card)' : 'transparent',
+                color: activeTab === tab.key ? 'var(--primary)' : 'var(--text-secondary)',
+                fontWeight: activeTab === tab.key ? 700 : 500,
+                boxShadow: activeTab === tab.key ? 'var(--shadow-sm)' : 'none',
+                border: 'none',
+                borderRadius: 'var(--radius)',
+                fontSize: '0.8rem',
+                padding: '6px 12px'
+              }}
+              onClick={() => { setActiveTab(tab.key); setReportData(null); }}
+            >
+              {tab.label}
+            </Button>
+          ))}
         </div>
       </div>
 
-      {/* Вкладки */}
-      <div style={{
-        display: 'flex',
-        gap: '2px',
-        marginBottom: '20px',
-        background: 'var(--border-light)',
-        borderRadius: 'var(--radius-md)',
-        padding: '4px',
-        width: 'fit-content'
-      }}>
-        {tabs.map((tab) => (
-          <Button
-            key={tab.key}
-            variant="ghost"
-            style={{
-              background: activeTab === tab.key ? 'var(--bg-card)' : 'transparent',
-              color: activeTab === tab.key ? 'var(--primary)' : 'var(--text-secondary)',
-              fontWeight: activeTab === tab.key ? 700 : 500,
-              boxShadow: activeTab === tab.key ? 'var(--shadow-sm)' : 'none',
-              border: 'none',
-              borderRadius: 'var(--radius)',
-              fontSize: '0.82rem',
-              padding: '8px 16px'
-            }}
-            onClick={() => { setActiveTab(tab.key); setReportData(null); }}
-          >
-            {tab.label}
-          </Button>
-        ))}
-      </div>
+      {/* Фільтри та дії в один рядок */}
+      <div className="card" style={{ marginBottom: '10px', padding: '8px 12px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px' }}>
+          
+          {/* Секція фільтрів зліва */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '8px', flexGrow: 1 }}>
+            {activeTab === 'stock' && (
+              <>
+                <div className="form-group" style={{ marginBottom: 0, flex: '0 0 160px' }}>
+                  <label style={{ fontSize: '0.7rem', marginBottom: '2px', fontWeight: 600 }}>Склад</label>
+                  <select className="form-select" value={stockFilter.warehouseId} onChange={(e) => setStockFilter({ ...stockFilter, warehouseId: e.target.value })} style={{ padding: '4px 8px', height: '32px', fontSize: '0.8rem' }}>
+                    <option value="">Всі склади</option>
+                    {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                  </select>
+                </div>
+                <div className="form-group" style={{ marginBottom: 0, flex: '0 0 130px' }}>
+                  <label style={{ fontSize: '0.7rem', marginBottom: '2px', fontWeight: 600 }}>На дату</label>
+                  <input type="date" className="form-input" value={stockFilter.date} onChange={(e) => setStockFilter({ ...stockFilter, date: e.target.value })} style={{ padding: '4px 8px', height: '32px', fontSize: '0.8rem' }} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', height: '32px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500 }}>
+                    <input type="checkbox" checked={stockFilter.nonZeroOnly} onChange={(e) => setStockFilter({ ...stockFilter, nonZeroOnly: e.target.checked })} />
+                    Лише ненульові
+                  </label>
+                </div>
+              </>
+            )}
 
-      {/* Фільтри */}
-      <div className="card" style={{ marginBottom: '12px', padding: '10px' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '10px' }}>
-          {activeTab === 'stock' && (
-            <>
-              <div className="form-group" style={{ marginBottom: 0, flex: '0 0 160px' }}>
-                <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Склад</label>
-                <select className="form-select" value={stockFilter.warehouseId} onChange={(e) => setStockFilter({ ...stockFilter, warehouseId: e.target.value })} style={{ padding: '6px 10px', height: '36px' }}>
-                  <option value="">Всі склади</option>
-                  {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-                </select>
-              </div>
-              <div className="form-group" style={{ marginBottom: 0, flex: '0 0 140px' }}>
-                <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>На дату</label>
-                <input type="date" className="form-input" value={stockFilter.date} onChange={(e) => setStockFilter({ ...stockFilter, date: e.target.value })} style={{ padding: '6px 10px', height: '36px' }} />
-              </div>
-              <div className="form-group" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', height: '36px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500 }}>
-                  <input type="checkbox" checked={stockFilter.nonZeroOnly} onChange={(e) => setStockFilter({ ...stockFilter, nonZeroOnly: e.target.checked })} />
-                  Лише ненульові
+            {activeTab === 'compare' && (
+              <div className="form-group" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', height: '32px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500 }}>
+                  <input type="checkbox" checked={compareFilter.nonZeroOnly} onChange={(e) => setCompareFilter({ ...compareFilter, nonZeroOnly: e.target.checked })} />
+                  Лише ненульові залишки
                 </label>
               </div>
-            </>
-          )}
+            )}
 
-          {activeTab === 'compare' && (
-            <div className="form-group" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', height: '36px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500 }}>
-                <input type="checkbox" checked={compareFilter.nonZeroOnly} onChange={(e) => setCompareFilter({ ...compareFilter, nonZeroOnly: e.target.checked })} />
-                Лише ненульові залишки
-              </label>
+            {activeTab === 'move' && (
+              <>
+                <div className="form-group" style={{ marginBottom: 0, flex: '0 0 140px' }}>
+                  <label style={{ fontSize: '0.7rem', marginBottom: '2px', fontWeight: 600 }}>Склад</label>
+                  <select className="form-select" value={moveFilter.warehouseId} onChange={(e) => setMoveFilter({ ...moveFilter, warehouseId: e.target.value })} style={{ padding: '4px 8px', height: '32px', fontSize: '0.8rem' }}>
+                    <option value="">Всі</option>
+                    {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                  </select>
+                </div>
+                <div className="form-group" style={{ marginBottom: 0, flex: '1 1 150px', maxWidth: '300px' }}>
+                  <label style={{ fontSize: '0.7rem', marginBottom: '2px', fontWeight: 600 }}>Товар</label>
+                  <select className="form-select" value={moveFilter.productId} onChange={(e) => setMoveFilter({ ...moveFilter, productId: e.target.value })} style={{ padding: '4px 8px', height: '32px', fontSize: '0.8rem' }}>
+                    <option value="">Всі</option>
+                    {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
+                <div className="form-group" style={{ marginBottom: 0, flex: '0 0 115px' }}>
+                  <label style={{ fontSize: '0.7rem', marginBottom: '2px', fontWeight: 600 }}>Від</label>
+                  <input type="date" className="form-input" value={moveFilter.dateFrom} onChange={(e) => setMoveFilter({ ...moveFilter, dateFrom: e.target.value })} style={{ padding: '4px 8px', height: '32px', fontSize: '0.8rem' }} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0, flex: '0 0 115px' }}>
+                  <label style={{ fontSize: '0.7rem', marginBottom: '2px', fontWeight: 600 }}>До</label>
+                  <input type="date" className="form-input" value={moveFilter.dateTo} onChange={(e) => setMoveFilter({ ...moveFilter, dateTo: e.target.value })} style={{ padding: '4px 8px', height: '32px', fontSize: '0.8rem' }} />
+                </div>
+              </>
+            )}
+
+            <div style={{ height: '32px', display: 'flex', alignItems: 'center' }}>
+              <Button variant="primary" onClick={generateReport} disabled={loading} loading={loading} style={{ height: '32px', padding: '0 12px', fontSize: '0.8rem' }}>
+                {loading ? 'Формування...' : '📊 Сформувати'}
+              </Button>
             </div>
-          )}
-
-          {activeTab === 'move' && (
-            <>
-              <div className="form-group" style={{ marginBottom: 0, flex: '0 0 160px' }}>
-                <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Склад</label>
-                <select className="form-select" value={moveFilter.warehouseId} onChange={(e) => setMoveFilter({ ...moveFilter, warehouseId: e.target.value })} style={{ padding: '6px 10px', height: '36px' }}>
-                  <option value="">Всі</option>
-                  {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-                </select>
-              </div>
-              <div className="form-group" style={{ marginBottom: 0, flex: '1 1 150px' }}>
-                <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Товар</label>
-                <select className="form-select" value={moveFilter.productId} onChange={(e) => setMoveFilter({ ...moveFilter, productId: e.target.value })} style={{ padding: '6px 10px', height: '36px' }}>
-                  <option value="">Всі</option>
-                  {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </div>
-              <div className="form-group" style={{ marginBottom: 0, flex: '0 0 120px' }}>
-                <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>Від</label>
-                <input type="date" className="form-input" value={moveFilter.dateFrom} onChange={(e) => setMoveFilter({ ...moveFilter, dateFrom: e.target.value })} style={{ padding: '6px 10px', height: '36px' }} />
-              </div>
-              <div className="form-group" style={{ marginBottom: 0, flex: '0 0 120px' }}>
-                <label style={{ fontSize: '0.75rem', marginBottom: '2px' }}>До</label>
-                <input type="date" className="form-input" value={moveFilter.dateTo} onChange={(e) => setMoveFilter({ ...moveFilter, dateTo: e.target.value })} style={{ padding: '6px 10px', height: '36px' }} />
-              </div>
-            </>
-          )}
-
-          <div>
-            <Button variant="primary" onClick={generateReport} disabled={loading} loading={loading} style={{ height: '36px', padding: '0 20px' }}>
-              {loading ? 'Формування...' : '📊 Сформувати'}
-            </Button>
           </div>
-        </div>
-      </div>
 
-      {/* Результат */}
-      {reportData && (
-        <div className="card">
-          <div className="card-header">
-            <h3>{getReportTitle()}</h3>
-            <div style={{ display: 'flex', gap: '8px' }}>
+          {/* Кнопки Дій (справа, з'являються тільки після формування) */}
+          {reportData && (
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', height: '32px' }}>
               <button 
                 className={`btn btn-sm ${sortAsc ? 'btn-primary' : 'btn-outline'}`}
-                style={sortAsc ? { color: 'white' } : {}}
+                style={{ 
+                  height: '32px', 
+                  padding: '0 10px', 
+                  fontSize: '0.75rem', 
+                  fontWeight: 600,
+                  color: sortAsc ? 'white' : 'var(--text-secondary)',
+                  borderColor: 'var(--border)'
+                }}
                 onClick={() => setSortAsc(!sortAsc)}
                 title="Сортувати від А до Я за назвою"
               >
                 {sortAsc ? 'Сортування: А-Я' : 'Сортувати А-Я'}
               </button>
-              <Button variant="ghost" size="sm" onClick={handleExportExcel}>
-                📥 Завантажити Excel (.csv)
+              <Button variant="ghost" size="sm" onClick={handleExportExcel} style={{ height: '32px', padding: '0 10px', fontSize: '0.75rem', border: '1px solid var(--border)' }}>
+                📥 Excel
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleExportPdf}>
-                📄 Завантажити PDF
+              <Button variant="ghost" size="sm" onClick={handleExportPdf} style={{ height: '32px', padding: '0 10px', fontSize: '0.75rem', border: '1px solid var(--border)' }}>
+                📄 PDF
               </Button>
             </div>
-          </div>
-          <div className="data-table-wrap" style={{ maxHeight: 'calc(100vh - 320px)', overflowY: 'auto' }}>
+          )}
+        </div>
+      </div>
+
+      {/* Результат */}
+      {reportData && (
+        <div className="card" style={{ padding: '4px', borderTop: 'none' }}>
+          <div className="data-table-wrap" style={{ maxHeight: 'calc(100vh - 240px)', overflowY: 'auto' }}>
             {sortedItems && sortedItems.length > 0 ? (
               <table className="data-table compact-table">
                 <thead>
