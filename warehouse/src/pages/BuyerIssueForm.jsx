@@ -21,6 +21,7 @@ export default function BuyerIssueForm() {
   const [balances, setBalances] = useState({});
   const [saving, setSaving] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
+  const [originalItemsMap, setOriginalItemsMap] = useState({});
 
   // Стан для автокомпліту пошуку товарів у рядках
   const [activeRowSearch, setActiveRowSearch] = useState(null); // Індекс рядка, де зараз активний пошук
@@ -107,6 +108,12 @@ export default function BuyerIssueForm() {
                 return [...prev, currentBuyer];
               });
             }
+
+            const origMap = {};
+            tx.items.forEach(item => {
+              origMap[item.productId] = (origMap[item.productId] || 0) + (parseFloat(item.quantity) || 0);
+            });
+            setOriginalItemsMap(origMap);
 
             setFormData({
               buyerId: tx.buyerId,
@@ -581,7 +588,8 @@ export default function BuyerIssueForm() {
               </thead>
               <tbody className="divide-y divide-[var(--border)]">
                 {formData.items.map((item, index) => {
-                  const stock = balances[item.productId] || 0;
+                  const origQty = originalItemsMap[item.productId] || 0;
+                  const stock = (balances[item.productId] || 0) + origQty;
                   const isOver = item.productId && parseFloat(item.quantity) > stock;
 
                   return (
@@ -609,7 +617,8 @@ export default function BuyerIssueForm() {
                                     <div className="p-2 text-[var(--text-secondary)] text-center">Нічого не знайдено</div>
                                   ) : (
                                     filteredProducts.map(p => {
-                                      const pStock = balances[p.id] || 0;
+                                      const origQty = originalItemsMap[p.id] || 0;
+                                      const pStock = (balances[p.id] || 0) + origQty;
                                       return (
                                         <div
                                           key={p.id}
