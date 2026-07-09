@@ -522,7 +522,7 @@ export default function BuyersReport() {
                                         </td>
                                       </tr>
                                     ) : (
-                                      row.items.map(t => {
+                                      [...row.items].reverse().map(t => {
                                         const isIssue = t.type === 'issue';
                                         const isAdj = t.type === 'adjustment';
                                         const amt = parseFloat(t.amount) || 0;
@@ -683,7 +683,7 @@ export default function BuyersReport() {
                                         Немає операцій за вказаний період
                                       </div>
                                     ) : (
-                                      row.items.map(t => {
+                                      [...row.items].reverse().map(t => {
                                         const isIssue = t.type === 'issue';
                                         const isAdj = t.type === 'adjustment';
                                         const amt = parseFloat(t.amount) || 0;
