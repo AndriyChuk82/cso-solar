@@ -45,8 +45,19 @@ export default function Transfer() {
           getWarehouses(),
           getCatalog()
         ]);
-        if (whResult?.success) setWarehouses(whResult.warehouses || []);
+        let loadedWhList = [];
+        if (whResult?.success) {
+          loadedWhList = whResult.warehouses || [];
+          setWarehouses(loadedWhList);
+        }
         if (catResult?.success) setProducts(catResult.products || []);
+
+        const saved = localStorage.getItem('cso_last_warehouse');
+        if (saved && loadedWhList.some(w => w.id === saved)) {
+          setFormData(prev => ({ ...prev, warehouseFrom: saved }));
+        } else if (loadedWhList.length > 0) {
+          setFormData(prev => ({ ...prev, warehouseFrom: loadedWhList[0].id }));
+        }
       } catch (err) {
         console.error('Помилка завантаження даних:', err);
       }
@@ -186,6 +197,7 @@ export default function Transfer() {
 
       const result = await addOperation(operation);
       if (result?.success) {
+        localStorage.setItem('cso_last_warehouse', formData.warehouseFrom);
         showToast('Переміщення успішно збережено', 'success');
         navigate('/');
       } else {
@@ -222,7 +234,11 @@ export default function Transfer() {
               <select
                 className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none w-full"
                 value={formData.warehouseFrom}
-                onChange={(e) => setFormData({ ...formData, warehouseFrom: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData({ ...formData, warehouseFrom: val });
+                  localStorage.setItem('cso_last_warehouse', val);
+                }}
                 required
               >
                 <option value="">Звідки</option>

@@ -138,11 +138,16 @@ export default function BuyerIssueForm() {
           }
         } else {
           // Для нової накладної склад за замовчуванням
-          const ternopil = loadedWhList.find(w => w.name.toLowerCase().includes('тернопіль'));
-          if (ternopil) {
-            setFormData(prev => ({ ...prev, warehouseId: ternopil.id }));
-          } else if (loadedWhList.length > 0) {
-            setFormData(prev => ({ ...prev, warehouseId: loadedWhList[0].id }));
+          const saved = localStorage.getItem('cso_last_warehouse');
+          if (saved && loadedWhList.some(w => w.id === saved)) {
+            setFormData(prev => ({ ...prev, warehouseId: saved }));
+          } else {
+            const ternopil = loadedWhList.find(w => w.name.toLowerCase().includes('тернопіль'));
+            if (ternopil) {
+              setFormData(prev => ({ ...prev, warehouseId: ternopil.id }));
+            } else if (loadedWhList.length > 0) {
+              setFormData(prev => ({ ...prev, warehouseId: loadedWhList[0].id }));
+            }
           }
         }
       } catch (err) {
@@ -539,7 +544,11 @@ export default function BuyerIssueForm() {
               <select
                 className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none"
                 value={formData.warehouseId}
-                onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData({ ...formData, warehouseId: val });
+                  localStorage.setItem('cso_last_warehouse', val);
+                }}
                 required
               >
                 {warehouses.map(w => (

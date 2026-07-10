@@ -61,7 +61,7 @@ export default function OperationForm({ type = 'income' }) {
 
         // Запам'ятований склад
         const saved = localStorage.getItem('cso_last_warehouse');
-        const defaultWh = user?.isStorekeeper ? user.warehouseId : (saved || '');
+        const defaultWh = user?.isStorekeeper ? user.warehouseId : (loadedWhList.some(w => w.id === saved) ? saved : '');
         if (defaultWh) {
           setFormData((prev) => ({ ...prev, warehouseId: defaultWh }));
         } else if (loadedWhList.length > 0) {
@@ -240,7 +240,11 @@ export default function OperationForm({ type = 'income' }) {
               <select
                 className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none w-full"
                 value={formData.warehouseId}
-                onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData({ ...formData, warehouseId: val });
+                  localStorage.setItem('cso_last_warehouse', val);
+                }}
                 required
               >
                 <option value="">-- Склад --</option>
