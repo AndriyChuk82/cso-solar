@@ -11,6 +11,7 @@ const getSupplierDisplayName = (name: string) => {
   if (name === 'БІЗ Солар' || name === 'БІЗ') return 'БІЗ';
   if (name === 'Solarverse' || name === 'СВ') return 'СВ';
   if (name === 'Хеліус' || name === 'ХЕЛ') return 'ХЕЛ';
+  if (name === 'Власний' || name === 'Власний матеріал' || name === 'ВЛ') return 'ВЛ';
   return name;
 };
 
@@ -19,6 +20,7 @@ const getSupplierOrderIndex = (name: string) => {
   if (name === 'БІЗ Солар' || name === 'БІЗ') return 1;
   if (name === 'Хеліус' || name === 'ХЕЛ') return 2;
   if (name === 'Solarverse' || name === 'СВ') return 3;
+  if (name === 'Власний' || name === 'Власний матеріал' || name === 'ВЛ') return 4;
   return 99;
 };
 
@@ -97,15 +99,16 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
     e.stopPropagation();
     if (confirm(`Видалити "${product.name}" з каталогу?`)) {
       const store = useProposalStore.getState();
+      const targetId = product.customId || product.id;
 
       // Видаляємо з products (товари з Google Sheets)
-      const updatedProducts = store.products.filter(p => p.id !== product.id);
+      const updatedProducts = store.products.filter(p => p.id !== targetId);
 
       // Видаляємо з customMaterials (локальні товари)
-      const updatedCustomMaterials = store.customMaterials.filter(p => p.id !== product.id);
+      const updatedCustomMaterials = store.customMaterials.filter(p => p.id !== targetId);
 
       // Додаємо в список видалених
-      const updatedDeletedIds = [...store.deletedProductIds, product.id];
+      const updatedDeletedIds = [...store.deletedProductIds, targetId];
 
       useProposalStore.setState({
         products: updatedProducts,
@@ -135,6 +138,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
     try {
       // Оновлюємо ціну локально через прямий доступ до store
       const store = useProposalStore.getState();
+      const targetId = product.customId || product.id;
 
       // Оновлюємо в products
       const updatedProducts = store.products.map(p =>
@@ -143,7 +147,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
 
       // Оновлюємо в customMaterials
       const updatedCustomMaterials = store.customMaterials.map(p =>
-        p.id === product.id ? { ...p, price: newPrice } : p
+        p.id === targetId ? { ...p, price: newPrice } : p
       );
 
       useProposalStore.setState({
@@ -152,8 +156,9 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
       });
 
       // Якщо це товар з Google Sheets - оновлюємо в хмарі (в фоні, не чекаємо)
-      if (isCustomFromSheets) {
-        updateMaterialPrice(product.id, newPrice).catch((error: any) => {
+      const isTargetCustomFromSheets = isCustomFromSheets && !targetId.startsWith('custom_');
+      if (isTargetCustomFromSheets) {
+        updateMaterialPrice(targetId, newPrice).catch((error: any) => {
           console.warn('Failed to sync to Google Sheets:', error);
         });
       }

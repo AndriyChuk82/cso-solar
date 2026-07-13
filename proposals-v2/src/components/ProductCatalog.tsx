@@ -4,7 +4,7 @@ import { Search, Filter, Star, Hash, Package, RefreshCw } from 'lucide-react';
 import { useProposalStore, clearProductsCache } from '../store';
 import { selectProducts, selectFavorites, selectCustomMaterials, selectDeletedProductIds } from '../store/selectors';
 import { ProductCard } from './ProductCard';
-import { searchProducts } from '../services/api';
+import { searchProducts, normalizeForComparison } from '../services/api';
 import { Product } from '../types';
 import { CustomMaterialsButton } from './CustomMaterials';
 
@@ -34,10 +34,74 @@ export function ProductCatalog() {
 
   // Об'єднуємо продукти з власними матеріалами
   const allProducts = useMemo(() => {
-    const map = new Map<string, Product>();
-    products.forEach((p: Product) => { if (!deletedProductIds.includes(p.id)) map.set(p.id, p); });
-    customMaterials.forEach((p: Product) => { if (!deletedProductIds.includes(p.id)) map.set(p.id, p); });
-    return Array.from(map.values());
+    const normalizedToProduct = new Map<string, Product>();
+    
+    // Спочатку додаємо стандартні товари від постачальників
+    products.forEach((p: Product) => {
+      if (deletedProductIds.includes(p.id)) return;
+      
+      const normName = normalizeForComparison(p.name);
+      normalizedToProduct.set(normName, {
+        ...p,
+        offers: p.offers ? [...p.offers] : []
+      });
+    });
+    
+    // Потім об'єднуємо власні матеріали, якщо назва збігається
+    customMaterials.forEach((p: Product) => {
+      if (deletedProductIds.includes(p.id)) return;
+      
+      const normName = normalizeForComparison(p.name);
+      const existing = normalizedToProduct.get(normName);
+      
+      if (existing) {
+        // Знайдено відповідність! Зливаємо власний матеріал в існуючу картку товару
+        const customOffer = {
+          supplierName: 'Власний',
+          price: p.price,
+          priceVat: p.priceVat,
+          currency: p.currency,
+          inStock: p.inStock !== false,
+          originalName: p.name,
+          isCustom: true,
+          customId: p.id
+        };
+        
+        if (!existing.offers) existing.offers = [];
+        
+        // Запобігаємо дублюванню оффера
+        if (!existing.offers.some(o => (o as any).customId === p.id)) {
+          existing.offers.push(customOffer);
+        }
+        
+        // Автовибір найкращої ціни
+        const bestOffer = existing.offers.reduce((best, curr) => {
+          if (!best) return curr;
+          if (curr.inStock && !best.inStock) return curr;
+          if (!curr.inStock && best.inStock) return best;
+          return curr.price < best.price ? curr : best;
+        }, null as any);
+        
+        if (bestOffer) {
+          existing.price = bestOffer.price;
+          existing.priceVat = bestOffer.priceVat;
+          existing.currency = bestOffer.currency;
+          existing.selectedSupplier = bestOffer.supplierName;
+        }
+        
+        existing.isCustom = true;
+        existing.customId = p.id;
+      } else {
+        // Якщо відповідності немає — додаємо окремою карткою
+        normalizedToProduct.set(normName, { 
+          ...p, 
+          isCustom: true,
+          selectedSupplier: 'Власний'
+        });
+      }
+    });
+    
+    return Array.from(normalizedToProduct.values());
   }, [products, customMaterials, deletedProductIds]);
 
   // Список унікальних категорій для швидких фільтрів

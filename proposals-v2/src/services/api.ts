@@ -515,6 +515,7 @@ export function extractModelCode(name: string): string | null {
   let cleanName = name.toUpperCase()
     .replace(/\(.*?\)/g, '') // Remove everything in parentheses first
     .replace(/\s+/g, '') // Strip all spaces/tabs
+    .replace(/BIFICIAL/g, 'BIFACIAL')
     .replace(/ГІБРИДНИЙ/g, '')
     .replace(/МЕРЕЖЕВИЙ/g, '')
     .replace(/ІНВЕРТОР/g, '')
@@ -751,8 +752,8 @@ export function cleanAndFormatProductName(name: string): string {
 function splitGluedWords(str: string): string {
   if (!str) return str;
   let res = str
-    .replace(/(\d{3}M)BIF(I|A)CIAL/gi, '$1 BIFICIAL')
-    .replace(/(\d{3}M)BIF(I|A)CIAL/gi, '$1 BIFICIAL')
+    .replace(/(\d{3}M)\s*BIF[IA]CIAL/gi, '$1 BIFACIAL')
+    .replace(/BIF[IA]CIAL/gi, 'BIFACIAL')
     .replace(/LIFEPO4/gi, ' LiFePO4')
     .replace(/LV(\d)/gi, ' LV $1')
     .replace(/LV/gi, ' LV')
@@ -1052,6 +1053,7 @@ export async function fetchAllData() {
             mainCategory: m.mainCategory || 'Власні матеріали',
             price: parseFloat(sanitize(m.price || 0)) || 0,
             currency: m.currency || 'USD',
+            selectedSupplier: 'Власний',
             inStock: true
           }));
       }
@@ -1393,6 +1395,7 @@ export async function updateMaterialPrice(id: string, price: number) {
 function normalizeForSearch(str: string): string {
   if (!str) return '';
   return str.toLowerCase()
+    .replace(/bificial/g, 'bifacial')
     .replace(/а/g, 'a')
     .replace(/в/g, 'b')
     .replace(/е/g, 'e')

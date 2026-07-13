@@ -34,6 +34,7 @@ export interface Product {
   offers?: SupplierOffer[]; // Список пропозицій від постачальників
   selectedSupplier?: string; // Вибраний постачальник для КП
   isManualSupplier?: boolean; // Чи вибрав користувач постачальника вручну
+  customId?: string; // Початковий ID власного матеріалу (якщо об'єднано)
 }
 
 export interface ProposalItem {

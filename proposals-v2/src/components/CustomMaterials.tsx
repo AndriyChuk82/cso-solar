@@ -103,6 +103,7 @@ export function CustomMaterialsModal({ isOpen, onClose, initialProductId }: Cust
         manufacturer: formData.manufacturer.trim(),
         inStock: true,
         isCustom: true,
+        selectedSupplier: 'Власний',
       };
 
       const normalizedNewName = normalizeForComparison(formData.name);
