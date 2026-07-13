@@ -1,1 +1,0 @@
-import{l as e}from"./index-BMNFKKBI.js";export{e as fetchAllData};

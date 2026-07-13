@@ -39,6 +39,7 @@ export function ProductCatalog() {
     // Спочатку додаємо стандартні товари від постачальників
     products.forEach((p: Product) => {
       if (deletedProductIds.includes(p.id)) return;
+      if (p.isCustom || p.mainCategory === 'Власні матеріали') return;
       
       const normName = normalizeForComparison(p.name);
       normalizedToProduct.set(normName, {
