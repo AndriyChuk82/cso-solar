@@ -1,1 +1,0 @@
-import{l as e}from"./index-DjrLa_yZ.js";export{e as fetchAllData};

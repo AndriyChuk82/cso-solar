@@ -350,37 +350,41 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
           )}
 
           {!isEditing && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-col items-end gap-1.5">
+              {/* Верхній ряд: Зірочка та Плюс */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handleToggleFavorite}
+                  className={`p-1.5 rounded-lg transition-all ${isFavorite ? 'text-yellow-400 bg-yellow-50 border-yellow-100' : 'text-gray-300 bg-gray-50 border-gray-100 opacity-0 group-hover:opacity-100'} border`}
+                  title={isFavorite ? "Прибрати з обраних" : "Додати в обрані"}
+                >
+                  <Star className="w-3.5 h-3.5" fill={isFavorite ? 'currentColor' : 'none'} />
+                </button>
+
+                <div className="w-7 h-7 flex items-center justify-center bg-primary/10 text-primary rounded-lg group-hover:bg-primary group-hover:text-white transition-all border border-primary/10 shadow-sm">
+                  <Plus className="w-4 h-4" />
+                </div>
+              </div>
+
+              {/* Нижній ряд (тільки для ручних пропозицій): Олівець та Корзина */}
               {isCustom && (
-                <>
+                <div className="flex items-center gap-1">
                   <button
                     onClick={handleEditClick}
-                    className="p-1 px-1.5 text-gray-400 hover:text-blue-500 transition border border-gray-50 rounded"
+                    className="p-1 px-1.5 text-gray-400 hover:text-blue-500 transition border border-gray-50 dark:border-slate-800 rounded"
                     title="Редагувати ціну"
                   >
                     <Edit2 className="w-3 h-3" />
                   </button>
                   <button
                     onClick={handleDelete}
-                    className="p-1 px-1.5 text-gray-400 hover:text-red-500 transition border border-gray-50 rounded"
+                    className="p-1 px-1.5 text-gray-400 hover:text-red-500 transition border border-gray-50 dark:border-slate-800 rounded"
                     title="Видалити"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
-                </>
+                </div>
               )}
-
-              <button
-                onClick={handleToggleFavorite}
-                className={`p-1.5 rounded-lg transition-all ${isFavorite ? 'text-yellow-400 bg-yellow-50 border-yellow-100' : 'text-gray-300 bg-gray-50 border-gray-100 opacity-0 group-hover:opacity-100'} border`}
-                title={isFavorite ? "Прибрати з обраних" : "Додати в обрані"}
-              >
-                <Star className="w-3.5 h-3.5" fill={isFavorite ? 'currentColor' : 'none'} />
-              </button>
-
-              <div className="w-7 h-7 flex items-center justify-center bg-primary/10 text-primary rounded-lg group-hover:bg-primary group-hover:text-white transition-all border border-primary/10 shadow-sm">
-                <Plus className="w-4 h-4" />
-              </div>
             </div>
           )}
         </div>
