@@ -695,9 +695,44 @@ export const createProposalSlice: StateCreator<
     updateProposalField: (field: keyof Proposal, value: any) => {
       const { proposal } = get();
       
+      let updatedItems = proposal.items || [];
+      
+      if (field === 'adjustment') {
+        const oldAdj = proposal.adjustment || 0;
+        const newAdj = parseFloat(value);
+        if (!isNaN(newAdj) && newAdj !== oldAdj) {
+          const ratio = (1 + newAdj / 100) / (1 + oldAdj / 100);
+          updatedItems = updatedItems.map(item => {
+            const newPrice = item.price * ratio;
+            const roundedPrice = Math.round(newPrice * 10000) / 10000;
+            return {
+              ...item,
+              price: roundedPrice,
+              total: roundedPrice * item.quantity
+            };
+          });
+        }
+      } else if (field === 'markup') {
+        const oldMarkup = proposal.markup || 0;
+        const newMarkup = parseFloat(value);
+        if (!isNaN(newMarkup) && newMarkup !== oldMarkup) {
+          const ratio = (1 + newMarkup / 100) / (1 + oldMarkup / 100);
+          updatedItems = updatedItems.map(item => {
+            const newPrice = item.price * ratio;
+            const roundedPrice = Math.round(newPrice * 10000) / 10000;
+            return {
+              ...item,
+              price: roundedPrice,
+              total: roundedPrice * item.quantity
+            };
+          });
+        }
+      }
+      
       const updatedProposal = { 
         ...proposal, 
         [field]: value, 
+        items: updatedItems,
         updatedAt: new Date().toISOString() 
       };
       set(state => updateActiveTabProposal(state.tabs, state.activeTabId, updatedProposal, state.history));

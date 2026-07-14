@@ -1,0 +1,1 @@
+import{l as e}from"./index-uyuvM416.js";export{e as fetchAllData};
