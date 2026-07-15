@@ -28,9 +28,9 @@ const STEPS = [
 
 // Обов'язкові поля для кожного кроку (користувач може легко змінити цей список)
 export const REQUIRED_FIELDS_BY_STEP: Record<number, (keyof SemanticProject)[]> = {
-  1: ['status', 'projectNumber', 'stationType', 'contractDate', 'testingTime'],
+  1: ['status', 'projectNumber', 'stationType', 'testingTime'],
   2: ['fullName', 'phone', 'taxId'],
-  3: ['propertyRegNumber', 'installationLocation', 'titleDeedNumber'],
+  3: ['propertyRegNumber', 'installationLocation', 'titleDeedNumber', 'contractDate'],
   4: ['eicCode', 'permittedPower', 'meterModel', 'substation', 'line', 'utilityPole', 'voltage', 'inputBreaker'],
   5: ['inverterModel', 'panelModel', 'panelCount', 'inverterPower', 'inverterSerialNumber', 'totalPanelPower', 'panelInstallationLocation', 'inverterFirmware'],
   6: [],
@@ -425,7 +425,7 @@ export function ProjectWizard() {
                   />
                 </FormField>
 
-                <FormField label="Номер договору обленерго" required>
+                <FormField label="Номер договору обленерго">
                   <Input 
                     value={formData.contractNumber} 
                     onChange={(v) => handleChange('contractNumber', v)} 
