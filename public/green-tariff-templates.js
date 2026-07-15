@@ -937,8 +937,12 @@ const GT_TEMPLATES = {
                 <div class="p2-photo-label" style="font-size:14pt; padding:10px 15px;">
                     ФОТОФІКСАЦІЯ: Фото 1 — Встановлений інвертор
                 </div>
-                <div style="font-size:11pt; padding:5px 15px; border-bottom:1px solid #000; background:#fff;">
-                    Об'єкт: <b>{{field21}}</b> &nbsp;|&nbsp; Замовник: <b>{{field4}}</b> &nbsp;|&nbsp; № {{field3}}
+                <div style="font-size:10pt; padding:6px 15px; border-bottom:1px solid #000; background:#fff; line-height:1.4;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Об'єкт: <b>{{field21}}</b></span>
+                        <span>№ <b>{{field3}}</b></span>
+                    </div>
+                    <div>Замовник: <b>{{field4}}</b></div>
                 </div>
                 <div class="p2-photo-body" style="background:#fff; flex:1;">{{photo1}}</div>
             </div>
@@ -950,8 +954,12 @@ const GT_TEMPLATES = {
                 <div class="p2-photo-label" style="font-size:14pt; padding:10px 15px;">
                     ФОТОФІКСАЦІЯ: Фото 2 — Серійний номер встановленого інвертора
                 </div>
-                <div style="font-size:11pt; padding:5px 15px; border-bottom:1px solid #000; background:#fff;">
-                    Об'єкт: <b>{{field21}}</b> &nbsp;|&nbsp; Замовник: <b>{{field4}}</b> &nbsp;|&nbsp; № {{field3}}
+                <div style="font-size:10pt; padding:6px 15px; border-bottom:1px solid #000; background:#fff; line-height:1.4;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Об'єкт: <b>{{field21}}</b></span>
+                        <span>№ <b>{{field3}}</b></span>
+                    </div>
+                    <div>Замовник: <b>{{field4}}</b></div>
                 </div>
                 <div class="p2-photo-body" style="background:#fff; flex:1;">{{photo2}}</div>
             </div>
