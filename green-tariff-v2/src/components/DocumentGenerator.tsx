@@ -16,6 +16,8 @@ const DOC_OPTIONS = [
   { value: '5', label: '5. Договір про встановлення' },
   { value: '6', label: '6. Акт тех. вимог (п. 4.12.2)' },
   { value: '7', label: '7. Технічні паспорти обладнання (QR-коди)' },
+  { value: 'inverter_cert', label: '📄 Паспорт інвертора (зі сховища)' },
+  { value: 'panel_cert', label: '📄 Паспорт сонячної панелі (зі сховища)' },
 ];
 
 function fileToBase64(file: File): Promise<string> {
@@ -166,21 +168,44 @@ export function DocumentGenerator({ formData, matchedCerts }: DocumentGeneratorP
         preparePhotoBase64(photo3Ref.current?.files?.[0]),
       ]);
 
-      const printData = {
-        selected,
-        formData: mergedData,
-        photos: { photo1: photo1Base64, photo2: photo2Base64, photo3: photo3Base64 },
-      };
+      // Автоматичне відкриття підібраних PDF-файлів у нових вкладках
+      if (selected.includes('inverter_cert')) {
+        if (matchedCerts?.inverterCert?.url) {
+          window.open(matchedCerts.inverterCert.url, '_blank');
+        } else {
+          showToast('Технічний паспорт інвертора не знайдено в сховищі', 'warning');
+        }
+      }
+      if (selected.includes('panel_cert')) {
+        if (matchedCerts?.panelCert?.url) {
+          window.open(matchedCerts.panelCert.url, '_blank');
+        } else {
+          showToast('Технічний паспорт сонячної панелі не знайдено в сховищі', 'warning');
+        }
+      }
 
-      const printKey = 'gt_print_' + Date.now();
-      localStorage.setItem(printKey, JSON.stringify(printData));
+      // Відфільтровуємо PDF-паспорти від HTML-шаблонів, які рендерить друкована сторінка
+      const htmlDocIds = selected.filter(id => id !== 'inverter_cert' && id !== 'panel_cert');
 
-      // Pause to write completely
-      await new Promise((r) => setTimeout(r, 60));
+      if (htmlDocIds.length > 0) {
+        const printData = {
+          selected: htmlDocIds,
+          formData: mergedData,
+          photos: { photo1: photo1Base64, photo2: photo2Base64, photo3: photo3Base64 },
+        };
 
-      const baseUrl = import.meta.env.BASE_URL || '/';
-      window.open(`${baseUrl}green-tariff-print.html?key=${printKey}`, '_blank');
-      showToast('Документи успішно відкриті у новій вкладці! 🖨️', 'success');
+        const printKey = 'gt_print_' + Date.now();
+        localStorage.setItem(printKey, JSON.stringify(printData));
+
+        // Очікуємо повного запису
+        await new Promise((r) => setTimeout(r, 60));
+
+        const baseUrl = import.meta.env.BASE_URL || '/';
+        window.open(`${baseUrl}green-tariff-print.html?key=${printKey}`, '_blank');
+        showToast('Документи успішно відкриті у новій вкладці! 🖨️', 'success');
+      } else {
+        showToast('Паспорти обладнання відкрито у нових вкладках! 📄', 'success');
+      }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'QuotaExceededError') {
         showToast('Помилка: фото занадто великі для пам\'яті браузера. Зменшіть якість!', 'error');
