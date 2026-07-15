@@ -1533,7 +1533,7 @@ const GT_TEMPLATES = {
         <div class="gt-doc-page" style="padding: 15mm 20mm; font-family: Calibri, sans-serif; box-sizing: border-box;">
             <div style="text-align: center; margin-top: 40px; margin-bottom: 50px;">
                 <h1 style="font-size: 22pt; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; color: #111;">Технічні паспорти обладнання</h1>
-                <p style="font-size: 11pt; color: #666; margin: 0;">(Скануйте QR-коди нижче за допомогою смартфона для перегляду та завантаження специфікацій)</p>
+                <p style="font-size: 12pt; color: #555; margin: 0;">Скануйте QR-код для завантаження технічного паспорта обладнання</p>
             </div>
             
             <div style="display: flex; flex-direction: column; gap: 30px; max-width: 600px; margin: 0 auto;">
