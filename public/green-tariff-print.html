@@ -117,7 +117,9 @@
         <div class="error-state" id="loadingState">Завантаження документів...</div>
     </div>
 
-    <script src="green-tariff-templates.js"></script>
+    <script>
+        document.write('<script src="green-tariff-templates.js?v=' + Date.now() + '"><\/script>');
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
