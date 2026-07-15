@@ -117,7 +117,9 @@
         <div class="error-state" id="loadingState">Завантаження документів...</div>
     </div>
 
-    <script src="green-tariff-templates.js"></script>
+    <script>
+        document.write('<script src="green-tariff-templates.js?v=' + Date.now() + '"><\/script>');
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
@@ -176,26 +178,15 @@
                 }
             }
 
-            formData.field11_day = '___';
-            formData.field11_month = '___';
-            formData.field11_year = '20___';
-            if (formData.field11) {
-                const d = formData.field11.split('-');
-                if (d.length === 3) {
-                    formData.field11_day = d[2];
-                    formData.field11_month = d[1];
-                    formData.field11_year = d[0];
-                }
-            }
-
             formData.field38_int = '_________';
-            formData.field38_kop = '00';
+            formData.field38_words = '____________________________________________________________';
             if (formData.field38) {
-                const cleanVal = formData.field38.toString().replace(/\s/g, '').replace(',', '.');
-                const val = parseFloat(cleanVal) || 0;
-                if (val > 0) {
-                    formData.field38_int = Math.floor(val).toLocaleString('uk-UA');
-                    formData.field38_kop = '00';
+                const val = parseFloat(formData.field38);
+                if (!isNaN(val)) {
+                    formData.field38_int = Math.floor(val).toString();
+                    if (typeof numberToWordsUA !== 'undefined') {
+                        formData.field38_words = numberToWordsUA(val);
+                    }
                 }
             }
 
@@ -264,10 +255,10 @@
 
                 // Специфічна логіка для Однолінійної схеми (doc3)
                 if (docId === '3') {
-                    const hasBattery = formData.field43 && formData.field43.toLowerCase().includes('гібрид');
+                    const hasBattery = formData.stationType && formData.stationType.toLowerCase().includes('гібрид');
                     template = template
-                        .split("{{field43 === 'Гібридна станція' ? 'block' : 'none'}}").join(hasBattery ? 'block' : 'none')
-                        .split("{{field43 === 'Гібридна станція' ? 'none' : 'block'}}").join(hasBattery ? 'none' : 'block');
+                        .split("{{stationType === 'Гібридна' ? 'block' : 'none'}}").join(hasBattery ? 'block' : 'none')
+                        .split("{{stationType === 'Гібридна' ? 'none' : 'block'}}").join(hasBattery ? 'none' : 'block');
                 }
 
                 // ─── Додавання документа в контейнер ───
@@ -282,11 +273,6 @@
 
                 // Специфічна логіка для Акту тех. вимог (doc6)
                 if (docId === '6') {
-                    const batteryInfo = formData.field36
-                        ? `<li style="margin-bottom:3px;">Акумуляторної батареї: <strong>${formData.field36} (${formData.field37} кВт·год)</strong></li>`
-                        : '';
-                    template = template.split('{{batteryListItem}}').join(batteryInfo);
-
                     // Форматуємо інвертор: Модель (с/н Номер)
                     const inverterFull = formData.field27 + (formData.field29 ? ` (с/н ${formData.field29})` : '');
                     template = template.split('{{field27_with_sn}}').join(inverterFull);
@@ -332,6 +318,29 @@
                 }
 
 
+
+                // Специфічна логіка для Технічних паспортів (doc7)
+                if (docId === '7') {
+                    let inverterQrHtml = '';
+                    if (formData.inverterCertUrl) {
+                        inverterQrHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(formData.inverterCertUrl)}" style="width:100px; height:100px;" />`;
+                    } else {
+                        inverterQrHtml = '<span style="font-size:9pt; color:#999; text-align:center; display:block; padding:10px;">Не знайдено в сховищі</span>';
+                    }
+                    template = template.split('{{inverterCertQr}}').join(inverterQrHtml);
+
+                    let panelQrHtml = '';
+                    if (formData.panelCertUrl) {
+                        panelQrHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(formData.panelCertUrl)}" style="width:100px; height:100px;" />`;
+                    } else {
+                        panelQrHtml = '<span style="font-size:9pt; color:#999; text-align:center; display:block; padding:10px;">Не знайдено в сховищі</span>';
+                    }
+                    template = template.split('{{panelCertQr}}').join(panelQrHtml);
+                    
+                    // Заміна імен файлів
+                    template = template.split('{{inverterCertName}}').join(formData.inverterCertName || 'Не підібрано');
+                    template = template.split('{{panelCertName}}').join(formData.panelCertName || 'Не підібрано');
+                }
 
                 wrapper.innerHTML = template;
                 container.appendChild(wrapper);

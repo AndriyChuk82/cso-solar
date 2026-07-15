@@ -1376,28 +1376,27 @@ const GT_TEMPLATES = {
         <div style="font-family:'Times New Roman',Times,serif; font-size:12pt; line-height:1.4; color:#000; padding:0; margin:0;">
          
           <p style="text-align:center; font-weight:bold; font-size:14pt; margin:0 0 4px 0;">АКТ</p>
-          <p style="text-align:center; font-weight:bold; font-size:12pt; margin:0 0 6px 0;">про забезпечення виконання технічних вимог відповідно до п.&nbsp;4.12.2 КСР</p>
+          <p style="text-align:center; font-weight:bold; font-size:12pt; margin:0 0 10px 0;">про забезпечення виконання технічних вимог відповідно до п.&nbsp;4.12.2 КСР</p>
          
-          <p style="text-align:center; font-size:12pt; margin:0 0 8px 0;">
+          <p style="text-align:center; font-size:12pt; margin:0 0 14px 0;">
             {{field11_day}}.{{field11_month}}.{{field11_year}}&nbsp;р.
             <span style="display:inline-block; width:200px;"></span>
             м.&nbsp;Золочів
           </p>
          
-          <p style="text-align:justify; text-indent:1.5cm; margin:0 0 6px 0; font-size:12pt;">
+          <p style="text-align:justify; text-indent:1.5cm; margin:0 0 10px 0; font-size:12pt;">
             Ми, що нижче підписалися, <strong>Виконавець ТОВ «Центр сервісного обслуговування»</strong>, з одного боку, та <strong>Замовник {{field4}}</strong>, з іншого боку, склали даний Акт на підтвердження того, що Виконавцем за адресою: <strong>{{field21}}</strong>, змонтована сонячна станція потужністю <strong>{{field22}}&nbsp;кВт</strong>, яка знаходиться у справному стані і готова до здійснення генерації електричної енергії.
           </p>
          
-          <p style="text-indent:0.8cm; margin:0 0 4px 0; font-size:12pt;">Сонячна станція складається з:</p>
+          <p style="text-indent:0.8cm; margin:0 0 6px 0; font-size:12pt;">Сонячна станція складається з:</p>
          
-          <ul style="margin:0 0 6px 1.2cm; padding:0; list-style-type:disc; font-size:12pt;">
+          <ul style="margin:0 0 10px 1.2cm; padding:0; list-style-type:disc; font-size:12pt;">
             <li style="margin-bottom:3px;">Інвертора: <strong>{{field27}}</strong></li>
             <li style="margin-bottom:3px;">Фотоелектричних модулів: <strong>{{field34}}</strong></li>
-            {{batteryListItem}}
             {{zubrListItem}}
           </ul>
          
-          <p style="text-align:justify; margin:0 0 6px 0; font-size:12pt;">
+          <p style="text-align:justify; margin:0 0 10px 0; font-size:12pt;">
             За допомогою програмного забезпечення проведено налаштування інвертора для забезпечення автоматичного відключення генеруючої електроустановки від електричної мережі ОСП, ОСР та їх користувачів ОМСР у разі раптового зникнення в ній напруги та унеможливлення подачі напруги в електричну мережу у разі відсутності в ній напруги.
           </p>
          
@@ -1462,6 +1461,12 @@ const GT_TEMPLATES = {
               <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Тривалість захисту у разі перевищення напруги впродовж 10 хвилин</td>
               <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">10 хвилин</td>
             </tr>
+            <tr>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Поріг захисту від перенапруги</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">253 В</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Тривалість захисту від перенапруги</td>
+              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">≤0,1 секунди</td>
+            </tr>
           </table>
           
         </div>
@@ -1471,12 +1476,6 @@ const GT_TEMPLATES = {
             <colgroup>
               <col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%">
             </colgroup>
-            <tr>
-              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Поріг захисту від перенапруги</td>
-              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">253 В</td>
-              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Тривалість захисту від перенапруги</td>
-              <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">≤0,1 секунди</td>
-            </tr>
             <tr>
               <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">Поріг захисту від недостатньої напруги</td>
               <td style="border:1px solid #000; padding:4px 6px; text-align:center; vertical-align:middle;">207 В</td>
@@ -1527,5 +1526,44 @@ const GT_TEMPLATES = {
               </tr>
             </table>
           </div>
+        </div>`,
+
+    doc7: `
+        {{styles}}
+        <div class="gt-doc-page" style="padding: 15mm 20mm; font-family: Calibri, sans-serif; box-sizing: border-box;">
+            <div style="text-align: center; margin-top: 40px; margin-bottom: 50px;">
+                <h1 style="font-size: 22pt; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; color: #111;">Технічні паспорти обладнання</h1>
+                <p style="font-size: 11pt; color: #666; margin: 0;">(Скануйте QR-коди нижче за допомогою смартфона для перегляду та завантаження специфікацій)</p>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 30px; max-width: 600px; margin: 0 auto;">
+                <!-- Інвертор -->
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 30px; border: 1.5px solid #000; padding: 25px; border-radius: 12px; background: #fafafa; box-sizing: border-box;">
+                    <div style="flex: 1;">
+                        <h2 style="font-size: 14pt; font-weight: bold; margin: 0 0 8px 0; color: #000;">Технічний паспорт інвертора</h2>
+                        <p style="font-size: 11pt; margin: 0 0 4px 0; color: #333;">Модель: <strong>{{field27}}</strong></p>
+                        <p style="font-size: 9.5pt; margin: 0; color: #666; font-style: italic; max-width: 320px; word-wrap: break-word;">Файл: {{inverterCertName}}</p>
+                    </div>
+                    <div style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid #ccc; padding: 5px; border-radius: 8px; flex-shrink: 0; box-sizing: border-box;">
+                        {{inverterCertQr}}
+                    </div>
+                </div>
+
+                <!-- Панелі -->
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 30px; border: 1.5px solid #000; padding: 25px; border-radius: 12px; background: #fafafa; box-sizing: border-box;">
+                    <div style="flex: 1;">
+                        <h2 style="font-size: 14pt; font-weight: bold; margin: 0 0 8px 0; color: #000;">Технічний паспорт сонячних панелей</h2>
+                        <p style="font-size: 11pt; margin: 0 0 4px 0; color: #333;">Модель: <strong>{{field34}}</strong></p>
+                        <p style="font-size: 9.5pt; margin: 0; color: #666; font-style: italic; max-width: 320px; word-wrap: break-word;">Файл: {{panelCertName}}</p>
+                    </div>
+                    <div style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid #ccc; padding: 5px; border-radius: 8px; flex-shrink: 0; box-sizing: border-box;">
+                        {{panelCertQr}}
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 120px; font-size: 9pt; color: #999; border-top: 1px dashed #ddd; padding-top: 15px;">
+                <p>Документ сформовано автоматично сервісом CSO Solar</p>
+            </div>
         </div>`
 };
