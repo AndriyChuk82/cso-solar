@@ -940,7 +940,7 @@ const GT_TEMPLATES = {
                 <div style="font-size:10pt; padding:6px 15px; border-bottom:1px solid #000; background:#fff; line-height:1.4;">
                     <div style="display: flex; justify-content: space-between;">
                         <span>Об'єкт: <b>{{field21}}</b></span>
-                        <span>№ <b>{{field3}}</b></span>
+                        <span>Протокол № <b>{{field3}}</b></span>
                     </div>
                     <div>Замовник: <b>{{field4}}</b></div>
                 </div>
@@ -957,7 +957,7 @@ const GT_TEMPLATES = {
                 <div style="font-size:10pt; padding:6px 15px; border-bottom:1px solid #000; background:#fff; line-height:1.4;">
                     <div style="display: flex; justify-content: space-between;">
                         <span>Об'єкт: <b>{{field21}}</b></span>
-                        <span>№ <b>{{field3}}</b></span>
+                        <span>Протокол № <b>{{field3}}</b></span>
                     </div>
                     <div>Замовник: <b>{{field4}}</b></div>
                 </div>
