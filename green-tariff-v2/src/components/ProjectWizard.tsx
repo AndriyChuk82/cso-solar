@@ -28,11 +28,11 @@ const STEPS = [
 
 // Обов'язкові поля для кожного кроку (користувач може легко змінити цей список)
 export const REQUIRED_FIELDS_BY_STEP: Record<number, (keyof SemanticProject)[]> = {
-  1: ['status', 'projectNumber'],
+  1: ['status', 'projectNumber', 'stationType', 'contractDate', 'testingTime'],
   2: ['fullName', 'phone', 'taxId'],
-  3: ['propertyRegNumber', 'installationLocation'],
-  4: ['eicCode', 'permittedPower', 'meterModel', 'substation', 'line', 'utilityPole'],
-  5: ['inverterModel', 'panelModel', 'panelCount', 'inverterPower', 'inverterSerialNumber', 'totalPanelPower', 'panelInstallationLocation'],
+  3: ['propertyRegNumber', 'installationLocation', 'titleDeedNumber'],
+  4: ['eicCode', 'permittedPower', 'meterModel', 'substation', 'line', 'utilityPole', 'voltage', 'inputBreaker'],
+  5: ['inverterModel', 'panelModel', 'panelCount', 'inverterPower', 'inverterSerialNumber', 'totalPanelPower', 'panelInstallationLocation', 'inverterFirmware'],
   6: [],
 };
 
@@ -289,7 +289,7 @@ export function ProjectWizard() {
                   />
                 </FormField>
 
-                <FormField label="Час тестування">
+                <FormField label="Час тестування" required>
                   <Input 
                     type="date" 
                     value={formData.testingTime} 
@@ -297,7 +297,7 @@ export function ProjectWizard() {
                   />
                 </FormField>
 
-                <FormField label="Тип станції">
+                <FormField label="Тип станції" required>
                   <SearchableSelect
                     value={formData.stationType}
                     onChange={(v) => handleChange('stationType', v)}
@@ -393,7 +393,7 @@ export function ProjectWizard() {
                   />
                 </FormField>
 
-                <FormField label="Номер запису про право власності">
+                <FormField label="Номер запису про право власності" required>
                   <Input 
                     value={formData.titleDeedNumber} 
                     onChange={(v) => handleChange('titleDeedNumber', v)} 
@@ -418,7 +418,7 @@ export function ProjectWizard() {
                   />
                 </FormField>
 
-                <FormField label="Дата підписання договору">
+                <FormField label="Дата підписання договору" required>
                   <Input 
                     type="date" 
                     value={formData.contractDate} 
@@ -454,7 +454,7 @@ export function ProjectWizard() {
                   />
                 </FormField>
 
-                <FormField label="Договірна напруга приєднання">
+                <FormField label="Договірна напруга приєднання" required>
                   <SearchableSelect 
                     value={formData.voltage} 
                     onChange={(v) => handleChange('voltage', v)} 
@@ -462,7 +462,7 @@ export function ProjectWizard() {
                   />
                 </FormField>
 
-                <FormField label="Вхідний захисний автомат">
+                <FormField label="Вхідний захисний автомат" required>
                   <SearchableSelect 
                     value={formData.inputBreaker} 
                     onChange={(v) => handleChange('inputBreaker', v)} 
@@ -562,7 +562,7 @@ export function ProjectWizard() {
                     />
                   </FormField>
 
-                  <FormField label="Версія прошивки інвертора">
+                  <FormField label="Версія прошивки інвертора" required>
                     <Input 
                       value={formData.inverterFirmware} 
                       onChange={(v) => handleChange('inverterFirmware', v)} 
@@ -683,7 +683,7 @@ export function ProjectWizard() {
                   <p className="text-[11px] text-gray-500">Договірні кошториси, аванси та залишкові суми</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="Повна вартість робіт, грн" required>
+                  <FormField label="Повна вартість робіт, грн">
                     <Input 
                       type="number" 
                       value={formData.workCost} 
