@@ -15,6 +15,7 @@ export function AuthProvider({ children }) {
 
   const [user, setUser] = useState(getInitialUser);
   const [loading, setLoading] = useState(!getInitialUser());
+  const [isVerifying, setIsVerifying] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -119,6 +120,7 @@ export function AuthProvider({ children }) {
         }
       } finally {
         setLoading(false);
+        setIsVerifying(false);
       }
     }
 
@@ -126,7 +128,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, error }}>
+    <AuthContext.Provider value={{ user, loading, error, isVerifying }}>
       {children}
     </AuthContext.Provider>
   );

@@ -27,7 +27,7 @@ const BuyersReport = lazy(() => import('./pages/BuyersReport'));
 
 
 function AppContent() {
-  const { user, loading, error } = useAuth();
+  const { user, loading, error, isVerifying } = useAuth();
   useTheme(); // Initialize theme and font scale
 
   if (loading) {
@@ -57,6 +57,16 @@ function AppContent() {
   const hasWarehouseAccess = user.isAdmin || moduleAccess.includes('warehouse') || moduleAccess.includes('склад');
 
   if (!hasWarehouseAccess) {
+    if (isVerifying) {
+      return (
+        <div className="loading-screen">
+          <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" style={{ height: '48px' }} />
+          <div className="spinner" />
+          <p>Перевірка доступу...</p>
+        </div>
+      );
+    }
+
     return (
       <div className="access-denied" style={{ background: 'var(--bg)', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text)' }}>
         <span className="denied-icon">🔒</span>
