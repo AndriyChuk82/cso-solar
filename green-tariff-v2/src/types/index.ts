@@ -163,6 +163,7 @@ export interface GTStoreState {
 export interface GASResponse {
   success: boolean;
   id?: string;
+  folderUrl?: string;
   error?: string;
   warning?: string;
   stack?: string;

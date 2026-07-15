@@ -1,7 +1,8 @@
-// ===== CSO Solar — Green Tariff v2 API Service =====
+// ===== CSO Solar — Green Tariff v2 API Service (Supabase + Google Drive Hybrid) =====
 
 import type { GASResponse, SemanticProject, FileAttachment } from '../types';
 import { toRawGASProject } from '../utils/mapper';
+import { supabase } from './supabaseClient';
 
 const GT_CONFIG = {
   GAS_URL: 'https://script.google.com/macros/s/AKfycbxc21z2v5vbzF4n4lLRoS-SEkKI6b4QD2ddR9XeWN3QOCpm4HwCUh3MGxxy_05Z8ZCwhw/exec',
@@ -28,7 +29,21 @@ export async function gasGTRequest(action: string, params: Record<string, unknow
 }
 
 export async function fetchProjects(): Promise<GASResponse> {
-  return gasGTRequest('getProjects');
+  if (!supabase) {
+    return { success: false, error: 'Supabase client not initialized' };
+  }
+  try {
+    const { data, error } = await supabase
+      .from('green_tariff_projects')
+      .select('*')
+      .order('createdAt', { ascending: false });
+
+    if (error) throw error;
+    return { success: true, projects: data || [] };
+  } catch (e) {
+    console.error('Fetch Projects Error:', e);
+    return { success: false, error: (e as Error).message };
+  }
 }
 
 export async function saveProject(
@@ -36,21 +51,93 @@ export async function saveProject(
   files: FileAttachment[],
   id: string | null
 ): Promise<GASResponse> {
-  const rawProject = toRawGASProject(project);
-  return gasGTRequest('saveProject', {
-    action: 'saveProject',
-    project: rawProject,
-    files,
-    id,
-  });
+  if (!supabase) {
+    return { success: false, error: 'Supabase client not initialized' };
+  }
+
+  try {
+    let folderUrl = project.folderUrl || '';
+
+    // 1. If files are uploaded, upload them to Google Drive via Apps Script first
+    if (files.length > 0) {
+      // Pass the current folder URL if it already exists, so Apps Script doesn't create a new one
+      const uploadRes = await gasGTRequest('saveProject', {
+        project: { ...toRawGASProject(project), folderurl: folderUrl },
+        files,
+        id,
+      });
+      if (uploadRes.success && uploadRes.folderUrl) {
+        folderUrl = uploadRes.folderUrl;
+      } else if (!uploadRes.success) {
+        return uploadRes; // Forward error from GAS
+      }
+    }
+
+    // 2. Save project to Supabase
+    const isNew = !id || id.startsWith('temp_');
+    const dbProject: any = { ...project };
+
+    // Clean up empty fields that shouldn't override default DB values
+    if (!dbProject.createdAt) {
+      delete dbProject.createdAt;
+    }
+    dbProject.folderUrl = folderUrl;
+
+    if (isNew) {
+      delete dbProject.id;
+      const { data, error } = await supabase
+        .from('green_tariff_projects')
+        .insert([dbProject])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, id: data.id, folderUrl: data.folderUrl };
+    } else {
+      dbProject.id = id;
+      const { data, error } = await supabase
+        .from('green_tariff_projects')
+        .update(dbProject)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, id: data.id, folderUrl: data.folderUrl };
+    }
+  } catch (e) {
+    console.error('Save Project Error:', e);
+    return { success: false, error: (e as Error).message };
+  }
+}
+
+export async function deleteProject(id: string): Promise<GASResponse> {
+  if (!supabase) {
+    return { success: false, error: 'Supabase client not initialized' };
+  }
+  try {
+    // 1. Delete from Supabase
+    const { error } = await supabase
+      .from('green_tariff_projects')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    // 2. Asynchronously delete from Google Sheets as a backup sync
+    gasGTRequest('deleteProject', { id }).catch(err => {
+      console.warn('Backup sheet delete failed (non-critical):', err);
+    });
+
+    return { success: true };
+  } catch (e) {
+    console.error('Delete Project Error:', e);
+    return { success: false, error: (e as Error).message };
+  }
 }
 
 export async function fetchEquipment(): Promise<GASResponse> {
   return gasGTRequest('getEquipment');
-}
-
-export async function deleteProject(id: string): Promise<GASResponse> {
-  return gasGTRequest('deleteProject', { id });
 }
 
 export const gtApi = {
