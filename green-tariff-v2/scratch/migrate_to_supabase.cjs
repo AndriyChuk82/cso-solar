@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
+const crypto = require('crypto');
 
 // 1. Manually parse .env.local to avoid extra dependencies
 const envPath = path.resolve(__dirname, '../../.env.local');
@@ -39,7 +40,7 @@ function mapToSupabase(raw) {
     id: raw.id || undefined,
     status: raw.field1 || 'В процесі',
     paymentStatus: raw.field2 || '',
-    projectNumber: raw.field3 || '',
+    projectNumber: (raw.field3 && raw.field3.trim()) ? raw.field3.trim() : null,
     fullName: raw.field4 || '',
     taxId: raw.field5 || '',
     propertyRegNumber: raw.field6 || '',
@@ -85,8 +86,9 @@ function mapToSupabase(raw) {
     folderUrl: raw.folderurl || '',
   };
 
-  if (!project.id || project.id === 'undefined') {
-    delete project.id;
+  const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  if (!project.id || !uuidRegex.test(project.id)) {
+    project.id = crypto.randomUUID();
   }
 
   if (raw.createdat) {
@@ -117,7 +119,44 @@ async function run() {
     const rawProjects = result.projects;
     console.log(`✅ Отримано ${rawProjects.length} проектів з Google Sheets.`);
 
-    const mappedProjects = rawProjects.map(mapToSupabase);
+    let mappedProjects = rawProjects.map(mapToSupabase);
+    
+    // Видаляємо дублікати спочатку за ID, потім за номером проекту
+    const uniqueById = new Map();
+    mappedProjects.forEach(p => {
+      if (p.id) {
+        uniqueById.set(p.id, p);
+      } else {
+        const tempKey = `empty_id_${Math.random()}`;
+        uniqueById.set(tempKey, p);
+      }
+    });
+    let deduped = Array.from(uniqueById.values());
+
+    const uniqueByNum = new Map();
+    deduped.forEach(p => {
+      if (p.projectNumber) {
+        // Уніфікуємо регістр і пробіли для точного порівняння
+        const normalizedNum = p.projectNumber.trim().toLowerCase();
+        uniqueByNum.set(normalizedNum, p);
+      } else {
+        const tempKey = `empty_num_${Math.random()}`;
+        uniqueByNum.set(tempKey, p);
+      }
+    });
+    mappedProjects = Array.from(uniqueByNum.values());
+    console.log(`🧹 Після видалення дублікатів (за ID та номером): ${mappedProjects.length} проектів (з вихідних ${rawProjects.length}).`);
+    
+    console.log('🧹 Очищення таблиці green_tariff_projects перед імпортом...');
+    const { error: deleteError } = await supabase
+      .from('green_tariff_projects')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+      
+    if (deleteError) {
+      throw deleteError;
+    }
+    
     console.log('📤 Імпорт проектів у Supabase (таблиця green_tariff_projects)...');
 
     // Insert in batches of 50
