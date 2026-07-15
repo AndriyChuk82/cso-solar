@@ -45,12 +45,27 @@ export function ProjectWizard() {
     equipment, 
     isLoading, 
     setUnsavedChanges,
-    loadEquipment
+    loadEquipment,
+    projects
   } = useGTStore();
 
   const [activeStep, setActiveStep] = useState(1);
   const [formData, setFormData] = useState<SemanticProject | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Collect unique inverter firmware versions from all projects for suggestions
+  const firmwareOptions = useMemo(() => {
+    const uniqueFirmwares = new Set<string>();
+    projects.forEach((p) => {
+      if (p.inverterFirmware) {
+        const val = p.inverterFirmware.trim();
+        if (val) {
+          uniqueFirmwares.add(val);
+        }
+      }
+    });
+    return Array.from(uniqueFirmwares).sort();
+  }, [projects]);
 
   // Load equipment catalog once on mount
   useEffect(() => {
@@ -563,10 +578,11 @@ export function ProjectWizard() {
                   </FormField>
 
                   <FormField label="Версія прошивки інвертора" required>
-                    <Input 
+                    <SearchableSelect 
                       value={formData.inverterFirmware} 
                       onChange={(v) => handleChange('inverterFirmware', v)} 
-                      placeholder="Напр: V100R001C00SPC145"
+                      options={firmwareOptions}
+                      placeholder="Виберіть із раніше збережених або введіть нову..."
                     />
                   </FormField>
 
