@@ -35,68 +35,155 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-function mapToSupabase(raw) {
-  const project = {
-    id: raw.id || undefined,
-    status: raw.field1 || 'В процесі',
-    paymentStatus: raw.field2 || '',
-    projectNumber: (raw.field3 && raw.field3.trim()) ? raw.field3.trim() : null,
-    fullName: raw.field4 || '',
-    taxId: raw.field5 || '',
-    propertyRegNumber: raw.field6 || '',
-    titleDeedNumber: raw.field7 || '',
-    unzr: raw.field8 || '',
-    contractNumber: raw.field9 || '',
-    contractDate: raw.field10 || '',
-    testingTime: raw.field11 || '',
-    eicCode: raw.field12 || '',
-    permittedPower: raw.field13 || '',
-    substation: raw.field14 || '',
-    line: raw.field15 || '',
-    utilityPole: raw.field16 || '',
-    meterModel: raw.field17 || '',
-    voltage: raw.field18 || '',
-    inputBreaker: raw.field19 || '',
-    voltageProtector: raw.field20 || '',
-    installationLocation: raw.field21 || '',
-    totalPanelPower: raw.field22 || '',
-    panelCount: raw.field23 || '',
-    panelInstallationLocation: raw.field24 || '',
-    email: raw.field25 || '',
-    phone: raw.field26 || '',
-    inverterModel: raw.field27 || '',
-    inverterPower: raw.field28 || '',
-    inverterSerialNumber: raw.field29 || '',
-    inverterManufacturer: raw.field30 || '',
-    inverterFirmware: raw.field31 || '',
-    inverterWarranty: raw.field32 || '',
-    panelManufacturer: raw.field33 || '',
-    panelModel: raw.field34 || '',
-    panelWarranty: raw.field35 || '',
-    batteryModel: raw.field36 || '',
-    batteryPower: raw.field37 || '',
-    workCost: raw.field38 || '',
-    workCostInWords: raw.field39 || '',
-    passportData: raw.field40 || '',
-    advanceUsd: raw.field41 || '',
-    balanceUsd: raw.field42 || '',
-    stationType: raw.field43 || '',
-    internalComment: raw.field44 || '',
-    reserve: raw.field45 || '',
-    folderUrl: raw.folderurl || '',
-  };
+const FIELD_MAPPING = {
+  id: ['id', 'ID'],
+  status: ['Стан проєкту', 'Статус', 'Стан', 'field1'],
+  paymentStatus: ['Розрахунок', 'Оплата', 'field2'],
+  projectNumber: ['№ проекту', 'field3'],
+  fullName: ['ПІБ фізичної особи', 'ПІБ', 'Прізвище', 'field4'],
+  taxId: ['ІПН', 'ІПН/ЄДРПОУ', 'РНОКПП', 'field5'],
+  propertyRegNumber: [
+    'реєстраційний номер об’єкта нерухомого майна',
+    'Реєстраційний номер об\'єкта',
+    'реєстраційний номер об’єкта',
+    'реєстраційний номер об\'єкта',
+    'Реєстр. номер',
+    'Реєстраційний номер об’єкта майна',
+    'field6'
+  ],
+  titleDeedNumber: [
+    'Номер запису про право власності',
+    'Номер запису на право власності',
+    'Запис про право власності',
+    'Номер запису про право',
+    'field7'
+  ],
+  unzr: [
+    'Унікальний номер запису в Єдиному державному демографічному реєстрі (за наявності)', 
+    'Унікальний номер запису в Єдиному державному демографічному реєстрі',
+    'Унікальний номер', 
+    'УНЗР',
+    'field8'
+  ],
+  contractNumber: ['№ Договору', 'Номер договору', '№ договору', 'Договір №', 'field9'],
+  contractDate: ['Дата договору', 'field10'],
+  testingTime: ['Час тестування', 'field11'],
+  eicCode: ['EIC-код точки розподілу', 'EIC-код', 'field12'],
+  permittedPower: ['Дозволена потужність', 'Дозволена потужність, кВт', 'field13'],
+  substation: ['Підстанція', 'field14'],
+  line: ['Лінія', 'field15'],
+  utilityPole: ['Опора', 'field16'],
+  meterModel: ['Лічильник', 'field17'],
+  voltage: ['Напруга', 'field18'],
+  inputBreaker: ['Вхідний автомат', 'Автомат', 'field19'],
+  voltageProtector: ['Відсікач', 'field20'],
+  installationLocation: ['Місце розташування генеруючої установки', 'Адреса об\'єкта', 'Місце', 'field21'],
+  totalPanelPower: ['Потужність генеруючих установок споживача, кВт', 'Сумарна потужність, кВт', 'Сумарна потужність', 'field22'],
+  panelCount: ['К-сть панелей', 'Кількість панелей', 'field23'],
+  panelInstallationLocation: ['Місце встановлення панелей', 'Встановлення панелей', 'field24'],
+  email: ['електронною поштою', 'Email', 'Електронна пошта', 'field25'],
+  phone: ['конт телефон', 'Телефон', 'Контактний телефон', 'field26'],
+  inverterModel: ['Інвертор', 'Модель інвертора', 'field27'],
+  inverterPower: ['Потужність інвертора, кВт', 'Потужність інвертора', 'field28'],
+  inverterSerialNumber: ['с/н інвертора', 'Серійний номер інвертора', 'field29'],
+  inverterManufacturer: ['Виробник Інвертора', 'field30'],
+  inverterFirmware: ['Прошивка інвертора', 'Прошивка', 'field31'],
+  inverterWarranty: ['Гарантія на інвертор, р.', 'Гарантія на інвертор', 'field32'],
+  panelManufacturer: ['Виробник сонячних панелей', 'field33'],
+  panelModel: ['Сонячна панель', 'Модель панелі', 'Панель (Модель)', 'Панель', 'field34'],
+  panelWarranty: ['Гарантія на панелі, років', 'Гарантія на панелі', 'field35'],
+  batteryModel: ['Акумуляторна батарея', 'Модель АКБ', 'АКБ', 'Батарея', 'field36'],
+  batteryPower: ['Номінальна потужність, кВт*год', 'Номінальна потужність АКБ', 'Номінальна потужність батарей', 'field37'],
+  workCost: ['Вартість робіт', 'field38'],
+  workCostInWords: ['Сума прописом', 'field39'],
+  passportData: ['Паспортні дані', 'Паспорт', 'field40'],
+  advanceUsd: ['Аванс, USD', 'field41'],
+  balanceUsd: ['Залишок, USD', 'field42'],
+  stationType: ['Тип станції', 'Модель станції', 'field43'],
+  internalComment: ['Коментар', 'Внутрішній коментар', 'Нотатки', 'Field 44', 'field44'],
+  reserve: ['Резерв', 'Field 45', 'field45'],
+  folderUrl: ['folderurl', 'Folder URL'],
+  createdAt: ['createdat', 'Created At'],
+};
 
+function getProp(obj, keys) {
+  if (!obj) return '';
+
+  const normalize = (s) =>
+    (s || '')
+      .toString()
+      .toLowerCase()
+      .replace(/[\n\r"]/g, '')
+      .replace(/[’'‘`]/g, "'") // Unify all apostrophe variants
+      .replace(/\s+/g, '')
+      .trim();
+
+  const objKeys = Object.keys(obj);
+
+  // 1. Direct match or normalized exact match
+  for (const k of keys) {
+    if (obj[k] !== undefined) return String(obj[k]);
+    const normalizedK = normalize(k);
+    const exactKey = objKeys.find((ak) => normalize(ak) === normalizedK);
+    if (exactKey) return String(obj[exactKey]);
+  }
+
+  // 2. Soft matching (substring checks) for long headers
+  for (const k of keys) {
+    const normalizedK = normalize(k);
+    if (normalizedK.length < 8) continue; // Skip short keys to prevent false positives
+
+    const foundKey = objKeys.find((ak) => {
+      if (!ak) return false;
+      const normActual = normalize(ak);
+      return normActual.includes(normalizedK) || normalizedK.includes(normActual);
+    });
+    if (foundKey) return String(obj[foundKey]);
+  }
+
+  return '';
+}
+
+function mapToSupabase(raw) {
+  const project = {};
+  
+  for (const key in FIELD_MAPPING) {
+    let val = raw[key];
+    if (val === undefined || val === '') {
+      val = getProp(raw, FIELD_MAPPING[key]);
+    }
+    
+    project[key] = String(val || '');
+  }
+
+  // ID handling
+  project.id = raw.id || getProp(raw, ['id', 'ID']);
   const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
   if (!project.id || !uuidRegex.test(project.id)) {
     project.id = crypto.randomUUID();
   }
 
-  if (raw.createdat) {
-    try {
-      project.createdAt = new Date(raw.createdat).toISOString();
-    } catch (e) {
-      console.warn(`Некоректна дата створення для проекту ${project.fullName}:`, raw.createdat);
+  // projectNumber unique constraint fallback
+  if (project.projectNumber) {
+    project.projectNumber = project.projectNumber.trim();
+    if (project.projectNumber === '') {
+      project.projectNumber = null;
     }
+  } else {
+    project.projectNumber = null;
+  }
+
+  // createdAt formatting
+  const rawDate = raw.createdat || getProp(raw, ['createdat', 'Created At']);
+  if (rawDate) {
+    try {
+      project.createdAt = new Date(rawDate).toISOString();
+    } catch (e) {
+      console.warn(`Некоректна дата створення для проекту ${project.fullName}:`, rawDate);
+      delete project.createdAt;
+    }
+  } else {
+    delete project.createdAt;
   }
 
   return project;
@@ -136,7 +223,6 @@ async function run() {
     const uniqueByNum = new Map();
     deduped.forEach(p => {
       if (p.projectNumber) {
-        // Уніфікуємо регістр і пробіли для точного порівняння
         const normalizedNum = p.projectNumber.trim().toLowerCase();
         uniqueByNum.set(normalizedNum, p);
       } else {
@@ -165,7 +251,7 @@ async function run() {
       const batch = mappedProjects.slice(i, i + batchSize);
       const { error } = await supabase
         .from('green_tariff_projects')
-        .upsert(batch, { onConflict: 'projectNumber' }); // Avoid duplication if run multiple times
+        .upsert(batch, { onConflict: 'projectNumber' });
 
       if (error) {
         throw error;
