@@ -317,6 +317,29 @@
 
 
 
+                // Специфічна логіка для Технічних паспортів (doc7)
+                if (docId === '7') {
+                    let inverterQrHtml = '';
+                    if (formData.inverterCertUrl) {
+                        inverterQrHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(formData.inverterCertUrl)}" style="width:100px; height:100px;" />`;
+                    } else {
+                        inverterQrHtml = '<span style="font-size:9pt; color:#999; text-align:center; display:block; padding:10px;">Не знайдено в сховищі</span>';
+                    }
+                    template = template.split('{{inverterCertQr}}').join(inverterQrHtml);
+
+                    let panelQrHtml = '';
+                    if (formData.panelCertUrl) {
+                        panelQrHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(formData.panelCertUrl)}" style="width:100px; height:100px;" />`;
+                    } else {
+                        panelQrHtml = '<span style="font-size:9pt; color:#999; text-align:center; display:block; padding:10px;">Не знайдено в сховищі</span>';
+                    }
+                    template = template.split('{{panelCertQr}}').join(panelQrHtml);
+                    
+                    // Заміна імен файлів
+                    template = template.split('{{inverterCertName}}').join(formData.inverterCertName || 'Не підібрано');
+                    template = template.split('{{panelCertName}}').join(formData.panelCertName || 'Не підібрано');
+                }
+
                 wrapper.innerHTML = template;
                 container.appendChild(wrapper);
                 renderedCount++;

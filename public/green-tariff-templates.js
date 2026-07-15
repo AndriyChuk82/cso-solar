@@ -1526,5 +1526,44 @@ const GT_TEMPLATES = {
               </tr>
             </table>
           </div>
+        </div>`,
+
+    doc7: `
+        {{styles}}
+        <div class="gt-doc-page" style="padding: 15mm 20mm; font-family: Calibri, sans-serif; box-sizing: border-box;">
+            <div style="text-align: center; margin-top: 40px; margin-bottom: 50px;">
+                <h1 style="font-size: 22pt; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; color: #111;">Технічні паспорти обладнання</h1>
+                <p style="font-size: 11pt; color: #666; margin: 0;">(Скануйте QR-коди нижче за допомогою смартфона для перегляду та завантаження специфікацій)</p>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 30px; max-width: 600px; margin: 0 auto;">
+                <!-- Інвертор -->
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 30px; border: 1.5px solid #000; padding: 25px; border-radius: 12px; background: #fafafa; box-sizing: border-box;">
+                    <div style="flex: 1;">
+                        <h2 style="font-size: 14pt; font-weight: bold; margin: 0 0 8px 0; color: #000;">Технічний паспорт інвертора</h2>
+                        <p style="font-size: 11pt; margin: 0 0 4px 0; color: #333;">Модель: <strong>{{field27}}</strong></p>
+                        <p style="font-size: 9.5pt; margin: 0; color: #666; font-style: italic; max-width: 320px; word-wrap: break-word;">Файл: {{inverterCertName}}</p>
+                    </div>
+                    <div style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid #ccc; padding: 5px; border-radius: 8px; flex-shrink: 0; box-sizing: border-box;">
+                        {{inverterCertQr}}
+                    </div>
+                </div>
+
+                <!-- Панелі -->
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 30px; border: 1.5px solid #000; padding: 25px; border-radius: 12px; background: #fafafa; box-sizing: border-box;">
+                    <div style="flex: 1;">
+                        <h2 style="font-size: 14pt; font-weight: bold; margin: 0 0 8px 0; color: #000;">Технічний паспорт сонячних панелей</h2>
+                        <p style="font-size: 11pt; margin: 0 0 4px 0; color: #333;">Модель: <strong>{{field34}}</strong></p>
+                        <p style="font-size: 9.5pt; margin: 0; color: #666; font-style: italic; max-width: 320px; word-wrap: break-word;">Файл: {{panelCertName}}</p>
+                    </div>
+                    <div style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid #ccc; padding: 5px; border-radius: 8px; flex-shrink: 0; box-sizing: border-box;">
+                        {{panelCertQr}}
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 120px; font-size: 9pt; color: #999; border-top: 1px dashed #ddd; padding-top: 15px;">
+                <p>Документ сформовано автоматично сервісом CSO Solar</p>
+            </div>
         </div>`
 };

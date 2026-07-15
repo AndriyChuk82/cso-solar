@@ -15,6 +15,7 @@ const DOC_OPTIONS = [
   { value: '4', label: '4. Акт приймання-передачі' },
   { value: '5', label: '5. Договір про встановлення' },
   { value: '6', label: '6. Акт тех. вимог (п. 4.12.2)' },
+  { value: '7', label: '7. Технічні паспорти обладнання (QR-коди)' },
 ];
 
 function fileToBase64(file: File): Promise<string> {
@@ -84,7 +85,15 @@ function PhotoInput({ id, label, fileRef }: PhotoInputProps) {
   );
 }
 
-export function DocumentGenerator({ formData }: { formData: SemanticProject }) {
+interface DocumentGeneratorProps {
+  formData: SemanticProject;
+  matchedCerts?: {
+    inverterCert: { name: string; url: string } | null;
+    panelCert: { name: string; url: string } | null;
+  } | null;
+}
+
+export function DocumentGenerator({ formData, matchedCerts }: DocumentGeneratorProps) {
   const [selected, setSelected] = useState<string[]>([]);
   const [signMode, setSignMode] = useState<'none' | 'stamp' | 'only'>('none');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -143,6 +152,12 @@ export function DocumentGenerator({ formData }: { formData: SemanticProject }) {
       mergedData.currentDate = new Date().toLocaleDateString('uk-UA');
       mergedData.stationType = formData.stationType || '';
       mergedData.signMode = signMode;
+      
+      // Inject matched certificate URLs and filenames for printing
+      mergedData.inverterCertUrl = matchedCerts?.inverterCert?.url || '';
+      mergedData.inverterCertName = matchedCerts?.inverterCert?.name || '';
+      mergedData.panelCertUrl = matchedCerts?.panelCert?.url || '';
+      mergedData.panelCertName = matchedCerts?.panelCert?.name || '';
 
       // Prepare photo files
       const [photo1Base64, photo2Base64, photo3Base64] = await Promise.all([

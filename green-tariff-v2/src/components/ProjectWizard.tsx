@@ -892,7 +892,7 @@ export function ProjectWizard() {
 
               {/* Document Generator Section */}
               <div className="pt-4 border-t border-gray-100 dark:border-slate-800/80">
-                <DocumentGenerator formData={formData} />
+                <DocumentGenerator formData={formData} matchedCerts={matchedCerts} />
               </div>
             </div>
           )}
