@@ -105,7 +105,7 @@ export function getProp(obj: Record<string, any>, keys: string[]): string {
     const foundKey = objKeys.find((ak) => {
       if (!ak) return false;
       const normActual = normalize(ak);
-      return normActual.includes(normalizedK) || normalizedK.includes(normActual);
+      return normActual.includes(normalizedK);
     });
     if (foundKey && obj[foundKey] !== undefined && obj[foundKey] !== '') return String(obj[foundKey]);
   }
