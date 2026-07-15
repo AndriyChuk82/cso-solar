@@ -970,8 +970,8 @@ const GT_TEMPLATES = {
     doc3: `
         {{styles}}
         <div class="p2-page p2-appendix-page" style="padding: 5mm 15mm; min-height: 250mm; display: flex; flex-direction: column;">
-            <p style="text-align:center; font-weight:bold; font-size:12pt; margin-bottom:10px;">
-                Улаштування вузла обліку генеруючої установки приватного домогосподарства за адресою: {{field21}}
+            <p style="text-align:center; font-weight:bold; font-size:12pt; margin-bottom:10px; line-height:1.4;">
+                Улаштування вузла обліку генеруючої установки приватного домогосподарства<br>за адресою: {{field21}}
             </p>
             <p style="font-size:14pt; font-weight:bold; text-align:center; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 5px;">
                 Схема електрична однолінійна
