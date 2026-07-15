@@ -171,6 +171,11 @@ export function toSemanticProject(raw: Record<string, any>): SemanticProject {
     let val = raw[sKey]; // Try matching exact key first (like if it's already semantic)
     
     if (val === undefined || val === '') {
+      // Try lowercase matching (Postgres/Supabase style)
+      val = raw[sKey.toLowerCase()];
+    }
+    
+    if (val === undefined || val === '') {
       // Direct field fallback (like raw['field1'])
       const fieldIndex = getFieldIndexFromSemanticName(sKey);
       if (fieldIndex > 0) {
