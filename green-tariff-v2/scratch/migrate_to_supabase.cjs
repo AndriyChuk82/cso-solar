@@ -122,10 +122,10 @@ function getProp(obj, keys) {
 
   // 1. Direct match or normalized exact match
   for (const k of keys) {
-    if (obj[k] !== undefined) return String(obj[k]);
+    if (obj[k] !== undefined && obj[k] !== '') return String(obj[k]);
     const normalizedK = normalize(k);
     const exactKey = objKeys.find((ak) => normalize(ak) === normalizedK);
-    if (exactKey) return String(obj[exactKey]);
+    if (exactKey && obj[exactKey] !== undefined && obj[exactKey] !== '') return String(obj[exactKey]);
   }
 
   // 2. Soft matching (substring checks) for long headers
@@ -138,7 +138,7 @@ function getProp(obj, keys) {
       const normActual = normalize(ak);
       return normActual.includes(normalizedK) || normalizedK.includes(normActual);
     });
-    if (foundKey) return String(obj[foundKey]);
+    if (foundKey && obj[foundKey] !== undefined && obj[foundKey] !== '') return String(obj[foundKey]);
   }
 
   return '';
