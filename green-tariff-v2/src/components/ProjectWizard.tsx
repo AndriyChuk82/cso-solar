@@ -30,7 +30,7 @@ const STEPS = [
 export const REQUIRED_FIELDS_BY_STEP: Record<number, (keyof SemanticProject)[]> = {
   1: ['status', 'projectNumber', 'stationType', 'testingTime'],
   2: ['fullName', 'phone', 'taxId'],
-  3: ['propertyRegNumber', 'installationLocation', 'titleDeedNumber', 'contractDate'],
+  3: ['propertyRegNumber', 'installationLocation', 'titleDeedNumber', 'contractDate', 'contractNumber'],
   4: ['eicCode', 'permittedPower', 'meterModel', 'substation', 'line', 'utilityPole', 'voltage', 'inputBreaker'],
   5: ['inverterModel', 'panelModel', 'panelCount', 'inverterPower', 'inverterSerialNumber', 'totalPanelPower', 'panelInstallationLocation', 'inverterFirmware'],
   6: [],
@@ -425,7 +425,7 @@ export function ProjectWizard() {
                   />
                 </FormField>
 
-                <FormField label="Номер договору обленерго">
+                <FormField label="Номер договору обленерго" required>
                   <Input 
                     value={formData.contractNumber} 
                     onChange={(v) => handleChange('contractNumber', v)} 
