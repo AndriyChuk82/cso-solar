@@ -7,8 +7,10 @@ import { DocumentGenerator } from './DocumentGenerator';
 import type { SemanticProject } from '../types';
 import { 
   ChevronDown, X, Check, ArrowRight, ArrowLeft, Save, Trash2, 
-  User, Home, Layers, Cpu, CreditCard, Clipboard, Loader2 
+  User, Home, Layers, Cpu, CreditCard, Clipboard, Loader2, Download 
 } from 'lucide-react';
+import { fetchSpecsFileList } from '../services/api';
+import { supabase } from '../services/supabaseClient';
 
 const STATUS_OPTIONS = ['В процесі', 'Відкладено', 'Готовий'];
 const PAYMENT_OPTIONS = ['Оплачено', 'Не оплачено'];
@@ -35,6 +37,89 @@ export const REQUIRED_FIELDS_BY_STEP: Record<number, (keyof SemanticProject)[]> 
   5: ['inverterModel', 'panelModel', 'panelCount', 'inverterPower', 'inverterSerialNumber', 'totalPanelPower', 'panelInstallationLocation', 'inverterFirmware'],
   6: [],
 };
+
+// Розрахунок оцінки відповідності імені файлу та назви моделі (від 0 до 100)
+function calculateMatchScore(fileName: string, modelName: string): number {
+  const normFile = fileName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normModel = modelName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  
+  // 1. Повний збіг (без розділювачів)
+  if (normFile.includes(normModel)) return 100;
+  
+  // Очищення назви бренду з початку моделі
+  const cleanModel = modelName.replace(/^(huawei|longi|deye|solis|fronius|ja solar|jinko|risen|canadian|trina|akb|pylontech|dahua|must|victron|growatt|altek)\s+/i, '').trim();
+  const cleanNormModel = cleanModel.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (normFile.includes(cleanNormModel)) return 90;
+  
+  // Розбиваємо модель на окремі слова/коди
+  const words = cleanModel.split(/[\s\-_/\\+]+/i)
+    .map(w => w.toLowerCase().trim())
+    .filter(w => w.length >= 2);
+    
+  if (words.length === 0) return 0;
+  
+  let matchCount = 0;
+  let hasSpecificCode = false; // Наявність специфічного буквено-цифрового коду (як-от 'sg05lp3' або 'sg02hp3')
+  
+  for (const word of words) {
+    const cleanWord = word.replace(/[^a-z0-9]/g, '');
+    if (cleanWord.length === 0) continue;
+    
+    if (normFile.includes(cleanWord)) {
+      matchCount++;
+      // Якщо слово містить і букви, і цифри, або є унікальним кодом моделі
+      if ((/[a-z]/.test(word) && /[0-9]/.test(word) && word.length >= 4) || word.length >= 6) {
+        hasSpecificCode = true;
+      }
+    }
+  }
+  
+  // Розрахунок відсотка збігів по словах
+  const wordMatchRatio = matchCount / words.length;
+  let score = wordMatchRatio * 50;
+  
+  if (hasSpecificCode) {
+    score += 35; // Бонус за збіг унікального коду моделі
+  }
+  
+  // Бонус за збіг бренду
+  const brands = ['deye', 'huawei', 'longi', 'solis', 'growatt', 'victron', 'must', 'pylontech', 'fronius', 'altek'];
+  const brandMatch = brands.find(b => {
+    return modelName.toLowerCase().includes(b) && fileName.toLowerCase().includes(b);
+  });
+  if (brandMatch) {
+    score += 15;
+  }
+  
+  return score;
+}
+
+// Пошук найкращого збігу серед наявних файлів у бакеті Supabase
+function findBestMatchingFile(modelName: string | undefined, files: string[]): { name: string; url: string } | null {
+  if (!modelName || files.length === 0) return null;
+  
+  let bestMatchName = '';
+  let bestScore = 0;
+  
+  for (const file of files) {
+    const score = calculateMatchScore(file, modelName);
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatchName = file;
+    }
+  }
+  
+  // Поріг відповідності 55 балів для запобігання випадковим збігам
+  if (supabase && bestMatchName && bestScore >= 55) {
+    const { data } = supabase.storage.from('equipment-specs').getPublicUrl(bestMatchName);
+    return {
+      name: bestMatchName,
+      url: data.publicUrl
+    };
+  }
+  
+  return null;
+}
 
 export function ProjectWizard() {
   const { 
@@ -67,9 +152,34 @@ export function ProjectWizard() {
     return Array.from(uniqueFirmwares).sort();
   }, [projects]);
 
+  const [specsFiles, setSpecsFiles] = useState<string[]>([]);
+  const [isSpecsLoading, setIsSpecsLoading] = useState(false);
+
+  // Динамічний підбір сертифікатів на основі завантаженого списку файлів
+  const matchedCerts = useMemo(() => {
+    return {
+      inverterCert: findBestMatchingFile(formData?.inverterModel, specsFiles),
+      panelCert: findBestMatchingFile(formData?.panelModel, specsFiles)
+    };
+  }, [formData?.inverterModel, formData?.panelModel, specsFiles]);
+
   // Load equipment catalog once on mount
   useEffect(() => {
     loadEquipment();
+    
+    // Fetch files list from Supabase Storage bucket 'equipment-specs'
+    const loadSpecs = async () => {
+      setIsSpecsLoading(true);
+      try {
+        const files = await fetchSpecsFileList();
+        setSpecsFiles(files);
+      } catch (e) {
+        console.error('Error loading specs files list:', e);
+      } finally {
+        setIsSpecsLoading(false);
+      }
+    };
+    loadSpecs();
   }, []);
 
   // Update local formData when store's currentProject changes
@@ -547,7 +657,7 @@ export function ProjectWizard() {
                     />
                   </FormField>
 
-                  <FormField label="Модель інвертора (Каталог)" required>
+                   <FormField label="Модель інвертора (Каталог)" required>
                     <SearchableSelect
                       value={formData.inverterModel}
                       placeholder="Оберіть модель..."
@@ -558,6 +668,26 @@ export function ProjectWizard() {
                         search: `${i.manufacturer || ''} ${i.model}`
                       }))}
                     />
+                    {isSpecsLoading ? (
+                      <div className="text-[10px] text-gray-400 flex items-center gap-1 mt-1">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Пошук сертифіката інвертора...
+                      </div>
+                    ) : matchedCerts.inverterCert ? (
+                      <div className="mt-1 flex">
+                        <a 
+                          href={matchedCerts.inverterCert.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/40 border border-emerald-200/50 dark:border-emerald-900/50 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all shadow-sm"
+                        >
+                          <Download className="w-3.5 h-3.5" /> Завантажити сертифікат інвертора
+                        </a>
+                      </div>
+                    ) : formData.inverterModel ? (
+                      <div className="text-[10px] text-gray-400 mt-1 italic">
+                        Сертифікат не знайдено в сховищі
+                      </div>
+                    ) : null}
                   </FormField>
 
                   <FormField label="Потужність інвертора, кВт" required>
@@ -610,7 +740,7 @@ export function ProjectWizard() {
                     />
                   </FormField>
 
-                  <FormField label="Модель сонячної панелі (Каталог)" required>
+                   <FormField label="Модель сонячної панелі (Каталог)" required>
                     <SearchableSelect
                       value={formData.panelModel}
                       placeholder="Оберіть модель..."
@@ -621,6 +751,26 @@ export function ProjectWizard() {
                         search: `${p.manufacturer || ''} ${p.model}`
                       }))}
                     />
+                    {isSpecsLoading ? (
+                      <div className="text-[10px] text-gray-400 flex items-center gap-1 mt-1">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Пошук сертифіката панелі...
+                      </div>
+                    ) : matchedCerts.panelCert ? (
+                      <div className="mt-1 flex">
+                        <a 
+                          href={matchedCerts.panelCert.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/40 border border-emerald-200/50 dark:border-emerald-900/50 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all shadow-sm"
+                        >
+                          <Download className="w-3.5 h-3.5" /> Завантажити сертифікат панелі
+                        </a>
+                      </div>
+                    ) : formData.panelModel ? (
+                      <div className="text-[10px] text-gray-400 mt-1 italic">
+                        Сертифікат не знайдено в сховищі
+                      </div>
+                    ) : null}
                   </FormField>
 
                   <FormField label="Кількість сонячних панелей, шт" required>

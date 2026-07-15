@@ -140,10 +140,27 @@ export async function fetchEquipment(): Promise<GASResponse> {
   return gasGTRequest('getEquipment');
 }
 
+export async function fetchSpecsFileList(): Promise<string[]> {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .storage
+      .from('equipment-specs')
+      .list('', { limit: 1000 });
+
+    if (error) throw error;
+    return (data || []).map(f => f.name);
+  } catch (e) {
+    console.error('Error listing specs files:', e);
+    return [];
+  }
+}
+
 export const gtApi = {
   fetchProjects,
   saveProject,
   gasGTRequest,
   fetchEquipment,
   deleteProject,
+  fetchSpecsFileList,
 };
