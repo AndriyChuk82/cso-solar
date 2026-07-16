@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
-import { getBuyerTransactions, updateBuyerTransaction, deleteBuyerTransaction, getBuyers, toggleArchiveTransaction } from '../api/gasApi';
+import { getBuyerTransactions, updateBuyerTransaction, deleteBuyerTransaction, getBuyers, toggleArchiveTransaction, addBuyerTransaction } from '../api/gasApi';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@cso/design-system';
@@ -41,6 +41,161 @@ export default function BuyerDetails() {
 
   // Редагування транзакції
   const [editTx, setEditTx] = useState(null);
+
+  // Видача заброньованих товарів (Резерви)
+  const [reserveReleaseTx, setReserveReleaseTx] = useState(null);
+  const [reserveReleaseForm, setReserveReleaseForm] = useState(null);
+
+  function startReserveRelease(tx) {
+    setReserveReleaseTx(tx);
+    setReserveReleaseForm({
+      pickedUpBy: tx.pickedUpBy || '',
+      comment: tx.comment || '',
+      items: tx.items.map(item => ({
+        productId: item.productId,
+        productName: item.productName,
+        productArticle: item.productArticle,
+        unit: item.unit,
+        quantityReserved: parseFloat(item.quantity) || 0,
+        quantityToIssue: parseFloat(item.quantity) || 0,
+        price: item.price !== null && item.price !== undefined ? item.price : '',
+        currency: item.currency || tx.currency || 'UAH',
+        warehouseId: item.warehouseId
+      }))
+    });
+  }
+
+  async function handleCancelReserve() {
+    if (!window.confirm('Ви впевнені, що хочете скасувати це бронювання? Товари повернуться у вільний залишок.')) return;
+    setLoading(true);
+    try {
+      await deleteBuyerTransaction(reserveReleaseTx.id);
+      showToast('Бронювання скасовано', 'success');
+      setReserveReleaseTx(null);
+      setReserveReleaseForm(null);
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      showToast('Помилка скасування бронювання', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleReserveReleaseSubmit(e) {
+    e.preventDefault();
+    if (!reserveReleaseTx || !reserveReleaseForm) return;
+
+    setLoading(true);
+    try {
+      const originalTx = reserveReleaseTx;
+      const form = reserveReleaseForm;
+
+      const itemsToIssue = [];
+      const itemsRemainder = [];
+
+      form.items.forEach(item => {
+        const issueQty = parseFloat(item.quantityToIssue) || 0;
+        const reservedQty = parseFloat(item.quantityReserved) || 0;
+
+        if (issueQty > 0) {
+          itemsToIssue.push({
+            productId: item.productId,
+            productName: item.productName,
+            productArticle: item.productArticle,
+            unit: item.unit,
+            quantity: issueQty,
+            price: item.price,
+            currency: item.currency,
+            warehouseId: item.warehouseId
+          });
+        }
+
+        const remainder = reservedQty - issueQty;
+        if (remainder > 0.001) {
+          itemsRemainder.push({
+            productId: item.productId,
+            productName: item.productName,
+            productArticle: item.productArticle,
+            unit: item.unit,
+            quantity: remainder,
+            price: item.price,
+            currency: item.currency,
+            warehouseId: item.warehouseId
+          });
+        }
+      });
+
+      if (itemsToIssue.length === 0) {
+        showToast('Вкажіть кількість для видачі', 'error');
+        setLoading(false);
+        return;
+      }
+
+      const userEmail = user?.email;
+
+      // 1. Оновлюємо коментар в оригінальній накладній про спліт
+      let finalComment = (form.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '');
+      if (itemsRemainder.length > 0) {
+        finalComment = `${finalComment.trim()} [Часткова видача. Залишок перенесено в нову накладну]`.trim();
+      }
+
+      // 2. Оновлюємо оригінальну накладну: ставимо статус completed/pending та оновлюємо товари
+      const updatedTxPayload = {
+        id: originalTx.id,
+        buyerId: originalTx.buyerId,
+        buyerName: buyer.name,
+        date: originalTx.date,
+        type: 'issue',
+        amount: itemsToIssue.reduce((sum, item) => {
+          const p = item.price !== '' && item.price !== null ? parseFloat(item.price) : 0;
+          return sum + (p * item.quantity);
+        }, 0),
+        currency: originalTx.currency,
+        status: itemsToIssue.some(i => i.price === '' || i.price === null) ? 'pending_price' : 'completed',
+        comment: finalComment,
+        pickedUpBy: form.pickedUpBy,
+        user: userEmail,
+        items: itemsToIssue
+      };
+
+      // 3. Зберігаємо оновлену накладну (вона автоматично створить списки в operations)
+      await updateBuyerTransaction(updatedTxPayload);
+
+      // 4. Якщо є залишок, створюємо нову накладну броні
+      if (itemsRemainder.length > 0) {
+        const remainderComment = `[Залишок броні від накладної від ${originalTx.date}] ${form.comment || ''}`.trim();
+        const remainderTxPayload = {
+          buyerId: originalTx.buyerId,
+          buyerName: buyer.name,
+          parentId: originalTx.id,
+          date: originalTx.date,
+          type: 'issue',
+          amount: itemsRemainder.reduce((sum, item) => {
+            const p = item.price !== '' && item.price !== null ? parseFloat(item.price) : 0;
+            return sum + (p * item.quantity);
+          }, 0),
+          currency: originalTx.currency,
+          status: 'reserved',
+          comment: remainderComment,
+          pickedUpBy: originalTx.pickedUpBy,
+          user: userEmail,
+          items: itemsRemainder
+        };
+        await addBuyerTransaction(remainderTxPayload);
+      }
+
+      showToast(itemsRemainder.length > 0 ? 'Часткову видачу проведено. Залишок зарезервовано.' : 'Товари успішно видано клієнту', 'success');
+      setReserveReleaseTx(null);
+      setReserveReleaseForm(null);
+      await loadData();
+    } catch (err) {
+      console.error('Помилка видачі:', err);
+      showToast('Помилка проведення видачі', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }
   const [editForm, setEditForm] = useState(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const [isEditCommentDirty, setIsEditCommentDirty] = useState(false);
@@ -708,7 +863,16 @@ export default function BuyerDetails() {
                           >
                             <td className="p-2 align-top whitespace-nowrap">{t.date}</td>
                             <td className="p-2 align-top font-semibold text-[var(--text)]">
-                              {isIssue ? '📤 Видача товарів' : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
+                              {isIssue ? (
+                                <span className="flex items-center gap-1.5 flex-wrap">
+                                  📤 Видача товарів
+                                  {t.status === 'reserved' && (
+                                    <span className="text-[9px] font-bold text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded animate-pulse">
+                                      Бронь
+                                    </span>
+                                  )}
+                                </span>
+                              ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                               {t.status === 'pending_price' && (
                                 <span className="text-[9px] font-bold text-yellow-600 bg-yellow-500/10 px-1 rounded ml-1">
                                   без ціни
@@ -1181,7 +1345,14 @@ export default function BuyerDetails() {
                             <td className="p-2 align-top">
                               {t.type === 'issue' ? (
                                 <div className="space-y-0.5">
-                                  <span className="font-semibold text-[var(--text)] block">Видача матеріалів:</span>
+                                  <span className="font-semibold text-[var(--text)] flex items-center gap-1.5 flex-wrap">
+                                    Видача матеріалів:
+                                    {t.status === 'reserved' && (
+                                      <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider animate-pulse no-print">
+                                        ⏳ Бронь
+                                      </span>
+                                    )}
+                                  </span>
                                   <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 pl-1.5">
                                     {t.items?.map((item, idx) => {
                                       const priceTxt = item.price !== null && item.price !== undefined && item.price !== ''
@@ -1260,7 +1431,16 @@ export default function BuyerDetails() {
                               <span className={getBalanceClass(t.usdRunning)}>${formatMoney(t.usdRunning)}</span>
                             </td>
                             <td className="p-2 text-right align-top no-print">
-                              <div className="flex justify-end gap-1.5">
+                              <div className="flex justify-end gap-1.5 items-center">
+                                {t.status === 'reserved' && (
+                                  <button
+                                    onClick={() => startReserveRelease(t)}
+                                    className="px-2 py-0.5 rounded bg-blue-500 hover:bg-blue-600 text-white text-[9px] font-bold shadow-sm flex items-center gap-1 transition-all"
+                                    title="Видати заброньовані товари"
+                                  >
+                                    📦 Видати
+                                  </button>
+                                )}
                                 <button 
                                   onClick={() => startEdit(t)} 
                                   className="text-amber-500 hover:bg-amber-500/10 px-1 py-0.5 rounded text-[10px]"
@@ -1305,7 +1485,14 @@ export default function BuyerDetails() {
                         <div>
                           {isIssue ? (
                             <div className="space-y-0.5">
-                              <span className="font-semibold text-[var(--text)] block">Видача матеріалів:</span>
+                              <span className="font-semibold text-[var(--text)] flex items-center gap-1.5">
+                                Видача матеріалів:
+                                {t.status === 'reserved' && (
+                                  <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider animate-pulse">
+                                    Бронь
+                                  </span>
+                                )}
+                              </span>
                               <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 pl-1.5">
                                 {t.items?.map((item, idx) => {
                                   const priceTxt = item.price !== null && item.price !== undefined && item.price !== ''
@@ -1347,7 +1534,15 @@ export default function BuyerDetails() {
                               </span>
                             )}
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 items-center">
+                            {t.status === 'reserved' && (
+                              <button
+                                onClick={() => startReserveRelease(t)}
+                                className="px-2 py-1 rounded bg-blue-500 text-white text-[10px] flex items-center gap-1 font-semibold hover:bg-blue-600 transition-colors"
+                              >
+                                📦 Видати
+                              </button>
+                            )}
                             <button 
                               onClick={() => startEdit(t)} 
                               className="px-2 py-1 rounded border border-amber-500/20 text-amber-600 hover:bg-amber-500/5 text-[10px] flex items-center gap-1 font-semibold"
@@ -1372,6 +1567,110 @@ export default function BuyerDetails() {
       )}
     </div>
   )}
+
+      {/* Модалка видачі резерву */}
+      {reserveReleaseTx && reserveReleaseForm && (
+        <div className="modal-overlay no-print" onClick={() => setReserveReleaseTx(null)}>
+          <div className="modal max-w-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="font-bold text-[var(--text)]">📦 Видача заброньованих товарів</h3>
+              <button className="modal-close" onClick={() => setReserveReleaseTx(null)}>×</button>
+            </div>
+            <form onSubmit={handleReserveReleaseSubmit}>
+              <div className="modal-body space-y-4 text-xs">
+                
+                <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-lg space-y-1">
+                  <div className="font-semibold text-[var(--text)]">Оригінальна бронь від {reserveReleaseTx.date}</div>
+                  <div className="text-[10px] text-[var(--text-secondary)]">
+                    Загальна сума: {reserveReleaseTx.amount !== null ? `${reserveReleaseTx.amount.toLocaleString('uk-UA')} ${reserveReleaseTx.currency === 'UAH' ? 'грн' : '$'}` : '(без ціни)'}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="font-semibold text-[var(--text-secondary)]">Отримувач (водій/представник)</label>
+                    <input
+                      type="text"
+                      placeholder="ПІБ отримувача"
+                      className="p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-[var(--text)] focus:outline-none"
+                      value={reserveReleaseForm.pickedUpBy}
+                      onChange={(e) => setReserveReleaseForm({ ...reserveReleaseForm, pickedUpBy: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="font-semibold text-[var(--text-secondary)]">Коментар до видачі</label>
+                    <input
+                      type="text"
+                      placeholder="напр. часткове відвантаження"
+                      className="p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-[var(--text)] focus:outline-none"
+                      value={reserveReleaseForm.comment}
+                      onChange={(e) => setReserveReleaseForm({ ...reserveReleaseForm, comment: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="font-semibold text-[var(--text-secondary)] block">Товари для відвантаження</label>
+                  <div className="border border-[var(--border)] rounded-lg divide-y divide-[var(--border)] overflow-hidden max-h-60 overflow-y-auto">
+                    {reserveReleaseForm.items.map((item, idx) => (
+                      <div key={idx} className="p-3 bg-[var(--bg-card)] flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-[var(--text)] truncate">{item.productName}</div>
+                          {item.productArticle && <div className="text-[10px] text-[var(--text-secondary)] font-mono">{item.productArticle}</div>}
+                          <div className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Всього в броні: {item.quantityReserved} {item.unit}</div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <label className="text-[10px] text-[var(--text-secondary)] font-medium">К-сть видачі:</label>
+                          <input
+                            type="number"
+                            step="any"
+                            min="0"
+                            max={item.quantityReserved}
+                            required
+                            className="w-20 p-1 text-center rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-[var(--text)] font-bold focus:outline-none"
+                            value={item.quantityToIssue}
+                            onChange={(e) => {
+                              const newItems = [...reserveReleaseForm.items];
+                              newItems[idx].quantityToIssue = e.target.value;
+                              setReserveReleaseForm({ ...reserveReleaseForm, items: newItems });
+                            }}
+                          />
+                          <span className="text-[10px] text-[var(--text-secondary)] font-medium w-6">{item.unit}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+              <div className="modal-footer flex flex-wrap justify-between gap-2 p-3 bg-[var(--bg)] border-t border-[var(--border)] w-full">
+                <button
+                  type="button"
+                  onClick={handleCancelReserve}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg text-red-500 hover:bg-red-500/10 transition-colors"
+                >
+                  ❌ Скасувати бронь
+                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setReserveReleaseTx(null)}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg text-[var(--text-secondary)] bg-[var(--bg-card)] hover:bg-[var(--border-light)] border border-[var(--border)] transition-colors"
+                  >
+                    Скасувати
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-1.5 text-xs font-bold rounded-lg text-white bg-blue-500 hover:bg-blue-600 transition-colors"
+                  >
+                    📦 Провести видачу
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Модалка редагування транзакції */}
       {editTx && editForm && (

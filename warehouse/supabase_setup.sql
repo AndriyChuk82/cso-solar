@@ -93,13 +93,14 @@ CREATE TABLE IF NOT EXISTS public.buyers (
 CREATE TABLE IF NOT EXISTS public.buyer_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     buyer_id UUID NOT NULL REFERENCES public.buyers(id) ON DELETE CASCADE,
+    parent_id UUID REFERENCES public.buyer_transactions(id) ON DELETE SET NULL,
     date DATE NOT NULL,
     type TEXT NOT NULL, -- 'issue', 'payment', 'adjustment'
     amount NUMERIC, -- null якщо ціна невідома (очікує оцінки)
     currency TEXT, -- 'UAH', 'USD', or null
     converted_amount NUMERIC, -- сума зарахування (якщо була конвертація)
     conversion_rate NUMERIC, -- курс конвертації
-    status TEXT NOT NULL DEFAULT 'completed', -- 'pending_price', 'completed'
+    status TEXT NOT NULL DEFAULT 'completed', -- 'pending_price', 'completed', 'reserved'
     comment TEXT,
     user_email TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()

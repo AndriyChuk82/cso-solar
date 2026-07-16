@@ -302,16 +302,59 @@ export async function getBalances(warehouseId) {
         product_article: op.product_article, 
         unit: op.unit, 
         category: op.category, // назва категорії
-        quantity: 0 
+        quantity: 0,
+        reserved: 0
       };
     }
     const qty = parseFloat(op.quantity) || 0;
     if (op.type === 'income' || op.type === 'balance') finalBalances[op.product_id].quantity += qty;
     if (op.type === 'expense') finalBalances[op.product_id].quantity -= qty;
   });
+
+  // Отримуємо активні резерви з buyer_transaction_items для цього складу
+  const { data: resItems } = await supabase
+    .from('buyer_transaction_items')
+    .select('product_id, quantity, buyer_transactions(status, is_archived)')
+    .eq('warehouse_id', warehouseId);
+
+  const reservedMap = {};
+  if (resItems) {
+    resItems.forEach(item => {
+      const tx = item.buyer_transactions;
+      if (tx && tx.status === 'reserved' && !tx.is_archived) {
+        const qty = parseFloat(item.quantity) || 0;
+        reservedMap[item.product_id] = (reservedMap[item.product_id] || 0) + qty;
+      }
+    });
+  }
+
+  // Отримуємо каталог товарів для наповнення відсутніх у фізичному залишку
+  const { data: prods } = await supabase.from('products').select('*');
+  const prodMap = {};
+  prods?.forEach(p => prodMap[p.id] = p);
+
+  // Накладаємо бронь на баланси
+  Object.keys(reservedMap).forEach(prodId => {
+    if (!finalBalances[prodId]) {
+      const p = prodMap[prodId] || {};
+      finalBalances[prodId] = {
+        product_id: prodId,
+        product_name: p.name || 'Невідомий товар',
+        product_article: p.article || '',
+        unit: p.unit || 'шт',
+        category: '',
+        quantity: 0,
+        reserved: 0
+      };
+    }
+    const reservedQty = reservedMap[prodId];
+    finalBalances[prodId].reserved = reservedQty;
+    finalBalances[prodId].quantity -= reservedQty; // зменшуємо вільний залишок
+  });
+
   return { 
     success: true, 
-    items: Object.values(finalBalances).filter(b => b.quantity !== 0),
+    items: Object.values(finalBalances).filter(b => b.quantity !== 0 || b.reserved !== 0),
     balances: Object.values(finalBalances)
   };
 }
@@ -542,6 +585,7 @@ export async function addBuyerTransaction(transaction) {
   // 1. Створюємо основну фінансову транзакцію
   const { data: tx, error: txErr } = await supabase.from('buyer_transactions').insert([{
     buyer_id: transaction.buyerId,
+    parent_id: transaction.parentId || null,
     date: transaction.date,
     type: transaction.type,
     amount: transaction.amount,
@@ -559,20 +603,24 @@ export async function addBuyerTransaction(transaction) {
 
   // 2. Якщо це видача, створюємо складські списання (operations) та прив'язуємо деталі
   if (transaction.type === 'issue' && transaction.items && transaction.items.length > 0) {
-    const opItems = transaction.items.map(item => ({
-      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
-      date: transaction.date,
-      type: 'expense',
-      product_id: item.productId,
-      warehouse_id: item.warehouseId,
-      quantity: item.quantity,
-      comment: `Видача клієнту: ${transaction.buyerName || 'Клієнт'}.${transaction.pickedUpBy ? ` (Представник: ${transaction.pickedUpBy})` : ''} ${transaction.comment || ''}`,
-      user_email: transaction.user,
-      created_at: timestamp
-    }));
+    const isReserved = transaction.status === 'reserved';
+    let opItems = [];
+    if (!isReserved) {
+      opItems = transaction.items.map(item => ({
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+        date: transaction.date,
+        type: 'expense',
+        product_id: item.productId,
+        warehouse_id: item.warehouseId,
+        quantity: item.quantity,
+        comment: `Видача клієнту: ${transaction.buyerName || 'Клієнт'}.${transaction.pickedUpBy ? ` (Представник: ${transaction.pickedUpBy})` : ''} ${transaction.comment || ''}`,
+        user_email: transaction.user,
+        created_at: timestamp
+      }));
 
-    const { error: opErr } = await supabase.from('operations').insert(opItems);
-    if (opErr) throw opErr;
+      const { error: opErr } = await supabase.from('operations').insert(opItems);
+      if (opErr) throw opErr;
+    }
 
     const txItems = transaction.items.map((item, idx) => ({
       transaction_id: transactionId,
@@ -581,7 +629,7 @@ export async function addBuyerTransaction(transaction) {
       quantity: item.quantity,
       price: item.price !== undefined ? item.price : null,
       currency: item.currency || null,
-      operation_id: opItems[idx].id
+      operation_id: isReserved ? null : opItems[idx].id
     }));
 
     const { error: itemErr } = await supabase.from('buyer_transaction_items').insert(txItems);
@@ -597,6 +645,7 @@ export async function updateBuyerTransaction(transaction) {
 
   // 1. Оновлюємо фінансову транзакцію
   const { error: txErr } = await supabase.from('buyer_transactions').update({
+    parent_id: transaction.parentId || null,
     date: transaction.date,
     amount: transaction.amount,
     currency: transaction.currency,
@@ -633,20 +682,24 @@ export async function updateBuyerTransaction(transaction) {
 
     // Записуємо нові складські операції та нові деталі
     if (transaction.items && transaction.items.length > 0) {
-      const opItems = transaction.items.map(item => ({
-        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
-        date: transaction.date,
-        type: 'expense',
-        product_id: item.productId,
-        warehouse_id: item.warehouseId,
-        quantity: item.quantity,
-        comment: `Видача клієнту: ${transaction.buyerName || 'Клієнт'}.${transaction.pickedUpBy ? ` (Представник: ${transaction.pickedUpBy})` : ''} ${transaction.comment || ''}`,
-        user_email: transaction.user,
-        created_at: timestamp
-      }));
+      const isReserved = transaction.status === 'reserved';
+      let opItems = [];
+      if (!isReserved) {
+        opItems = transaction.items.map(item => ({
+          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+          date: transaction.date,
+          type: 'expense',
+          product_id: item.productId,
+          warehouse_id: item.warehouseId,
+          quantity: item.quantity,
+          comment: `Видача клієнту: ${transaction.buyerName || 'Клієнт'}.${transaction.pickedUpBy ? ` (Представник: ${transaction.pickedUpBy})` : ''} ${transaction.comment || ''}`,
+          user_email: transaction.user,
+          created_at: timestamp
+        }));
 
-      const { error: opErr } = await supabase.from('operations').insert(opItems);
-      if (opErr) throw opErr;
+        const { error: opErr } = await supabase.from('operations').insert(opItems);
+        if (opErr) throw opErr;
+      }
 
       const txItems = transaction.items.map((item, idx) => ({
         transaction_id: transaction.id,
@@ -655,7 +708,7 @@ export async function updateBuyerTransaction(transaction) {
         quantity: item.quantity,
         price: item.price !== undefined ? item.price : null,
         currency: item.currency || null,
-        operation_id: opItems[idx].id
+        operation_id: isReserved ? null : opItems[idx].id
       }));
 
       const { error: itemErr } = await supabase.from('buyer_transaction_items').insert(txItems);

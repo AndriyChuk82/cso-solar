@@ -51,6 +51,7 @@ export default function BuyerIssueForm() {
     currency: 'UAH', // за замовчуванням для нових рядків
     comment: '',
     pickedUpBy: '',
+    status: 'completed',
     items: [
       // Починаємо з одного порожнього рядка для швидкості роботи (як в 1С)
       { productId: '', productName: '', productArticle: '', unit: '', quantity: 1, price: '', currency: 'UAH' }
@@ -122,6 +123,7 @@ export default function BuyerIssueForm() {
               currency: tx.currency || 'UAH',
               comment: tx.comment || '',
               pickedUpBy: tx.pickedUpBy || '',
+              status: tx.status || 'completed',
               items: tx.items.map(item => ({
                 productId: item.productId,
                 productName: item.productName,
@@ -290,7 +292,7 @@ export default function BuyerIssueForm() {
           const price = item.price !== '' && item.price !== null ? parseFloat(item.price) : 0;
           return sum + (price * (parseFloat(item.quantity) || 0));
         }, 0);
-        const status = hasEmptyPrices ? 'pending_price' : 'completed';
+        const status = formData.status === 'reserved' ? 'reserved' : (hasEmptyPrices ? 'pending_price' : 'completed');
 
         const payload = {
           buyerId: formData.buyerId,
@@ -326,7 +328,7 @@ export default function BuyerIssueForm() {
           const price = item.price !== '' && item.price !== null ? parseFloat(item.price) : 0;
           return sum + (price * (parseFloat(item.quantity) || 0));
         }, 0);
-        const status = hasEmptyPrices ? 'pending_price' : 'completed';
+        const status = formData.status === 'reserved' ? 'reserved' : (hasEmptyPrices ? 'pending_price' : 'completed');
 
         const payload = {
           buyerId: formData.buyerId,
@@ -568,7 +570,7 @@ export default function BuyerIssueForm() {
               />
             </div>
 
-            <div className="col-span-2 md:col-span-2 flex flex-col gap-1">
+            <div className="flex flex-col gap-1">
               <label className="font-semibold text-[var(--text-secondary)]">Коментар</label>
               <input
                 type="text"
@@ -577,6 +579,19 @@ export default function BuyerIssueForm() {
                 value={formData.comment}
                 onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
               />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold text-[var(--text-secondary)]">Статус документа *</label>
+              <select
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none font-semibold text-blue-600 dark:text-blue-400"
+                value={formData.status || 'completed'}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                required
+              >
+                <option value="completed">✅ Видано (Списати)</option>
+                <option value="reserved">⏳ Бронь / Резерв</option>
+              </select>
             </div>
           </div>
         </div>
