@@ -476,7 +476,8 @@ export default function BuyerDetails() {
   processedTransactions.forEach(t => {
     if (t.is_archived === true) return;
     
-    const amt = parseFloat(t.amount) || 0;
+    const isReservedIssue = t.type === 'issue' && t.status === 'reserved';
+    const amt = isReservedIssue ? 0 : (parseFloat(t.amount) || 0);
     const cur = t.currency;
 
     if (isSingleDoc) {
@@ -560,14 +561,17 @@ export default function BuyerDetails() {
       return !isSingleDoc ? (t.date >= dateFrom && t.date <= dateTo) : t.id === selectedTxFilter;
     })
     .map(t => {
-      const amt = parseFloat(t.amount) || 0;
+      const isReservedIssue = t.type === 'issue' && t.status === 'reserved';
+      const amt = isReservedIssue ? 0 : (parseFloat(t.amount) || 0);
       const cur = t.currency;
       
       let uahDeb = 0, uahCred = 0, usdDeb = 0, usdCred = 0;
 
       if (t.type === 'issue') {
-        if (cur === 'UAH') { uahDeb = amt; currentUahRunning -= amt; }
-        if (cur === 'USD') { usdDeb = amt; currentUsdRunning -= amt; }
+        if (!isReservedIssue) {
+          if (cur === 'UAH') { uahDeb = amt; currentUahRunning -= amt; }
+          if (cur === 'USD') { usdDeb = amt; currentUsdRunning -= amt; }
+        }
         
         // Додаємо суми зв'язаних платежів до кредиту накладної
         if (t.linkedPayments) {
@@ -880,8 +884,12 @@ export default function BuyerDetails() {
                               )}
                             </td>
                             <td className="p-2 text-center align-top font-medium">
-                              {isIssue && amt > 0 ? (
+                              {isIssue && t.status !== 'reserved' && amt > 0 ? (
                                 <span className="text-red-500">{amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
+                              ) : isIssue && t.status === 'reserved' && amt > 0 ? (
+                                <span className="text-gray-400 font-normal italic" title="Резерв не списується в борг до видачі">
+                                  ({amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'})
+                                </span>
                               ) : isAdj && amt < 0 ? (
                                 <span className="text-red-500">{Math.abs(amt).toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
                               ) : (
@@ -1069,8 +1077,12 @@ export default function BuyerDetails() {
                               )}
                             </td>
                             <td className="p-2 text-center align-top font-medium">
-                              {isIssue && amt > 0 ? (
+                              {isIssue && t.status !== 'reserved' && amt > 0 ? (
                                 <span className="text-red-500">{amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
+                              ) : isIssue && t.status === 'reserved' && amt > 0 ? (
+                                <span className="text-gray-400 font-normal italic" title="Резерв не списується в борг до видачі">
+                                  ({amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'})
+                                </span>
                               ) : isAdj && amt < 0 ? (
                                 <span className="text-red-500">{Math.abs(amt).toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
                               ) : (

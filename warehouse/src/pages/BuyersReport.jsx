@@ -154,7 +154,8 @@ export default function BuyersReport() {
 
     // 1. Початковий баланс до початку періоду
     buyerTx.forEach(t => {
-      const amt = parseFloat(t.amount) || 0;
+      const isReservedIssue = t.type === 'issue' && t.status === 'reserved';
+      const amt = isReservedIssue ? 0 : (parseFloat(t.amount) || 0);
       const cur = t.currency;
 
       if (t.date < dateFrom) {
@@ -188,14 +189,17 @@ export default function BuyersReport() {
 
     // 2. Обходимо транзакції періоду та розраховуємо накопичувальний підсумок для кожної операції
     buyerTx.forEach(t => {
-      const amt = parseFloat(t.amount) || 0;
+      const isReservedIssue = t.type === 'issue' && t.status === 'reserved';
+      const amt = isReservedIssue ? 0 : (parseFloat(t.amount) || 0);
       const cur = t.currency;
 
       let uahDeb = 0, uahCred = 0, usdDeb = 0, usdCred = 0;
 
       if (t.type === 'issue') {
-        if (cur === 'UAH') { uahDeb = amt; currentUahRunning -= amt; uahIssued += amt; }
-        if (cur === 'USD') { usdDeb = amt; currentUsdRunning -= amt; usdIssued += amt; }
+        if (!isReservedIssue) {
+          if (cur === 'UAH') { uahDeb = amt; currentUahRunning -= amt; uahIssued += amt; }
+          if (cur === 'USD') { usdDeb = amt; currentUsdRunning -= amt; usdIssued += amt; }
+        }
         
         // Враховуємо лінковані платежі в межах періоду
         if (t.linkedPayments) {
@@ -535,7 +539,14 @@ export default function BuyersReport() {
                                             <td className="p-2 align-top">
                                               {isIssue ? (
                                                 <div className="space-y-0.5">
-                                                  <span className="font-semibold text-[var(--text)] block">Видача матеріалів:</span>
+                                                  <span className="font-semibold text-[var(--text)] flex items-center gap-1.5 flex-wrap">
+                                                    Видача матеріалів:
+                                                    {t.status === 'reserved' && (
+                                                      <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider animate-pulse no-print">
+                                                        ⏳ Бронь
+                                                      </span>
+                                                    )}
+                                                  </span>
                                                   <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 pl-1.5">
                                                     {t.items?.map((item, idx) => {
                                                       const priceTxt = item.price !== null && item.price !== undefined && item.price !== ''
@@ -592,7 +603,13 @@ export default function BuyersReport() {
                                             </td>
                                             <td className="p-2 text-center align-top text-red-500 font-medium">
                                               {(isIssue || (isAdj && amt < 0)) && amt > 0 ? (
-                                                `${Math.abs(amt).toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
+                                                t.status === 'reserved' ? (
+                                                  <span className="text-gray-400 font-normal italic" title="Резерв не списується в борг до видачі">
+                                                    (${Math.abs(amt).toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'})
+                                                  </span>
+                                                ) : (
+                                                  `${Math.abs(amt).toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
+                                                )
                                               ) : '—'}
                                             </td>
                                             <td className="p-2 text-center align-top text-green-500 font-medium">
@@ -694,7 +711,16 @@ export default function BuyersReport() {
                                             <div className="flex justify-between text-xs font-semibold">
                                               <span className="text-[var(--text-secondary)]">📅 {t.date}</span>
                                               <span className="text-[var(--text)]">
-                                                {isIssue ? '📤 Видача матеріалів' : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
+                                                {isIssue ? (
+                                                  <span className="flex items-center gap-1.5">
+                                                    📤 Видача матеріалів
+                                                    {t.status === 'reserved' && (
+                                                      <span className="text-[9px] font-bold text-amber-600 bg-amber-500/10 px-1 rounded animate-pulse">
+                                                        Бронь
+                                                      </span>
+                                                    )}
+                                                  </span>
+                                                ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                                               </span>
                                             </div>
 
@@ -758,7 +784,13 @@ export default function BuyersReport() {
                                                   <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Нараховано</span>
                                                   <span className="text-red-500 font-bold">
                                                     {(isIssue || (isAdj && amt < 0)) && amt > 0
-                                                      ? `${Math.abs(amt).toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
+                                                      ? t.status === 'reserved' ? (
+                                                          <span className="text-gray-400 font-normal italic" title="Резерв не списується в борг до видачі">
+                                                            (${Math.abs(amt).toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'})
+                                                          </span>
+                                                        ) : (
+                                                          `${Math.abs(amt).toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
+                                                        )
                                                       : '—'}
                                                   </span>
                                                 </div>
