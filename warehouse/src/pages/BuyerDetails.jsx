@@ -868,13 +868,8 @@ export default function BuyerDetails() {
                             <td className="p-2 align-top whitespace-nowrap">{t.date}</td>
                             <td className="p-2 align-top font-semibold text-[var(--text)]">
                               {isIssue ? (
-                                <span className="flex items-center gap-1.5 flex-wrap">
-                                  📤 Видача товарів
-                                  {t.status === 'reserved' && (
-                                    <span className="text-[9px] font-bold text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded animate-pulse">
-                                      Бронь
-                                    </span>
-                                  )}
+                                <span className="flex items-center gap-1.5 flex-wrap font-semibold text-[var(--text)]">
+                                  {t.status === 'reserved' ? '⏳ Бронь' : '📤 Видача товарів'}
                                 </span>
                               ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                               {t.status === 'pending_price' && (
@@ -939,12 +934,7 @@ export default function BuyerDetails() {
                           <span className="font-semibold text-[var(--text)]">
                             {isIssue ? (
                               <span className="flex items-center gap-1.5">
-                                📤 Видача
-                                {t.status === 'reserved' && (
-                                  <span className="text-[9px] font-bold text-amber-600 bg-amber-500/10 px-1 rounded animate-pulse">
-                                    Бронь
-                                  </span>
-                                )}
+                                {t.status === 'reserved' ? '⏳ Бронь' : '📤 Видача'}
                               </span>
                             ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                             {t.status === 'pending_price' && ' (без ціни)'}
