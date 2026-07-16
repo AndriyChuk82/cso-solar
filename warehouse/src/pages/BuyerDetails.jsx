@@ -871,21 +871,9 @@ export default function BuyerDetails() {
                                 <span className="flex items-center gap-1.5 flex-wrap">
                                   📤 Видача товарів
                                   {t.status === 'reserved' && (
-                                    <>
-                                      <span className="text-[9px] font-bold text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded animate-pulse">
-                                        Бронь
-                                      </span>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          startReserveRelease(t);
-                                        }}
-                                        className="px-2 py-0.5 rounded bg-blue-500 hover:bg-blue-600 text-white text-[9px] font-bold shadow-sm flex items-center gap-1 transition-all no-print ml-2"
-                                        title="Видати заброньовані товари"
-                                      >
-                                        📦 Видати
-                                      </button>
-                                    </>
+                                    <span className="text-[9px] font-bold text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded animate-pulse">
+                                      Бронь
+                                    </span>
                                   )}
                                 </span>
                               ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
@@ -999,17 +987,7 @@ export default function BuyerDetails() {
                               </span>
                             )}
                           </div>
-                          {t.status === 'reserved' && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                startReserveRelease(t);
-                              }}
-                              className="px-2 py-1 rounded bg-blue-500 text-white text-[10px] flex items-center gap-1 font-semibold hover:bg-blue-600 transition-colors"
-                            >
-                              📦 Видати
-                            </button>
-                          )}
+
                         </div>
                       </div>
                     );
@@ -1482,15 +1460,7 @@ export default function BuyerDetails() {
                             </td>
                             <td className="p-2 text-right align-top no-print">
                               <div className="flex justify-end gap-1.5 items-center">
-                                {t.status === 'reserved' && (
-                                  <button
-                                    onClick={() => startReserveRelease(t)}
-                                    className="px-2 py-0.5 rounded bg-blue-500 hover:bg-blue-600 text-white text-[9px] font-bold shadow-sm flex items-center gap-1 transition-all"
-                                    title="Видати заброньовані товари"
-                                  >
-                                    📦 Видати
-                                  </button>
-                                )}
+                                
                                 <button 
                                   onClick={() => startEdit(t)} 
                                   className="text-amber-500 hover:bg-amber-500/10 px-1 py-0.5 rounded text-[10px]"
@@ -1585,14 +1555,7 @@ export default function BuyerDetails() {
                             )}
                           </div>
                           <div className="flex gap-2 items-center">
-                            {t.status === 'reserved' && (
-                              <button
-                                onClick={() => startReserveRelease(t)}
-                                className="px-2 py-1 rounded bg-blue-500 text-white text-[10px] flex items-center gap-1 font-semibold hover:bg-blue-600 transition-colors"
-                              >
-                                📦 Видати
-                              </button>
-                            )}
+
                             <button 
                               onClick={() => startEdit(t)} 
                               className="px-2 py-1 rounded border border-amber-500/20 text-amber-600 hover:bg-amber-500/5 text-[10px] flex items-center gap-1 font-semibold"
