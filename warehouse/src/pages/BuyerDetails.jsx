@@ -871,9 +871,21 @@ export default function BuyerDetails() {
                                 <span className="flex items-center gap-1.5 flex-wrap">
                                   📤 Видача товарів
                                   {t.status === 'reserved' && (
-                                    <span className="text-[9px] font-bold text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded animate-pulse">
-                                      Бронь
-                                    </span>
+                                    <>
+                                      <span className="text-[9px] font-bold text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded animate-pulse">
+                                        Бронь
+                                      </span>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          startReserveRelease(t);
+                                        }}
+                                        className="px-2 py-0.5 rounded bg-blue-500 hover:bg-blue-600 text-white text-[9px] font-bold shadow-sm flex items-center gap-1 transition-all no-print ml-2"
+                                        title="Видати заброньовані товари"
+                                      >
+                                        📦 Видати
+                                      </button>
+                                    </>
                                   )}
                                 </span>
                               ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
@@ -937,7 +949,16 @@ export default function BuyerDetails() {
                         <div className="flex justify-between items-start text-[10px] text-[var(--text-secondary)] font-mono">
                           <span>📅 {t.date}</span>
                           <span className="font-semibold text-[var(--text)]">
-                            {isIssue ? '📤 Видача' : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
+                            {isIssue ? (
+                              <span className="flex items-center gap-1.5">
+                                📤 Видача
+                                {t.status === 'reserved' && (
+                                  <span className="text-[9px] font-bold text-amber-600 bg-amber-500/10 px-1 rounded animate-pulse">
+                                    Бронь
+                                  </span>
+                                )}
+                              </span>
+                            ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                             {t.status === 'pending_price' && ' (без ціни)'}
                           </span>
                         </div>
@@ -964,14 +985,31 @@ export default function BuyerDetails() {
                           <div>
                             {isIssue || (isAdj && amt < 0) ? (
                               <span className="text-red-500 font-semibold">
-                                Сума: {amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}
+                                Сума: {t.status === 'reserved' ? (
+                                  <span className="text-gray-400 font-normal italic">
+                                    ({amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'})
+                                  </span>
+                                ) : (
+                                  `${amt.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
+                                )}
                               </span>
                             ) : (
                               <span className="text-green-600 font-semibold">
-                                Сума: {amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}
+                                Сума: ${amt.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}
                               </span>
                             )}
                           </div>
+                          {t.status === 'reserved' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startReserveRelease(t);
+                              }}
+                              className="px-2 py-1 rounded bg-blue-500 text-white text-[10px] flex items-center gap-1 font-semibold hover:bg-blue-600 transition-colors"
+                            >
+                              📦 Видати
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
