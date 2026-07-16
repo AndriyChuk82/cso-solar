@@ -540,12 +540,7 @@ export default function BuyersReport() {
                                               {isIssue ? (
                                                 <div className="space-y-0.5">
                                                   <span className="font-semibold text-[var(--text)] flex items-center gap-1.5 flex-wrap">
-                                                    Видача матеріалів:
-                                                    {t.status === 'reserved' && (
-                                                      <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider animate-pulse no-print">
-                                                        ⏳ Бронь
-                                                      </span>
-                                                    )}
+                                                    {t.status === 'reserved' ? '⏳ Бронь матеріалів:' : 'Видача матеріалів:'}
                                                   </span>
                                                   <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 pl-1.5">
                                                     {t.items?.map((item, idx) => {
@@ -713,12 +708,7 @@ export default function BuyersReport() {
                                               <span className="text-[var(--text)]">
                                                 {isIssue ? (
                                                   <span className="flex items-center gap-1.5">
-                                                    📤 Видача матеріалів
-                                                    {t.status === 'reserved' && (
-                                                      <span className="text-[9px] font-bold text-amber-600 bg-amber-500/10 px-1 rounded animate-pulse">
-                                                        Бронь
-                                                      </span>
-                                                    )}
+                                                    {t.status === 'reserved' ? '⏳ Бронь' : '📤 Видача матеріалів'}
                                                   </span>
                                                 ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                                               </span>

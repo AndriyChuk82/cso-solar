@@ -1085,7 +1085,7 @@ export default function BuyerDetails() {
                           >
                             <td className="p-2 align-top whitespace-nowrap">{t.date}</td>
                             <td className="p-2 align-top font-semibold text-[var(--text)]">
-                              {isIssue ? '📤 Видача товарів' : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
+                              {isIssue ? (t.status === 'reserved' ? '⏳ Бронь' : '📤 Видача товарів') : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                               {t.status === 'pending_price' && (
                                 <span className="text-[9px] font-bold text-yellow-600 bg-yellow-500/10 px-1 rounded ml-1">
                                   без ціни
@@ -1146,7 +1146,7 @@ export default function BuyerDetails() {
                         <div className="flex justify-between items-start text-[10px] text-[var(--text-secondary)] font-mono">
                           <span>📅 {t.date}</span>
                           <span className="font-semibold text-[var(--text)]">
-                            {isIssue ? '📤 Видача' : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
+                            {isIssue ? (t.status === 'reserved' ? '⏳ Бронь' : '📤 Видача') : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                             {t.status === 'pending_price' && ' (без ціни)'}
                           </span>
                         </div>
@@ -1374,12 +1374,7 @@ export default function BuyerDetails() {
                               {t.type === 'issue' ? (
                                 <div className="space-y-0.5">
                                   <span className="font-semibold text-[var(--text)] flex items-center gap-1.5 flex-wrap">
-                                    Видача матеріалів:
-                                    {t.status === 'reserved' && (
-                                      <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider animate-pulse no-print">
-                                        ⏳ Бронь
-                                      </span>
-                                    )}
+                                    {t.status === 'reserved' ? '⏳ Бронь матеріалів:' : 'Видача матеріалів:'}
                                   </span>
                                   <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 pl-1.5">
                                     {t.items?.map((item, idx) => {
@@ -1506,12 +1501,7 @@ export default function BuyerDetails() {
                           {isIssue ? (
                             <div className="space-y-0.5">
                               <span className="font-semibold text-[var(--text)] flex items-center gap-1.5">
-                                Видача матеріалів:
-                                {t.status === 'reserved' && (
-                                  <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider animate-pulse">
-                                    Бронь
-                                  </span>
-                                )}
+                                {t.status === 'reserved' ? '⏳ Бронь матеріалів:' : 'Видача матеріалів:'}
                               </span>
                               <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 pl-1.5">
                                 {t.items?.map((item, idx) => {
