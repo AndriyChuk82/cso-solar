@@ -1112,9 +1112,9 @@ export default function BuyerDetails() {
               {/* Зведені показники періоду */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-4 border-b border-[var(--border)] pb-4">
                 <div>
-                  <span className="text-[10px] text-[var(--text-secondary)] block">Початковий борг (UAH / USD):</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] block">Початковий баланс (UAH / USD):</span>
                   <span className="font-semibold block mt-0.5">
-                    {formatMoney(Math.abs(uahOpening), 'грн')} / ${formatMoney(Math.abs(usdOpening))}
+                    <span className={getBalanceClass(uahOpening)}>{formatMoney(uahOpening, 'грн')}</span> / <span className={getBalanceClass(usdOpening)}>${formatMoney(usdOpening)}</span>
                   </span>
                 </div>
                 <div>
@@ -1130,9 +1130,9 @@ export default function BuyerDetails() {
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[var(--text-secondary)] block">Кінцевий борг (UAH / USD):</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] block">Кінцевий баланс (UAH / USD):</span>
                   <span className="font-semibold block mt-0.5">
-                    {formatMoney(Math.abs(uahClosing), 'грн')} / ${formatMoney(Math.abs(usdClosing))}
+                    <span className={getBalanceClass(uahClosing)}>{formatMoney(uahClosing, 'грн')}</span> / <span className={getBalanceClass(usdClosing)}>${formatMoney(usdClosing)}</span>
                   </span>
                 </div>
               </div>
@@ -1147,7 +1147,7 @@ export default function BuyerDetails() {
                       <th className="p-2">Документ / Деталі операції</th>
                       <th className="p-2 text-center w-24">Нараховано борг</th>
                       <th className="p-2 text-center w-24">Сплачено</th>
-                      <th className="p-2 text-right w-36">Поточний борг</th>
+                      <th className="p-2 text-right w-36">Поточний баланс</th>
                       <th className="p-2 text-right w-24 no-print">Дії</th>
                     </tr>
                   </thead>
@@ -1159,7 +1159,7 @@ export default function BuyerDetails() {
                       <td className="p-2 text-center">—</td>
                       <td className="p-2 text-center">—</td>
                       <td className="p-2 text-right">
-                        {formatMoney(Math.abs(uahOpening), 'грн')} / ${formatMoney(Math.abs(usdOpening))}
+                        <span className={getBalanceClass(uahOpening)}>{formatMoney(uahOpening, 'грн')}</span> / <span className={getBalanceClass(usdOpening)}>${formatMoney(usdOpening)}</span>
                       </td>
                       <td className="p-2 text-right no-print">—</td>
                     </tr>
@@ -1254,8 +1254,10 @@ export default function BuyerDetails() {
                               {t.usdCred > 0 && `$${t.usdCred.toLocaleString('uk-UA')}`}
                               {t.uahCred === 0 && t.usdCred === 0 && '—'}
                             </td>
-                            <td className="p-2 text-right text-[var(--text)] font-semibold align-top whitespace-nowrap">
-                              {formatMoney(Math.abs(t.uahRunning), 'грн')} / ${formatMoney(Math.abs(t.usdRunning))}
+                            <td className="p-2 text-right align-top whitespace-nowrap text-xs">
+                              <span className={getBalanceClass(t.uahRunning)}>{formatMoney(t.uahRunning, 'грн')}</span>
+                              <span className="text-[var(--text-secondary)] opacity-60"> / </span>
+                              <span className={getBalanceClass(t.usdRunning)}>${formatMoney(t.usdRunning)}</span>
                             </td>
                             <td className="p-2 text-right align-top no-print">
                               <div className="flex justify-end gap-1.5">
@@ -1297,7 +1299,7 @@ export default function BuyerDetails() {
                         <div className="flex justify-between items-start text-[10px] text-[var(--text-secondary)] font-mono">
                           <span>📅 {t.date}</span>
                           <span className="font-semibold text-[var(--text)]">
-                            Борг: {formatMoney(Math.abs(t.uahRunning), 'грн')} / ${formatMoney(Math.abs(t.usdRunning))}
+                            Баланс: <span className={getBalanceClass(t.uahRunning)}>{formatMoney(t.uahRunning, 'грн')}</span> / <span className={getBalanceClass(t.usdRunning)}>${formatMoney(t.usdRunning)}</span>
                           </span>
                         </div>
                         <div>
