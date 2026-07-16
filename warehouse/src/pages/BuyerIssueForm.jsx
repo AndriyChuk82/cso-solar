@@ -22,6 +22,7 @@ export default function BuyerIssueForm() {
   const [saving, setSaving] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
   const [originalItemsMap, setOriginalItemsMap] = useState({});
+  const [originalStatus, setOriginalStatus] = useState('completed');
 
   // Стан для автокомпліту пошуку товарів у рядках
   const [activeRowSearch, setActiveRowSearch] = useState(null); // Індекс рядка, де зараз активний пошук
@@ -115,6 +116,7 @@ export default function BuyerIssueForm() {
               origMap[item.productId] = (origMap[item.productId] || 0) + (parseFloat(item.quantity) || 0);
             });
             setOriginalItemsMap(origMap);
+            setOriginalStatus(tx.status || 'completed');
 
             setFormData({
               buyerId: tx.buyerId,
@@ -267,8 +269,8 @@ export default function BuyerIssueForm() {
     return acc + (qty * price);
   }, 0);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function handleSubmit(e, forcedStatus = null) {
+    if (e) e.preventDefault();
     if (saving) return;
     if (!formData.buyerId) return showToast('Оберіть покупця', 'error');
     if (!formData.warehouseId) return showToast('Оберіть склад', 'error');
@@ -285,14 +287,49 @@ export default function BuyerIssueForm() {
 
       const submitPromises = [];
 
+      // Визначаємо, чи переводимо ми накладну з броні у фактичну видачу
+      const targetStatusVal = forcedStatus || formData.status;
+      const isReleasing = txId && originalStatus === 'reserved' && targetStatusVal !== 'reserved';
+
+      // Визначаємо новий статус для кожної валюти
+      const newStatusUah = isReleasing
+        ? (uahItems.some(item => item.price === '' || item.price === null) ? 'pending_price' : 'completed')
+        : targetStatusVal;
+
+      const newStatusUsd = isReleasing
+        ? (usdItems.some(item => item.price === '' || item.price === null) ? 'pending_price' : 'completed')
+        : targetStatusVal;
+
+      // Визначаємо, чи є часткова видача (розщеплення броні)
+      const remainderItems = [];
+      if (isReleasing) {
+        filledItems.forEach(item => {
+          const origQty = originalItemsMap[item.productId] || 0;
+          const newQty = parseFloat(item.quantity) || 0;
+          const diff = origQty - newQty;
+          if (diff > 0.001) {
+            remainderItems.push({
+              productId: item.productId,
+              warehouseId: formData.warehouseId,
+              quantity: diff,
+              price: item.price !== '' && item.price !== null ? parseFloat(item.price) : null,
+              currency: item.currency
+            });
+          }
+        });
+      }
+
       // 1. Якщо є гривневі товари, формуємо гривневу накладну
       if (uahItems.length > 0) {
-        const hasEmptyPrices = uahItems.some(item => item.price === '' || item.price === null);
+        let finalComment = formData.comment || '';
+        if (isReleasing && remainderItems.length > 0) {
+          finalComment = `${finalComment.trim()} [Часткова видача. Залишок перенесено в нову накладну]`.trim();
+        }
+
         const amount = uahItems.reduce((sum, item) => {
           const price = item.price !== '' && item.price !== null ? parseFloat(item.price) : 0;
           return sum + (price * (parseFloat(item.quantity) || 0));
         }, 0);
-        const status = formData.status === 'reserved' ? 'reserved' : (hasEmptyPrices ? 'pending_price' : 'completed');
 
         const payload = {
           buyerId: formData.buyerId,
@@ -301,15 +338,15 @@ export default function BuyerIssueForm() {
           type: 'issue',
           amount,
           currency: 'UAH',
-          status,
-          comment: formData.comment,
+          status: newStatusUah,
+          comment: finalComment,
           pickedUpBy: formData.pickedUpBy,
           user: user?.email,
           items: uahItems.map(item => ({
             productId: item.productId,
             warehouseId: formData.warehouseId,
             quantity: parseFloat(item.quantity) || 0,
-            price: item.price !== '' ? parseFloat(item.price) : null,
+            price: item.price !== '' && item.price !== null ? parseFloat(item.price) : null,
             currency: 'UAH'
           }))
         };
@@ -323,12 +360,15 @@ export default function BuyerIssueForm() {
 
       // 2. Якщо є доларові товари, формуємо доларову накладну
       if (usdItems.length > 0) {
-        const hasEmptyPrices = usdItems.some(item => item.price === '' || item.price === null);
+        let finalComment = formData.comment || '';
+        if (isReleasing && remainderItems.length > 0) {
+          finalComment = `${finalComment.trim()} [Часткова видача. Залишок перенесено в нову накладну]`.trim();
+        }
+
         const amount = usdItems.reduce((sum, item) => {
           const price = item.price !== '' && item.price !== null ? parseFloat(item.price) : 0;
           return sum + (price * (parseFloat(item.quantity) || 0));
         }, 0);
-        const status = formData.status === 'reserved' ? 'reserved' : (hasEmptyPrices ? 'pending_price' : 'completed');
 
         const payload = {
           buyerId: formData.buyerId,
@@ -337,15 +377,15 @@ export default function BuyerIssueForm() {
           type: 'issue',
           amount,
           currency: 'USD',
-          status,
-          comment: formData.comment,
+          status: newStatusUsd,
+          comment: finalComment,
           pickedUpBy: formData.pickedUpBy,
           user: user?.email,
           items: usdItems.map(item => ({
             productId: item.productId,
             warehouseId: formData.warehouseId,
             quantity: parseFloat(item.quantity) || 0,
-            price: item.price !== '' ? parseFloat(item.price) : null,
+            price: item.price !== '' && item.price !== null ? parseFloat(item.price) : null,
             currency: 'USD'
           }))
         };
@@ -365,11 +405,34 @@ export default function BuyerIssueForm() {
         }
       }
 
+      // 4. Якщо це був переклад з резерву у видачу і є залишок, створюємо нову накладну броні
+      if (isReleasing && remainderItems.length > 0) {
+        const remainderComment = `[Залишок броні від накладної від ${formData.date}] ${formData.comment || ''}`.trim();
+        const remainderPayload = {
+          buyerId: formData.buyerId,
+          buyerName: selectedBuyer?.name,
+          parentId: txId,
+          date: formData.date,
+          type: 'issue',
+          amount: remainderItems.reduce((sum, item) => {
+            const price = item.price !== '' && item.price !== null ? parseFloat(item.price) : 0;
+            return sum + (price * item.quantity);
+          }, 0),
+          currency: formData.currency,
+          status: 'reserved',
+          comment: remainderComment,
+          pickedUpBy: formData.pickedUpBy,
+          user: user?.email,
+          items: remainderItems
+        };
+        submitPromises.push(addBuyerTransaction(remainderPayload));
+      }
+
       const results = await Promise.all(submitPromises);
       const failed = results.find(r => !r?.success);
       
       if (!failed) {
-        showToast('Видачу товарів успішно проведено', 'success');
+        showToast(isReleasing && remainderItems.length > 0 ? 'Часткову видачу проведено. Залишок зарезервовано.' : 'Видачу товарів успішно проведено', 'success');
         navigate(-1);
       } else {
         showToast(failed.error || 'Помилка збереження', 'error');
@@ -858,6 +921,18 @@ export default function BuyerIssueForm() {
           >
             Скасувати
           </Button>
+          {txId && originalStatus === 'reserved' && (
+            <Button
+              type="button"
+              variant="primary"
+              disabled={saving}
+              loading={saving}
+              onClick={() => handleSubmit(null, 'completed')}
+              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 font-bold"
+            >
+              📦 Видати бронь
+            </Button>
+          )}
           <Button 
             type="submit" 
             variant="primary" 
