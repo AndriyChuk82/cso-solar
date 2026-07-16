@@ -797,7 +797,7 @@ export default function BuyerIssueForm() {
                             type="number"
                             step="any"
                             min="0"
-                            disabled={!item.productId || isReleaseMode}
+                            disabled={!item.productId}
                             className="w-20 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none disabled:opacity-40 text-center font-semibold"
                             placeholder="неоцінено"
                             value={item.price}
@@ -805,7 +805,7 @@ export default function BuyerIssueForm() {
                             onFocus={(e) => e.target.select()}
                           />
                           <select
-                            disabled={!item.productId || isReleaseMode}
+                            disabled={!item.productId}
                             className="w-14 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none disabled:opacity-40 cursor-pointer"
                             value={item.currency || 'UAH'}
                             onChange={(e) => updateRowField(index, 'currency', e.target.value)}
