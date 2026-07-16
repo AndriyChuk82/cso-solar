@@ -208,15 +208,23 @@ export default function BuyersDashboard() {
                         {formatMoney(b.balanceUsd, '$')}
                       </td>
                       <td className="p-4 text-center">
-                        {b.pendingCount > 0 ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                            ⚠️ {b.pendingCount} без ціни
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
-                            ок
-                          </span>
-                        )}
+                        <div className="flex flex-col gap-1 items-center justify-center">
+                          {b.pendingCount > 0 && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                              ⚠️ {b.pendingCount} без ціни
+                            </span>
+                          )}
+                          {b.reservedCount > 0 && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 animate-pulse">
+                              ⏳ Бронь: {b.reservedCount}
+                            </span>
+                          )}
+                          {b.pendingCount === 0 && b.reservedCount === 0 && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
+                              ок
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end gap-2">
@@ -251,11 +259,18 @@ export default function BuyersDashboard() {
                       <span className="font-bold text-sm text-blue-500 block">{b.name}</span>
                       {b.phone && <span className="text-xs text-[var(--text-secondary)] block mt-0.5">{b.phone}</span>}
                     </div>
-                    {b.pendingCount > 0 && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                        ⚠️ {b.pendingCount} без ціни
-                      </span>
-                    )}
+                    <div className="flex flex-col gap-1 items-end">
+                      {b.pendingCount > 0 && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                          ⚠️ {b.pendingCount} без ціни
+                        </span>
+                      )}
+                      {b.reservedCount > 0 && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 animate-pulse">
+                          ⏳ Бронь: {b.reservedCount}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex justify-between items-center text-xs mt-1 border-t border-[var(--border)] pt-2">

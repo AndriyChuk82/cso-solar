@@ -455,13 +455,16 @@ export async function getBuyersWithBalances() {
 
   const balanceMap = {};
   buyers.forEach(b => {
-    balanceMap[b.id] = { uah: 0, usd: 0, pendingCount: 0 };
+    balanceMap[b.id] = { uah: 0, usd: 0, pendingCount: 0, reservedCount: 0 };
   });
 
   txs.forEach(t => {
     if (!balanceMap[t.buyer_id]) return;
     if (t.is_archived === true) return; // Ігноруємо архівні транзакції для активного балансу
-    if (t.status === 'reserved') return; // Ігноруємо резерви для активного балансу
+    if (t.status === 'reserved') {
+      balanceMap[t.buyer_id].reservedCount += 1;
+      return; // Ігноруємо резерви для активного балансу
+    }
     if (t.status === 'pending_price') {
       balanceMap[t.buyer_id].pendingCount += 1;
     }
@@ -488,7 +491,8 @@ export async function getBuyersWithBalances() {
       ...b,
       balanceUah: balanceMap[b.id].uah,
       balanceUsd: balanceMap[b.id].usd,
-      pendingCount: balanceMap[b.id].pendingCount
+      pendingCount: balanceMap[b.id].pendingCount,
+      reservedCount: balanceMap[b.id].reservedCount
     }))
   };
 }
