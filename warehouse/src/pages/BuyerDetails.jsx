@@ -315,6 +315,7 @@ export default function BuyerDetails() {
 
         const match = editTx.comment?.match(/\[invoice_id:([\w-]+)\]/);
         const tag = match ? ` [invoice_id:${match[1]}]` : '';
+        const invoiceId = match ? match[1] : null;
         const cleanComment = editForm.comment || '';
         const commentWithTag = tag ? `${cleanComment}${tag}` : cleanComment;
 
