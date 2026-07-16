@@ -23,6 +23,7 @@ export default function BuyerIssueForm() {
   const [isArchived, setIsArchived] = useState(false);
   const [originalItemsMap, setOriginalItemsMap] = useState({});
   const [originalStatus, setOriginalStatus] = useState('completed');
+  const [isReleaseMode, setIsReleaseMode] = useState(false);
 
   // Стан для автокомпліту пошуку товарів у рядках
   const [activeRowSearch, setActiveRowSearch] = useState(null); // Індекс рядка, де зараз активний пошук
@@ -117,6 +118,7 @@ export default function BuyerIssueForm() {
             });
             setOriginalItemsMap(origMap);
             setOriginalStatus(tx.status || 'completed');
+            setIsReleaseMode(tx.status === 'reserved');
 
             setFormData({
               buyerId: tx.buyerId,
@@ -550,6 +552,7 @@ export default function BuyerIssueForm() {
                   setIsCustomRepresentative(false);
                 }}
                 required
+                disabled={txId && isReleaseMode}
               >
                 <option value="">-- Виберіть клієнта --</option>
                 {buyers.map(b => (
@@ -615,6 +618,7 @@ export default function BuyerIssueForm() {
                   localStorage.setItem('cso_last_warehouse', val);
                 }}
                 required
+                disabled={txId && isReleaseMode}
               >
                 {warehouses.map(w => (
                   <option key={w.id} value={w.id}>{w.name}</option>
@@ -630,6 +634,7 @@ export default function BuyerIssueForm() {
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 required
+                disabled={txId && isReleaseMode}
               />
             </div>
 
@@ -641,21 +646,24 @@ export default function BuyerIssueForm() {
                 className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none"
                 value={formData.comment}
                 onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+                disabled={isReleaseMode}
               />
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="font-semibold text-[var(--text-secondary)]">Статус документа *</label>
-              <select
-                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none font-semibold text-blue-600 dark:text-blue-400"
-                value={formData.status || 'completed'}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                required
-              >
-                <option value="completed">✅ Видано (Списати)</option>
-                <option value="reserved">⏳ Бронь / Резерв</option>
-              </select>
-            </div>
+            {!isReleaseMode && (
+              <div className="flex flex-col gap-1">
+                <label className="font-semibold text-[var(--text-secondary)]">Статус документа *</label>
+                <select
+                  className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none font-semibold text-blue-600 dark:text-blue-400"
+                  value={formData.status || 'completed'}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  required
+                >
+                  <option value="completed">✅ Видано (Списати)</option>
+                  <option value="reserved">⏳ Бронь / Резерв</option>
+                </select>
+              </div>
+            )}
           </div>
         </div>
 
@@ -729,10 +737,11 @@ export default function BuyerIssueForm() {
                             ) : (
                               <div 
                                 onClick={() => {
+                                  if (isReleaseMode) return;
                                   setActiveRowSearch(index);
                                   setSearchText(item.productName || '');
                                 }}
-                                className="w-full p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] cursor-pointer text-[16px] sm:text-xs min-h-[30px] flex items-center justify-between"
+                                className={`w-full p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[16px] sm:text-xs min-h-[30px] flex items-center justify-between ${isReleaseMode ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
                               >
                                 <span className={item.productName ? 'text-[var(--text)] font-medium' : 'text-[var(--text-secondary)] italic'}>
                                   {item.productName || 'Клацніть для вибору товару...'}
@@ -788,7 +797,7 @@ export default function BuyerIssueForm() {
                             type="number"
                             step="any"
                             min="0"
-                            disabled={!item.productId}
+                            disabled={!item.productId || isReleaseMode}
                             className="w-20 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none disabled:opacity-40 text-center font-semibold"
                             placeholder="неоцінено"
                             value={item.price}
@@ -796,7 +805,7 @@ export default function BuyerIssueForm() {
                             onFocus={(e) => e.target.select()}
                           />
                           <select
-                            disabled={!item.productId}
+                            disabled={!item.productId || isReleaseMode}
                             className="w-14 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none disabled:opacity-40 cursor-pointer"
                             value={item.currency || 'UAH'}
                             onChange={(e) => updateRowField(index, 'currency', e.target.value)}
@@ -818,14 +827,16 @@ export default function BuyerIssueForm() {
 
                       {/* Кнопка видалення рядка */}
                       <td className="p-2 text-center">
-                        <button
-                          type="button"
-                          onClick={() => removeRow(index)}
-                          className="text-red-500 hover:bg-red-500/10 font-bold w-6 h-6 rounded-full flex items-center justify-center transition-colors"
-                          title="Видалити рядок"
-                        >
-                          ×
-                        </button>
+                        {!isReleaseMode && (
+                          <button
+                            type="button"
+                            onClick={() => removeRow(index)}
+                            className="text-red-500 hover:bg-red-500/10 font-bold w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+                            title="Видалити рядок"
+                          >
+                            ×
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -836,13 +847,15 @@ export default function BuyerIssueForm() {
 
           {/* Низ таблиці: додати рядок та підсумок */}
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-3 border-t border-[var(--border)] pt-3 no-print">
-            <button
-              type="button"
-              onClick={addRow}
-              className="btn btn-ghost btn-sm text-blue-500 border border-blue-500/30 hover:bg-blue-500/5 flex items-center gap-1"
-            >
-              ➕ Додати рядок
-            </button>
+            {!isReleaseMode && (
+              <button
+                type="button"
+                onClick={addRow}
+                className="btn btn-ghost btn-sm text-blue-500 border border-blue-500/30 hover:bg-blue-500/5 flex items-center gap-1"
+              >
+                ➕ Додати рядок
+              </button>
+            )}
 
             <div className="text-xs md:text-sm text-[var(--text)] flex flex-col items-end gap-1 font-semibold">
               {totalUah > 0 && (
@@ -860,7 +873,7 @@ export default function BuyerIssueForm() {
 
         {/* Кнопки збереження */}
         <div className="flex justify-end gap-3 pt-2 flex-wrap items-center">
-          {txId && (
+          {txId && !isReleaseMode && (
             <div className="flex gap-2 mr-auto">
               <button
                 type="button"
@@ -913,6 +926,19 @@ export default function BuyerIssueForm() {
               </button>
             </div>
           )}
+
+          {txId && isReleaseMode && (
+            <div className="flex gap-2 mr-auto">
+              <button
+                type="button"
+                onClick={() => setIsReleaseMode(false)}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-amber-500/20 text-amber-600 bg-amber-500/5 hover:bg-amber-500/10 transition-colors flex items-center gap-1.5"
+              >
+                ✏️ Редагувати бронь
+              </button>
+            </div>
+          )}
+
           <Button 
             type="button" 
             variant="ghost" 
@@ -921,7 +947,8 @@ export default function BuyerIssueForm() {
           >
             Скасувати
           </Button>
-          {txId && originalStatus === 'reserved' && (
+
+          {isReleaseMode ? (
             <Button
               type="button"
               variant="primary"
@@ -932,15 +959,16 @@ export default function BuyerIssueForm() {
             >
               📦 Видати бронь
             </Button>
+          ) : (
+            <Button 
+              type="submit" 
+              variant="primary" 
+              disabled={saving} 
+              loading={saving}
+            >
+              {saving ? 'Збереження...' : 'Провести документ'}
+            </Button>
           )}
-          <Button 
-            type="submit" 
-            variant="primary" 
-            disabled={saving} 
-            loading={saving}
-          >
-            {saving ? 'Збереження...' : 'Провести документ'}
-          </Button>
         </div>
       </form>
 
