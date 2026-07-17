@@ -405,13 +405,13 @@ export default function BuyerIssueForm() {
       const isReleasing = txId && originalStatus === 'reserved' && targetStatusVal !== 'reserved';
 
       // Визначаємо новий статус для кожної валюти
-      const newStatusUah = isReleasing
-        ? (uahItems.some(item => item.price === '' || item.price === null) ? 'pending_price' : 'completed')
-        : targetStatusVal;
+      const newStatusUah = targetStatusVal === 'reserved'
+        ? 'reserved'
+        : (uahItems.some(item => item.price === '' || item.price === null) ? 'pending_price' : 'completed');
 
-      const newStatusUsd = isReleasing
-        ? (usdItems.some(item => item.price === '' || item.price === null) ? 'pending_price' : 'completed')
-        : targetStatusVal;
+      const newStatusUsd = targetStatusVal === 'reserved'
+        ? 'reserved'
+        : (usdItems.some(item => item.price === '' || item.price === null) ? 'pending_price' : 'completed');
 
       // Визначаємо, чи є часткова видача (розщеплення броні)
       const remainderItems = [];
