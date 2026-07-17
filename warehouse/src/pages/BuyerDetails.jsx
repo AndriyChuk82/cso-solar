@@ -42,9 +42,65 @@ export default function BuyerDetails() {
   // Редагування транзакції
   const [editTx, setEditTx] = useState(null);
 
+  // Стан для коригування боргу клієнта
+  const [showAdjModal, setShowAdjModal] = useState(false);
+  const [adjType, setAdjType] = useState('increase'); // 'increase' | 'decrease'
+  const [adjAmount, setAdjAmount] = useState('');
+  const [adjCurrency, setAdjCurrency] = useState('UAH');
+  const [adjComment, setAdjComment] = useState('');
+  const [savingAdj, setSavingAdj] = useState(false);
+
   // Видача заброньованих товарів (Резерви)
   const [reserveReleaseTx, setReserveReleaseTx] = useState(null);
   const [reserveReleaseForm, setReserveReleaseForm] = useState(null);
+
+  const handleSaveAdjustment = async (e) => {
+    e.preventDefault();
+    if (!adjAmount || parseFloat(adjAmount) <= 0) {
+      showToast('Введіть коректну суму', 'error');
+      return;
+    }
+    if (!adjComment.trim()) {
+      showToast('Введіть коментар/причину коригування', 'error');
+      return;
+    }
+
+    setSavingAdj(true);
+    try {
+      // Збільшити борг = від'ємний баланс (знак мінус)
+      // Зменшити борг = додатній баланс (знак плюс)
+      const multiplier = adjType === 'increase' ? -1 : 1;
+      const finalAmount = parseFloat(adjAmount) * multiplier;
+
+      const payload = {
+        buyerId: id,
+        buyerName: buyer?.name,
+        date: new Date().toISOString().split('T')[0],
+        type: 'adjustment',
+        amount: finalAmount,
+        currency: adjCurrency,
+        status: 'completed',
+        comment: adjComment,
+        user: user?.email
+      };
+
+      const res = await addBuyerTransaction(payload);
+      if (res.success) {
+        showToast('Коригування боргу успішно збережено', 'success');
+        setShowAdjModal(false);
+        setAdjAmount('');
+        setAdjComment('');
+        loadData();
+      } else {
+        showToast(res.error || 'Помилка при збереженні коригування', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Не вдалося зберегти коригування', 'error');
+    } finally {
+      setSavingAdj(false);
+    }
+  };
 
   function startReserveRelease(tx) {
     setReserveReleaseTx(tx);
@@ -822,6 +878,19 @@ export default function BuyerDetails() {
                   <Link to={`/buyers/payment?buyerId=${id}`} className="btn btn-secondary btn-sm px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1 border border-[var(--border)]">
                     📥 Прийняти оплату
                   </Link>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setAdjType('increase');
+                      setAdjAmount('');
+                      setAdjComment('');
+                      setAdjCurrency('UAH');
+                      setShowAdjModal(true);
+                    }} 
+                    className="btn btn-ghost btn-sm px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1 border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/5"
+                  >
+                    🔧 Коригувати борг
+                  </button>
                 </div>
               </div>
 
@@ -1926,6 +1995,118 @@ export default function BuyerDetails() {
                     Зберегти
                   </Button>
                 </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Модальне вікно коригування боргу */}
+      {showAdjModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-2xl max-w-sm w-full overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white p-4 flex items-center justify-between">
+              <h3 className="font-bold text-sm">🔧 Коригування боргу клієнта</h3>
+              <button 
+                type="button"
+                onClick={() => setShowAdjModal(false)}
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleSaveAdjustment} className="p-4 space-y-4">
+              {/* Перемикач напрямку */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Напрямок коригування</label>
+                <div className="grid grid-cols-2 gap-2 bg-[var(--bg)] p-1 rounded-lg border border-[var(--border)]">
+                  <button
+                    type="button"
+                    onClick={() => setAdjType('increase')}
+                    className={`py-1.5 px-2 rounded-md text-xs font-semibold transition-all ${
+                      adjType === 'increase'
+                        ? 'bg-red-500 text-white shadow-sm font-bold'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
+                    }`}
+                  >
+                    📈 Збільшити борг
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAdjType('decrease')}
+                    className={`py-1.5 px-2 rounded-md text-xs font-semibold transition-all ${
+                      adjType === 'decrease'
+                        ? 'bg-green-600 text-white shadow-sm font-bold'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
+                    }`}
+                  >
+                    📉 Зменшити борг
+                  </button>
+                </div>
+              </div>
+
+              {/* Сума та Валюта */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2 flex flex-col gap-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Сума *</label>
+                  <input
+                    type="number"
+                    step="any"
+                    required
+                    placeholder="0.00"
+                    value={adjAmount}
+                    onChange={(e) => setAdjAmount(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] focus:ring-1 focus:ring-amber-500 outline-none font-semibold text-center"
+                    onFocus={(e) => e.target.select()}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Валюта</label>
+                  <select
+                    value={adjCurrency}
+                    onChange={(e) => setAdjCurrency(e.target.value)}
+                    className="w-full h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-xs focus:outline-none"
+                  >
+                    <option value="UAH">UAH</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Коментар */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Коментар / Причина *</label>
+                <textarea
+                  required
+                  placeholder="Вкажіть причину коригування боргу..."
+                  value={adjComment}
+                  onChange={(e) => setAdjComment(e.target.value)}
+                  rows={2}
+                  className="w-full p-2 text-xs rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] focus:ring-1 focus:ring-amber-500 outline-none"
+                />
+              </div>
+
+              {/* Кнопки дії */}
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border)]/50">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowAdjModal(false)}
+                >
+                  Скасувати
+                </Button>
+                <Button 
+                  type="submit" 
+                  variant="primary" 
+                  size="sm"
+                  disabled={savingAdj}
+                  style={{ backgroundColor: 'var(--primary)' }}
+                  className="font-bold"
+                >
+                  {savingAdj ? 'Збереження...' : 'Зберегти'}
+                </Button>
               </div>
             </form>
           </div>
