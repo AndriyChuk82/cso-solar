@@ -34,6 +34,12 @@ export default function BuyerIssueForm() {
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [printWithPrices, setPrintWithPrices] = useState(true);
 
+  // Стан для інтеграції з Комерційними пропозиціями (КП)
+  const [showKpModal, setShowKpModal] = useState(false);
+  const [loadingKp, setLoadingKp] = useState(false);
+  const [proposalsList, setProposalsList] = useState([]);
+  const [kpSearchQuery, setKpSearchQuery] = useState('');
+
   // Стан для безпечного підтвердження дій
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -249,6 +255,111 @@ export default function BuyerIssueForm() {
     }));
     setActiveRowSearch(null);
   }
+
+  // Завантаження КП з Google Apps Script
+  const openKpImport = async () => {
+    setShowKpModal(true);
+    setLoadingKp(true);
+    try {
+      const response = await fetch('https://script.google.com/macros/s/AKfycbyvYNoyGINAtWlbExzONJWoReE8OC3_-FhOase5pHkCZ_PdCLXuMQqXqMYBWLzaNX-s/exec', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'getProposals' })
+      });
+      const res = await response.json();
+      if (res?.success) {
+        // Сортуємо від найновіших до найстаріших за датою або номером
+        const sorted = (res.proposals || []).sort((a, b) => {
+          const dateA = new Date(a.date || a.updatedAt || 0);
+          const dateB = new Date(b.date || b.updatedAt || 0);
+          return dateB - dateA;
+        });
+        setProposalsList(sorted);
+      } else {
+        showToast(res?.error || 'Не вдалося завантажити список КП', 'error');
+      }
+    } catch (err) {
+      console.error('Помилка при завантаженні КП:', err);
+      showToast('Не вдалося зв\'язатися з сервером Google Drive', 'error');
+    } finally {
+      setLoadingKp(false);
+    }
+  };
+
+  // Фільтрація комерційних пропозицій за назвою/телефоном/номером
+  const filteredProposals = proposalsList.filter(kp => {
+    if (!kpSearchQuery) return true;
+    const query = kpSearchQuery.toLowerCase();
+    const nameMatch = kp.clientName?.toLowerCase().includes(query);
+    const phoneMatch = kp.clientPhone?.toLowerCase().includes(query);
+    const numberMatch = kp.number?.toString().toLowerCase().includes(query);
+    return nameMatch || phoneMatch || numberMatch;
+  });
+
+  // Імпорт пропозиції
+  const importProposalData = (kp) => {
+    const kpCurrency = kp.currency === 'USD' ? 'USD' : 'UAH';
+    
+    // Спробуємо заповнити також дані про покупця
+    let matchedBuyerId = formData.buyerId;
+    if (!matchedBuyerId && kp.clientName) {
+      // Спробуємо зіставити за назвою клієнта
+      const matchedBuyer = buyers.find(b => 
+        b.name?.toLowerCase().trim() === kp.clientName.toLowerCase().trim()
+      );
+      if (matchedBuyer) {
+        matchedBuyerId = matchedBuyer.id;
+      }
+    }
+    
+    const importedItems = (kp.items || []).map(item => {
+      const name = item.name || '';
+      const qty = parseFloat(item.quantity) || 1;
+      const price = parseFloat(item.price) || '';
+      
+      const matchedProduct = products.find(p => 
+        p.name?.toLowerCase().trim() === name.toLowerCase().trim()
+      );
+      
+      if (matchedProduct) {
+        return {
+          productId: matchedProduct.id,
+          productName: matchedProduct.name,
+          productArticle: matchedProduct.article || '',
+          unit: matchedProduct.unit || 'шт',
+          quantity: qty,
+          price: price,
+          currency: kpCurrency
+        };
+      } else {
+        return {
+          productId: '',
+          productName: name,
+          productArticle: '',
+          unit: item.unit || 'шт',
+          quantity: qty,
+          price: price,
+          currency: kpCurrency
+        };
+      }
+    });
+
+    if (importedItems.length === 0) {
+      showToast('Обрана пропозиція не містить товарів для імпорту', 'warning');
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      buyerId: matchedBuyerId,
+      currency: kpCurrency,
+      comment: kp.notes ? `${kp.notes} (Імпортовано з КП №${kp.number || 'б/н'})` : `Імпортовано з КП №${kp.number || 'б/н'}`,
+      items: importedItems
+    }));
+
+    showToast(`Успішно імпортовано ${importedItems.length} поз. з КП №${kp.number || 'б/н'}`, 'success');
+    setShowKpModal(false);
+  };
 
   // Фільтрація товарів для автокомпліту
   const filteredProducts = products.filter(p => {
@@ -741,10 +852,15 @@ export default function BuyerIssueForm() {
                                   setActiveRowSearch(index);
                                   setSearchText(item.productName || '');
                                 }}
-                                className={`w-full p-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-[16px] sm:text-xs min-h-[30px] flex items-center justify-between ${isReleaseMode ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
+                                className={`w-full p-1.5 rounded border text-[16px] sm:text-xs min-h-[30px] flex items-center justify-between ${
+                                  !item.productId && item.productName 
+                                    ? 'border-amber-500/50 bg-amber-500/5 dark:bg-amber-500/10' 
+                                    : 'border-[var(--border)] bg-[var(--bg)]'
+                                } ${isReleaseMode ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
                               >
-                                <span className={item.productName ? 'text-[var(--text)] font-medium' : 'text-[var(--text-secondary)] italic'}>
+                                <span className={item.productId ? 'text-[var(--text)] font-medium' : item.productName ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-[var(--text-secondary)] italic'}>
                                   {item.productName || 'Клацніть для вибору товару...'}
+                                  {!item.productId && item.productName && ' (⚠️ Не зіставлено)'}
                                 </span>
                                 {item.productArticle && (
                                   <span className="text-[9px] text-[var(--text-secondary)] font-mono bg-[var(--border-light)] px-1 rounded mr-2">
@@ -848,13 +964,22 @@ export default function BuyerIssueForm() {
           {/* Низ таблиці: додати рядок та підсумок */}
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-3 border-t border-[var(--border)] pt-3 no-print">
             {!isReleaseMode && (
-              <button
-                type="button"
-                onClick={addRow}
-                className="btn btn-ghost btn-sm text-blue-500 border border-blue-500/30 hover:bg-blue-500/5 flex items-center gap-1"
-              >
-                ➕ Додати рядок
-              </button>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={addRow}
+                  className="btn btn-ghost btn-sm text-blue-500 border border-blue-500/30 hover:bg-blue-500/5 flex items-center gap-1"
+                >
+                  ➕ Додати рядок
+                </button>
+                <button
+                  type="button"
+                  onClick={openKpImport}
+                  className="btn btn-ghost btn-sm text-emerald-600 border border-emerald-500/30 hover:bg-emerald-500/5 flex items-center gap-1 font-semibold dark:text-emerald-400 dark:border-emerald-500/20"
+                >
+                  📥 Імпортувати з КП
+                </button>
+              </div>
             )}
 
             <div className="text-xs md:text-sm text-[var(--text)] flex flex-col items-end gap-1 font-semibold">
@@ -1109,6 +1234,91 @@ export default function BuyerIssueForm() {
               >
                 {confirmModal.type === 'delete' ? '🗑️ Остаточно видалити' : '✔️ Підтвердити'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальне вікно вибору параметрів імпорту з КП */}
+      {showKpModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 flex items-center justify-between">
+              <h3 className="font-bold text-sm">Імпорт товарів з Комерційної Пропозиції (КП)</h3>
+              <button 
+                type="button"
+                onClick={() => setShowKpModal(false)}
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {/* Рядок пошуку */}
+            <div className="p-3 border-b border-[var(--border)] bg-[var(--bg)] flex gap-2">
+              <input 
+                type="text" 
+                placeholder="Пошук за ім'ям покупця, телефоном або номером КП..."
+                value={kpSearchQuery}
+                onChange={(e) => setKpSearchQuery(e.target.value)}
+                className="flex-1 px-3 py-1.5 text-xs rounded border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] focus:ring-1 focus:ring-emerald-500 outline-none"
+              />
+            </div>
+
+            {/* Вміст списку */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-1 bg-[var(--bg-card)]">
+              {loadingKp ? (
+                <div className="flex flex-col items-center justify-center py-10 gap-3">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                  <span className="text-xs text-[var(--text-secondary)]">Завантаження комерційних пропозицій з Google Drive...</span>
+                </div>
+              ) : filteredProposals.length === 0 ? (
+                <div className="text-center py-10 text-xs text-[var(--text-secondary)]">
+                  {kpSearchQuery ? 'Нічого не знайдено за вашим запитом' : 'Немає доступних комерційних пропозицій'}
+                </div>
+              ) : (
+                filteredProposals.map((kp) => (
+                  <div 
+                    key={kp.id} 
+                    onClick={() => importProposalData(kp)}
+                    className="p-3 border border-[var(--border)] rounded-lg hover:border-emerald-500 hover:bg-emerald-500/5 transition-all cursor-pointer flex flex-col gap-1 text-xs"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                        КП №{kp.number || 'б/н'}
+                      </span>
+                      <span className="text-[10px] text-[var(--text-secondary)] font-mono">
+                        📅 {kp.date ? new Date(kp.date).toLocaleDateString('uk-UA') : 'без дати'}
+                      </span>
+                    </div>
+                    <div className="font-semibold text-[var(--text)] mt-0.5">
+                      👤 {kp.clientName || 'Шановний Клієнт'}
+                    </div>
+                    {kp.clientPhone && (
+                      <div className="text-[10px] text-[var(--text-secondary)]">
+                        📞 {kp.clientPhone}
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center mt-1 border-t border-[var(--border)]/50 pt-1 text-[10px] text-[var(--text-secondary)]">
+                      <span>Товарів: {kp.items?.length || 0}</span>
+                      <span className="font-bold text-[var(--text)] text-xs">
+                        Сума: {parseFloat(kp.total || 0).toLocaleString('uk-UA')} {kp.currency === 'USD' ? '$' : 'грн'}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 p-3 bg-[var(--bg)] border-t border-[var(--border)]">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowKpModal(false)}
+              >
+                Скасувати
+              </Button>
             </div>
           </div>
         </div>
