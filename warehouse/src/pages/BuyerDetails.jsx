@@ -638,6 +638,32 @@ export default function BuyerDetails() {
     return `${prefix}${val.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${symbol}`;
   }
 
+  // Розрахунок загального поточного балансу за всю історію (без архівних)
+  let totalUahBalance = 0;
+  let totalUsdBalance = 0;
+  let totalReservedUah = 0;
+  let totalReservedUsd = 0;
+
+  transactions.forEach(t => {
+    if (t.is_archived === true) return;
+    const amt = parseFloat(t.amount) || 0;
+    const cur = t.currency;
+
+    if (t.status === 'reserved') {
+      if (cur === 'UAH') totalReservedUah += amt;
+      if (cur === 'USD') totalReservedUsd += amt;
+      return;
+    }
+
+    if (t.type === 'issue') {
+      if (cur === 'UAH') totalUahBalance -= amt;
+      if (cur === 'USD') totalUsdBalance -= amt;
+    } else if (t.type === 'payment' || t.type === 'adjustment') {
+      if (cur === 'UAH') totalUahBalance += amt;
+      if (cur === 'USD') totalUsdBalance += amt;
+    }
+  });
+
   return (
     <div className="pb-12">
       {/* Спеціальні стилі друку */}
@@ -684,9 +710,36 @@ export default function BuyerDetails() {
             ←
           </Link>
           {buyer && (
-            <div>
+            <div className="flex flex-col gap-1">
               <h1 className="text-xl md:text-2xl font-bold text-[var(--text)]">{buyer.name}</h1>
               {buyer.phone && <p className="text-xs md:text-sm text-[var(--text-secondary)]">{buyer.phone}</p>}
+              
+              {/* Картки загального балансу клієнта */}
+              <div className="flex flex-wrap gap-3 mt-2 no-print">
+                <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-3 py-2 flex flex-col min-w-[130px] shadow-sm">
+                  <span className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Баланс UAH</span>
+                  <span className={`text-sm md:text-base font-extrabold mt-0.5 ${totalUahBalance < 0 ? 'text-red-500' : totalUahBalance > 0 ? 'text-green-500' : 'text-[var(--text-secondary)]'}`}>
+                    {totalUahBalance > 0 ? '+' : ''}{totalUahBalance.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} грн
+                  </span>
+                  {totalReservedUah > 0 && (
+                    <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">
+                      ⏳ Бронь: ({totalReservedUah.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} грн)
+                    </span>
+                  )}
+                </div>
+
+                <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-3 py-2 flex flex-col min-w-[130px] shadow-sm">
+                  <span className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Баланс USD</span>
+                  <span className={`text-sm md:text-base font-extrabold mt-0.5 ${totalUsdBalance < 0 ? 'text-red-500' : totalUsdBalance > 0 ? 'text-green-500' : 'text-[var(--text-secondary)]'}`}>
+                    {totalUsdBalance > 0 ? '+' : ''}${totalUsdBalance.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                  {totalReservedUsd > 0 && (
+                    <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">
+                      ⏳ Бронь: (${totalReservedUsd.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
