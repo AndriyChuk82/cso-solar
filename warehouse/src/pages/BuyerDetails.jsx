@@ -832,7 +832,7 @@ export default function BuyerDetails() {
                     <tr className="bg-[var(--bg)] text-[var(--text-secondary)] font-semibold border-b border-[var(--border)]">
                       <th className="p-2 w-28 whitespace-nowrap">Дата</th>
                       <th className="p-2 w-32">Тип документа</th>
-                      <th className="p-2 text-center w-32">Сума боргу</th>
+                      <th className="p-2 text-center w-32">Сума накладної</th>
                       <th className="p-2 text-center w-32">Сума сплачено</th>
                       <th className="p-2">Деталі (коментар / товари)</th>
                     </tr>
@@ -1056,7 +1056,7 @@ export default function BuyerDetails() {
                     <tr className="bg-[var(--bg)] text-[var(--text-secondary)] font-semibold border-b border-[var(--border)]">
                       <th className="p-2 w-28 whitespace-nowrap">Дата</th>
                       <th className="p-2 w-32">Тип документа</th>
-                      <th className="p-2 text-center w-32">Сума боргу</th>
+                      <th className="p-2 text-center w-32">Сума накладної</th>
                       <th className="p-2 text-center w-32">Сума сплачено</th>
                       <th className="p-2">Деталі (коментар / товари)</th>
                     </tr>
