@@ -257,7 +257,8 @@ export default function Reports() {
                             <td key={colIndex} style={{
                               fontWeight: col === 'Всього' || col === 'Кількість' ? 700 : 400,
                               textAlign: (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) ? 'center' : 'left',
-                              width: (col === 'Товар' || col === 'Назва') ? '100%' : '1px'
+                              width: (col === 'Товар' || col === 'Назва') ? '100%' : '1px',
+                              whiteSpace: (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) ? 'pre-line' : 'normal'
                             }}>
                               {col === 'Дата' ? formatDate(row[col]) : (
                                 (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) 

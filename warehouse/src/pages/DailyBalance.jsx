@@ -199,7 +199,7 @@ export default function DailyBalance() {
                       >
                         <td style={{ fontWeight: 500, paddingLeft: '24px', paddingTop: '4px', paddingBottom: '4px', fontSize: '0.85rem' }}>{item.product_name}</td>
                         <td style={{ paddingTop: '4px', paddingBottom: '4px', fontSize: '0.8rem' }}>{item.unit}</td>
-                        <td style={{ fontWeight: 600, whiteSpace: 'nowrap', paddingTop: '4px', paddingBottom: '4px', fontSize: '0.85rem' }}>
+                        <td style={{ fontWeight: 600, whiteSpace: 'pre-line', paddingTop: '4px', paddingBottom: '4px', fontSize: '0.85rem' }}>
                           {formatQuantity(item.quantity, item.product_category)}
                         </td>
                         <td style={{ paddingTop: '2px', paddingBottom: '2px' }}>
@@ -279,7 +279,7 @@ export default function DailyBalance() {
                         {/* Облік */}
                         <div>
                           <span className="text-[9px] text-[var(--text-secondary)] block tracking-wider uppercase font-semibold">Облік</span>
-                          <span className="font-semibold text-xs text-[var(--text)]">
+                          <span className="font-semibold text-xs text-[var(--text)]" style={{ whiteSpace: 'pre-line', display: 'block' }}>
                             {formatQuantity(item.quantity, item.product_category)} {item.unit}
                           </span>
                         </div>
