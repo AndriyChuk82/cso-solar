@@ -40,15 +40,24 @@ export const REQUIRED_FIELDS_BY_STEP: Record<number, (keyof SemanticProject)[]> 
 
 // Розрахунок оцінки відповідності імені файлу та назви моделі (від 0 до 100)
 function calculateMatchScore(fileName: string, modelName: string): number {
-  const normFile = fileName.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const normModel = modelName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normalizeText = (text: string) => {
+    return text.toLowerCase()
+      .replace(/bificial/g, 'bifacial')
+      .replace(/bificual/g, 'bifacial')
+      .replace(/bifacual/g, 'bifacial')
+      .replace(/ghd/g, 'hgd') // Treat GHD and HGD as equivalent for matching certificates
+      .replace(/[^a-z0-9]/g, '');
+  };
+
+  const normFile = normalizeText(fileName);
+  const normModel = normalizeText(modelName);
   
   // 1. Повний збіг (без розділювачів)
   if (normFile.includes(normModel)) return 100;
   
   // Очищення назви бренду з початку моделі
   const cleanModel = modelName.replace(/^(huawei|longi|deye|solis|fronius|ja solar|jinko|risen|canadian|trina|akb|pylontech|dahua|must|victron|growatt|altek)\s+/i, '').trim();
-  const cleanNormModel = cleanModel.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const cleanNormModel = normalizeText(cleanModel);
   if (normFile.includes(cleanNormModel)) return 90;
   
   // Розбиваємо модель на окремі слова/коди
@@ -62,13 +71,14 @@ function calculateMatchScore(fileName: string, modelName: string): number {
   let hasSpecificCode = false; // Наявність специфічного буквено-цифрового коду (як-от 'sg05lp3' або 'sg02hp3')
   
   for (const word of words) {
-    const cleanWord = word.replace(/[^a-z0-9]/g, '');
+    const cleanWord = normalizeText(word);
     if (cleanWord.length === 0) continue;
     
     if (normFile.includes(cleanWord)) {
       matchCount++;
       // Якщо слово містить і букви, і цифри, або є унікальним кодом моделі
-      if ((/[a-z]/.test(word) && /[0-9]/.test(word) && word.length >= 4) || word.length >= 6) {
+      const originalWordClean = word.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if ((/[a-z]/.test(originalWordClean) && /[0-9]/.test(originalWordClean) && originalWordClean.length >= 4) || originalWordClean.length >= 6) {
         hasSpecificCode = true;
       }
     }
