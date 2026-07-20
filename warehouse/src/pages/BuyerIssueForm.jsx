@@ -52,6 +52,18 @@ export default function BuyerIssueForm() {
     onConfirm: null
   });
 
+  const [txHistoryLogs, setTxHistoryLogs] = useState([]);
+
+  useEffect(() => {
+    if (txId) {
+      getActivityLogs({ entityId: txId }).then(res => {
+        if (res.success) setTxHistoryLogs(res.data || []);
+      });
+    } else {
+      setTxHistoryLogs([]);
+    }
+  }, [txId]);
+
   const [formData, setFormData] = useState({
     buyerId: queryBuyerId || '',
     warehouseId: '',
@@ -1096,6 +1108,41 @@ export default function BuyerIssueForm() {
           )}
         </div>
       </form>
+
+      {/* Секція історії дій по цій накладній */}
+      {txId && (
+        <div className="card mt-4 p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl space-y-3 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-[var(--text)] flex items-center gap-1.5">
+              📜 Історія змін цієї накладної
+            </h3>
+            {txHistoryLogs.length > 0 && (
+              <span className="text-[10px] text-[var(--text-secondary)] font-semibold">
+                Записів: {txHistoryLogs.length}
+              </span>
+            )}
+          </div>
+          {txHistoryLogs.length === 0 ? (
+            <p className="text-xs text-[var(--text-secondary)] italic">
+              Історія змін для цієї накладної відсутня (або накладна була створена раніше). Всі подальші зміни відображатимуться тут.
+            </p>
+          ) : (
+            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+              {txHistoryLogs.map((log) => (
+                <div key={log.id} className="p-2.5 bg-[var(--bg)] rounded border border-[var(--border)] text-xs flex flex-col gap-1">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-bold text-[var(--text)]">👤 {log.user_name || log.user_email}</span>
+                    <span className="text-[10px] text-[var(--text-secondary)] font-mono">⏱️ {new Date(log.created_at).toLocaleString('uk-UA')}</span>
+                  </div>
+                  <div className="text-[var(--text-secondary)] whitespace-pre-line leading-relaxed text-[11px]">
+                    {log.details?.changesSummary || log.entity_title || log.action_type}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Модальне вікно вибору параметрів друку видаткової накладної */}
       {showPrintModal && (
