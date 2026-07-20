@@ -24,6 +24,7 @@ const BuyerDetails = lazy(() => import('./pages/BuyerDetails'));
 const BuyerIssueForm = lazy(() => import('./pages/BuyerIssueForm'));
 const BuyerPaymentForm = lazy(() => import('./pages/BuyerPaymentForm'));
 const BuyersReport = lazy(() => import('./pages/BuyersReport'));
+const AuditLog = lazy(() => import('./pages/AuditLog'));
 
 
 function AppContent() {
@@ -101,6 +102,7 @@ function AppContent() {
             {/* Баланси клієнтів */}
             <Route path="/buyers" element={<BuyersDashboard />} />
             <Route path="/buyers/report" element={<BuyersReport />} />
+            <Route path="/audit-log" element={<AuditLog />} />
             <Route path="/buyers/:id" element={<BuyerDetails />} />
             <Route path="/buyers/issue" element={<BuyerIssueForm />} />
             <Route path="/buyers/issue/edit/:txId" element={<BuyerIssueForm />} />

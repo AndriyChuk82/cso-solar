@@ -58,6 +58,24 @@ export async function addCategory(category) {
   if (!supabase) throw new Error('База даних не підключена');
   const { error } = await supabase.from('categories').insert([{ id: category.name, name: category.name, active: true }]);
   if (error) throw error;
+  // Логування архівування
+  try {
+    logActivity({
+      userEmail: 'Оператор',
+      userName: 'Оператор',
+      actionType: isArchived ? 'ARCHIVE' : 'UNARCHIVE',
+      entityType: 'BUYER_TRANSACTION',
+      entityId: transactionId,
+      entityTitle: `${isArchived ? '🗄️ Закрито в архів' : '🔄 Відновлено з архіву'} ID ${transactionId.slice(0, 8)}`,
+      details: {
+        transactionId,
+        isArchived
+      }
+    });
+  } catch (err) {
+    console.error("Logging archive error", err);
+  }
+
   return { success: true };
 }
 
@@ -809,3 +827,122 @@ export async function getBuyerTransactionById(txId) {
   };
 }
 
+
+
+/**
+ * Запис дії користувача (Аудит-лог)
+ */
+export async function logActivity({ userEmail, userName, actionType, entityType, entityId, entityTitle, details }) {
+  const logEntry = {
+    id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+    created_at: new Date().toISOString(),
+    user_email: userEmail || 'Система / Невідомо',
+    user_name: userName || userEmail || 'Оператор',
+    action_type: actionType, // 'CREATE', 'UPDATE', 'DELETE', 'ARCHIVE', 'UNARCHIVE'
+    entity_type: entityType, // 'BUYER_TRANSACTION', 'PRODUCT', 'WAREHOUSE', 'BUYER'
+    entity_id: entityId ? String(entityId) : null,
+    entity_title: entityTitle || '',
+    details: details || {}
+  };
+
+  // 1. Запис у LocalStorage для гарантії негайного збереження
+  try {
+    const existingStr = localStorage.getItem('cso_activity_logs');
+    const existing = existingStr ? JSON.parse(existingStr) : [];
+    existing.unshift(logEntry);
+    localStorage.setItem('cso_activity_logs', JSON.stringify(existing.slice(0, 1000)));
+  } catch (err) {
+    console.error("Failed to write log to localStorage", err);
+  }
+
+  // 2. Відправка в Supabase activity_logs
+  try {
+    const { error } = await supabase.from('activity_logs').insert([logEntry]);
+    if (error) {
+      console.warn("Supabase activity_logs insert warning:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase activity_logs network warning:", err);
+  }
+
+  return logEntry;
+}
+
+/**
+ * Отримання списку логів дій
+ */
+export async function getActivityLogs(filters = {}) {
+  let logs = [];
+
+  // 1. Отримуємо з Supabase
+  try {
+    let query = supabase.from('activity_logs').select('*').order('created_at', { ascending: false });
+    if (filters.actionType && filters.actionType !== 'ALL') {
+      query = query.eq('action_type', filters.actionType);
+    }
+    if (filters.entityType && filters.entityType !== 'ALL') {
+      query = query.eq('entity_type', filters.entityType);
+    }
+    if (filters.entityId) {
+      query = query.eq('entity_id', String(filters.entityId));
+    }
+    if (filters.dateFrom) {
+      query = query.gte('created_at', `${filters.dateFrom}T00:00:00.000Z`);
+    }
+    if (filters.dateTo) {
+      query = query.lte('created_at', `${filters.dateTo}T23:59:59.999Z`);
+    }
+
+    const { data, error } = await query;
+    if (!error && data && data.length > 0) {
+      logs = data;
+    }
+  } catch (err) {
+    console.warn("Supabase activity_logs fetch failed, using local storage fallback", err);
+  }
+
+  // 2. Отримуємо з LocalStorage (якщо Supabase порожня або недоступна)
+  if (logs.length === 0) {
+    try {
+      const localStr = localStorage.getItem('cso_activity_logs');
+      if (localStr) {
+        let localLogs = JSON.parse(localStr);
+        if (filters.actionType && filters.actionType !== 'ALL') {
+          localLogs = localLogs.filter(l => l.action_type === filters.actionType);
+        }
+        if (filters.entityType && filters.entityType !== 'ALL') {
+          localLogs = localLogs.filter(l => l.entity_type === filters.entityType);
+        }
+        if (filters.entityId) {
+          localLogs = localLogs.filter(l => String(l.entity_id) === String(filters.entityId));
+        }
+        if (filters.dateFrom) {
+          localLogs = localLogs.filter(l => l.created_at >= `${filters.dateFrom}T00:00:00.000Z`);
+        }
+        if (filters.dateTo) {
+          localLogs = localLogs.filter(l => l.created_at <= `${filters.dateTo}T23:59:59.999Z`);
+        }
+        logs = localLogs;
+      }
+    } catch (err) {
+      console.error("Failed to parse local activity_logs", err);
+    }
+  }
+
+  // 3. Фільтрація за пошуковим словом або користувачем
+  if (filters.search) {
+    const s = filters.search.toLowerCase();
+    logs = logs.filter(l => 
+      (l.user_name || '').toLowerCase().includes(s) ||
+      (l.user_email || '').toLowerCase().includes(s) ||
+      (l.entity_title || '').toLowerCase().includes(s) ||
+      JSON.stringify(l.details || {}).toLowerCase().includes(s)
+    );
+  }
+
+  if (filters.user && filters.user !== 'ALL') {
+    logs = logs.filter(l => l.user_email === filters.user || l.user_name === filters.user);
+  }
+
+  return { success: true, data: logs };
+}

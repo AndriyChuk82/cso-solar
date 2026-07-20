@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
-import { getBuyerTransactions, updateBuyerTransaction, deleteBuyerTransaction, getBuyers, toggleArchiveTransaction, addBuyerTransaction } from '../api/gasApi';
+import { getBuyerTransactions, updateBuyerTransaction, deleteBuyerTransaction, getBuyers, toggleArchiveTransaction, addBuyerTransaction, getActivityLogs } from '../api/gasApi';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@cso/design-system';
@@ -41,6 +41,21 @@ export default function BuyerDetails() {
 
   // Редагування транзакції
   const [editTx, setEditTx] = useState(null);
+
+  // Стан для історії змін документа
+  const [txHistoryLogs, setTxHistoryLogs] = useState([]);
+  const [showTxHistory, setShowTxHistory] = useState(false);
+
+  useEffect(() => {
+    if (editTx) {
+      getActivityLogs({ entityId: editTx.id }).then(res => {
+        if (res.success) setTxHistoryLogs(res.data || []);
+      });
+    } else {
+      setTxHistoryLogs([]);
+      setShowTxHistory(false);
+    }
+  }, [editTx]);
 
   // Стан для коригування боргу клієнта
   const [showAdjModal, setShowAdjModal] = useState(false);
@@ -1964,6 +1979,33 @@ export default function BuyerDetails() {
                 </div>
 
               </div>
+
+              {/* Секція історії змін документа */}
+              {txHistoryLogs.length > 0 && (
+                <div className="pt-2 border-t border-[var(--border)]">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowTxHistory(!showTxHistory)} 
+                    className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                  >
+                    📜 {showTxHistory ? 'Сховати історію змін' : `Показати історію змін (${txHistoryLogs.length})`}
+                  </button>
+                  {showTxHistory && (
+                    <div className="mt-2 space-y-1.5 max-h-36 overflow-y-auto bg-[var(--bg)] p-2 rounded border border-[var(--border)] text-[10px]">
+                      {txHistoryLogs.map((l) => (
+                        <div key={l.id} className="flex flex-col gap-0.5 border-b border-[var(--border)]/30 pb-1 last:border-0">
+                          <div className="flex justify-between font-semibold">
+                            <span>👤 {l.user_name || l.user_email}</span>
+                            <span className="text-[var(--text-secondary)] font-mono">{new Date(l.created_at).toLocaleString('uk-UA')}</span>
+                          </div>
+                          <div className="text-[var(--text-secondary)]">{l.details?.changesSummary || l.entity_title || l.action_type}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="modal-footer flex justify-between items-center w-full">
                 <div className="flex gap-2">
                   <button

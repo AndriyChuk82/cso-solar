@@ -27,6 +27,7 @@ export default function Sidebar({ isOpen, onClose }) {
       items: [
         { path: '/reports', label: 'Звіти', icon: '📈' },
         { path: '/buyers/report', label: 'Звіти по клієнтах', icon: '👥' },
+        { path: '/audit-log', label: 'Журнал дій (Аудит)', icon: '📜' },
       ]
     },
 

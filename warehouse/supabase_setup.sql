@@ -146,4 +146,20 @@ ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS representatives TEXT;
 
 -- Додаємо колонку отримувача до фінансових транзакцій (хто саме забирав дане списання)
 ALTER TABLE public.buyer_transactions ADD COLUMN IF NOT EXISTS picked_up_by TEXT;
+-- Додаємо підтримку журналу дій користувачів (Аудит-лог)
+CREATE TABLE IF NOT EXISTS public.activity_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    user_email TEXT,
+    user_name TEXT,
+    action_type TEXT NOT NULL, -- 'CREATE', 'UPDATE', 'DELETE', 'ARCHIVE', 'UNARCHIVE'
+    entity_type TEXT NOT NULL, -- 'BUYER_TRANSACTION', 'PRODUCT', 'WAREHOUSE', 'BUYER'
+    entity_id TEXT,
+    entity_title TEXT,
+    details JSONB
+);
 
+GRANT ALL ON TABLE public.activity_logs TO anon, authenticated, service_role;
+ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon access to activity_logs" ON public.activity_logs;
+CREATE POLICY "Allow anon access to activity_logs" ON public.activity_logs FOR ALL TO anon USING (true) WITH CHECK (true);
