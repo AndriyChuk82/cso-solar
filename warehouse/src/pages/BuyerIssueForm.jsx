@@ -469,6 +469,7 @@ export default function BuyerIssueForm() {
           user: user?.email,
           items: uahItems.map(item => ({
             productId: item.productId,
+            productName: products.find(p => p.id === item.productId)?.name || item.productId,
             warehouseId: formData.warehouseId,
             quantity: parseFloat(item.quantity) || 0,
             price: item.price !== '' && item.price !== null ? parseFloat(item.price) : null,
@@ -508,6 +509,7 @@ export default function BuyerIssueForm() {
           user: user?.email,
           items: usdItems.map(item => ({
             productId: item.productId,
+            productName: products.find(p => p.id === item.productId)?.name || item.productId,
             warehouseId: formData.warehouseId,
             quantity: parseFloat(item.quantity) || 0,
             price: item.price !== '' && item.price !== null ? parseFloat(item.price) : null,

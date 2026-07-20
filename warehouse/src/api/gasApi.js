@@ -666,6 +666,35 @@ export async function updateBuyerTransaction(transaction) {
   if (!supabase) throw new Error('База даних не підключена');
   const timestamp = new Date().toISOString();
 
+  // 0. Зчитуємо попередній стан для детального логування порівняння товару
+  let oldTx = null;
+  let oldItemsMap = {};
+  try {
+    const { data: oldTxData } = await supabase
+      .from('buyer_transactions')
+      .select('*')
+      .eq('id', transaction.id)
+      .single();
+    oldTx = oldTxData;
+
+    const { data: oldItemsData } = await supabase
+      .from('buyer_transaction_items')
+      .select('*, products(name)')
+      .eq('transaction_id', transaction.id);
+    
+    if (oldItemsData) {
+      oldItemsData.forEach(item => {
+        oldItemsMap[item.product_id] = {
+          quantity: item.quantity,
+          price: item.price,
+          name: item.products?.name || item.product_id
+        };
+      });
+    }
+  } catch (err) {
+    console.warn("Could not fetch old transaction details for diff logging", err);
+  }
+
   // 1. Оновлюємо фінансову транзакцію
   const { error: txErr } = await supabase.from('buyer_transactions').update({
     parent_id: transaction.parentId || null,
@@ -741,14 +770,62 @@ export async function updateBuyerTransaction(transaction) {
 
   try {
     const changes = [];
-    if (transaction.amount !== undefined) {
+
+    // 1. Порівнюємо суму накладної
+    if (oldTx && Number(oldTx.amount) !== Number(transaction.amount)) {
+      changes.push(`Сума накладної: ${oldTx.amount} ${oldTx.currency || ''} ➔ ${transaction.amount} ${transaction.currency || ''}`);
+    } else if (!oldTx && transaction.amount !== undefined) {
       changes.push(`Сума: ${transaction.amount} ${transaction.currency || ''}`);
     }
-    if (transaction.status !== undefined) {
-      changes.push(`Статус: ${transaction.status}`);
+
+    // 2. Порівнюємо статус
+    if (oldTx && oldTx.status !== transaction.status) {
+      changes.push(`Статус: ${oldTx.status} ➔ ${transaction.status}`);
     }
-    if (transaction.comment !== undefined) {
-      changes.push(`Коментар: "${transaction.comment || ''}"`);
+
+    // 3. Порівнюємо коментар
+    if (oldTx && (oldTx.comment || '') !== (transaction.comment || '')) {
+      changes.push(`Коментар: "${oldTx.comment || ''}" ➔ "${transaction.comment || ''}"`);
+    }
+
+    // 4. Порівнюємо товари (ціна, кількість, додавання/видалення)
+    if (transaction.items && Array.isArray(transaction.items)) {
+      const newItemsProcessed = new Set();
+
+      transaction.items.forEach(newItem => {
+        const prodId = newItem.productId;
+        const prodName = newItem.productName || newItem.name || (oldItemsMap[prodId]?.name) || prodId;
+        const oldItem = oldItemsMap[prodId];
+        newItemsProcessed.add(prodId);
+
+        if (oldItem) {
+          // Товар існував раніше
+          const itemChanges = [];
+          if (newItem.price !== undefined && oldItem.price !== null && Number(oldItem.price) !== Number(newItem.price)) {
+            const oldP = oldItem.price ?? 'без ціни';
+            const newP = newItem.price ?? 'без ціни';
+            itemChanges.push(`ціна ${oldP} ➔ ${newP} ${transaction.currency || ''}`);
+          }
+          if (Number(oldItem.quantity) !== Number(newItem.quantity)) {
+            itemChanges.push(`к-сть ${oldItem.quantity} ➔ ${newItem.quantity}`);
+          }
+
+          if (itemChanges.length > 0) {
+            changes.push(`Товар "${prodName}": ${itemChanges.join(', ')}`);
+          }
+        } else {
+          // Новий доданий товар
+          changes.push(`Додано товар "${prodName}": ${newItem.quantity} шт (ціна: ${newItem.price ?? 'без ціни'} ${transaction.currency || ''})`);
+        }
+      });
+
+      // Перевіряємо видалені товари
+      Object.keys(oldItemsMap).forEach(oldProdId => {
+        if (!newItemsProcessed.has(oldProdId)) {
+          const oldItem = oldItemsMap[oldProdId];
+          changes.push(`Видалено товар "${oldItem.name}"`);
+        }
+      });
     }
 
     logActivity({
@@ -759,8 +836,9 @@ export async function updateBuyerTransaction(transaction) {
       entityId: transaction.id,
       entityTitle: `Оновлено накладну/оплату (${transaction.buyerName || 'Клієнт'})`,
       details: {
-        changesSummary: changes.join('; ') || 'Редагування деталей накладної',
+        changesSummary: changes.length > 0 ? '• ' + changes.join('\n• ') : 'Редагування деталей накладної',
         changesList: changes,
+        oldAmount: oldTx?.amount,
         newAmount: transaction.amount,
         currency: transaction.currency,
         status: transaction.status
