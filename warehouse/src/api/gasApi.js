@@ -971,11 +971,22 @@ export async function getBuyerTransactionById(txId) {
  * Запис дії користувача (Аудит-лог)
  */
 export async function logActivity({ userEmail, userName, actionType, entityType, entityId, entityTitle, details }) {
+  let displayName = userName;
+  if (!displayName || displayName.includes('@')) {
+    const raw = userName || userEmail || '';
+    if (raw.includes('@')) {
+      const prefix = raw.split('@')[0];
+      displayName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+    } else {
+      displayName = raw || 'Оператор';
+    }
+  }
+
   const logEntry = {
     id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
     created_at: new Date().toISOString(),
     user_email: userEmail || 'Система / Невідомо',
-    user_name: userName || userEmail || 'Оператор',
+    user_name: displayName,
     action_type: actionType, // 'CREATE', 'UPDATE', 'DELETE', 'ARCHIVE', 'UNARCHIVE'
     entity_type: entityType, // 'BUYER_TRANSACTION', 'PRODUCT', 'WAREHOUSE', 'BUYER'
     entity_id: entityId ? String(entityId) : null,

@@ -1,3 +1,13 @@
+
+const getCleanManagerName = (name, email) => {
+  let raw = name || email || '';
+  if (!raw) return 'Оператор';
+  if (raw.includes('@')) {
+    const prefix = raw.split('@')[0];
+    return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+  }
+  return raw;
+};
 import { useState, useEffect } from 'react';
 import { getActivityLogs } from '../api/gasApi';
 import { useToast } from '../context/ToastContext';
@@ -254,7 +264,7 @@ export default function AuditLog() {
                       {getActionBadge(log.action_type)}
                     </td>
                     <td className="p-3 align-top font-semibold text-[var(--text)]">
-                      👤 {log.user_name || log.user_email}
+                      👤 {getCleanManagerName(log.user_name, log.user_email)}
                     </td>
                     <td className="p-3 align-top font-semibold text-[var(--text)]">
                       {log.entity_title || log.entity_id || '—'}
@@ -279,7 +289,7 @@ export default function AuditLog() {
                   </span>
                 </div>
                 <div className="font-bold text-[var(--text)]">
-                  👤 {log.user_name || log.user_email}
+                  👤 {getCleanManagerName(log.user_name, log.user_email)}
                 </div>
                 <div className="font-semibold text-blue-600 dark:text-blue-400">
                   {log.entity_title || log.entity_id || '—'}

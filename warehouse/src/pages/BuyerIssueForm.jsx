@@ -1,3 +1,13 @@
+
+const getCleanManagerName = (name, email) => {
+  let raw = name || email || '';
+  if (!raw) return 'Оператор';
+  if (raw.includes('@')) {
+    const prefix = raw.split('@')[0];
+    return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+  }
+  return raw;
+};
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { getWarehouses, getCatalog, getBuyers, getBalances, addBuyerTransaction, getBuyerTransactionById, deleteBuyerTransaction, toggleArchiveTransaction, updateBuyerTransaction, getActivityLogs } from '../api/gasApi';
@@ -466,7 +476,7 @@ export default function BuyerIssueForm() {
           status: newStatusUah,
           comment: finalComment,
           pickedUpBy: formData.pickedUpBy,
-          user: user?.email,
+          user: user?.name || user?.email, userName: user?.name, userEmail: user?.email,
           items: uahItems.map(item => ({
             productId: item.productId,
             productName: products.find(p => p.id === item.productId)?.name || item.productId,
@@ -506,7 +516,7 @@ export default function BuyerIssueForm() {
           status: newStatusUsd,
           comment: finalComment,
           pickedUpBy: formData.pickedUpBy,
-          user: user?.email,
+          user: user?.name || user?.email, userName: user?.name, userEmail: user?.email,
           items: usdItems.map(item => ({
             productId: item.productId,
             productName: products.find(p => p.id === item.productId)?.name || item.productId,
@@ -549,7 +559,7 @@ export default function BuyerIssueForm() {
           status: 'reserved',
           comment: remainderComment,
           pickedUpBy: formData.pickedUpBy,
-          user: user?.email,
+          user: user?.name || user?.email, userName: user?.name, userEmail: user?.email,
           items: remainderItems
         };
         submitPromises.push(addBuyerTransaction(remainderPayload));
@@ -1133,7 +1143,7 @@ export default function BuyerIssueForm() {
               {txHistoryLogs.map((log) => (
                 <div key={log.id} className="p-2.5 bg-[var(--bg)] rounded border border-[var(--border)] text-xs flex flex-col gap-1">
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-bold text-[var(--text)]">👤 {log.user_name || log.user_email}</span>
+                    <span className="font-bold text-[var(--text)]">👤 {getCleanManagerName(log.user_name, log.user_email)}</span>
                     <span className="text-[10px] text-[var(--text-secondary)] font-mono">⏱️ {new Date(log.created_at).toLocaleString('uk-UA')}</span>
                   </div>
                   <div className="text-[var(--text-secondary)] whitespace-pre-line leading-relaxed text-[11px]">
