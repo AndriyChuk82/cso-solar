@@ -20,9 +20,9 @@ export default function AuditLog() {
 
   // Фільтри
   const [actionFilter, setActionFilter] = useState('ALL');
-  const [userFilter, setUserFilter] = useState('ALL');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const [dateFrom, setDateFrom] = useState(todayStr);
+  const [dateTo, setDateTo] = useState(todayStr);
   const [search, setSearch] = useState('');
 
   // Завантаження логів
@@ -62,7 +62,6 @@ export default function AuditLog() {
   const uniqueUsers = Array.from(new Set(logs.map(l => l.user_name || l.user_email).filter(Boolean)));
 
   // Статистика дій за сьогодні
-  const todayStr = new Date().toISOString().split('T')[0];
   const todayLogs = logs.filter(l => l.created_at?.startsWith(todayStr));
   const countCreates = todayLogs.filter(l => l.action_type === 'CREATE').length;
   const countUpdates = todayLogs.filter(l => l.action_type === 'UPDATE').length;
