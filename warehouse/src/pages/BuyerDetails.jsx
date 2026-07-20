@@ -67,9 +67,9 @@ export default function BuyerDetails() {
 
     setSavingAdj(true);
     try {
-      // Збільшити борг = від'ємний баланс (знак мінус)
-      // Зменшити борг = додатній баланс (знак плюс)
-      const multiplier = adjType === 'increase' ? -1 : 1;
+      // Збільшити баланс = додатній баланс (знак плюс)
+      // Зменшити баланс = від'ємний баланс (знак мінус)
+      const multiplier = adjType === 'increase' ? 1 : -1;
       const finalAmount = parseFloat(adjAmount) * multiplier;
 
       const payload = {
@@ -86,7 +86,7 @@ export default function BuyerDetails() {
 
       const res = await addBuyerTransaction(payload);
       if (res.success) {
-        showToast('Коригування боргу успішно збережено', 'success');
+        showToast('Коригування балансу успішно збережено', 'success');
         setShowAdjModal(false);
         setAdjAmount('');
         setAdjComment('');
@@ -889,7 +889,7 @@ export default function BuyerDetails() {
                     }} 
                     className="btn btn-ghost btn-sm px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1 border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/5"
                   >
-                    🔧 Коригувати борг
+                    🔧 Коригувати баланс
                   </button>
                 </div>
               </div>
@@ -2006,7 +2006,7 @@ export default function BuyerDetails() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
           <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-2xl max-w-sm w-full overflow-hidden flex flex-col">
             <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white p-4 flex items-center justify-between">
-              <h3 className="font-bold text-sm">🔧 Коригування боргу клієнта</h3>
+              <h3 className="font-bold text-sm">🔧 Коригування балансу клієнта</h3>
               <button 
                 type="button"
                 onClick={() => setShowAdjModal(false)}
@@ -2026,22 +2026,22 @@ export default function BuyerDetails() {
                     onClick={() => setAdjType('increase')}
                     className={`py-1.5 px-2 rounded-md text-xs font-semibold transition-all ${
                       adjType === 'increase'
-                        ? 'bg-red-500 text-white shadow-sm font-bold'
+                        ? 'bg-green-600 text-white shadow-sm font-bold'
                         : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
                     }`}
                   >
-                    📈 Збільшити борг
+                    📈 Збільшити баланс
                   </button>
                   <button
                     type="button"
                     onClick={() => setAdjType('decrease')}
                     className={`py-1.5 px-2 rounded-md text-xs font-semibold transition-all ${
                       adjType === 'decrease'
-                        ? 'bg-green-600 text-white shadow-sm font-bold'
+                        ? 'bg-red-500 text-white shadow-sm font-bold'
                         : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
                     }`}
                   >
-                    📉 Зменшити борг
+                    📉 Зменшити баланс
                   </button>
                 </div>
               </div>
@@ -2079,7 +2079,7 @@ export default function BuyerDetails() {
                 <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Коментар / Причина *</label>
                 <textarea
                   required
-                  placeholder="Вкажіть причину коригування боргу..."
+                  placeholder="Вкажіть причину коригування балансу..."
                   value={adjComment}
                   onChange={(e) => setAdjComment(e.target.value)}
                   rows={2}
