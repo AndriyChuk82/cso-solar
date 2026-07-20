@@ -18,8 +18,8 @@ export default function AuditLog() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Фільтри
   const [actionFilter, setActionFilter] = useState('ALL');
+  const [userFilter, setUserFilter] = useState('ALL');
   const todayStr = new Date().toISOString().split('T')[0];
   const [dateFrom, setDateFrom] = useState(todayStr);
   const [dateTo, setDateTo] = useState(todayStr);
