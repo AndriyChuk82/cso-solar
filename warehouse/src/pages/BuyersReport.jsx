@@ -597,7 +597,7 @@ export default function BuyersReport() {
                                               )}
                                             </td>
                                             <td className="p-2 text-center align-top text-red-500 font-medium">
-                                              {(isIssue || (isAdj && amt < 0)) && amt > 0 ? (
+                                              {((isIssue && amt > 0) || (isAdj && amt < 0)) ? (
                                                 t.status === 'reserved' ? (
                                                   <span className="text-gray-400 font-normal italic" title="Резерв не списується в борг до видачі">
                                                     (${Math.abs(amt).toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'})
@@ -608,7 +608,7 @@ export default function BuyersReport() {
                                               ) : '—'}
                                             </td>
                                             <td className="p-2 text-center align-top text-green-500 font-medium">
-                                              {(!isIssue && !(isAdj && amt < 0)) && amt > 0 ? (
+                                              {((t.type === 'payment' && amt > 0) || (isAdj && amt > 0)) ? (
                                                 `${amt.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
                                               ) : isIssue && t.paidAmount > 0 ? (
                                                 `${t.paidAmount.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
@@ -1106,12 +1106,12 @@ export default function BuyersReport() {
                                   )}
                                 </td>
                                 <td className="p-2 text-center align-top text-red-500 font-medium">
-                                  {(isIssue || (isAdj && amt < 0)) && amt > 0 ? (
+                                  {((isIssue && amt > 0) || (isAdj && amt < 0)) ? (
                                     `${Math.abs(amt).toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
                                   ) : '—'}
                                 </td>
                                 <td className="p-2 text-center align-top text-green-500 font-medium">
-                                  {(!isIssue && !(isAdj && amt < 0)) && amt > 0 ? (
+                                  {((t.type === 'payment' && amt > 0) || (isAdj && amt > 0)) ? (
                                     `${amt.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
                                   ) : isIssue && t.paidAmount > 0 ? (
                                     `${t.paidAmount.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
