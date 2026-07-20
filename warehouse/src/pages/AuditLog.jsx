@@ -9,7 +9,7 @@ const getCleanManagerName = (name, email) => {
   return raw;
 };
 import { useState, useEffect } from 'react';
-import { getActivityLogs } from '../api/gasApi';
+import { getActivityLogs, fetchUsersMap, formatUserName } from '../api/gasApi';
 import { useToast } from '../context/ToastContext';
 import { Button } from '@cso/design-system';
 
@@ -50,7 +50,7 @@ export default function AuditLog() {
   };
 
   useEffect(() => {
-    fetchLogs();
+    fetchUsersMap().then(() => fetchLogs());
   }, [actionFilter, userFilter, dateFrom, dateTo]);
 
   const handleSearchSubmit = (e) => {
@@ -264,7 +264,7 @@ export default function AuditLog() {
                       {getActionBadge(log.action_type)}
                     </td>
                     <td className="p-3 align-top font-semibold text-[var(--text)]">
-                      👤 {getCleanManagerName(log.user_name, log.user_email)}
+                      👤 {formatUserName(log.user_name || log.user_email)}
                     </td>
                     <td className="p-3 align-top font-semibold text-[var(--text)]">
                       {log.entity_title || log.entity_id || '—'}
@@ -289,7 +289,7 @@ export default function AuditLog() {
                   </span>
                 </div>
                 <div className="font-bold text-[var(--text)]">
-                  👤 {getCleanManagerName(log.user_name, log.user_email)}
+                  👤 {formatUserName(log.user_name || log.user_email)}
                 </div>
                 <div className="font-semibold text-blue-600 dark:text-blue-400">
                   {log.entity_title || log.entity_id || '—'}

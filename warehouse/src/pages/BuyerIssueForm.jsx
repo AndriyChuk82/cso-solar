@@ -10,7 +10,7 @@ const getCleanManagerName = (name, email) => {
 };
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { getWarehouses, getCatalog, getBuyers, getBalances, addBuyerTransaction, getBuyerTransactionById, deleteBuyerTransaction, toggleArchiveTransaction, updateBuyerTransaction, getActivityLogs } from '../api/gasApi';
+import { getWarehouses, getCatalog, getBuyers, getBalances, addBuyerTransaction, getBuyerTransactionById, deleteBuyerTransaction, toggleArchiveTransaction, updateBuyerTransaction, getActivityLogs, formatUserName } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Button } from '@cso/design-system';
@@ -1143,7 +1143,7 @@ export default function BuyerIssueForm() {
               {txHistoryLogs.map((log) => (
                 <div key={log.id} className="p-2.5 bg-[var(--bg)] rounded border border-[var(--border)] text-xs flex flex-col gap-1">
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-bold text-[var(--text)]">👤 {getCleanManagerName(log.user_name, log.user_email)}</span>
+                    <span className="font-bold text-[var(--text)]">👤 {formatUserName(log.user_name || log.user_email)}</span>
                     <span className="text-[10px] text-[var(--text-secondary)] font-mono">⏱️ {new Date(log.created_at).toLocaleString('uk-UA')}</span>
                   </div>
                   <div className="text-[var(--text-secondary)] whitespace-pre-line leading-relaxed text-[11px]">

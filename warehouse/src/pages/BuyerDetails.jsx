@@ -10,7 +10,7 @@ const getCleanManagerName = (name, email) => {
 };
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
-import { getBuyerTransactions, updateBuyerTransaction, deleteBuyerTransaction, getBuyers, toggleArchiveTransaction, addBuyerTransaction, getActivityLogs } from '../api/gasApi';
+import { getBuyerTransactions, updateBuyerTransaction, deleteBuyerTransaction, getBuyers, toggleArchiveTransaction, addBuyerTransaction, getActivityLogs, formatUserName } from '../api/gasApi';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@cso/design-system';
@@ -2005,7 +2005,7 @@ export default function BuyerDetails() {
                       {txHistoryLogs.map((l) => (
                         <div key={l.id} className="flex flex-col gap-0.5 border-b border-[var(--border)]/30 pb-1 last:border-0">
                           <div className="flex justify-between font-semibold">
-                            <span>👤 {getCleanManagerName(l.user_name, l.user_email)}</span>
+                            <span>👤 {formatUserName(l.user_name || l.user_email)}</span>
                             <span className="text-[var(--text-secondary)] font-mono">{new Date(l.created_at).toLocaleString('uk-UA')}</span>
                           </div>
                           <div className="text-[var(--text-secondary)]">{l.details?.changesSummary || l.entity_title || l.action_type}</div>

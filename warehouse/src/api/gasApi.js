@@ -1,3 +1,41 @@
+
+// Кеш імен користувачів за email
+export const usersMapCache = {
+  'andros@cso': 'Андрій Чикайло',
+  'misha@cso': 'Михайло Юркевич',
+  'yura@cso': 'Юра Пастушок',
+  'andriy@cso': 'Андрій Чикайло',
+  'dev@test.com': 'Dev User'
+};
+
+export async function fetchUsersMap() {
+  try {
+    const res = await getUsers();
+    if (res && res.users) {
+      res.users.forEach(u => {
+        if (u.email && u.name) {
+          usersMapCache[u.email.toLowerCase()] = u.name;
+        }
+      });
+    }
+  } catch (e) {
+    console.warn("Could not fetch users map", e);
+  }
+  return usersMapCache;
+}
+
+export function formatUserName(nameOrEmail) {
+  if (!nameOrEmail) return 'Оператор';
+  const clean = String(nameOrEmail).trim();
+  const lower = clean.toLowerCase();
+  if (usersMapCache[lower]) return usersMapCache[lower];
+  
+  if (clean.includes('@')) {
+    const prefix = clean.split('@')[0];
+    return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+  }
+  return clean;
+}
 import CONFIG from '../config';
 import { supabase } from './supabaseClient';
 
@@ -971,16 +1009,7 @@ export async function getBuyerTransactionById(txId) {
  * Запис дії користувача (Аудит-лог)
  */
 export async function logActivity({ userEmail, userName, actionType, entityType, entityId, entityTitle, details }) {
-  let displayName = userName;
-  if (!displayName || displayName.includes('@')) {
-    const raw = userName || userEmail || '';
-    if (raw.includes('@')) {
-      const prefix = raw.split('@')[0];
-      displayName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
-    } else {
-      displayName = raw || 'Оператор';
-    }
-  }
+  const displayName = formatUserName(userName || userEmail);
 
   const logEntry = {
     id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
