@@ -739,6 +739,37 @@ export async function updateBuyerTransaction(transaction) {
     }
   }
 
+  try {
+    const changes = [];
+    if (transaction.amount !== undefined) {
+      changes.push(`Сума: ${transaction.amount} ${transaction.currency || ''}`);
+    }
+    if (transaction.status !== undefined) {
+      changes.push(`Статус: ${transaction.status}`);
+    }
+    if (transaction.comment !== undefined) {
+      changes.push(`Коментар: "${transaction.comment || ''}"`);
+    }
+
+    logActivity({
+      userEmail: transaction.user || 'Система',
+      userName: transaction.user || 'Оператор',
+      actionType: 'UPDATE',
+      entityType: 'BUYER_TRANSACTION',
+      entityId: transaction.id,
+      entityTitle: `Оновлено накладну/оплату (${transaction.buyerName || 'Клієнт'})`,
+      details: {
+        changesSummary: changes.join('; ') || 'Редагування деталей накладної',
+        changesList: changes,
+        newAmount: transaction.amount,
+        currency: transaction.currency,
+        status: transaction.status
+      }
+    });
+  } catch (err) {
+    console.error("Logging update error", err);
+  }
+
   return { success: true };
 }
 
@@ -749,6 +780,21 @@ export async function toggleArchiveTransaction(id, isArchived) {
     .update({ is_archived: isArchived })
     .eq('id', id);
   if (error) throw error;
+
+  try {
+    logActivity({
+      userEmail: 'Оператор',
+      userName: 'Оператор',
+      actionType: isArchived ? 'ARCHIVE' : 'UNARCHIVE',
+      entityType: 'BUYER_TRANSACTION',
+      entityId: id,
+      entityTitle: `${isArchived ? '🗄️ Закрито в архів' : '🔄 Відновлено з архіву'} ID ${id.slice(0, 8)}`,
+      details: { transactionId: id, isArchived }
+    });
+  } catch (err) {
+    console.error("Logging archive error", err);
+  }
+
   return { success: true };
 }
 
@@ -772,6 +818,20 @@ export async function deleteBuyerTransaction(transactionId) {
   if (opIds.length > 0) {
     const { error: opErr } = await supabase.from('operations').delete().in('id', opIds);
     if (opErr) throw opErr;
+  }
+
+  try {
+    logActivity({
+      userEmail: 'Оператор',
+      userName: 'Оператор',
+      actionType: 'DELETE',
+      entityType: 'BUYER_TRANSACTION',
+      entityId: transactionId,
+      entityTitle: `🔴 Видалено накладну/оплату ID ${transactionId.slice(0, 8)}`,
+      details: { transactionId }
+    });
+  } catch (err) {
+    console.error("Logging delete error", err);
   }
 
   return { success: true };
