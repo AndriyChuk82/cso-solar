@@ -697,6 +697,31 @@ export async function addBuyerTransaction(transaction) {
     if (itemErr) throw itemErr;
   }
 
+  try {
+    logActivity({
+      userEmail: transaction.user || 'Система',
+      userName: transaction.user || 'Оператор',
+      actionType: 'CREATE',
+      entityType: 'BUYER_TRANSACTION',
+      entityId: transactionId,
+      entityTitle: `${transaction.type === 'issue' ? (transaction.status === 'reserved' ? 'Бронь товарів' : 'Видача товарів') : transaction.type === 'payment' ? 'Оплата' : 'Коригування'} (${transaction.buyerName || 'Клієнт'})`,
+      details: {
+        buyerId: transaction.buyerId,
+        buyerName: transaction.buyerName,
+        date: transaction.date,
+        type: transaction.type,
+        amount: transaction.amount,
+        currency: transaction.currency,
+        status: transaction.status,
+        comment: transaction.comment,
+        itemsCount: transaction.items?.length || 0,
+        itemsSummary: transaction.items?.map(i => `${i.productName || i.productId}: ${i.quantity} шт (${i.price || 'без ціни'})`).join(', ')
+      }
+    });
+  } catch (err) {
+    console.error("Logging creation error", err);
+  }
+
   return { success: true, transactionId };
 }
 
