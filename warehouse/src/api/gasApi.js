@@ -733,21 +733,27 @@ export async function updateBuyerTransaction(transaction) {
     console.warn("Could not fetch old transaction details for diff logging", err);
   }
 
-  // 1. Оновлюємо фінансову транзакцію
-  const { error: txErr } = await supabase.from('buyer_transactions').update({
-    parent_id: transaction.parentId || null,
-    date: transaction.date,
-    amount: transaction.amount,
-    currency: transaction.currency,
-    converted_amount: transaction.convertedAmount || null,
-    conversion_rate: transaction.conversionRate || null,
-    status: transaction.status || 'completed',
-    comment: transaction.comment,
-    picked_up_by: transaction.pickedUpBy || null,
-    user_email: transaction.user
-  }).eq('id', transaction.id);
+  // 1. Формуємо безпечний об'єкт оновлення транзакції
+  const updatePayload = {};
+  if (transaction.parentId !== undefined) updatePayload.parent_id = transaction.parentId;
+  if (transaction.date !== undefined) updatePayload.date = transaction.date;
+  if (transaction.amount !== undefined) updatePayload.amount = transaction.amount;
+  if (transaction.currency !== undefined) updatePayload.currency = transaction.currency;
+  if (transaction.convertedAmount !== undefined) updatePayload.converted_amount = transaction.convertedAmount;
+  if (transaction.conversionRate !== undefined) updatePayload.conversion_rate = transaction.conversionRate;
+  if (transaction.status !== undefined) updatePayload.status = transaction.status;
+  if (transaction.comment !== undefined) updatePayload.comment = transaction.comment;
+  if (transaction.pickedUpBy !== undefined) updatePayload.picked_up_by = transaction.pickedUpBy;
+  if (transaction.user !== undefined) updatePayload.user_email = transaction.user;
+  if (transaction.is_archived !== undefined) updatePayload.is_archived = transaction.is_archived;
 
-  if (txErr) throw txErr;
+  if (Object.keys(updatePayload).length > 0) {
+    const { error: txErr } = await supabase
+      .from('buyer_transactions')
+      .update(updatePayload)
+      .eq('id', transaction.id);
+    if (txErr) throw txErr;
+  }
 
   // 2. Якщо це видача, оновлюємо специфікацію та складські записи
   if (transaction.type === 'issue') {
@@ -809,25 +815,23 @@ export async function updateBuyerTransaction(transaction) {
   try {
     const changes = [];
 
-    // 1. Порівнюємо суму накладної
-    if (oldTx && Number(oldTx.amount) !== Number(transaction.amount)) {
+    // 1. Порівнюємо суму накладної (тільки якщо передана)
+    if (transaction.amount !== undefined && oldTx && Number(oldTx.amount) !== Number(transaction.amount)) {
       changes.push(`Сума накладної: ${oldTx.amount} ${oldTx.currency || ''} ➔ ${transaction.amount} ${transaction.currency || ''}`);
-    } else if (!oldTx && transaction.amount !== undefined) {
-      changes.push(`Сума: ${transaction.amount} ${transaction.currency || ''}`);
     }
 
-    // 2. Порівнюємо статус
-    if (oldTx && oldTx.status !== transaction.status) {
+    // 2. Порівнюємо статус (тільки якщо переданий)
+    if (transaction.status !== undefined && oldTx && oldTx.status !== transaction.status) {
       changes.push(`Статус: ${oldTx.status} ➔ ${transaction.status}`);
     }
 
-    // 3. Порівнюємо коментар
-    if (oldTx && (oldTx.comment || '') !== (transaction.comment || '')) {
+    // 3. Порівнюємо коментар (тільки якщо переданий)
+    if (transaction.comment !== undefined && oldTx && (oldTx.comment || '') !== (transaction.comment || '')) {
       changes.push(`Коментар: "${oldTx.comment || ''}" ➔ "${transaction.comment || ''}"`);
     }
 
     // 4. Порівнюємо товари (ціна, кількість, додавання/видалення)
-    if (transaction.items && Array.isArray(transaction.items)) {
+    if (transaction.items !== undefined && Array.isArray(transaction.items)) {
       const newItemsProcessed = new Set();
 
       transaction.items.forEach(newItem => {
@@ -837,7 +841,6 @@ export async function updateBuyerTransaction(transaction) {
         newItemsProcessed.add(prodId);
 
         if (oldItem) {
-          // Товар існував раніше
           const itemChanges = [];
           if (newItem.price !== undefined && oldItem.price !== null && Number(oldItem.price) !== Number(newItem.price)) {
             const oldP = oldItem.price ?? 'без ціни';
@@ -852,12 +855,10 @@ export async function updateBuyerTransaction(transaction) {
             changes.push(`Товар "${prodName}": ${itemChanges.join(', ')}`);
           }
         } else {
-          // Новий доданий товар
           changes.push(`Додано товар "${prodName}": ${newItem.quantity} шт (ціна: ${newItem.price ?? 'без ціни'} ${transaction.currency || ''})`);
         }
       });
 
-      // Перевіряємо видалені товари
       Object.keys(oldItemsMap).forEach(oldProdId => {
         if (!newItemsProcessed.has(oldProdId)) {
           const oldItem = oldItemsMap[oldProdId];
@@ -866,20 +867,27 @@ export async function updateBuyerTransaction(transaction) {
       });
     }
 
+    // Якщо це була автоматична архівація через повну оплату
+    if (transaction.is_archived === true && transaction.amount === undefined) {
+      changes.push(`Накладну автоматично закрито в архів (повна оплата)`);
+    }
+
+    const buyerDisplayName = transaction.buyerName || oldTx?.buyer_name || 'Клієнт';
+
     logActivity({
-      userEmail: transaction.user || 'Система',
-      userName: transaction.user || 'Оператор',
+      userEmail: transaction.user || oldTx?.user_email,
+      userName: transaction.userName || transaction.user || oldTx?.user_email,
       actionType: 'UPDATE',
       entityType: 'BUYER_TRANSACTION',
       entityId: transaction.id,
-      entityTitle: `Оновлено накладну/оплату (${transaction.buyerName || 'Клієнт'})`,
+      entityTitle: `Оновлено накладну/оплату (${buyerDisplayName})`,
       details: {
         changesSummary: changes.length > 0 ? '• ' + changes.join('\n• ') : 'Редагування деталей накладної',
         changesList: changes,
         oldAmount: oldTx?.amount,
-        newAmount: transaction.amount,
-        currency: transaction.currency,
-        status: transaction.status
+        newAmount: transaction.amount !== undefined ? transaction.amount : oldTx?.amount,
+        currency: transaction.currency || oldTx?.currency,
+        status: transaction.status || oldTx?.status
       }
     });
   } catch (err) {
@@ -1009,7 +1017,21 @@ export async function getBuyerTransactionById(txId) {
  * Запис дії користувача (Аудит-лог)
  */
 export async function logActivity({ userEmail, userName, actionType, entityType, entityId, entityTitle, details }) {
-  const displayName = formatUserName(userName || userEmail);
+  let cleanEmail = userEmail;
+  let cleanName = userName;
+
+  if (!cleanEmail) {
+    try {
+      const cached = localStorage.getItem('cso_user');
+      if (cached) {
+        const u = JSON.parse(cached);
+        cleanEmail = u.email;
+        cleanName = u.name;
+      }
+    } catch (e) {}
+  }
+
+  const displayName = formatUserName(cleanName || cleanEmail);
 
   const logEntry = {
     id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),

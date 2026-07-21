@@ -435,10 +435,7 @@ export default function BuyerDetails() {
                   if (totalPaid >= invoiceAmt && !invoice.is_archived) {
                     const closeInvoice = window.confirm("Ця накладна повністю оплачена. Бажаєте закрити її (перенести в архів)?");
                     if (closeInvoice) {
-                      await updateBuyerTransaction({
-                        id: invoiceId,
-                        is_archived: true
-                      });
+                      await toggleArchiveTransaction(invoiceId, true);
                       showToast('Накладну перенесено в архів', 'success');
                     }
                   }
