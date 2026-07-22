@@ -200,6 +200,18 @@ export const createClientsSlice: StateCreator<
       return cleaned.replace(/[^\w\u0400-\u04FF]/g, '').trim();
     };
 
+    const isMatch = (bName: string, pName: string) => {
+      const bNorm = norm(bName);
+      const pNorm = norm(pName);
+      if (!bNorm || !pNorm) return false;
+      if (bNorm === pNorm) return true;
+      const minLen = Math.min(bNorm.length, pNorm.length);
+      const maxLen = Math.max(bNorm.length, pNorm.length);
+      // Запобігаємо збігу коротких/загальних слів (напр. "Володя" з "Енергетик UA_Володя")
+      if (maxLen / minLen > 1.5) return false;
+      return bNorm.includes(pNorm) || pNorm.includes(bNorm);
+    };
+
     // Сортуємо КП від найстаріших до найновіших
     const sorted = [...freshHistory].sort((a, b) => {
       const tA = new Date(a.updatedAt || a.createdAt || a.date || 0).getTime();
@@ -213,18 +225,9 @@ export const createClientsSlice: StateCreator<
 
     for (const proposal of sorted) {
       if (!proposal.clientName || !proposal.items || proposal.items.length === 0) continue;
-      const targetNorm = norm(proposal.clientName);
-      if (!targetNorm) continue;
 
-      // Шукаємо клієнта в buyers за гнучким порівнянням
-      const matchedBuyer = buyers.find((b) => {
-        const bNorm = norm(b.name);
-        if (!bNorm) return false;
-        return (
-          bNorm === targetNorm ||
-          (bNorm.length >= 3 && targetNorm.length >= 3 && (bNorm.includes(targetNorm) || targetNorm.includes(bNorm)))
-        );
-      });
+      // Шукаємо клієнта в buyers за гнучким, але точним порівнянням
+      const matchedBuyer = buyers.find((b) => isMatch(b.name, proposal.clientName));
 
       if (matchedBuyer) {
         proposalsProcessed++;
@@ -254,10 +257,23 @@ export const createClientsSlice: StateCreator<
   },
 
   getClientByName: (name: string) => {
-    const normalized = name.trim().toLowerCase();
-    return get().regularClients.find(
-      (c) => c.name.trim().toLowerCase() === normalized
-    );
+    const norm = (s: string) => {
+      if (!s) return '';
+      let cleaned = s.toLowerCase().replace(/тов|фоп|пп|тдв|ват|пат|прат|ао|фг|дп|пбк/gi, '');
+      return cleaned.replace(/[^\w\u0400-\u04FF]/g, '').trim();
+    };
+
+    const targetNorm = norm(name);
+    if (!targetNorm) return undefined;
+
+    return get().regularClients.find((c) => {
+      const cNorm = norm(c.name);
+      if (cNorm === targetNorm) return true;
+      const minLen = Math.min(cNorm.length, targetNorm.length);
+      const maxLen = Math.max(cNorm.length, targetNorm.length);
+      if (maxLen / minLen > 1.5) return false;
+      return cNorm.includes(targetNorm) || targetNorm.includes(cNorm);
+    });
   },
 
   getClientPriceForProduct: (buyerId: string, productId: string) => {
