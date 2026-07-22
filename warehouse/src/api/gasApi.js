@@ -986,6 +986,37 @@ export async function toggleArchiveTransaction(id, isArchived) {
 export async function deleteBuyerTransaction(transactionId) {
   if (!supabase) throw new Error('База даних не підключена');
 
+  // 0. Зчитуємо детальний знімок (snapshot) транзакції ТА товарів ПЕРЕД її видаленням
+  let existingTx = null;
+  let existingItems = [];
+  try {
+    const { data: txData } = await supabase
+      .from('buyer_transactions')
+      .select('*, buyers(name)')
+      .eq('id', transactionId)
+      .single();
+    existingTx = txData;
+
+    const { data: itemsData } = await supabase
+      .from('buyer_transaction_items')
+      .select('*, products(name, article, unit)')
+      .eq('transaction_id', transactionId);
+    
+    if (itemsData) {
+      existingItems = itemsData.map(item => ({
+        productId: item.product_id,
+        productName: item.products?.name || item.product_id,
+        article: item.products?.article || '',
+        quantity: item.quantity,
+        price: item.price,
+        unit: item.products?.unit || 'шт',
+        currency: item.currency || existingTx?.currency
+      }));
+    }
+  } catch (err) {
+    console.warn("Could not fetch transaction details before delete", err);
+  }
+
   // 1. Зчитуємо старі операції списання для їх видалення
   const { data: items, error: getErr } = await supabase
     .from('buyer_transaction_items')
@@ -1006,14 +1037,43 @@ export async function deleteBuyerTransaction(transactionId) {
   }
 
   try {
+    const clientName = existingTx?.buyers?.name || 'Клієнт';
+    const typeTitle = existingTx?.type === 'issue' ? 'Видачу товарів' : existingTx?.type === 'payment' ? 'Оплату' : 'Коригування';
+    const amountStr = existingTx?.amount !== undefined ? ` на суму ${existingTx.amount} ${existingTx.currency || ''}` : '';
+    const cleanComment = (existingTx?.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '').trim();
+
+    const itemsSummaryText = existingItems.length > 0
+      ? existingItems.map(i => `${i.productName}: ${i.quantity} ${i.unit} (${i.price !== null && i.price !== undefined ? `${i.price} ${i.currency || ''}` : 'без ціни'})`).join(', ')
+      : null;
+
     logActivity({
-      userEmail: 'Оператор',
-      userName: 'Оператор',
+      userEmail: existingTx?.user_email,
+      userName: existingTx?.user_email,
       actionType: 'DELETE',
       entityType: 'BUYER_TRANSACTION',
       entityId: transactionId,
-      entityTitle: `🔴 Видалено накладну/оплату ID ${transactionId.slice(0, 8)}`,
-      details: { transactionId }
+      entityTitle: `Видалено ${typeTitle} (${clientName})`,
+      details: {
+        transactionId,
+        buyerName: clientName,
+        amount: existingTx?.amount,
+        currency: existingTx?.currency,
+        changesSummary: `Видалено ${typeTitle.toLowerCase()} клієнта ${clientName}${amountStr} (від ${existingTx?.date || ''})`,
+        deletedTransaction: {
+          id: transactionId,
+          date: existingTx?.date,
+          type: existingTx?.type,
+          amount: existingTx?.amount,
+          currency: existingTx?.currency,
+          buyerId: existingTx?.buyer_id,
+          buyerName: clientName,
+          comment: cleanComment,
+          userEmail: existingTx?.user_email,
+          itemsCount: existingItems.length,
+          itemsSummary: itemsSummaryText,
+          items: existingItems
+        }
+      }
     });
   } catch (err) {
     console.error("Logging delete error", err);

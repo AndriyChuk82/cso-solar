@@ -17,6 +17,7 @@ export default function AuditLog() {
   const { showToast } = useToast();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewingLog, setViewingLog] = useState(null);
 
   const [actionFilter, setActionFilter] = useState('ALL');
   const [userFilter, setUserFilter] = useState('ALL');
@@ -305,8 +306,17 @@ const formatDetails = (log) => {
                     <td className="p-3 align-top font-semibold text-[var(--text)]">
                       {log.entity_title || log.entity_id || '—'}
                     </td>
-                    <td className="p-3 align-top text-[var(--text-secondary)] whitespace-pre-line leading-relaxed">
-                      {formatDetails(log)}
+                    <td className="p-3 align-top text-[var(--text-secondary)] leading-relaxed">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="whitespace-pre-line">{formatDetails(log)}</div>
+                        <button
+                          onClick={() => setViewingLog(log)}
+                          className="shrink-0 px-2 py-1 rounded bg-[var(--bg)] border border-[var(--border)] hover:bg-[var(--border-light)] text-[10px] font-bold text-blue-600 dark:text-blue-400 transition-colors"
+                          title="Переглянути картку фіксації дій"
+                        >
+                          👁️ Деталі
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
