@@ -32,12 +32,12 @@ export function ClientInfoForm({
   const inputRef = useRef<HTMLInputElement>(null);
   const suggRef = useRef<HTMLDivElement>(null);
 
-  // Фільтруємо підказки по введеному тексту
-  const suggestions = clientName.trim().length > 0
+  // Фільтруємо підказки по введеному тексту (показуємо лише коли введено 2+ символи)
+  const suggestions = clientName.trim().length >= 2
     ? regularClients.filter((c) =>
         c.name.toLowerCase().includes(clientName.trim().toLowerCase())
       )
-    : regularClients;
+    : [];
 
   // Знайдений клієнт (точний збіг)
   const matchedClient = regularClients.find(
@@ -138,9 +138,13 @@ export function ClientInfoForm({
                   value={clientName}
                   onChange={(e) => {
                     onUpdateField('clientName', e.target.value);
-                    setShowSuggestions(true);
+                    setShowSuggestions(e.target.value.trim().length >= 2);
                   }}
-                  onFocus={() => setShowSuggestions(true)}
+                  onFocus={() => {
+                    if (clientName.trim().length >= 2) {
+                      setShowSuggestions(true);
+                    }
+                  }}
                   className="w-full py-1.5 text-xs bg-transparent focus:outline-none text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-450 placeholder:font-medium dark:placeholder:text-slate-600 transition-all"
                 />
               </div>
