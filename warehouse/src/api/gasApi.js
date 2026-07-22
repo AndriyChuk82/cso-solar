@@ -721,7 +721,7 @@ export async function addBuyerTransaction(transaction) {
       entityId: transactionId,
       entityTitle: `${transaction.type === 'issue' ? (transaction.status === 'reserved' ? 'Бронь товарів' : 'Видача товарів') : transaction.type === 'payment' ? 'Оплата' : 'Коригування'} (${transaction.buyerName || 'Клієнт'})`,
       details: {
-        changesSummary: summaryParts.join('; ') || 'Створено новий документ',
+        changesSummary: summaryParts.join('\n') || 'Створено новий документ',
         buyerId: transaction.buyerId,
         buyerName: transaction.buyerName,
         date: transaction.date,
@@ -731,7 +731,8 @@ export async function addBuyerTransaction(transaction) {
         status: transaction.status,
         comment: cleanComment,
         itemsCount: transaction.items?.length || 0,
-        itemsSummary: itemsText
+        itemsSummary: itemsText,
+        items: transaction.items || []
       }
     });
   } catch (err) {

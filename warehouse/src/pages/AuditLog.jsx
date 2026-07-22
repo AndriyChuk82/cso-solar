@@ -122,40 +122,185 @@ const formatDetails = (log) => {
 
     const parts = [];
     if (details.amount !== undefined && details.amount !== null) {
-      parts.push(`Сума: ${details.amount} ${details.currency || ''}`);
+      parts.push(`💰 Сума: ${parseFloat(details.amount).toLocaleString('uk-UA', { minimumFractionDigits: 2 })} ${details.currency || ''}`);
     }
     if (details.itemsSummary) {
-      parts.push(`Товари: ${details.itemsSummary}`);
+      const count = details.itemsCount || (details.items ? details.items.length : 0);
+      parts.push(`📦 Товари (${count || 1} поз.): ${details.itemsSummary}`);
     } else if (details.itemsCount > 0) {
-      parts.push(`Кількість позицій: ${details.itemsCount}`);
+      parts.push(`📦 Кількість позицій: ${details.itemsCount}`);
     }
     if (details.comment) {
       const cleanComment = String(details.comment).replace(/\s*\[invoice_id:[\w-]+\]/g, '').trim();
-      if (cleanComment) parts.push(`Коментар: "${cleanComment}"`);
+      if (cleanComment) parts.push(`💬 Коментар: "${cleanComment}"`);
     }
 
-    return parts.join('; ') || `Створено ${typeLabel.toLowerCase()}`;
+    return parts.join('\n') || `Створено ${typeLabel.toLowerCase()}`;
   }
 
   if (log.action_type === 'DELETE' || details.transactionId) {
     if (details.deletedTransaction) {
       const t = details.deletedTransaction;
-      return `Видалено: ${t.type === 'issue' ? 'Видача' : 'Оплата'} від ${t.date} на суму ${t.amount} ${t.currency}`;
+      return `🔴 Видалено: ${t.type === 'issue' ? 'Видача' : 'Оплата'} від ${t.date} на суму ${parseFloat(t.amount || 0).toLocaleString('uk-UA', { minimumFractionDigits: 2 })} ${t.currency || ''}`;
     }
     return `Видалено документ (ID: ${(details.transactionId || log.entity_id || '').slice(0, 8)})`;
   }
 
-  if (log.action_type === 'ARCHIVE') return 'Переміщено документ в архів';
-  if (log.action_type === 'UNARCHIVE') return 'Відновлено документ з архіву';
+  if (log.action_type === 'ARCHIVE') return '🗄️ Переміщено документ в архів';
+  if (log.action_type === 'UNARCHIVE') return '🔄 Відновлено документ з архіву';
 
   try {
     const cleanKeys = Object.entries(details)
       .filter(([k, v]) => v !== undefined && v !== null && k !== 'buyerId' && k !== 'transactionId')
       .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`);
-    return cleanKeys.join('; ') || 'Операція виконана';
+    return cleanKeys.join('\n') || 'Операція виконана';
   } catch {
     return 'Деталі операції зафіксовано';
   }
+};
+
+const renderStructuredDetails = (log) => {
+  if (!log) return null;
+  const details = log.details || {};
+
+  // 1. Сума та коментар
+  const amountVal = details.amount !== undefined && details.amount !== null 
+    ? details.amount 
+    : details.deletedTransaction?.amount;
+  const currencyStr = details.currency || details.deletedTransaction?.currency || '';
+  const amountStr = amountVal !== undefined && amountVal !== null 
+    ? `${parseFloat(amountVal).toLocaleString('uk-UA', { minimumFractionDigits: 2 })} ${currencyStr}`
+    : null;
+
+  let cleanComment = details.comment || (details.deletedTransaction?.comment);
+  if (!cleanComment && typeof details.changesSummary === 'string' && details.changesSummary.includes('Коментар:')) {
+    cleanComment = details.changesSummary.split('Коментар:')[1]?.replace(/^[\s"]+|[\s"]+$/g, '');
+  }
+  if (cleanComment) {
+    cleanComment = String(cleanComment).replace(/\s*\[invoice_id:[\w-]+\]/g, '').trim();
+  }
+
+  // 2. Повноцінний масив товарів (якщо збережений у лозі)
+  const itemsList = details.items || details.deletedTransaction?.items || [];
+
+  // 3. Якщо масиву немає, розбираємо itemsSummary на окремі елементи
+  let parsedSummaryItems = [];
+  if (itemsList.length === 0 && details.itemsSummary) {
+    parsedSummaryItems = String(details.itemsSummary)
+      .split(/\),\s*/)
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(s => s.endsWith(')') ? s : `${s})`);
+  }
+
+  // 4. Перелік внесених змін (для UPDATE дій)
+  const changesList = details.changesList || (typeof details.changesSummary === 'string' && details.changesSummary.includes('\n• ')
+    ? details.changesSummary.split('\n• ').map(c => c.replace(/^•\s*/, '').trim()).filter(Boolean)
+    : (details.changesSummary && !details.itemsSummary && !details.comment ? [details.changesSummary] : []));
+
+  return (
+    <div className="space-y-4 text-xs">
+      {/* Сума та Коментар у структурованій картці */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {amountStr && (
+          <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg flex flex-col justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              💳 Загальна сума документа:
+            </span>
+            <span className="text-lg font-black text-emerald-700 dark:text-emerald-300 mt-1 font-mono">
+              {amountStr}
+            </span>
+          </div>
+        )}
+        {cleanComment && (
+          <div className="bg-[var(--bg)] border border-[var(--border)] p-3 rounded-lg flex flex-col justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+              💬 Примітка / Коментар:
+            </span>
+            <span className="text-xs font-medium text-[var(--text)] mt-1 italic leading-relaxed">
+              "{cleanComment}"
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Перелік дій/змін (UPDATE) */}
+      {changesList.length > 0 && (
+        <div className="space-y-1.5">
+          <h4 className="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+            📝 Зафіксовані зміни у документі:
+          </h4>
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 space-y-1.5 text-[var(--text)]">
+            {changesList.map((ch, idx) => (
+              <div key={idx} className="flex items-start gap-2 leading-relaxed">
+                <span className="text-amber-500 font-bold">•</span>
+                <span>{ch}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Специфікація товарів - повноцінна таблиця (якщо є масив items) */}
+      {itemsList.length > 0 ? (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <h4 className="font-bold text-[var(--text)]">📦 Специфікація товарів:</h4>
+            <span className="text-[10px] font-semibold text-[var(--text-secondary)]">Позицій: {itemsList.length}</span>
+          </div>
+          <div className="border border-[var(--border)] rounded-lg overflow-hidden shadow-sm">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[var(--bg)] text-[var(--text-secondary)] font-bold border-b border-[var(--border)] text-[11px]">
+                  <th className="p-2.5 w-10 text-center">№</th>
+                  <th className="p-2.5">Найменування товару</th>
+                  <th className="p-2.5 w-24 text-right">Кількість</th>
+                  <th className="p-2.5 w-28 text-right">Ціна</th>
+                  <th className="p-2.5 w-28 text-right">Сума</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)] text-xs">
+                {itemsList.map((item, idx) => {
+                  const qty = parseFloat(item.quantity) || 0;
+                  const price = parseFloat(item.price) || 0;
+                  const sum = qty * price;
+                  return (
+                    <tr key={idx} className="hover:bg-[var(--border-light)]/20">
+                      <td className="p-2.5 text-center text-[var(--text-secondary)] font-mono text-[10px]">{idx + 1}</td>
+                      <td className="p-2.5 font-medium text-[var(--text)]">{item.productName || item.name || 'Товар'}</td>
+                      <td className="p-2.5 text-right font-mono text-[var(--text)] font-semibold">{qty} {item.unit || 'шт'}</td>
+                      <td className="p-2.5 text-right font-mono text-[var(--text-secondary)]">
+                        {price > 0 ? `${price.toLocaleString('uk-UA', { minimumFractionDigits: 2 })} ${item.currency || currencyStr}` : '—'}
+                      </td>
+                      <td className="p-2.5 text-right font-mono font-bold text-[var(--text)]">
+                        {sum > 0 ? `${sum.toLocaleString('uk-UA', { minimumFractionDigits: 2 })} ${item.currency || currencyStr}` : '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : parsedSummaryItems.length > 0 ? (
+        /* Специфікація товарів розібрана з тексту itemsSummary */
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <h4 className="font-bold text-[var(--text)]">📦 Перелік товарів (Специфікація):</h4>
+            <span className="text-[10px] font-semibold text-[var(--text-secondary)]">Позицій: {parsedSummaryItems.length}</span>
+          </div>
+          <div className="bg-[var(--bg)] border border-[var(--border)] rounded-lg p-3 space-y-1.5 text-[var(--text)] font-mono text-[11px]">
+            {parsedSummaryItems.map((itemText, idx) => (
+              <div key={idx} className="flex items-start gap-2 border-b border-[var(--border)]/40 pb-1.5 last:border-b-0 last:pb-0">
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold shrink-0">#{idx + 1}</span>
+                <span className="leading-relaxed">{itemText}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 };
 
 
@@ -396,42 +541,8 @@ const formatDetails = (log) => {
               </div>
             </div>
 
-            {/* Опис / Деталі */}
-            <div className="space-y-1.5 text-xs">
-              <h4 className="font-bold text-[var(--text)]">Детальний зміст операції:</h4>
-              <div className="p-3 bg-[var(--bg)] rounded-lg border border-[var(--border)] whitespace-pre-line text-[var(--text-secondary)] leading-relaxed font-mono">
-                {formatDetails(viewingLog)}
-              </div>
-            </div>
-
-            {/* Якщо це видалений документ зі специфікацією товарів */}
-            {viewingLog.details?.deletedTransaction?.items?.length > 0 && (
-              <div className="space-y-2 text-xs">
-                <h4 className="font-bold text-[var(--text)]">📦 Специфікація товарів у видаленому документі:</h4>
-                <div className="border border-[var(--border)] rounded-lg overflow-hidden">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-[var(--bg)] text-[var(--text-secondary)] font-bold border-b border-[var(--border)]">
-                        <th className="p-2.5">Найменування товару</th>
-                        <th className="p-2.5 w-28 text-right">Кількість</th>
-                        <th className="p-2.5 w-28 text-right">Ціна</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--border)]">
-                      {viewingLog.details.deletedTransaction.items.map((item, idx) => (
-                        <tr key={idx} className="hover:bg-[var(--border-light)]/20">
-                          <td className="p-2.5 font-medium text-[var(--text)]">{item.productName}</td>
-                          <td className="p-2.5 text-right font-mono text-[var(--text)]">{item.quantity} {item.unit || 'шт'}</td>
-                          <td className="p-2.5 text-right font-mono text-[var(--text)]">
-                            {item.price !== null && item.price !== undefined ? `${item.price} ${item.currency || ''}` : '—'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+            {/* Опис / Деталі та Специфікація */}
+            {renderStructuredDetails(viewingLog)}
 
             <div className="flex justify-end pt-2 border-t border-[var(--border)]">
               <Button onClick={() => setViewingLog(null)} variant="outline" size="sm">
