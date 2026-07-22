@@ -387,7 +387,12 @@ const formatDetails = (log) => {
               </div>
               <div>
                 <span className="text-[var(--text-secondary)] block">Клієнт / Покупець:</span>
-                <span className="font-bold text-[var(--text)]">{viewingLog.details?.buyerName || viewingLog.details?.deletedTransaction?.buyerName || viewingLog.entity_title || '—'}</span>
+                <span className="font-bold text-[var(--text)]">
+                  {viewingLog.details?.buyerName || 
+                   viewingLog.details?.deletedTransaction?.buyerName || 
+                   (viewingLog.entity_title && !viewingLog.entity_title.includes('ID ') ? viewingLog.entity_title : null) || 
+                   'Документ (видалено до оновлення журналу)'}
+                </span>
               </div>
             </div>
 
