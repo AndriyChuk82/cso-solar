@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useDeferredValue } from 'react';
 import { Link } from 'react-router-dom';
-import { getOperations, getWarehouses, deleteOperation, updateOperation } from '../api/gasApi';
+import { getOperations, getWarehouses, deleteOperation, updateOperation, formatUserName } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { exportToExcel } from '../utils/exportUtils';
@@ -185,7 +185,7 @@ export default function Journal() {
       'К-сть': formatQuantity(op.quantity, op.product_category, op.product_name),
       'Залишок після': formatQuantity(op.balance_after, op.product_category, op.product_name),
       'Коментар': op.comment || '',
-      'Автор': op.user_name || op.user || ''
+      'Автор': formatUserName(op.user_name || op.user || '')
     }));
     
     exportToExcel(columns, items, 'журнал_операцій');
@@ -417,7 +417,7 @@ export default function Journal() {
                       <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', minWidth: '220px', maxWidth: '350px', whiteSpace: 'normal', lineHeight: '1.2' }}>
                         {typeof (op.comment || op.note || op.primitka) === 'object' ? JSON.stringify(op.comment || op.note || op.primitka) : String(op.comment || op.note || op.primitka || '—')}
                       </td>
-                      <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '1px' }}>{op.user_name || op.user || '—'}</td>
+                      <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '1px', whiteSpace: 'nowrap' }}>{formatUserName(op.user_name || op.user)}</td>
                       {user?.isAdmin && (
                         <td>
                           <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', position: 'relative', zIndex: 100 }}>
@@ -499,7 +499,7 @@ export default function Journal() {
                           <div>
                             <span className="text-[9px] text-[var(--text-secondary)] block uppercase font-semibold">Автор</span>
                             <span className="text-[var(--text-muted)]">
-                              {op.user_name || op.user || '—'}
+                              {formatUserName(op.user_name || op.user)}
                             </span>
                           </div>
                         </div>

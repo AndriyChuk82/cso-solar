@@ -24,14 +24,29 @@ export async function fetchUsersMap() {
   return usersMapCache;
 }
 
+const STATIC_USER_MAP = {
+  'misha@cso': 'Михайло Юркевич',
+  'misha@cso.solar': 'Михайло Юркевич',
+  'andros@cso': 'Андрій Чикайло',
+  'andros@cso.solar': 'Андрій Чикайло',
+  'yura@cso': 'Юра Пастушок',
+  'yura@cso.solar': 'Юра Пастушок',
+  'misha': 'Михайло Юркевич',
+  'andros': 'Андрій Чикайло',
+  'yura': 'Юра Пастушок'
+};
+
 export function formatUserName(nameOrEmail) {
   if (!nameOrEmail) return 'Оператор';
   const clean = String(nameOrEmail).trim();
   const lower = clean.toLowerCase();
+
+  if (STATIC_USER_MAP[lower]) return STATIC_USER_MAP[lower];
   if (usersMapCache[lower]) return usersMapCache[lower];
-  
+
   if (clean.includes('@')) {
-    const prefix = clean.split('@')[0];
+    const prefix = clean.split('@')[0].toLowerCase();
+    if (STATIC_USER_MAP[prefix]) return STATIC_USER_MAP[prefix];
     return prefix.charAt(0).toUpperCase() + prefix.slice(1);
   }
   return clean;
@@ -273,7 +288,7 @@ export async function getOperations(filters = {}) {
       product_article: prodMap[finalProdId]?.article || '',
       unit: prodMap[finalProdId]?.unit || '',
       warehouse_name: whName || op.warehouse_id || '—',
-      user_name: op.user_email || '—',
+      user_name: formatUserName(op.user_name || op.user_email || op.user),
       balance_after: runningBalances[key] || 0,
       category: prodMap[finalProdId]?.category_id || ''
     };
