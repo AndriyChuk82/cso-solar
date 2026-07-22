@@ -366,10 +366,10 @@ export default function BuyerIssueForm() {
   // Фільтрація комерційних пропозицій за назвою/телефоном/номером
   const filteredProposals = proposalsList.filter(kp => {
     if (!kpSearchQuery) return true;
-    const query = kpSearchQuery.toLowerCase();
-    const nameMatch = kp.clientName?.toLowerCase().includes(query);
-    const phoneMatch = kp.clientPhone?.toLowerCase().includes(query);
-    const numberMatch = kp.number?.toString().toLowerCase().includes(query);
+    const query = String(kpSearchQuery || '').toLowerCase();
+    const nameMatch = String(kp.clientName || '').toLowerCase().includes(query);
+    const phoneMatch = String(kp.clientPhone || '').toLowerCase().includes(query);
+    const numberMatch = String(kp.number || '').toLowerCase().includes(query);
     return nameMatch || phoneMatch || numberMatch;
   });
 
@@ -380,9 +380,9 @@ export default function BuyerIssueForm() {
     // Спробуємо заповнити також дані про покупця
     let matchedBuyerId = formData.buyerId;
     if (!matchedBuyerId && kp.clientName) {
-      // Спробуємо зіставити за назвою клієнта
+      const kpClientStr = String(kp.clientName || '').toLowerCase().trim();
       const matchedBuyer = buyers.find(b => 
-        b.name?.toLowerCase().trim() === kp.clientName.toLowerCase().trim()
+        String(b.name || '').toLowerCase().trim() === kpClientStr
       );
       if (matchedBuyer) {
         matchedBuyerId = matchedBuyer.id;
@@ -390,13 +390,14 @@ export default function BuyerIssueForm() {
     }
     
     const importedItems = (kp.items || []).map(item => {
-      const name = item.name || '';
+      const name = String(item.name || item.productName || item.title || '');
       const qty = parseFloat(item.quantity) || 1;
       const price = parseFloat(item.price) || '';
       
-      const matchedProduct = products.find(p => 
-        p.name?.toLowerCase().trim() === name.toLowerCase().trim()
-      );
+      const itemStr = name.toLowerCase().trim();
+      const matchedProduct = itemStr ? products.find(p => 
+        String(p.name || '').toLowerCase().trim() === itemStr
+      ) : null;
       
       if (matchedProduct) {
         return {

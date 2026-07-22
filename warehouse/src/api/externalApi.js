@@ -94,15 +94,16 @@ function parseGvizJson(response, categoryName, mainCat) {
       model = col0;
     }
     
-    if (model && model.toLowerCase() !== 'модель' && model.length > 2) {
+    const modelStr = String(model || '');
+    if (modelStr && modelStr.toLowerCase() !== 'модель' && modelStr.length > 2) {
       // Filter brands like in CP app for Inverters
       let inStock = true;
       if (mainCat === 'Інвертори') {
-         const low = model.toLowerCase();
+         const low = modelStr.toLowerCase();
          if (!low.includes('deye') && !low.includes('solis') && !low.includes('huawei') && !low.includes('solax')) continue;
          
          // Column H (index 7) - Availability comments for Inverters
-         const availability = getVal(7);
+         const availability = String(getVal(7) || '');
          if (availability.toLowerCase().includes('нема') || availability.toLowerCase().includes('відсутн')) {
            inStock = false;
          }
