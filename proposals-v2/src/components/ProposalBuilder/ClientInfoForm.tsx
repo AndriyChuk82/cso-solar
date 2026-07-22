@@ -155,29 +155,21 @@ export function ClientInfoForm({
                   ref={suggRef}
                   className="absolute top-full left-0 mt-1 z-[100] min-w-[280px] sm:min-w-[320px] max-w-[380px] bg-white dark:bg-neutral-900 border border-amber-200/80 dark:border-neutral-700 rounded-xl shadow-2xl overflow-hidden max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-neutral-800"
                 >
-                  {suggestions.map((client) => {
-                    const priceCount = (clientPricesMap[client.id] || []).length;
-                    return (
-                      <button
-                        key={client.id}
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => handleSelectClient(client)}
-                        className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors group"
-                      >
-                        <div>
-                          <div className="text-xs font-semibold text-gray-800 dark:text-white">{client.name}</div>
-                          {client.phone && (
-                            <div className="text-[10px] text-gray-400">{client.phone}</div>
-                          )}
-                        </div>
-                        {priceCount > 0 && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
-                            {priceCount} цін
-                          </span>
+                  {suggestions.map((client) => (
+                    <button
+                      key={client.id}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleSelectClient(client)}
+                      className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors group"
+                    >
+                      <div>
+                        <div className="text-xs font-semibold text-gray-800 dark:text-white">{client.name}</div>
+                        {client.phone && (
+                          <div className="text-[10px] text-gray-400">{client.phone}</div>
                         )}
-                      </button>
-                    );
-                  })}
+                      </div>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
