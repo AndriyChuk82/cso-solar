@@ -104,6 +104,7 @@ export default function BuyerIssueForm() {
   const [loadingKp, setLoadingKp] = useState(false);
   const [proposalsList, setProposalsList] = useState([]);
   const [kpSearchQuery, setKpSearchQuery] = useState('');
+  const [importTargetCurrency, setImportTargetCurrency] = useState('UAH');
 
   // Стан для безпечного підтвердження дій
   const [confirmModal, setConfirmModal] = useState({
@@ -375,46 +376,25 @@ export default function BuyerIssueForm() {
 
   // Імпорт пропозиції
   const importProposalData = (kp) => {
-    const totalNum = parseFloat(kp.total || kp.totalAmount || kp.totalSum || kp.grandTotal || 0);
+    const targetCurrency = importTargetCurrency; // 'UAH' або 'USD'
+    const itemsRaw = kp.items || [];
     
     // Обчислюємо суму позицій у базових цінниках
-    const itemsRaw = kp.items || [];
     const sumRaw = itemsRaw.reduce((acc, item) => {
       const p = parseFloat(item.price || item.customPrice || 0);
       const q = parseFloat(item.quantity) || 1;
       return acc + (p * q);
     }, 0);
 
-    // Курс долара з КП або з відношення підсумків
+    const totalNum = parseFloat(kp.total || kp.totalAmount || kp.totalSum || kp.grandTotal || 0);
+
+    // Курс долара з КП або обчислений з підсумків
     let usdRate = parseFloat(kp.rates?.usdToUah || kp.courseUSD || kp.usdRate || kp.rate || 0);
     if ((!usdRate || usdRate < 10) && sumRaw > 0 && totalNum > 0) {
       const calcRate = totalNum / sumRaw;
       if (calcRate >= 10) usdRate = calcRate;
     }
-    if (!usdRate || usdRate < 10) usdRate = 45;
-
-    // ДЕТЕКТУВАННЯ ВАЛЮТИ КП:
-    let kpCurrency = 'UAH';
-    
-    if (totalNum > 0 && sumRaw > 0) {
-      const ratio = totalNum / sumRaw;
-      // Якщо підсумкова сума в таблиці в ~40-50 разів більша ніж сума базових цінників (2.44 $ -> 110 грн)
-      if (ratio > 3) {
-        kpCurrency = 'UAH';
-      } else {
-        // Якщо співвідношення ~1, перевіряємо чи ціни самі по собі великі (в грн) чи маленькі (в $)
-        const hasLargePrices = itemsRaw.some(i => parseFloat(i.price || 0) > 30);
-        const selCurr = String(kp.selectedCurrency || kp.documentCurrency || kp.displayCurrency || '').toUpperCase();
-        if (selCurr === 'USD' || (!hasLargePrices && selCurr !== 'UAH' && selCurr !== 'ГРН')) {
-          kpCurrency = 'USD';
-        } else {
-          kpCurrency = 'UAH';
-        }
-      }
-    } else {
-      const selCurr = String(kp.selectedCurrency || kp.currency || '').toUpperCase();
-      kpCurrency = (selCurr === 'USD' || selCurr === '$') ? 'USD' : 'UAH';
-    }
+    if (!usdRate || usdRate < 10) usdRate = 45; // резервний курс 45
 
     // Зіставлення покупця
     let matchedBuyerId = formData.buyerId;
@@ -428,20 +408,20 @@ export default function BuyerIssueForm() {
       }
     }
 
-    // Позиції товару
+    // Формуємо позиції товару для складської накладної
     const importedItems = itemsRaw.map(item => {
       const name = String(item.name || item.productName || item.title || '');
       const qty = parseFloat(item.quantity) || 1;
       const rawPrice = parseFloat(item.price || item.customPrice || 0);
 
       let finalPrice = '';
-      if (kpCurrency === 'UAH') {
+      if (targetCurrency === 'UAH') {
         if (item.priceUah !== undefined && item.priceUah !== null && item.priceUah !== '' && parseFloat(item.priceUah) > 0) {
           finalPrice = parseFloat(item.priceUah);
         } else if (item.price_uah !== undefined && item.price_uah !== null && item.price_uah !== '' && parseFloat(item.price_uah) > 0) {
           finalPrice = parseFloat(item.price_uah);
         } else if (rawPrice > 0) {
-          // Якщо базове rawPrice у доларах (наприклад 2.4444 $), множимо на курс usdRate (45)
+          // Якщо базове rawPrice у доларах (наприклад 2.4444 $), множимо на курс usdRate (45) -> 110 грн
           if (rawPrice < 30) {
             finalPrice = Math.round(rawPrice * usdRate * 100) / 100;
           } else {
@@ -449,7 +429,12 @@ export default function BuyerIssueForm() {
           }
         }
       } else {
-        finalPrice = rawPrice || '';
+        // Якщо обрано імпорт у доларах (USD)
+        if (rawPrice > 30) {
+          finalPrice = Math.round((rawPrice / usdRate) * 10000) / 10000;
+        } else {
+          finalPrice = rawPrice;
+        }
       }
       
       const itemStr = name.toLowerCase().trim();
@@ -464,7 +449,7 @@ export default function BuyerIssueForm() {
         unit: matchedProduct ? (matchedProduct.unit || 'шт') : (item.unit || 'шт'),
         quantity: qty,
         price: finalPrice,
-        currency: kpCurrency
+        currency: targetCurrency
       };
     });
 
@@ -476,12 +461,12 @@ export default function BuyerIssueForm() {
     setFormData(prev => ({
       ...prev,
       buyerId: matchedBuyerId,
-      currency: kpCurrency,
+      currency: targetCurrency,
       comment: kp.notes ? `${kp.notes} (Імпортовано з КП №${kp.number || 'б/н'})` : `Імпортовано з КП №${kp.number || 'б/н'}`,
       items: importedItems
     }));
 
-    showToast(`Успішно імпортовано ${importedItems.length} поз. у ${kpCurrency === 'USD' ? 'USD ($)' : 'UAH (грн)'} з КП №${kp.number || 'б/н'}`, 'success');
+    showToast(`Успішно імпортовано ${importedItems.length} поз. у ${targetCurrency === 'USD' ? 'USD ($)' : 'UAH (грн)'} з КП №${kp.number || 'б/н'}`, 'success');
     setShowKpModal(false);
   };
 
@@ -1415,14 +1400,41 @@ export default function BuyerIssueForm() {
               </button>
             </div>
             
-            {/* Рядок пошуку */}
-            <div className="p-3 border-b border-[var(--border)] bg-[var(--bg)] flex gap-2">
+            {/* Рядок пошуку та вибір валюти */}
+            <div className="p-3 border-b border-[var(--border)] bg-[var(--bg)] flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-[var(--text-secondary)]">Валюта імпорту у накладну:</span>
+                <div className="flex items-center gap-1 bg-[var(--bg-card)] border border-[var(--border)] p-0.5 rounded-lg text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setImportTargetCurrency('UAH')}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                      importTargetCurrency === 'UAH' 
+                        ? 'bg-emerald-600 text-white shadow-sm' 
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
+                    }`}
+                  >
+                    🇺🇦 Гривня (UAH)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImportTargetCurrency('USD')}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                      importTargetCurrency === 'USD' 
+                        ? 'bg-emerald-600 text-white shadow-sm' 
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
+                    }`}
+                  >
+                    💵 Долар (USD)
+                  </button>
+                </div>
+              </div>
               <input 
                 type="text" 
                 placeholder="Пошук за ім'ям покупця, телефоном або номером КП..."
                 value={kpSearchQuery}
                 onChange={(e) => setKpSearchQuery(e.target.value)}
-                className="flex-1 px-3 py-1.5 text-xs rounded border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] focus:ring-1 focus:ring-emerald-500 outline-none"
+                className="w-full px-3 py-1.5 text-xs rounded border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] focus:ring-1 focus:ring-emerald-500 outline-none"
               />
             </div>
 
