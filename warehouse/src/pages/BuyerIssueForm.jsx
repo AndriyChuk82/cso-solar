@@ -375,19 +375,40 @@ export default function BuyerIssueForm() {
 
   // Імпорт пропозиції
   const importProposalData = (kp) => {
-    // Детектуємо валюту КП (Гривня чи Долар)
+    // 1. Детектуємо валюту КП (Гривня чи Долар) за текстом та математичним зіставленням сум
     let kpCurrency = 'UAH';
-    const rawCurrency = String(kp.currency || kp.currencyType || kp.currencyMode || '').toUpperCase().trim();
     
-    if (rawCurrency === 'UAH' || rawCurrency === 'ГРН' || rawCurrency === 'ГРН.' || rawCurrency === '₴' || kp.isUah === true) {
+    const allCurrencyFields = [
+      kp.selectedCurrency,
+      kp.documentCurrency,
+      kp.displayCurrency,
+      kp.currencyMode,
+      kp.currencyType,
+      kp.currency
+    ].map(c => String(c || '').toUpperCase().trim());
+
+    if (allCurrencyFields.some(c => c === 'UAH' || c === 'ГРН' || c === 'ГРН.' || c === '₴')) {
       kpCurrency = 'UAH';
-    } else if (rawCurrency === 'USD' || rawCurrency === '$' || rawCurrency === 'ДОЛ') {
+    } else if (kp.isUah === true) {
+      kpCurrency = 'UAH';
+    } else if (allCurrencyFields.some(c => c === 'USD' || c === '$' || c === 'ДОЛ')) {
       kpCurrency = 'USD';
-    } else if (kp.items && kp.items.length > 0 && kp.items[0].currency) {
-      const itemCurr = String(kp.items[0].currency).toUpperCase().trim();
-      kpCurrency = (itemCurr === 'USD' || itemCurr === '$') ? 'USD' : 'UAH';
-    } else {
-      kpCurrency = 'UAH';
+    } else if (kp.items && kp.items.length > 0) {
+      const totalNum = parseFloat(kp.total || kp.totalSum || kp.grandTotal || 0);
+      const sumUah = kp.items.reduce((acc, item) => {
+        const p = parseFloat(item.priceUah || item.price_uah || item.price || 0);
+        return acc + (p * (parseFloat(item.quantity) || 1));
+      }, 0);
+      const sumUsd = kp.items.reduce((acc, item) => {
+        const p = parseFloat(item.priceUsd || item.price || 0);
+        return acc + (p * (parseFloat(item.quantity) || 1));
+      }, 0);
+
+      if (totalNum > 0 && Math.abs(totalNum - sumUah) < Math.abs(totalNum - sumUsd)) {
+        kpCurrency = 'UAH';
+      } else {
+        kpCurrency = 'UAH';
+      }
     }
     
     // Спробуємо заповнити також дані про покупця
@@ -406,12 +427,22 @@ export default function BuyerIssueForm() {
       const name = String(item.name || item.productName || item.title || '');
       const qty = parseFloat(item.quantity) || 1;
 
-      // Якщо КП в UAH, використовуємо UAH ціну з КП якщо вона є
+      // Отримуємо відповідну ціну для позиції
       let price = '';
-      if (kpCurrency === 'UAH' && (item.priceUah !== undefined || item.price_uah !== undefined)) {
-        price = parseFloat(item.priceUah || item.price_uah) || '';
+      if (kpCurrency === 'UAH') {
+        if (item.priceUah !== undefined && item.priceUah !== null && item.priceUah !== '') {
+          price = parseFloat(item.priceUah);
+        } else if (item.price_uah !== undefined && item.price_uah !== null && item.price_uah !== '') {
+          price = parseFloat(item.price_uah);
+        } else {
+          price = parseFloat(item.price) || '';
+        }
       } else {
-        price = parseFloat(item.price) || '';
+        if (item.priceUsd !== undefined && item.priceUsd !== null && item.priceUsd !== '') {
+          price = parseFloat(item.priceUsd);
+        } else {
+          price = parseFloat(item.price) || '';
+        }
       }
       
       const itemStr = name.toLowerCase().trim();
