@@ -113,9 +113,17 @@ export function ClientInfoForm({
         
         {/* Ліве крило: Дані Замовника (col-span-3) */}
         <div className="lg:col-span-3 space-y-2.5">
-          <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1 select-none font-mono">
-            Дані Замовника
-          </span>
+          <div className="flex items-center justify-between mb-1 select-none">
+            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block font-mono">
+              Дані Замовника
+            </span>
+            {matchedClient && (
+              <span className="flex items-center gap-1 text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 px-2 py-0.5 rounded-full font-mono">
+                <span>⭐</span>
+                <span>Постійний клієнт{matchedPrices.length > 0 && ` · ${matchedPrices.length} цін`}</span>
+              </span>
+            )}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* Ім'я клієнта з автодоповненням */}
             <div className="relative z-40">
@@ -136,17 +144,6 @@ export function ClientInfoForm({
                   className="w-full py-1.5 text-xs bg-transparent focus:outline-none text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-450 placeholder:font-medium dark:placeholder:text-slate-600 transition-all"
                 />
               </div>
-
-              {/* Індикатор постійного клієнта */}
-              {matchedClient && (
-                <div className="mt-1 flex items-center gap-1 text-[9px] font-semibold text-amber-600 dark:text-amber-400">
-                  <span>⭐</span>
-                  <span>
-                    Постійний клієнт
-                    {matchedPrices.length > 0 && ` · ${matchedPrices.length} цін збережено`}
-                  </span>
-                </div>
-              )}
 
               {/* Dropdown підказки */}
               {showSuggestions && suggestions.length > 0 && (
