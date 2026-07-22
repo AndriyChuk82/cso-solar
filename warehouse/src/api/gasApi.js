@@ -751,7 +751,7 @@ export async function updateBuyerTransaction(transaction) {
   try {
     const { data: oldTxData } = await supabase
       .from('buyer_transactions')
-      .select('*')
+      .select('*, buyers(name)')
       .eq('id', transaction.id)
       .single();
     oldTx = oldTxData;
@@ -913,7 +913,7 @@ export async function updateBuyerTransaction(transaction) {
       changes.push(`Накладну автоматично закрито в архів (повна оплата)`);
     }
 
-    const buyerDisplayName = transaction.buyerName || oldTx?.buyer_name || 'Клієнт';
+    const buyerDisplayName = transaction.buyerName || oldTx?.buyers?.name || oldTx?.buyer_name || 'Клієнт';
 
     logActivity({
       userEmail: transaction.user || oldTx?.user_email,
@@ -940,6 +940,19 @@ export async function updateBuyerTransaction(transaction) {
 
 export async function toggleArchiveTransaction(id, isArchived) {
   if (!supabase) throw new Error('База даних не підключена');
+
+  let clientName = 'Клієнт';
+  let txUserEmail = null;
+  try {
+    const { data: txData } = await supabase
+      .from('buyer_transactions')
+      .select('*, buyers(name)')
+      .eq('id', id)
+      .single();
+    if (txData?.buyers?.name) clientName = txData.buyers.name;
+    if (txData?.user_email) txUserEmail = txData.user_email;
+  } catch (err) {}
+
   const { error } = await supabase
     .from('buyer_transactions')
     .update({ is_archived: isArchived })
@@ -948,13 +961,20 @@ export async function toggleArchiveTransaction(id, isArchived) {
 
   try {
     logActivity({
-      userEmail: 'Оператор',
-      userName: 'Оператор',
+      userEmail: txUserEmail,
+      userName: txUserEmail,
       actionType: isArchived ? 'ARCHIVE' : 'UNARCHIVE',
       entityType: 'BUYER_TRANSACTION',
       entityId: id,
-      entityTitle: `${isArchived ? '🗄️ Закрито в архів' : '🔄 Відновлено з архіву'} ID ${id.slice(0, 8)}`,
-      details: { transactionId: id, isArchived }
+      entityTitle: `${isArchived ? '🗄️ Закрито в архів' : '🔄 Відновлено з архіву'} (${clientName})`,
+      details: {
+        transactionId: id,
+        isArchived,
+        buyerName: clientName,
+        changesSummary: isArchived 
+          ? `Переміщено накладну/оплату клієнта ${clientName} в архів` 
+          : `Відновлено накладну/оплату клієнта ${clientName} з архіву`
+      }
     });
   } catch (err) {
     console.error("Logging archive error", err);
