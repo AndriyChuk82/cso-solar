@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getBuyersWithBalances, addBuyer, updateBuyer } from '../api/gasApi';
+import { getBuyersWithBalances, addBuyer, updateBuyer, deleteBuyer } from '../api/gasApi';
 import { useToast } from '../context/ToastContext';
 import { Button } from '@cso/design-system';
 
@@ -14,6 +14,7 @@ export default function BuyersDashboard() {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, buyer: null, loading: false });
 
   const [formData, setFormData] = useState({
     name: '',
@@ -92,6 +93,46 @@ export default function BuyersDashboard() {
       showToast('Помилка збереження даних', 'error');
     } finally {
       setSaving(false);
+    }
+  }
+
+  function handlePromptDelete(buyer, e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Перевіряємо борг відразу перед відкриттям
+    const isUahDebt = (buyer.balanceUah || 0) < -0.01;
+    const isUsdDebt = (buyer.balanceUsd || 0) < -0.01;
+
+    if (isUahDebt || isUsdDebt) {
+      const debtParts = [];
+      if (isUahDebt) debtParts.push(`${Math.abs(buyer.balanceUah).toLocaleString('uk-UA')} грн`);
+      if (isUsdDebt) debtParts.push(`${Math.abs(buyer.balanceUsd).toLocaleString('uk-UA')} $`);
+
+      showToast(`Неможливо видалити клієнта "${buyer.name}": наявна заборгованість (${debtParts.join(', ')}). Спочатку необхідно повністю погасити борг.`, 'error');
+      return;
+    }
+
+    setDeleteConfirm({ isOpen: true, buyer, loading: false });
+  }
+
+  async function confirmDeleteBuyer() {
+    if (!deleteConfirm.buyer) return;
+    setDeleteConfirm(prev => ({ ...prev, loading: true }));
+    try {
+      const res = await deleteBuyer(deleteConfirm.buyer.id);
+      if (res.success) {
+        showToast(`Клієнта "${deleteConfirm.buyer.name}" успішно видалено`, 'success');
+        setDeleteConfirm({ isOpen: false, buyer: null, loading: false });
+        loadData();
+      } else {
+        showToast(res.error || 'Помилка видалення', 'error');
+        setDeleteConfirm(prev => ({ ...prev, loading: false }));
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Помилка видалення клієнта', 'error');
+      setDeleteConfirm(prev => ({ ...prev, loading: false }));
     }
   }
 
@@ -238,6 +279,13 @@ export default function BuyersDashboard() {
                           >
                             ✏️ Профіль
                           </button>
+                          <button 
+                            onClick={(e) => handlePromptDelete(b, e)} 
+                            className="btn btn-ghost btn-xs text-red-500 hover:bg-red-500/10 font-semibold"
+                            title="Видалити клієнта (тільки якщо немає боргу)"
+                          >
+                            🗑️ Видалити
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -286,10 +334,13 @@ export default function BuyersDashboard() {
 
                   <div className="flex justify-end gap-3 mt-1 text-[11px] pt-1" onClick={(e) => e.stopPropagation()}>
                     <Link to={`/buyers/${b.id}`} className="text-blue-500 font-semibold hover:underline">
-                      👁️ Деталі та Акт
+                      👁️ Деталі
                     </Link>
                     <button onClick={(e) => openEdit(b, e)} className="text-amber-500 font-semibold hover:underline">
                       ✏️ Профіль
+                    </button>
+                    <button onClick={(e) => handlePromptDelete(b, e)} className="text-red-500 font-semibold hover:underline">
+                      🗑️ Видалити
                     </button>
                   </div>
                 </div>
@@ -373,6 +424,38 @@ export default function BuyersDashboard() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Модальне вікно підтвердження видалення */}
+      {deleteConfirm.isOpen && (
+        <div className="modal-overlay" onClick={() => setDeleteConfirm({ isOpen: false, buyer: null, loading: false })}>
+          <div className="modal max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header bg-red-600 text-white">
+              <h3 className="font-bold text-sm">🗑️ Видалити клієнта?</h3>
+              <button className="modal-close text-white" onClick={() => setDeleteConfirm({ isOpen: false, buyer: null, loading: false })}>×</button>
+            </div>
+            <div className="p-4 text-xs space-y-3 text-[var(--text)]">
+              <p>Ви дійсно бажаєте безповоротно видалити клієнта <strong>"{deleteConfirm.buyer?.name}"</strong>?</p>
+              <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded text-[11px] text-amber-700 dark:text-amber-300">
+                ⚠️ Перевірка пройшла успішно: клієнт не має заборгованості.
+              </div>
+            </div>
+            <div className="modal-footer">
+              <Button type="button" variant="ghost" onClick={() => setDeleteConfirm({ isOpen: false, buyer: null, loading: false })}>
+                Скасувати
+              </Button>
+              <Button 
+                type="button" 
+                variant="danger" 
+                onClick={confirmDeleteBuyer} 
+                disabled={deleteConfirm.loading} 
+                loading={deleteConfirm.loading}
+              >
+                Видалити
+              </Button>
+            </div>
           </div>
         </div>
       )}

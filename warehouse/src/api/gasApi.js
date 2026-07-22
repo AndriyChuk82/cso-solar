@@ -594,6 +594,55 @@ export async function updateBuyer(buyer) {
   return { success: true };
 }
 
+export async function deleteBuyer(buyerId) {
+  if (!supabase) throw new Error('База даних не підключена');
+
+  // 1. Отримуємо актуальні баланси покупця
+  const buyersRes = await getBuyersWithBalances();
+  const buyer = buyersRes.buyers?.find(b => b.id === buyerId);
+  if (!buyer) return { success: false, error: 'Клієнта не знайдено' };
+
+  // 2. БОРГ — це коли баланс UAH або USD від'ємний (< -0.01)
+  const isUahDebt = (buyer.balanceUah || 0) < -0.01;
+  const isUsdDebt = (buyer.balanceUsd || 0) < -0.01;
+
+  if (isUahDebt || isUsdDebt) {
+    const debtParts = [];
+    if (isUahDebt) debtParts.push(`${Math.abs(buyer.balanceUah).toLocaleString('uk-UA')} грн`);
+    if (isUsdDebt) debtParts.push(`${Math.abs(buyer.balanceUsd).toLocaleString('uk-UA')} $`);
+
+    return {
+      success: false,
+      error: `Неможливо видалити клієнта "${buyer.name}": наявна заборгованість (${debtParts.join(', ')}). Спочатку необхідно повністю погасити борг.`
+    };
+  }
+
+  // 3. Видаляємо покупця з бази
+  const { error } = await supabase.from('buyers').delete().eq('id', buyerId);
+  if (error) {
+    console.error('Error deleting buyer:', error);
+    return { success: false, error: 'Помилка видалення клієнта з бази даних' };
+  }
+
+  // 4. Фіксуємо аудит-лог
+  try {
+    logActivity({
+      userEmail: 'Оператор',
+      userName: 'Оператор',
+      actionType: 'DELETE',
+      entityType: 'BUYER',
+      entityId: buyerId,
+      entityTitle: `Видалення клієнта (${buyer.name})`,
+      details: {
+        deletedBuyerName: buyer.name,
+        buyerPhone: buyer.phone || '—'
+      }
+    });
+  } catch (err) {}
+
+  return { success: true };
+}
+
 export async function getBuyerTransactions(buyerId) {
   if (!supabase) return { success: true, transactions: [] };
   const { data, error } = await supabase
