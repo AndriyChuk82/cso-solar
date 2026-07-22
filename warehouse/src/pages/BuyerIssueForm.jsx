@@ -375,16 +375,32 @@ export default function BuyerIssueForm() {
 
   // Імпорт пропозиції
   const importProposalData = (kp) => {
-    // 1. Детектуємо валюту КП (Гривня чи Долар) за текстом та математичним зіставленням сум
-    let kpCurrency = 'UAH';
+    const totalNum = parseFloat(kp.total || kp.totalAmount || kp.totalSum || kp.grandTotal || 0);
     
+    // Обчислюємо суму позицій у USD якщо вони збережені в базі як USD
+    const itemsRaw = kp.items || [];
+    const sumUsdRaw = itemsRaw.reduce((acc, item) => {
+      const p = parseFloat(item.price || item.customPrice || 0);
+      const q = parseFloat(item.quantity) || 1;
+      return acc + (p * q);
+    }, 0);
+
+    // 1. Детектуємо курс USD -> UAH з КП
+    let usdRate = parseFloat(kp.rates?.usdToUah || kp.courseUSD || kp.usdRate || kp.rate || 0);
+    if ((!usdRate || usdRate < 10) && sumUsdRaw > 0 && totalNum > 0) {
+      usdRate = totalNum / sumUsdRaw;
+    }
+    if (!usdRate || usdRate < 10) usdRate = 45; // резервний дефолтний курс
+
+    // 2. Детектуємо валюту КП (Гривня чи Долар)
+    let kpCurrency = 'UAH';
     const allCurrencyFields = [
+      kp.currency,
       kp.selectedCurrency,
       kp.documentCurrency,
       kp.displayCurrency,
       kp.currencyMode,
-      kp.currencyType,
-      kp.currency
+      kp.currencyType
     ].map(c => String(c || '').toUpperCase().trim());
 
     if (allCurrencyFields.some(c => c === 'UAH' || c === 'ГРН' || c === 'ГРН.' || c === '₴')) {
@@ -393,25 +409,15 @@ export default function BuyerIssueForm() {
       kpCurrency = 'UAH';
     } else if (allCurrencyFields.some(c => c === 'USD' || c === '$' || c === 'ДОЛ')) {
       kpCurrency = 'USD';
-    } else if (kp.items && kp.items.length > 0) {
-      const totalNum = parseFloat(kp.total || kp.totalSum || kp.grandTotal || 0);
-      const sumUah = kp.items.reduce((acc, item) => {
-        const p = parseFloat(item.priceUah || item.price_uah || item.price || 0);
-        return acc + (p * (parseFloat(item.quantity) || 1));
-      }, 0);
-      const sumUsd = kp.items.reduce((acc, item) => {
-        const p = parseFloat(item.priceUsd || item.price || 0);
-        return acc + (p * (parseFloat(item.quantity) || 1));
-      }, 0);
-
-      if (totalNum > 0 && Math.abs(totalNum - sumUah) < Math.abs(totalNum - sumUsd)) {
+    } else if (totalNum > 0 && sumUsdRaw > 0) {
+      if (Math.abs(totalNum - sumUsdRaw) > totalNum * 0.3 || totalNum > 5000) {
         kpCurrency = 'UAH';
       } else {
-        kpCurrency = 'UAH';
+        kpCurrency = 'USD';
       }
     }
-    
-    // Спробуємо заповнити також дані про покупця
+
+    // 3. Зіставлення покупця за назвою з КП
     let matchedBuyerId = formData.buyerId;
     if (!matchedBuyerId && kp.clientName) {
       const kpClientStr = String(kp.clientName || '').toLowerCase().trim();
@@ -422,27 +428,29 @@ export default function BuyerIssueForm() {
         matchedBuyerId = matchedBuyer.id;
       }
     }
-    
-    const importedItems = (kp.items || []).map(item => {
+
+    // 4. Формуємо позиції товару для складської накладної
+    const importedItems = itemsRaw.map(item => {
       const name = String(item.name || item.productName || item.title || '');
       const qty = parseFloat(item.quantity) || 1;
+      const rawPrice = parseFloat(item.price || item.customPrice || 0);
 
-      // Отримуємо відповідну ціну для позиції
-      let price = '';
+      let finalPrice = '';
       if (kpCurrency === 'UAH') {
         if (item.priceUah !== undefined && item.priceUah !== null && item.priceUah !== '') {
-          price = parseFloat(item.priceUah);
+          finalPrice = parseFloat(item.priceUah);
         } else if (item.price_uah !== undefined && item.price_uah !== null && item.price_uah !== '') {
-          price = parseFloat(item.price_uah);
-        } else {
-          price = parseFloat(item.price) || '';
+          finalPrice = parseFloat(item.price_uah);
+        } else if (rawPrice > 0) {
+          // Якщо ціна в базі КП збережена в USD (наприклад 2.4444 $), конвертуємо в UAH за курсом КП
+          if (rawPrice < 30) {
+            finalPrice = Math.round(rawPrice * usdRate * 100) / 100;
+          } else {
+            finalPrice = rawPrice;
+          }
         }
       } else {
-        if (item.priceUsd !== undefined && item.priceUsd !== null && item.priceUsd !== '') {
-          price = parseFloat(item.priceUsd);
-        } else {
-          price = parseFloat(item.price) || '';
-        }
+        finalPrice = rawPrice || '';
       }
       
       const itemStr = name.toLowerCase().trim();
@@ -450,27 +458,15 @@ export default function BuyerIssueForm() {
         String(p.name || '').toLowerCase().trim() === itemStr
       ) : null;
       
-      if (matchedProduct) {
-        return {
-          productId: matchedProduct.id,
-          productName: matchedProduct.name,
-          productArticle: matchedProduct.article || '',
-          unit: matchedProduct.unit || 'шт',
-          quantity: qty,
-          price: price,
-          currency: kpCurrency
-        };
-      } else {
-        return {
-          productId: '',
-          productName: name,
-          productArticle: '',
-          unit: item.unit || 'шт',
-          quantity: qty,
-          price: price,
-          currency: kpCurrency
-        };
-      }
+      return {
+        productId: matchedProduct ? matchedProduct.id : '',
+        productName: matchedProduct ? matchedProduct.name : name,
+        productArticle: matchedProduct ? (matchedProduct.article || '') : '',
+        unit: matchedProduct ? (matchedProduct.unit || 'шт') : (item.unit || 'шт'),
+        quantity: qty,
+        price: finalPrice,
+        currency: kpCurrency
+      };
     });
 
     if (importedItems.length === 0) {
