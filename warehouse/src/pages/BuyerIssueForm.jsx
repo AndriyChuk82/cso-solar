@@ -377,47 +377,46 @@ export default function BuyerIssueForm() {
   const importProposalData = (kp) => {
     const totalNum = parseFloat(kp.total || kp.totalAmount || kp.totalSum || kp.grandTotal || 0);
     
-    // Обчислюємо суму позицій у USD якщо вони збережені в базі як USD
+    // Обчислюємо суму позицій у базових цінниках
     const itemsRaw = kp.items || [];
-    const sumUsdRaw = itemsRaw.reduce((acc, item) => {
+    const sumRaw = itemsRaw.reduce((acc, item) => {
       const p = parseFloat(item.price || item.customPrice || 0);
       const q = parseFloat(item.quantity) || 1;
       return acc + (p * q);
     }, 0);
 
-    // 1. Детектуємо курс USD -> UAH з КП
+    // Курс долара з КП або з відношення підсумків
     let usdRate = parseFloat(kp.rates?.usdToUah || kp.courseUSD || kp.usdRate || kp.rate || 0);
-    if ((!usdRate || usdRate < 10) && sumUsdRaw > 0 && totalNum > 0) {
-      usdRate = totalNum / sumUsdRaw;
+    if ((!usdRate || usdRate < 10) && sumRaw > 0 && totalNum > 0) {
+      const calcRate = totalNum / sumRaw;
+      if (calcRate >= 10) usdRate = calcRate;
     }
-    if (!usdRate || usdRate < 10) usdRate = 45; // резервний дефолтний курс
+    if (!usdRate || usdRate < 10) usdRate = 45;
 
-    // 2. Детектуємо валюту КП (Гривня чи Долар)
+    // ДЕТЕКТУВАННЯ ВАЛЮТИ КП:
     let kpCurrency = 'UAH';
-    const allCurrencyFields = [
-      kp.currency,
-      kp.selectedCurrency,
-      kp.documentCurrency,
-      kp.displayCurrency,
-      kp.currencyMode,
-      kp.currencyType
-    ].map(c => String(c || '').toUpperCase().trim());
-
-    if (allCurrencyFields.some(c => c === 'UAH' || c === 'ГРН' || c === 'ГРН.' || c === '₴')) {
-      kpCurrency = 'UAH';
-    } else if (kp.isUah === true) {
-      kpCurrency = 'UAH';
-    } else if (allCurrencyFields.some(c => c === 'USD' || c === '$' || c === 'ДОЛ')) {
-      kpCurrency = 'USD';
-    } else if (totalNum > 0 && sumUsdRaw > 0) {
-      if (Math.abs(totalNum - sumUsdRaw) > totalNum * 0.3 || totalNum > 5000) {
+    
+    if (totalNum > 0 && sumRaw > 0) {
+      const ratio = totalNum / sumRaw;
+      // Якщо підсумкова сума в таблиці в ~40-50 разів більша ніж сума базових цінників (2.44 $ -> 110 грн)
+      if (ratio > 3) {
         kpCurrency = 'UAH';
       } else {
-        kpCurrency = 'USD';
+        // Якщо співвідношення ~1, перевіряємо чи ціни самі по собі великі (в грн) чи маленькі (в $)
+        const hasLargePrices = itemsRaw.some(i => parseFloat(i.price || 0) > 30);
+        const selCurr = String(kp.selectedCurrency || kp.documentCurrency || kp.displayCurrency || '').toUpperCase();
+        if (selCurr === 'USD' || (!hasLargePrices && selCurr !== 'UAH' && selCurr !== 'ГРН')) {
+          kpCurrency = 'USD';
+        } else {
+          kpCurrency = 'UAH';
+        }
       }
+    } else {
+      const selCurr = String(kp.selectedCurrency || kp.currency || '').toUpperCase();
+      kpCurrency = (selCurr === 'USD' || selCurr === '$') ? 'USD' : 'UAH';
     }
 
-    // 3. Зіставлення покупця за назвою з КП
+    // Зіставлення покупця
     let matchedBuyerId = formData.buyerId;
     if (!matchedBuyerId && kp.clientName) {
       const kpClientStr = String(kp.clientName || '').toLowerCase().trim();
@@ -429,7 +428,7 @@ export default function BuyerIssueForm() {
       }
     }
 
-    // 4. Формуємо позиції товару для складської накладної
+    // Позиції товару
     const importedItems = itemsRaw.map(item => {
       const name = String(item.name || item.productName || item.title || '');
       const qty = parseFloat(item.quantity) || 1;
@@ -437,12 +436,12 @@ export default function BuyerIssueForm() {
 
       let finalPrice = '';
       if (kpCurrency === 'UAH') {
-        if (item.priceUah !== undefined && item.priceUah !== null && item.priceUah !== '') {
+        if (item.priceUah !== undefined && item.priceUah !== null && item.priceUah !== '' && parseFloat(item.priceUah) > 0) {
           finalPrice = parseFloat(item.priceUah);
-        } else if (item.price_uah !== undefined && item.price_uah !== null && item.price_uah !== '') {
+        } else if (item.price_uah !== undefined && item.price_uah !== null && item.price_uah !== '' && parseFloat(item.price_uah) > 0) {
           finalPrice = parseFloat(item.price_uah);
         } else if (rawPrice > 0) {
-          // Якщо ціна в базі КП збережена в USD (наприклад 2.4444 $), конвертуємо в UAH за курсом КП
+          // Якщо базове rawPrice у доларах (наприклад 2.4444 $), множимо на курс usdRate (45)
           if (rawPrice < 30) {
             finalPrice = Math.round(rawPrice * usdRate * 100) / 100;
           } else {
