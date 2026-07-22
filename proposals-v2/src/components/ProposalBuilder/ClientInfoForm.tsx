@@ -1,5 +1,7 @@
-import { User, Phone, MapPin, Building, UserCheck } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { User, Phone, MapPin, UserCheck } from 'lucide-react';
 import { SELLERS } from '../../config';
+import { useProposalStore } from '../../store';
 import type { SellerId } from '../../types/index';
 
 interface ClientInfoFormProps {
@@ -25,8 +27,57 @@ export function ClientInfoForm({
   status,
   hasUnsavedChanges,
 }: ClientInfoFormProps) {
+  const { regularClients, clientPricesMap, loadClientPrices } = useProposalStore();
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suggRef = useRef<HTMLDivElement>(null);
+
+  // Фільтруємо підказки по введеному тексту
+  const suggestions = clientName.trim().length > 0
+    ? regularClients.filter((c) =>
+        c.name.toLowerCase().includes(clientName.trim().toLowerCase())
+      )
+    : regularClients;
+
+  // Знайдений клієнт (точний збіг)
+  const matchedClient = regularClients.find(
+    (c) => c.name.trim().toLowerCase() === clientName.trim().toLowerCase()
+  );
+  const matchedPrices = matchedClient ? (clientPricesMap[matchedClient.id] || []) : [];
+
+  // Завантажуємо ціни при точному збігу
+  useEffect(() => {
+    if (matchedClient && !clientPricesMap[matchedClient.id]) {
+      loadClientPrices(matchedClient.id);
+    }
+  }, [matchedClient?.id]);
+
+  // Закриття підказок при кліку поза
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (
+        !inputRef.current?.contains(e.target as Node) &&
+        !suggRef.current?.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const handleSelectClient = (client: typeof regularClients[0]) => {
+    onUpdateField('clientName', client.name);
+    if (client.phone) onUpdateField('clientPhone', client.phone);
+    setShowSuggestions(false);
+    // Завантажуємо ціни якщо ще немає
+    if (!clientPricesMap[client.id]) {
+      loadClientPrices(client.id);
+    }
+  };
+
   return (
-    <div className="bg-[#fbfaf5]/90 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-[#e8e4d1]/75 dark:border-slate-800/50 p-4 client-info-block transition-all duration-300 shadow-[0_8px_30px_rgba(245,158,11,0.02)] hover:shadow-[0_12px_40px_rgba(245,158,11,0.04)] no-print">
+    <div className="bg-[#fbfaf5]/90 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-[#e8e4d1]/75 dark:border-slate-800/50 p-4 client-info-block transition-all duration-300 shadow-[0_8px_30px_rgba(245,158,11,0.02)] hover:shadow-[0_12px_40px_rgba(245,158,11,0.04)] no-print relative z-30">
       {/* Title block with status indicator */}
       <div className="flex items-center justify-between border-b border-[#e8e4d1]/40 dark:border-slate-800/30 pb-2 mb-3 select-none">
         <h3 className="font-extrabold text-[#a89a74] dark:text-slate-400 text-[10px] uppercase tracking-widest font-mono flex items-center gap-2">
@@ -66,18 +117,68 @@ export function ClientInfoForm({
             Дані Замовника
           </span>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {/* Ім'я клієнта */}
-            <div className="relative flex items-center group border-b border-[#e8e4d1] dark:border-slate-800/80 focus-within:border-amber-500 transition-colors pb-0.5">
-              <div className="text-[#a89a74] dark:text-slate-500 group-focus-within:text-amber-500 transition-colors mr-2">
-                <User className="w-3.5 h-3.5" />
+            {/* Ім'я клієнта з автодоповненням */}
+            <div className="relative z-40">
+              <div className="relative flex items-center group border-b border-[#e8e4d1] dark:border-slate-800/80 focus-within:border-amber-500 transition-colors pb-0.5">
+                <div className="text-[#a89a74] dark:text-slate-500 group-focus-within:text-amber-500 transition-colors mr-2">
+                  <User className="w-3.5 h-3.5" />
+                </div>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="ПІБ Клієнта"
+                  value={clientName}
+                  onChange={(e) => {
+                    onUpdateField('clientName', e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  className="w-full py-1.5 text-xs bg-transparent focus:outline-none text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-450 placeholder:font-medium dark:placeholder:text-slate-600 transition-all"
+                />
               </div>
-              <input
-                type="text"
-                placeholder="ПІБ Клієнта"
-                value={clientName}
-                onChange={(e) => onUpdateField('clientName', e.target.value)}
-                className="w-full py-1.5 text-xs bg-transparent focus:outline-none text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-450 placeholder:font-medium dark:placeholder:text-slate-600 transition-all"
-              />
+
+              {/* Індикатор постійного клієнта */}
+              {matchedClient && (
+                <div className="mt-1 flex items-center gap-1 text-[9px] font-semibold text-amber-600 dark:text-amber-400">
+                  <span>⭐</span>
+                  <span>
+                    Постійний клієнт
+                    {matchedPrices.length > 0 && ` · ${matchedPrices.length} цін збережено`}
+                  </span>
+                </div>
+              )}
+
+              {/* Dropdown підказки */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div
+                  ref={suggRef}
+                  className="absolute top-full left-0 mt-1 z-[100] min-w-[280px] sm:min-w-[320px] max-w-[380px] bg-white dark:bg-neutral-900 border border-amber-200/80 dark:border-neutral-700 rounded-xl shadow-2xl overflow-hidden max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-neutral-800"
+                >
+                  {suggestions.map((client) => {
+                    const priceCount = (clientPricesMap[client.id] || []).length;
+                    return (
+                      <button
+                        key={client.id}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleSelectClient(client)}
+                        className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors group"
+                      >
+                        <div>
+                          <div className="text-xs font-semibold text-gray-800 dark:text-white">{client.name}</div>
+                          {client.phone && (
+                            <div className="text-[10px] text-gray-400">{client.phone}</div>
+                          )}
+                        </div>
+                        {priceCount > 0 && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
+                            {priceCount} цін
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Телефон */}

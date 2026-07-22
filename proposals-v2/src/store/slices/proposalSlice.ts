@@ -2,6 +2,7 @@ import { StateCreator } from 'zustand';
 import { Proposal, ProposalItem, Product, SellerId, SupplierOffer, ProposalTab } from '../../types';
 import { CONFIG, SELLERS } from '../../config';
 import { saveProposalToSheet, fetchProposalsHistory, deleteProposalFromSheet, normalizeProposal } from '../../services/api';
+import { toast } from 'sonner';
 
 /**
  * Proposal Slice - управління пропозиціями та товарами
@@ -270,10 +271,11 @@ export const createProposalSlice: StateCreator<
 
     // Actions
     addToProposal: (product: Product, quantity: number) => {
-      const { proposal } = get();
+      const state = get() as any;
+      const { proposal } = state;
 
       // Перевіряємо чи продукт вже є
-      const existingItem = proposal.items.find(item => item.productId === product.id);
+      const existingItem = proposal.items.find((item: ProposalItem) => item.productId === product.id);
 
       if (existingItem) {
         // Оновлюємо кількість
@@ -287,19 +289,19 @@ export const createProposalSlice: StateCreator<
         let activeSupplier = product.selectedSupplier;
 
         if (!product.isManualSupplier && product.offers && product.offers.length > 0) {
-          const inStockOffers = product.offers.filter(o => o.inStock !== false);
+          const inStockOffers = product.offers.filter((o: SupplierOffer) => o.inStock !== false);
           const baseOffers = inStockOffers.length > 0 ? inStockOffers : product.offers;
           let bestOffer = baseOffers[0];
           
           if (useVat) {
-            const vatOffers = baseOffers.filter(o => o.priceVat !== undefined && o.priceVat !== null);
+            const vatOffers = baseOffers.filter((o: SupplierOffer) => o.priceVat !== undefined && o.priceVat !== null);
             if (vatOffers.length > 0) {
-              bestOffer = vatOffers.reduce((min, o) => o.priceVat! < min.priceVat! ? o : min, vatOffers[0]);
+              bestOffer = vatOffers.reduce((min: SupplierOffer, o: SupplierOffer) => o.priceVat! < min.priceVat! ? o : min, vatOffers[0]);
             } else {
-              bestOffer = baseOffers.reduce((min, o) => o.price < min.price ? o : min, baseOffers[0]);
+              bestOffer = baseOffers.reduce((min: SupplierOffer, o: SupplierOffer) => o.price < min.price ? o : min, baseOffers[0]);
             }
           } else {
-            bestOffer = baseOffers.reduce((min, o) => o.price < min.price ? o : min, baseOffers[0]);
+            bestOffer = baseOffers.reduce((min: SupplierOffer, o: SupplierOffer) => o.price < min.price ? o : min, baseOffers[0]);
           }
           
           activePrice = bestOffer.price;
@@ -315,7 +317,24 @@ export const createProposalSlice: StateCreator<
           : undefined;
 
         const salePrice = usdCostPrice * (1 + proposal.markup / 100) * (1 + (proposal.adjustment || 0) / 100);
-        const roundedPrice = Math.round(salePrice * 10000) / 10000;
+        let roundedPrice = Math.round(salePrice * 10000) / 10000;
+
+        // ===== Підстановка ціни клієнта =====
+        const clientEntry = (() => {
+          if (!proposal.clientName || !state.getClientByName || !state.getClientPriceForProduct) return null;
+          const client = state.getClientByName(proposal.clientName);
+          if (!client) return null;
+          return state.getClientPriceForProduct(client.id, product.id);
+        })();
+
+        if (clientEntry) {
+          roundedPrice = clientEntry.price;
+          toast.info(`🔖 Ціна клієнта підставлена: $${clientEntry.price.toFixed(2)}`, {
+            description: `${product.name.substring(0, 50)} · джерело: ${clientEntry.source === 'kp' ? `КП ${clientEntry.sourceKpNumber}` : 'вручну'}`,
+            duration: 4000,
+          });
+        }
+        // ====================================
 
         const finalDescription = product.description || '';
 
@@ -496,6 +515,19 @@ export const createProposalSlice: StateCreator<
 
       try {
         const success = await saveProposalToSheet(finalizedProposal);
+
+        // ===== Автосинхронізація прайсу клієнта =====
+        if (success) {
+          const storeState = get() as any;
+          if (storeState.getClientByName && finalizedProposal.clientName) {
+            const client = storeState.getClientByName(finalizedProposal.clientName);
+            if (client && storeState.syncFromProposal) {
+              storeState.syncFromProposal(client.id, finalizedProposal);
+            }
+          }
+        }
+        // ============================================
+
         return success;
       } catch (error) {
         console.error('❌ Помилка збереження на Google Sheets:', error);

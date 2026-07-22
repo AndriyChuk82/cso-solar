@@ -15,10 +15,12 @@ function App() {
   const loading = useProposalStore(selectLoading);
   const error = useProposalStore(selectError);
   const loadProducts = useProposalStore((state) => state.loadProducts);
+  const loadKpClients = useProposalStore((state) => state.loadKpClients);
 
   useEffect(() => {
     loadProducts();
-  }, [loadProducts]);
+    loadKpClients();
+  }, [loadProducts, loadKpClients]);
 
   return (
     <ErrorBoundary>

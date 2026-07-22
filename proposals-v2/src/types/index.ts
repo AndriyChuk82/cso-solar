@@ -183,3 +183,27 @@ export interface ProposalTab {
   isUnsaved?: boolean;
 }
 
+// ===== Client Price Types =====
+
+export interface ClientPriceEntry {
+  id: string;              // UUID з Supabase
+  buyerId: string;
+  productId: string;
+  productName: string;
+  price: number;           // ціна продажу (USD)
+  costPrice?: number;      // собівартість (USD)
+  source: 'manual' | 'kp';
+  sourceKpId?: string;
+  sourceKpNumber?: string;
+  updatedAt: string;
+}
+
+export interface RegularClient {
+  id: string;              // UUID з Supabase (buyers.id)
+  name: string;
+  phone?: string;
+  notes?: string;
+  representatives?: string;
+  isKpClient: boolean;     // чи позначений як клієнт КП
+  prices?: ClientPriceEntry[];
+}

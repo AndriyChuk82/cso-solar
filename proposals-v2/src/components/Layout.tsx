@@ -1,8 +1,9 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { Home, FileText, Package, BarChart2, Zap } from 'lucide-react';
+import { Home, FileText, Package, BarChart2, Zap, Users } from 'lucide-react';
 import { SettingsButton } from './Settings';
 import { HistoryButton } from './History';
 import { ThemeToggle } from './ThemeToggle';
+import { ClientsManager } from './ClientsManager';
 
 interface LayoutProps {
   children: ReactNode;
@@ -15,6 +16,7 @@ interface UserAccess {
 
 export function Layout({ children }: LayoutProps) {
   const [access, setAccess] = useState<UserAccess>({ isAdmin: false, modules: [] });
+  const [showClients, setShowClients] = useState(false);
 
   useEffect(() => {
     const fetchAccess = async () => {
@@ -121,6 +123,14 @@ export function Layout({ children }: LayoutProps) {
               </nav>
 
               <div className="flex items-center gap-2 border-l border-gray-200 dark:border-neutral-700 pl-4">
+                <button
+                  onClick={() => setShowClients(true)}
+                  title="Постійні клієнти"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-neutral-350 hover:text-[#f59e0b] hover:bg-gray-100/50 dark:hover:bg-neutral-800/50 rounded-lg transition-all duration-150"
+                >
+                  <Users className="w-4 h-4" />
+                  <span className="hidden sm:inline">Клієнти</span>
+                </button>
                 <ThemeToggle />
                 <HistoryButton />
                 <SettingsButton />
@@ -133,6 +143,8 @@ export function Layout({ children }: LayoutProps) {
       <main className="max-w-[100%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
+
+      {showClients && <ClientsManager onClose={() => setShowClients(false)} />}
     </div>
   );
 }

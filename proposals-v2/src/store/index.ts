@@ -4,12 +4,13 @@ import { createProductsSlice, ProductsSlice } from './slices/productsSlice';
 import { createSettingsSlice, SettingsSlice } from './slices/settingsSlice';
 import { createFavoritesSlice, FavoritesSlice } from './slices/favoritesSlice';
 import { createProposalSlice, ProposalSlice } from './slices/proposalSlice';
+import { createClientsSlice, ClientsSlice } from './slices/clientsSlice';
 import { normalizeProposal } from '../services/api';
 
 /**
  * Комбінований тип стору - об'єднання всіх слайсів
  */
-export type ProposalStore = ProductsSlice & SettingsSlice & FavoritesSlice & ProposalSlice;
+export type ProposalStore = ProductsSlice & SettingsSlice & FavoritesSlice & ProposalSlice & ClientsSlice;
 
 /**
  * Головний Zustand store - комбінує всі слайси
@@ -21,6 +22,7 @@ export const useProposalStore = create<ProposalStore>()(
       ...createSettingsSlice(...args),
       ...createFavoritesSlice(...args),
       ...createProposalSlice(...args),
+      ...createClientsSlice(...args),
     }),
     {
       name: 'cso-proposals-storage',
