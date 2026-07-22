@@ -1,4 +1,59 @@
 
+const formatDetails = (log) => {
+  if (!log) return '—';
+  const details = log.details || {};
+  
+  if (typeof details === 'string') return details;
+  
+  if (details.changesSummary) {
+    return details.changesSummary;
+  }
+
+  if (log.action_type === 'CREATE' || details.type) {
+    const typeLabel = details.type === 'issue' 
+      ? (details.status === 'reserved' ? 'Бронь товарів' : 'Видача товарів')
+      : details.type === 'payment' ? 'Оплата' 
+      : details.type === 'adjustment' ? 'Коригування' 
+      : 'Створення документа';
+
+    const parts = [];
+    if (details.amount !== undefined && details.amount !== null) {
+      parts.push(`Сума: ${details.amount} ${details.currency || ''}`);
+    }
+    if (details.itemsSummary) {
+      parts.push(`Товари: ${details.itemsSummary}`);
+    } else if (details.itemsCount > 0) {
+      parts.push(`Кількість позицій: ${details.itemsCount}`);
+    }
+    if (details.comment) {
+      const cleanComment = String(details.comment).replace(/\s*\[invoice_id:[\w-]+\]/g, '').trim();
+      if (cleanComment) parts.push(`Коментар: "${cleanComment}"`);
+    }
+
+    return parts.join('; ') || `Створено ${typeLabel.toLowerCase()}`;
+  }
+
+  if (log.action_type === 'DELETE' || details.transactionId) {
+    if (details.deletedTransaction) {
+      const t = details.deletedTransaction;
+      return `Видалено: ${t.type === 'issue' ? 'Видача' : 'Оплата'} від ${t.date} на суму ${t.amount} ${t.currency}`;
+    }
+    return `Видалено документ (ID: ${(details.transactionId || log.entity_id || '').slice(0, 8)})`;
+  }
+
+  if (log.action_type === 'ARCHIVE') return 'Переміщено документ в архів';
+  if (log.action_type === 'UNARCHIVE') return 'Відновлено документ з архіву';
+
+  try {
+    const cleanKeys = Object.entries(details)
+      .filter(([k, v]) => v !== undefined && v !== null && k !== 'buyerId' && k !== 'transactionId')
+      .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`);
+    return cleanKeys.join('; ') || 'Операція виконана';
+  } catch {
+    return 'Деталі операції зафіксовано';
+  }
+};
+
 const getCleanManagerName = (name, email) => {
   let raw = name || email || '';
   if (!raw) return 'Оператор';
@@ -1147,7 +1202,7 @@ export default function BuyerIssueForm() {
                     <span className="text-[10px] text-[var(--text-secondary)] font-mono">⏱️ {new Date(log.created_at).toLocaleString('uk-UA')}</span>
                   </div>
                   <div className="text-[var(--text-secondary)] whitespace-pre-line leading-relaxed text-[11px]">
-                    {log.details?.changesSummary || log.entity_title || log.action_type}
+                    {formatDetails(log)}
                   </div>
                 </div>
               ))}

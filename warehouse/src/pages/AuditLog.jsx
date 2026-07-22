@@ -101,25 +101,62 @@ export default function AuditLog() {
     }
   };
 
-  const formatDetails = (details) => {
-    if (!details) return '—';
-    if (typeof details === 'string') return details;
-    
-    if (details.changesSummary) {
-      return details.changesSummary;
+
+const formatDetails = (log) => {
+  if (!log) return '—';
+  const details = log.details || {};
+  
+  if (typeof details === 'string') return details;
+  
+  if (details.changesSummary) {
+    return details.changesSummary;
+  }
+
+  if (log.action_type === 'CREATE' || details.type) {
+    const typeLabel = details.type === 'issue' 
+      ? (details.status === 'reserved' ? 'Бронь товарів' : 'Видача товарів')
+      : details.type === 'payment' ? 'Оплата' 
+      : details.type === 'adjustment' ? 'Коригування' 
+      : 'Створення документа';
+
+    const parts = [];
+    if (details.amount !== undefined && details.amount !== null) {
+      parts.push(`Сума: ${details.amount} ${details.currency || ''}`);
+    }
+    if (details.itemsSummary) {
+      parts.push(`Товари: ${details.itemsSummary}`);
+    } else if (details.itemsCount > 0) {
+      parts.push(`Кількість позицій: ${details.itemsCount}`);
+    }
+    if (details.comment) {
+      const cleanComment = String(details.comment).replace(/\s*\[invoice_id:[\w-]+\]/g, '').trim();
+      if (cleanComment) parts.push(`Коментар: "${cleanComment}"`);
     }
 
+    return parts.join('; ') || `Створено ${typeLabel.toLowerCase()}`;
+  }
+
+  if (log.action_type === 'DELETE' || details.transactionId) {
     if (details.deletedTransaction) {
       const t = details.deletedTransaction;
       return `Видалено: ${t.type === 'issue' ? 'Видача' : 'Оплата'} від ${t.date} на суму ${t.amount} ${t.currency}`;
     }
+    return `Видалено документ (ID: ${(details.transactionId || log.entity_id || '').slice(0, 8)})`;
+  }
 
-    if (details.itemsSummary) {
-      return `Товари: ${details.itemsSummary}`;
-    }
+  if (log.action_type === 'ARCHIVE') return 'Переміщено документ в архів';
+  if (log.action_type === 'UNARCHIVE') return 'Відновлено документ з архіву';
 
-    return JSON.stringify(details);
-  };
+  try {
+    const cleanKeys = Object.entries(details)
+      .filter(([k, v]) => v !== undefined && v !== null && k !== 'buyerId' && k !== 'transactionId')
+      .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`);
+    return cleanKeys.join('; ') || 'Операція виконана';
+  } catch {
+    return 'Деталі операції зафіксовано';
+  }
+};
+
 
   return (
     <div className="pb-12 max-w-7xl mx-auto px-2 md:px-4 space-y-6">
@@ -269,7 +306,7 @@ export default function AuditLog() {
                       {log.entity_title || log.entity_id || '—'}
                     </td>
                     <td className="p-3 align-top text-[var(--text-secondary)] whitespace-pre-line leading-relaxed">
-                      {formatDetails(log.details)}
+                      {formatDetails(log)}
                     </td>
                   </tr>
                 ))}
@@ -294,7 +331,7 @@ export default function AuditLog() {
                   {log.entity_title || log.entity_id || '—'}
                 </div>
                 <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg)] p-2 rounded border border-[var(--border)] whitespace-pre-line">
-                  {formatDetails(log.details)}
+                  {formatDetails(log)}
                 </div>
               </div>
             ))}

@@ -698,6 +698,21 @@ export async function addBuyerTransaction(transaction) {
   }
 
   try {
+    const itemsText = transaction.items?.map(i => `${i.productName || i.productId}: ${i.quantity} шт (${i.price !== null && i.price !== undefined ? `${i.price} ${transaction.currency}` : 'без ціни'})`).join(', ');
+
+    const cleanComment = (transaction.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '').trim();
+
+    const summaryParts = [];
+    if (transaction.amount !== undefined && transaction.amount !== null) {
+      summaryParts.push(`Сума: ${transaction.amount} ${transaction.currency || ''}`);
+    }
+    if (itemsText) {
+      summaryParts.push(`Товари: ${itemsText}`);
+    }
+    if (cleanComment) {
+      summaryParts.push(`Коментар: "${cleanComment}"`);
+    }
+
     logActivity({
       userEmail: transaction.user || 'Система',
       userName: transaction.user || 'Оператор',
@@ -706,6 +721,7 @@ export async function addBuyerTransaction(transaction) {
       entityId: transactionId,
       entityTitle: `${transaction.type === 'issue' ? (transaction.status === 'reserved' ? 'Бронь товарів' : 'Видача товарів') : transaction.type === 'payment' ? 'Оплата' : 'Коригування'} (${transaction.buyerName || 'Клієнт'})`,
       details: {
+        changesSummary: summaryParts.join('; ') || 'Створено новий документ',
         buyerId: transaction.buyerId,
         buyerName: transaction.buyerName,
         date: transaction.date,
@@ -713,9 +729,9 @@ export async function addBuyerTransaction(transaction) {
         amount: transaction.amount,
         currency: transaction.currency,
         status: transaction.status,
-        comment: transaction.comment,
+        comment: cleanComment,
         itemsCount: transaction.items?.length || 0,
-        itemsSummary: transaction.items?.map(i => `${i.productName || i.productId}: ${i.quantity} шт (${i.price || 'без ціни'})`).join(', ')
+        itemsSummary: itemsText
       }
     });
   } catch (err) {
