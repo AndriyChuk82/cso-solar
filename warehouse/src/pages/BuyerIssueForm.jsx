@@ -375,7 +375,20 @@ export default function BuyerIssueForm() {
 
   // Імпорт пропозиції
   const importProposalData = (kp) => {
-    const kpCurrency = kp.currency === 'USD' ? 'USD' : 'UAH';
+    // Детектуємо валюту КП (Гривня чи Долар)
+    let kpCurrency = 'UAH';
+    const rawCurrency = String(kp.currency || kp.currencyType || kp.currencyMode || '').toUpperCase().trim();
+    
+    if (rawCurrency === 'UAH' || rawCurrency === 'ГРН' || rawCurrency === 'ГРН.' || rawCurrency === '₴' || kp.isUah === true) {
+      kpCurrency = 'UAH';
+    } else if (rawCurrency === 'USD' || rawCurrency === '$' || rawCurrency === 'ДОЛ') {
+      kpCurrency = 'USD';
+    } else if (kp.items && kp.items.length > 0 && kp.items[0].currency) {
+      const itemCurr = String(kp.items[0].currency).toUpperCase().trim();
+      kpCurrency = (itemCurr === 'USD' || itemCurr === '$') ? 'USD' : 'UAH';
+    } else {
+      kpCurrency = 'UAH';
+    }
     
     // Спробуємо заповнити також дані про покупця
     let matchedBuyerId = formData.buyerId;
@@ -392,7 +405,14 @@ export default function BuyerIssueForm() {
     const importedItems = (kp.items || []).map(item => {
       const name = String(item.name || item.productName || item.title || '');
       const qty = parseFloat(item.quantity) || 1;
-      const price = parseFloat(item.price) || '';
+
+      // Якщо КП в UAH, використовуємо UAH ціну з КП якщо вона є
+      let price = '';
+      if (kpCurrency === 'UAH' && (item.priceUah !== undefined || item.price_uah !== undefined)) {
+        price = parseFloat(item.priceUah || item.price_uah) || '';
+      } else {
+        price = parseFloat(item.price) || '';
+      }
       
       const itemStr = name.toLowerCase().trim();
       const matchedProduct = itemStr ? products.find(p => 
@@ -435,7 +455,7 @@ export default function BuyerIssueForm() {
       items: importedItems
     }));
 
-    showToast(`Успішно імпортовано ${importedItems.length} поз. з КП №${kp.number || 'б/н'}`, 'success');
+    showToast(`Успішно імпортовано ${importedItems.length} поз. у ${kpCurrency === 'USD' ? 'USD ($)' : 'UAH (грн)'} з КП №${kp.number || 'б/н'}`, 'success');
     setShowKpModal(false);
   };
 
