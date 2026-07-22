@@ -340,11 +340,99 @@ const formatDetails = (log) => {
                 <div className="font-semibold text-blue-600 dark:text-blue-400">
                   {log.entity_title || log.entity_id || '—'}
                 </div>
-                <div className="text-[11px] text-[var(--text-secondary)] bg-[var(--bg)] p-2 rounded border border-[var(--border)] whitespace-pre-line">
-                  {formatDetails(log)}
+                <div className="flex items-center justify-between gap-2 text-[11px] text-[var(--text-secondary)] bg-[var(--bg)] p-2 rounded border border-[var(--border)]">
+                  <div className="whitespace-pre-line leading-relaxed">{formatDetails(log)}</div>
+                  <button
+                    onClick={() => setViewingLog(log)}
+                    className="shrink-0 px-2 py-1 rounded bg-[var(--bg-card)] border border-[var(--border)] hover:bg-[var(--border-light)] text-[10px] font-bold text-blue-600 dark:text-blue-400 transition-colors"
+                  >
+                    👁️ Деталі
+                  </button>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Модальне вікно перегляду детального акту фіксації */}
+      {viewingLog && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-5 md:p-6 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
+              <h3 className="text-base md:text-lg font-bold flex items-center gap-2 text-[var(--text)]">
+                📄 Акт фіксації аудит-журналу
+              </h3>
+              <button 
+                onClick={() => setViewingLog(null)} 
+                className="w-8 h-8 rounded-full hover:bg-[var(--border-light)] flex items-center justify-center text-[var(--text-secondary)] font-bold text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Основна інформація */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-[var(--bg)] p-3.5 rounded-lg border border-[var(--border)]">
+              <div>
+                <span className="text-[var(--text-secondary)] block">Тип операції:</span>
+                <span className="font-bold mt-0.5 inline-block">{getActionBadge(viewingLog.action_type)}</span>
+              </div>
+              <div>
+                <span className="text-[var(--text-secondary)] block">Дата та час запису:</span>
+                <span className="font-mono font-bold text-[var(--text)]">{formatLogTime(viewingLog.created_at)}</span>
+              </div>
+              <div>
+                <span className="text-[var(--text-secondary)] block">Менеджер (Виконавець):</span>
+                <span className="font-bold text-[var(--text)]">{formatUserName(viewingLog.user_name || viewingLog.user_email)}</span>
+              </div>
+              <div>
+                <span className="text-[var(--text-secondary)] block">Клієнт / Покупець:</span>
+                <span className="font-bold text-[var(--text)]">{viewingLog.details?.buyerName || viewingLog.details?.deletedTransaction?.buyerName || viewingLog.entity_title || '—'}</span>
+              </div>
+            </div>
+
+            {/* Опис / Деталі */}
+            <div className="space-y-1.5 text-xs">
+              <h4 className="font-bold text-[var(--text)]">Детальний зміст операції:</h4>
+              <div className="p-3 bg-[var(--bg)] rounded-lg border border-[var(--border)] whitespace-pre-line text-[var(--text-secondary)] leading-relaxed font-mono">
+                {formatDetails(viewingLog)}
+              </div>
+            </div>
+
+            {/* Якщо це видалений документ зі специфікацією товарів */}
+            {viewingLog.details?.deletedTransaction?.items?.length > 0 && (
+              <div className="space-y-2 text-xs">
+                <h4 className="font-bold text-[var(--text)]">📦 Специфікація товарів у видаленому документі:</h4>
+                <div className="border border-[var(--border)] rounded-lg overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-[var(--bg)] text-[var(--text-secondary)] font-bold border-b border-[var(--border)]">
+                        <th className="p-2.5">Найменування товару</th>
+                        <th className="p-2.5 w-28 text-right">Кількість</th>
+                        <th className="p-2.5 w-28 text-right">Ціна</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border)]">
+                      {viewingLog.details.deletedTransaction.items.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-[var(--border-light)]/20">
+                          <td className="p-2.5 font-medium text-[var(--text)]">{item.productName}</td>
+                          <td className="p-2.5 text-right font-mono text-[var(--text)]">{item.quantity} {item.unit || 'шт'}</td>
+                          <td className="p-2.5 text-right font-mono text-[var(--text)]">
+                            {item.price !== null && item.price !== undefined ? `${item.price} ${item.currency || ''}` : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2 border-t border-[var(--border)]">
+              <Button onClick={() => setViewingLog(null)} variant="outline" size="sm">
+                Закрити
+              </Button>
+            </div>
           </div>
         </div>
       )}
