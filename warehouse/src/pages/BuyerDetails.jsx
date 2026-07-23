@@ -183,8 +183,10 @@ export default function BuyerDetails() {
   };
 
   function startReserveRelease(tx) {
+    const todayStr = new Date().toISOString().split('T')[0];
     setReserveReleaseTx(tx);
     setReserveReleaseForm({
+      issueDate: todayStr,
       pickedUpBy: tx.pickedUpBy || '',
       comment: tx.comment || '',
       items: tx.items.map(item => ({
@@ -226,6 +228,7 @@ export default function BuyerDetails() {
     try {
       const originalTx = reserveReleaseTx;
       const form = reserveReleaseForm;
+      const issueDate = form.issueDate || new Date().toISOString().split('T')[0];
 
       const itemsToIssue = [];
       const itemsRemainder = [];
@@ -276,12 +279,12 @@ export default function BuyerDetails() {
         finalComment = `${finalComment.trim()} [Часткова видача. Залишок перенесено в нову накладну]`.trim();
       }
 
-      // 2. Оновлюємо оригінальну накладну: ставимо статус completed/pending та оновлюємо товари
+      // 2. Оновлюємо оригінальну накладну: ставимо статус completed/pending та ДАТУ ФАКТИЧНОЇ ВИДАЧІ
       const updatedTxPayload = {
         id: originalTx.id,
         buyerId: originalTx.buyerId,
         buyerName: buyer.name,
-        date: originalTx.date,
+        date: issueDate,
         type: 'issue',
         amount: itemsToIssue.reduce((sum, item) => {
           const p = item.price !== '' && item.price !== null ? parseFloat(item.price) : 0;
@@ -1779,7 +1782,17 @@ export default function BuyerDetails() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="font-semibold text-[var(--text-secondary)]">Дата фактичної видачі *</label>
+                    <input
+                      type="date"
+                      required
+                      className="p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-xs font-semibold text-emerald-600 dark:text-emerald-400 focus:outline-none"
+                      value={reserveReleaseForm.issueDate || new Date().toISOString().split('T')[0]}
+                      onChange={(e) => setReserveReleaseForm({ ...reserveReleaseForm, issueDate: e.target.value })}
+                    />
+                  </div>
                   <div className="flex flex-col gap-1">
                     <label className="font-semibold text-[var(--text-secondary)]">Отримувач (водій/представник)</label>
                     <input

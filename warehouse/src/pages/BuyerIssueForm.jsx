@@ -88,6 +88,7 @@ export default function BuyerIssueForm() {
   const [isArchived, setIsArchived] = useState(false);
   const [originalItemsMap, setOriginalItemsMap] = useState({});
   const [originalStatus, setOriginalStatus] = useState('completed');
+  const [originalTxDate, setOriginalTxDate] = useState('');
   const [isReleaseMode, setIsReleaseMode] = useState(false);
 
   // Стан для автокомпліту пошуку товарів у рядках
@@ -200,14 +201,17 @@ export default function BuyerIssueForm() {
             tx.items.forEach(item => {
               origMap[item.productId] = (origMap[item.productId] || 0) + (parseFloat(item.quantity) || 0);
             });
+            const todayStr = new Date().toISOString().split('T')[0];
+            const isReservedTx = tx.status === 'reserved';
             setOriginalItemsMap(origMap);
             setOriginalStatus(tx.status || 'completed');
-            setIsReleaseMode(tx.status === 'reserved');
+            setOriginalTxDate(tx.date || todayStr);
+            setIsReleaseMode(isReservedTx);
 
             setFormData({
               buyerId: tx.buyerId,
               warehouseId: tx.items[0]?.warehouseId || '',
-              date: tx.date,
+              date: isReservedTx ? todayStr : (tx.date || todayStr),
               currency: tx.currency || 'UAH',
               comment: tx.comment || '',
               pickedUpBy: tx.pickedUpBy || '',
@@ -631,12 +635,13 @@ export default function BuyerIssueForm() {
 
       // 4. Якщо це був переклад з резерву у видачу і є залишок, створюємо нову накладну броні
       if (isReleasing && remainderItems.length > 0) {
-        const remainderComment = `[Залишок броні від накладної від ${formData.date}] ${formData.comment || ''}`.trim();
+        const reserveOrigDate = originalTxDate || formData.date;
+        const remainderComment = `[Залишок броні від накладної від ${reserveOrigDate}] ${formData.comment || ''}`.trim();
         const remainderPayload = {
           buyerId: formData.buyerId,
           buyerName: selectedBuyer?.name,
           parentId: txId,
-          date: formData.date,
+          date: reserveOrigDate,
           type: 'issue',
           amount: remainderItems.reduce((sum, item) => {
             const price = item.price !== '' && item.price !== null ? parseFloat(item.price) : 0;
@@ -849,14 +854,15 @@ export default function BuyerIssueForm() {
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="font-semibold text-[var(--text-secondary)]">Дата</label>
+              <label className="font-semibold text-[var(--text-secondary)]">
+                {isReleaseMode ? 'Дата фактичної видачі' : 'Дата'}
+              </label>
               <input
                 type="date"
-                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none font-semibold text-emerald-600 dark:text-emerald-400"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 required
-                disabled={txId && isReleaseMode}
               />
             </div>
 
