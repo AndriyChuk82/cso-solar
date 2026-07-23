@@ -1112,19 +1112,19 @@ const GT_TEMPLATES = {
                 <p style="font-weight:bold; font-size:12.5pt; margin:0 0 1px 0; text-transform:uppercase; letter-spacing:1px;">АКТ</p>
                 <p style="font-weight:bold; font-size:11pt; margin:0 0 1px 0;">приймання-передачі виконаних робіт</p>
                 <p style="font-size:10.5pt; margin:0;">за Договором купівлі-продажу та встановлення<br>
-                сонячної електростанції № _________ від «___» ____________ 20___ року</p>
+                сонячної електростанції № <b>{{field3}}</b> від «{{field10_day}}» {{field10_month_name}} {{field10_year}} року</p>
             </div>
             <br>
             <!-- МІСТО / ДАТА -->
             <div style="display:flex; justify-content:space-between; margin:6px 0; font-size:12pt;">
                 <div>м. Золочів</div>
-                <div>«___» ____________ 20___ року</div>
+                <div>«{{field11_day}}» {{field11_month_name}} {{field11_year}} року</div>
             </div>
             <br>
             <!-- ПРЕАМБУЛА -->
             <div style="text-align:justify; font-size:10.5pt; margin-bottom:10px;">
                 Цей Акт складено на виконання Договору купівлі-продажу та встановлення сонячної електростанції
-                № _________ від «___» ____________ 20___ року (надалі — Договір), укладеного між:<br>
+                № <b>{{field3}}</b> від «{{field10_day}}» {{field10_month_name}} {{field10_year}} року (надалі — Договір), укладеного між:<br>
                 <b>Замовник:</b> {{field4}}, паспорт громадянина України {{field40}}, РНОКПП {{field5}},<br>
                 та <b>Виконавець:</b> ТОВ «Центр сервісного обслуговування» надалі разом — Сторони,
                 а кожна окремо — Сторона.
@@ -1143,7 +1143,7 @@ const GT_TEMPLATES = {
             <div style="font-size:10.5pt; margin-bottom:10px;">
                 <ol style="margin:0; padding-left:20px;">
                     <li style="margin-bottom:2px;">
-                        Встановлення та налаштування сонячної електростанції потужністю <b>{{field22}} кВт</b>.<br>
+                        Встановлення та налаштування сонячної електростанції потужністю <b>{{field28}} кВт</b>.<br>
                         У складі:
                         <ul style="margin:2px 0 0 0; padding-left:20px; list-style-type:disc;">
                             <li>Інвертор: {{field27}}</li>
@@ -1159,7 +1159,7 @@ const GT_TEMPLATES = {
             <!-- 3. Вартість робіт -->
             <div style="text-align:center; font-weight:bold; font-size:11pt; margin-bottom:4px; text-decoration:underline;">3. Вартість робіт</div>
             <div style="text-align:justify; font-size:10.5pt; margin-bottom:10px;">
-                Загальна вартість виконаних робіт за цим Актом становить: <b>{{field38}} грн.</b>&nbsp;({{field39}} гривень 00 копійок)
+                Загальна вартість виконаних робіт за цим Актом становить: <b>{{field38}} грн.</b>&nbsp;({{field39}} 00 копійок)
             </div>
 
             <!-- 4. Якість та зауваження -->

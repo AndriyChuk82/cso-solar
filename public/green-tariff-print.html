@@ -165,18 +165,101 @@
                 document.head.appendChild(styleTag);
             }
 
-            // 1. ПІДГОТОВКА ДОДАТКОВИХ ПОЛІВ (дати, суми прописом тощо)
-            formData.field10_day = '___';
-            formData.field10_month = '___';
-            formData.field10_year = '20___';
-            if (formData.field10) {
-                const d = formData.field10.split('-');
-                if (d.length === 3) {
-                    formData.field10_day = d[2];
-                    formData.field10_month = d[1];
-                    formData.field10_year = d[0];
+            // 0. ФУНКЦІЇ ДЛЯ СУМ ТА ДАТ
+            function numberToWordsUA(num) {
+                const ones = ['', 'одна', 'дві', 'три', 'чотири', "п'ять", 'шість', 'сім', 'вісім', "дев'ять"];
+                const teens = ['десять', 'одинадцять', 'дванадцять', 'тринадцять', 'чотирнадцять', "п'ятнадцять", 'шістнадцять', 'сімнадцять', 'вісімнадцять', "дев'ятнадцять"];
+                const tens = ['', '', 'двадцять', 'тридцять', 'сорок', "п'ятдесят", 'шістдесят', 'сімдесят', 'вісімдесят', "дев'яносто"];
+                const hundreds = ['', 'сто', 'двісті', 'триста', 'чотириста', "п'ятсот", 'шістсот', 'сімсот', 'вісімсот', "дев'ятсот"];
+                const intPart = Math.floor(num);
+                if (intPart === 0) return 'нуль гривень';
+
+                function convertGroup(n, gender = 0) {
+                    if (n === 0) return '';
+                    let res = '';
+                    if (n >= 100) { res += hundreds[Math.floor(n / 100)] + ' '; n %= 100; }
+                    if (n >= 10 && n <= 19) { res += teens[n - 10] + ' '; }
+                    else {
+                        if (n >= 20) { res += tens[Math.floor(n / 10)] + ' '; n %= 10; }
+                        if (n > 0) {
+                            if (gender === 1) {
+                                if (n === 1) res += 'одна ';
+                                else if (n === 2) res += 'дві ';
+                                else res += ones[n] + ' ';
+                            } else { res += ones[n] + ' '; }
+                        }
+                    }
+                    return res;
                 }
+
+                let result = '', n = intPart;
+                const millions = Math.floor(n / 1000000);
+                if (millions > 0) {
+                    result += convertGroup(millions, 0);
+                    const m = millions % 10;
+                    if (m === 1 && millions % 100 !== 11) result += 'мільйон ';
+                    else if (m >= 2 && m <= 4 && (millions % 100 < 10 || millions % 100 > 20)) result += 'мільйони ';
+                    else result += 'мільйонів ';
+                    n %= 1000000;
+                }
+                const thousands = Math.floor(n / 1000);
+                if (thousands > 0) {
+                    result += convertGroup(thousands, 1);
+                    const t = thousands % 10;
+                    if (t === 1 && thousands % 100 !== 11) result += 'тисяча ';
+                    else if (t >= 2 && t <= 4 && (thousands % 100 < 10 || thousands % 100 > 20)) result += 'тисячі ';
+                    else result += 'тисяч ';
+                    n %= 1000;
+                }
+                result += convertGroup(n, 0);
+                return result.trim() + ' гривень';
             }
+
+            const ukrMonths = ['', 'січня', 'лютого', 'березня', 'квітня', 'травня', 'червня', 'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];
+
+            function parseDateParts(dateStr) {
+                let day = '___', month = '___', year = '20___', monthName = '____________';
+                if (!dateStr) return { day, month, year, monthName };
+                
+                const str = String(dateStr).trim();
+                if (str.includes('-')) {
+                    const parts = str.split('T')[0].split('-');
+                    if (parts.length === 3) {
+                        year = parts[0];
+                        month = parts[1];
+                        day = parts[2];
+                    }
+                } else if (str.includes('.')) {
+                    const parts = str.split('.');
+                    if (parts.length === 3) {
+                        day = parts[0];
+                        month = parts[1];
+                        year = parts[2];
+                    }
+                }
+                
+                if (day.length === 2 && day.startsWith('0')) day = day.substring(1);
+                
+                const mInt = parseInt(month, 10);
+                if (mInt >= 1 && mInt <= 12) {
+                    monthName = ukrMonths[mInt];
+                }
+                
+                return { day, month, year, monthName };
+            }
+
+            // 1. ПІДГОТОВКА ДОДАТКОВИХ ПОЛІВ (дати, суми прописом тощо)
+            const d10 = parseDateParts(formData.field10);
+            formData.field10_day = d10.day;
+            formData.field10_month = d10.month;
+            formData.field10_year = d10.year;
+            formData.field10_month_name = d10.monthName;
+
+            const d11 = parseDateParts(formData.field11);
+            formData.field11_day = d11.day;
+            formData.field11_month = d11.month;
+            formData.field11_year = d11.year;
+            formData.field11_month_name = d11.monthName;
 
             formData.field38_int = '_________';
             formData.field38_words = '____________________________________________________________';
@@ -184,10 +267,14 @@
                 const val = parseFloat(formData.field38);
                 if (!isNaN(val)) {
                     formData.field38_int = Math.floor(val).toString();
-                    if (typeof numberToWordsUA !== 'undefined') {
-                        formData.field38_words = numberToWordsUA(val);
-                    }
+                    formData.field38_words = numberToWordsUA(val);
                 }
+            }
+
+            if (!formData.field39 || formData.field39.trim() === '') {
+                formData.field39 = formData.field38_words !== '____________________________________________________________'
+                    ? formData.field38_words
+                    : '';
             }
 
             // 2. Рендеримо документи
