@@ -20,30 +20,6 @@ const COLOR_TAG_CONFIG: Record<string, { border: string; bg: string; badge: stri
     badge: 'bg-purple-100 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border-purple-300/60',
     label: '🟣 Сторонній',
   },
-  blue: {
-    border: 'border-l-[5px] border-l-blue-500',
-    bg: 'bg-blue-50/50 dark:bg-blue-950/30',
-    badge: 'bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border-blue-300/60',
-    label: '🔵 Основний',
-  },
-  emerald: {
-    border: 'border-l-[5px] border-l-emerald-500',
-    bg: 'bg-emerald-50/50 dark:bg-emerald-950/30',
-    badge: 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-300/60',
-    label: '🟢 Власний',
-  },
-  amber: {
-    border: 'border-l-[5px] border-l-amber-500',
-    bg: 'bg-amber-50/50 dark:bg-amber-950/30',
-    badge: 'bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border-amber-300/60',
-    label: '🟠 Уточнення',
-  },
-  rose: {
-    border: 'border-l-[5px] border-l-rose-500',
-    bg: 'bg-rose-50/50 dark:bg-rose-950/30',
-    badge: 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border-rose-300/60',
-    label: '🔴 Пріоритет',
-  },
 };
 
 export function ProjectList() {
@@ -199,39 +175,26 @@ export function ProjectList() {
             <button
               type="button"
               onClick={() => setColorFilter('all')}
-              className={`px-2 py-0.5 rounded-full text-[9px] font-bold border transition-all cursor-pointer ${
+              className={`px-2.5 py-0.5 rounded-full text-[9.5px] font-bold border transition-all cursor-pointer ${
                 colorFilter === 'all'
                   ? 'bg-gray-800 text-white border-gray-800 dark:bg-slate-200 dark:text-slate-900'
                   : 'bg-white/60 dark:bg-slate-800/40 text-gray-600 dark:text-slate-400 border-gray-200 dark:border-slate-700 hover:bg-gray-100'
               }`}
             >
-              Всі
+              Всі проєкти
             </button>
 
             <button
               type="button"
               onClick={() => setColorFilter(colorFilter === 'purple' ? 'all' : 'purple')}
-              className={`px-2 py-0.5 rounded-full text-[9px] font-bold border transition-all flex items-center gap-1 cursor-pointer ${
+              className={`px-2.5 py-0.5 rounded-full text-[9.5px] font-bold border transition-all flex items-center gap-1 cursor-pointer ${
                 colorFilter === 'purple'
                   ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
                   : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-900/50 hover:bg-purple-100'
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-              Сторонні
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setColorFilter(colorFilter === 'blue' ? 'all' : 'blue')}
-              className={`px-2 py-0.5 rounded-full text-[9px] font-bold border transition-all flex items-center gap-1 cursor-pointer ${
-                colorFilter === 'blue'
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                  : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/50 hover:bg-blue-100'
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-              Основні
+              Сторонні замовники
             </button>
           </div>
         </div>
