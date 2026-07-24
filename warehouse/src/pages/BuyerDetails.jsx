@@ -662,7 +662,6 @@ export default function BuyerDetails() {
 
   const reportItems = [...processedTransactions]
     .filter(t => {
-      if (t.is_archived === true && selectedTxFilter === 'ALL') return false;
       return !isSingleDoc ? (t.date >= dateFrom && t.date <= dateTo) : t.id === selectedTxFilter;
     })
     .map(t => {
@@ -742,14 +741,13 @@ export default function BuyerDetails() {
     return `${prefix}${val.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${symbol}`;
   }
 
-  // Розрахунок загального поточного балансу за всю історію (без архівних)
+  // Розрахунок загального поточного балансу за всю історію (враховуючи всі документи)
   let totalUahBalance = 0;
   let totalUsdBalance = 0;
   let totalReservedUah = 0;
   let totalReservedUsd = 0;
 
   transactions.forEach(t => {
-    if (t.is_archived === true) return;
     const amt = parseFloat(t.amount) || 0;
     const cur = t.currency;
 
