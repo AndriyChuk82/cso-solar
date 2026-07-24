@@ -1,1 +1,0 @@
-import{l as e}from"./index-BaOZFPlb.js";export{e as fetchAllData};

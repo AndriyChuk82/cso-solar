@@ -262,8 +262,7 @@ export async function fetchHeliusProducts(): Promise<Product[]> {
       
       const name = colA;
       const stockStr = (row[2] || '').trim(); // Column C (Availability)
-      const priceStr = (row[4] || '').trim(); // Column E (Price)
-      const priceVatStr = (row[5] || '').trim(); // Column F (Price VAT)
+      const priceStr = (row[4] || '').trim(); // Column E (Price without VAT)
       
       if (!name || name.length < 5 || name === 'Модель') continue;
       
@@ -271,9 +270,7 @@ export async function fetchHeliusProducts(): Promise<Product[]> {
       const price = parseFloat(cleanedPriceStr);
       if (isNaN(price) || price <= 0) continue;
 
-      const cleanedPriceVatStr = priceVatStr.replace(/[^0-9.,]/g, '').replace(',', '.');
-      const priceVatVal = parseFloat(cleanedPriceVatStr);
-      const finalPriceVatRaw = isNaN(priceVatVal) || priceVatVal <= 0 ? undefined : priceVatVal;
+      const finalPriceVatRaw: number | undefined = undefined; // Helius prices are without VAT only
       
       const inStock = !(stockStr.toLowerCase().includes('нема') || stockStr.toLowerCase().includes('відсутн') || stockStr === '0' || stockStr.toLowerCase() === 'нет');
       
