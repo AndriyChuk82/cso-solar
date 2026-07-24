@@ -1112,7 +1112,7 @@ const GT_TEMPLATES = {
                 <p style="font-weight:bold; font-size:12.5pt; margin:0 0 1px 0; text-transform:uppercase; letter-spacing:1px;">АКТ</p>
                 <p style="font-weight:bold; font-size:11pt; margin:0 0 1px 0;">приймання-передачі виконаних робіт</p>
                 <p style="font-size:10.5pt; margin:0;">за Договором купівлі-продажу та встановлення<br>
-                сонячної електростанції № <b>{{field3}}</b> від «___» ____________ 20___ року</p>
+                сонячної електростанції № <b>{{field3}}</b> від «{{field10_day}}» {{field10_month_name}} {{field10_year}} року</p>
             </div>
             <br>
             <!-- МІСТО / ДАТА -->
@@ -1124,7 +1124,7 @@ const GT_TEMPLATES = {
             <!-- ПРЕАМБУЛА -->
             <div style="text-align:justify; font-size:10.5pt; margin-bottom:10px;">
                 Цей Акт складено на виконання Договору купівлі-продажу та встановлення сонячної електростанції
-                № <b>{{field3}}</b> від «___» ____________ 20___ року (надалі — Договір), укладеного між:<br>
+                № <b>{{field3}}</b> від «{{field10_day}}» {{field10_month_name}} {{field10_year}} року (надалі — Договір), укладеного між:<br>
                 <b>Замовник:</b> {{field4}}, паспорт громадянина України {{field40}}, РНОКПП {{field5}},<br>
                 та <b>Виконавець:</b> ТОВ «Центр сервісного обслуговування» надалі разом — Сторони,
                 а кожна окремо — Сторона.
@@ -1244,7 +1244,7 @@ const GT_TEMPLATES = {
             <br>
             <div style="display:flex; justify-content:space-between; margin-bottom:16px; font-size:11.5pt;">
                 <div>м. Золочів</div>
-                <div>"___" ____________ 20___ року</div>
+                <div>«{{field10_day}}» {{field10_month_name}} {{field10_year}} року</div>
             </div>
             <br>
             <div class="d5-section">1. СТОРОНИ ДОГОВОРУ</div>

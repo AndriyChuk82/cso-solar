@@ -850,15 +850,23 @@ export function ProjectWizard() {
             </div>
           )}
 
-          {/* Step 6: Finances, Uploads, Prints */}
+          {/* Step 6: Finances & Prints */}
           {activeStep === 6 && (
             <div className="space-y-6 animate-slide-in">
               <div className="space-y-4">
                 <div className="border-b border-gray-100 dark:border-slate-800/80 pb-2">
                   <h3 className="text-sm font-bold text-gray-900 dark:text-white">💰 Фінансова сторона підряду</h3>
-                  <p className="text-[11px] text-gray-500">Договірні кошториси, аванси та залишкові суми</p>
+                  <p className="text-[11px] text-gray-500">Дата договору, кошториси, аванси та залишкові суми</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField label="Дата договору підряду">
+                    <Input 
+                      type="date" 
+                      value={formData.contractDate} 
+                      onChange={(v) => handleChange('contractDate', v)} 
+                    />
+                  </FormField>
+
                   <FormField label="Повна вартість робіт, грн">
                     <Input 
                       type="number" 
@@ -892,12 +900,6 @@ export function ProjectWizard() {
                     />
                   </FormField>
                 </div>
-              </div>
-
-              {/* Attachments Section */}
-              <div className="pt-4 border-t border-gray-100 dark:border-slate-800/80">
-                <h4 className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3">📎 Додані копії та файли:</h4>
-                <FileUpload />
               </div>
 
               {/* Document Generator Section */}

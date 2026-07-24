@@ -228,7 +228,7 @@ export function DocumentGenerator({ formData, matchedCerts }: DocumentGeneratorP
       {/* Checkboxes List */}
       <div className="space-y-2">
         <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Оберіть шаблони:</p>
-        <div className="flex flex-col gap-1.5 max-w-md">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {DOC_OPTIONS.map((doc) => (
             <label
               key={doc.value}
