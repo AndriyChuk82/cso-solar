@@ -209,6 +209,23 @@ export function toSemanticProject(raw: Record<string, any>): SemanticProject {
     project[sKey] = String(val || '');
   }
 
+  // Parse colorTag embedded in internalComment if colorTag wasn't found directly
+  if (!project.colorTag || project.colorTag === 'none' || project.colorTag === '') {
+    const comment = project.internalComment || '';
+    const tagMatch = comment.match(/^\[tag:([a-z]+)\]\s*/i);
+    if (tagMatch) {
+      project.colorTag = tagMatch[1];
+      project.internalComment = comment.replace(/^\[tag:[a-z]+\]\s*/i, '');
+    } else {
+      project.colorTag = 'none';
+    }
+  }
+
+  // Map serviceContractDate fallback to reserve / field45 if empty
+  if (!project.serviceContractDate) {
+    project.serviceContractDate = project.reserve || '';
+  }
+
   // Ensure ID is set
   project.id = raw.id || getProp(raw, ['id', 'ID']);
 
@@ -217,6 +234,13 @@ export function toSemanticProject(raw: Record<string, any>): SemanticProject {
 
 // Convert Semantic Project to the format expected by the GAS backend save API
 export function toRawGASProject(semantic: SemanticProject): RawGASProject {
+  let comment = semantic.internalComment || '';
+  if (semantic.colorTag && semantic.colorTag !== 'none') {
+    if (!comment.match(/^\[tag:[a-z]+\]/i)) {
+      comment = `[tag:${semantic.colorTag}] ${comment}`.trim();
+    }
+  }
+
   const raw: RawGASProject = {
     field1: semantic.status || 'В процесі',
     field2: semantic.paymentStatus || '',
@@ -261,12 +285,11 @@ export function toRawGASProject(semantic: SemanticProject): RawGASProject {
     field41: semantic.advanceUsd || '',
     field42: semantic.balanceUsd || '',
     field43: semantic.stationType || '',
-    field44: semantic.internalComment || '',
+    field44: comment,
     field45: semantic.serviceContractDate || semantic.reserve || '',
   };
 
   if (semantic.id) raw.id = semantic.id;
-  if (semantic.colorTag) raw.colortag = semantic.colorTag;
   if (semantic.folderUrl) raw.folderurl = semantic.folderUrl;
   if (semantic.createdAt) raw.createdat = semantic.createdAt;
 

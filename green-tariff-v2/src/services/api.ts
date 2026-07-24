@@ -77,6 +77,24 @@ export async function saveProject(
     const isNew = !id || id.startsWith('temp_');
     const dbProject: any = { ...project };
 
+    // Embed colorTag tag into internalComment
+    if (project.colorTag && project.colorTag !== 'none') {
+      let comment = project.internalComment || '';
+      if (!comment.match(/^\[tag:[a-z]+\]/i)) {
+        comment = `[tag:${project.colorTag}] ${comment}`.trim();
+      }
+      dbProject.internalComment = comment;
+    } else if (dbProject.internalComment) {
+      dbProject.internalComment = dbProject.internalComment.replace(/^\[tag:[a-z]+\]\s*/i, '');
+    }
+
+    // Map serviceContractDate to reserve column
+    dbProject.reserve = project.serviceContractDate || project.reserve || '';
+
+    // Remove transient non-schema properties that cause PGRST204 errors in Supabase
+    delete dbProject.colorTag;
+    delete dbProject.serviceContractDate;
+
     // Clean up empty fields that shouldn't override default DB values
     if (!dbProject.createdAt) {
       delete dbProject.createdAt;
