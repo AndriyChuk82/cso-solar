@@ -261,7 +261,7 @@ export function toRawGASProject(semantic: SemanticProject): RawGASProject {
     field42: semantic.balanceUsd || '',
     field43: semantic.stationType || '',
     field44: semantic.internalComment || '',
-    field45: semantic.reserve || '',
+    field45: semantic.serviceContractDate || semantic.reserve || '',
   };
 
   if (semantic.id) raw.id = semantic.id;
