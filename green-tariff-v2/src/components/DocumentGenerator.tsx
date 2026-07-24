@@ -153,6 +153,8 @@ export function DocumentGenerator({ formData, matchedCerts }: DocumentGeneratorP
         mergedData[semanticKey] = val ?? '';
       });
 
+      mergedData.serviceContractDate = formData.serviceContractDate || '';
+
       // Special formatted fields
       mergedData.currentDate = new Date().toLocaleDateString('uk-UA');
       mergedData.stationType = formData.stationType || '';

@@ -261,6 +261,17 @@
             formData.field11_year = d11.year;
             formData.field11_month_name = d11.monthName;
 
+            const dService = parseDateParts(formData.serviceContractDate || formData.field45);
+            formData.serviceContractDate_day = dService.day;
+            formData.serviceContractDate_month = dService.month;
+            formData.serviceContractDate_year = dService.year;
+            formData.serviceContractDate_month_name = dService.monthName;
+
+            formData.field45_day = dService.day;
+            formData.field45_month = dService.month;
+            formData.field45_year = dService.year;
+            formData.field45_month_name = dService.monthName;
+
             formData.field38_int = '_________';
             formData.field38_words = '____________________________________________________________';
             if (formData.field38) {

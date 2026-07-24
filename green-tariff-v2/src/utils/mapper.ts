@@ -70,6 +70,7 @@ export const FIELD_MAPPING: Record<keyof SemanticProject, string[]> = {
   stationType: ['Тип станції', 'Модель станції', 'field43'],
   internalComment: ['Коментар', 'Внутрішній коментар', 'Нотатки', 'Field 44', 'field44'],
   reserve: ['Резерв', 'Field 45', 'field45'],
+  serviceContractDate: ['Дата договору підряду', 'field45'],
   folderUrl: ['folderurl', 'Folder URL'],
   createdAt: ['createdat', 'Created At'],
 };

@@ -47,6 +47,7 @@ export interface SemanticProject {
   stationType: string;            // field43
   internalComment: string;        // field44
   reserve: string;                // field45
+  serviceContractDate?: string;   // Дата договору підряду CSO Solar
   folderUrl?: string;
   createdAt?: string;
 }

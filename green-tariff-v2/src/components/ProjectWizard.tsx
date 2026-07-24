@@ -862,8 +862,8 @@ export function ProjectWizard() {
                   <FormField label="Дата договору підряду">
                     <Input 
                       type="date" 
-                      value={formData.contractDate} 
-                      onChange={(v) => handleChange('contractDate', v)} 
+                      value={formData.serviceContractDate || ''} 
+                      onChange={(v) => handleChange('serviceContractDate', v)} 
                     />
                   </FormField>
 
