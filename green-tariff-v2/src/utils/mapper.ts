@@ -71,6 +71,7 @@ export const FIELD_MAPPING: Record<keyof SemanticProject, string[]> = {
   internalComment: ['Коментар', 'Внутрішній коментар', 'Нотатки', 'Field 44', 'field44'],
   reserve: ['Резерв', 'Field 45', 'field45'],
   serviceContractDate: ['Дата договору підряду', 'field45'],
+  colorTag: ['Кольорова мітка', 'colorTag', 'colortag'],
   folderUrl: ['folderurl', 'Folder URL'],
   createdAt: ['createdat', 'Created At'],
 };
@@ -265,6 +266,7 @@ export function toRawGASProject(semantic: SemanticProject): RawGASProject {
   };
 
   if (semantic.id) raw.id = semantic.id;
+  if (semantic.colorTag) raw.colortag = semantic.colorTag;
   if (semantic.folderUrl) raw.folderurl = semantic.folderUrl;
   if (semantic.createdAt) raw.createdat = semantic.createdAt;
 

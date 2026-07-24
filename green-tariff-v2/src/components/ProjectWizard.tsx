@@ -447,6 +447,44 @@ export function ProjectWizard() {
                     placeholder="Наприклад: 'Терміново доробити'" 
                   />
                 </FormField>
+
+                <div className="md:col-span-2 pt-2 border-t border-gray-100 dark:border-slate-800/80">
+                  <FormField label="Кольорова мітка / Категорія проєкту">
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {[
+                        { value: 'none', label: '⚪ За замовчуванням (Сірий)', color: 'border-gray-300 bg-gray-100 text-gray-700' },
+                        { value: 'purple', label: '🟣 Сторонній замовник', color: 'border-purple-300 bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300' },
+                        { value: 'blue', label: '🔵 Основне замовлення (CSO)', color: 'border-blue-300 bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300' },
+                        { value: 'emerald', label: '🟢 Власний об\'єкт', color: 'border-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' },
+                        { value: 'amber', label: '🟠 Уточнити дані', color: 'border-amber-300 bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300' },
+                        { value: 'rose', label: '🔴 Пріоритет', color: 'border-rose-300 bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' },
+                      ].map((tag) => {
+                        const isSelected = (formData.colorTag || 'none') === tag.value;
+                        return (
+                          <button
+                            key={tag.value}
+                            type="button"
+                            onClick={() => handleChange('colorTag', tag.value)}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer select-none ${
+                              isSelected
+                                ? 'ring-2 ring-[#f59e0b] ring-offset-1 dark:ring-offset-slate-900 font-bold shadow-sm scale-[1.02] ' + tag.color
+                                : 'opacity-70 hover:opacity-100 bg-gray-50 dark:bg-slate-800/80 border-gray-200 dark:border-slate-700/80 text-gray-700 dark:text-slate-300'
+                            }`}
+                          >
+                            <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                              tag.value === 'purple' ? 'bg-purple-500' :
+                              tag.value === 'blue' ? 'bg-blue-500' :
+                              tag.value === 'emerald' ? 'bg-emerald-500' :
+                              tag.value === 'amber' ? 'bg-amber-500' :
+                              tag.value === 'rose' ? 'bg-rose-500' : 'bg-gray-400'
+                            }`} />
+                            <span>{tag.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </FormField>
+                </div>
               </div>
             </div>
           )}

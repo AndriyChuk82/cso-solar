@@ -48,6 +48,7 @@ export interface SemanticProject {
   internalComment: string;        // field44
   reserve: string;                // field45
   serviceContractDate?: string;   // Дата договору підряду CSO Solar
+  colorTag?: string;              // Кольорова мітка / тип замовника (purple, blue, emerald, amber, rose, none)
   folderUrl?: string;
   createdAt?: string;
 }
