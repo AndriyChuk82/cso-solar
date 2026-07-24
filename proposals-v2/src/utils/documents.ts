@@ -349,26 +349,26 @@ export function generateTTNHTML(data: any): string {
             .page-break { page-break-after: always; }
           }
           * { box-sizing: border-box; }
-          body { font-family: 'Times New Roman', Times, serif; font-size: 10px; color: #000; background: #fff; margin: 0; padding: 0; line-height: 1.15; }
+          body { font-family: 'Times New Roman', Times, serif; font-size: 11px; color: #000; background: #fff; margin: 0; padding: 0; line-height: 1.25; }
           .container { width: 280mm; margin: 0 auto; position: relative; }
           
-          .top-right-appendix { position: absolute; top: 0; right: 0; text-align: right; font-size: 8.5px; line-height: 1.2; }
+          .top-right-appendix { position: absolute; top: 0; right: 0; text-align: right; font-size: 9.5px; line-height: 1.25; }
           
-          .header-center { text-align: center; margin-top: 20px; margin-bottom: 12px; }
-          .main-title { font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
-          .form-number { position: absolute; top: 50px; right: 0; font-weight: bold; font-size: 10px; }
+          .header-center { text-align: center; margin-top: 25px; margin-bottom: 22px; }
+          .main-title { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+          .form-number { position: absolute; top: 60px; right: 0; font-weight: bold; font-size: 11px; }
           
-          .date-line { font-size: 12px; margin-top: 5px; font-weight: bold; }
-          .date-gap { display: inline-block; border-bottom: 1px solid #000; min-width: 30px; text-align: center; }
-          .date-month-gap { display: inline-block; border-bottom: 1px solid #000; min-width: 90px; text-align: center; }
+          .date-line { font-size: 13px; margin-top: 6px; font-weight: bold; }
+          .date-gap { display: inline-block; border-bottom: 1px solid #000; min-width: 35px; text-align: center; }
+          .date-month-gap { display: inline-block; border-bottom: 1px solid #000; min-width: 100px; text-align: center; }
           
-          .row { display: flex; align-items: flex-end; margin-bottom: 8px; width: 100%; }
-          .field-wrap { display: flex; flex-direction: column; flex-grow: 1; margin-right: 12px; }
+          .row { display: flex; align-items: flex-end; margin-bottom: 18px; width: 100%; }
+          .field-wrap { display: flex; flex-direction: column; flex-grow: 1; margin-right: 15px; }
           .field-wrap:last-child { margin-right: 0; }
           .field-top { display: flex; align-items: flex-end; }
-          .label { white-space: nowrap; margin-right: 5px; font-weight: bold; font-size: 9.5px; }
-          .value { border-bottom: 1px solid #000; flex-grow: 1; text-align: center; min-height: 14px; font-family: Arial, sans-serif; font-size: 10px; padding: 0 4px; }
-          .subtext { font-size: 7px; text-align: center; margin-top: 1px; line-height: 1.05; }
+          .label { white-space: nowrap; margin-right: 6px; font-weight: bold; font-size: 11px; }
+          .value { border-bottom: 1px solid #000; flex-grow: 1; text-align: center; min-height: 18px; font-family: Arial, sans-serif; font-size: 11.5px; padding: 0 4px; line-height: 1.2; }
+          .subtext { font-size: 8px; text-align: center; margin-top: 2px; line-height: 1.1; }
           
           .table-title { text-align: center; font-weight: bold; text-transform: uppercase; margin: 12px 0 6px 0; font-size: 12px; }
           table { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 9px; margin-bottom: 8px; }
