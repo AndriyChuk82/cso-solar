@@ -32,6 +32,8 @@ export interface TTNData {
   vatSum: string;
   additionalDocs: string;
   sealType: 'none' | 'cso' | 'fop';
+  carStoragePlace?: string;
+  grossWeightWords?: string;
 }
 
 export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTNModalProps) {
@@ -70,6 +72,8 @@ export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTN
   const [totalSumWords, setTotalSumWords] = useState('');
   const [vatSum, setVatSum] = useState('');
   const [additionalDocs, setAdditionalDocs] = useState('');
+  const [carStoragePlace, setCarStoragePlace] = useState('');
+  const [grossWeightWords, setGrossWeightWords] = useState('');
   const [sealType, setSealType] = useState<'none' | 'cso' | 'fop'>('none');
 
   if (!isOpen) return null;
@@ -140,6 +144,8 @@ export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTN
       vatSum,
       additionalDocs,
       sealType,
+      carStoragePlace,
+      grossWeightWords,
     };
 
     if (onPrint) onPrint(data);
@@ -203,6 +209,19 @@ export function TTNModal({ isOpen, onClose, proposal, onPrint, onComplete }: TTN
                 className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded focus:ring-1 focus:ring-primary transition-colors"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-slate-400 mb-1">
+              Місце де зберігається автомобіль (адреса перевізника/філії)
+            </label>
+            <input
+              type="text"
+              value={carStoragePlace}
+              onChange={(e) => setCarStoragePlace(e.target.value)}
+              placeholder="Адреса місцезнаходження перевізника чи його філії..."
+              className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded focus:ring-1 focus:ring-primary transition-colors"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">

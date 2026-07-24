@@ -299,93 +299,113 @@ function generateDeliveryNoteHTML(proposal: Proposal): string {
   `;
 }
 
-function generateTTNHTMLWithData(proposal: Proposal, data: TTNData): string {
-  const dateStr = data.date ? new Date(data.date) : new Date();
-  const day = dateStr.getDate().toString().padStart(2, '0');
-  const month = ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"][dateStr.getMonth()];
-  const year = dateStr.getFullYear().toString().substring(2);
-  
-  const itemsHTML = (data.selectedItems || []).map((item, i) => `
-    <tr>
-      <td>${i + 1}</td>
-      <td style="text-align: left;">${item.editedName || item.name || item.product?.name || 'Без назви'}</td>
-      <td>${item.unit || item.product?.unit || 'шт.'}</td>
-      <td>${item.editedQuantity || item.quantity || 0}</td>
-      <td style="color:#fff">_</td>
-      <td style="color:#fff">_</td>
-      <td></td>
-      <td></td>
-      <td></td>
-    </tr>
-  `).join('');
+export function generateTTNHTMLWithData(_proposal: Proposal, data: TTNData): string {
+  return generateTTNHTML(data);
+}
 
-  const totalQty = data.selectedItems.reduce((acc, item) => acc + (item.editedQuantity || item.quantity), 0);
+export function generateTTNHTML(data: any): string {
+  const dateObj = data.date ? new Date(data.date) : new Date();
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const monthNames = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня', 'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];
+  const month = monthNames[dateObj.getMonth()];
+  const year = String(dateObj.getFullYear()).slice(-2);
+
+  const selectedItems = data.selectedItems || [];
+  let totalQty = 0;
+  const itemsHTML = selectedItems.map((item: any, i: number) => {
+    const qty = item.editedQuantity || item.quantity || 1;
+    totalQty += qty;
+    const name = item.editedName || item.name || item.product?.name || '';
+    const unit = item.unit || item.product?.unit || 'шт';
+    return `
+      <tr>
+        <td>${i + 1}</td>
+        <td style="text-align: left;">${name}</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>${unit}</td>
+        <td>${qty}</td>
+        <td>—</td>
+        <td>—</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    `;
+  }).join('');
 
   return `
-    <html>
+    <!DOCTYPE html>
+    <html lang="uk">
       <head>
-        <title>ТТН ${proposal.number} - Друк</title>
+        <meta charset="UTF-8">
+        <title>Товарно-транспортна накладна (Форма № 1-ТН)</title>
         <style>
-          @page { size: A4 landscape; margin: 10mm; }
-          body { font-family: 'Times New Roman', Times, serif; font-size: 11px; color: #000; background: #fff; margin: 0; padding: 0; line-height: 1.1; }
-          .container { width: 270mm; margin: 0 auto; position: relative; }
+          @page { size: A4 landscape; margin: 8mm; }
+          @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print { display: none !important; }
+            .page-break { page-break-after: always; }
+          }
+          * { box-sizing: border-box; }
+          body { font-family: 'Times New Roman', Times, serif; font-size: 10px; color: #000; background: #fff; margin: 0; padding: 0; line-height: 1.15; }
+          .container { width: 280mm; margin: 0 auto; position: relative; }
           
-          .top-right-appendix { position: absolute; top: 0; right: 0; text-align: right; font-size: 10px; line-height: 1.2; }
-          .top-right-appendix a { text-decoration: underline; color: blue; }
+          .top-right-appendix { position: absolute; top: 0; right: 0; text-align: right; font-size: 8.5px; line-height: 1.2; }
           
-          .header-center { text-align: center; margin-top: 30px; margin-bottom: 20px; }
-          .main-title { font-size: 14px; font-weight: bold; text-transform: uppercase; }
-          .form-number { position: absolute; top: 55px; right: 0; font-weight: bold; }
+          .header-center { text-align: center; margin-top: 20px; margin-bottom: 12px; }
+          .main-title { font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+          .form-number { position: absolute; top: 50px; right: 0; font-weight: bold; font-size: 10px; }
           
-          .date-line { font-size: 13px; margin-top: 5px; }
-          .date-gap { display: inline-block; border-bottom: 1px solid #000; min-width: 40px; text-align: center; }
-          .date-month-gap { display: inline-block; border-bottom: 1px solid #000; min-width: 100px; text-align: center; }
+          .date-line { font-size: 12px; margin-top: 5px; font-weight: bold; }
+          .date-gap { display: inline-block; border-bottom: 1px solid #000; min-width: 30px; text-align: center; }
+          .date-month-gap { display: inline-block; border-bottom: 1px solid #000; min-width: 90px; text-align: center; }
           
-          .row { display: flex; align-items: flex-end; margin-bottom: 12px; }
-          .field-wrap { display: flex; flex-direction: column; flex-grow: 1; margin-right: 15px; }
+          .row { display: flex; align-items: flex-end; margin-bottom: 8px; width: 100%; }
+          .field-wrap { display: flex; flex-direction: column; flex-grow: 1; margin-right: 12px; }
           .field-wrap:last-child { margin-right: 0; }
           .field-top { display: flex; align-items: flex-end; }
-          .label { white-space: nowrap; margin-right: 5px; }
-          .value { border-bottom: 1px solid #000; flex-grow: 1; text-align: center; min-height: 14px; font-family: Arial, sans-serif; font-size: 11px; padding: 0 4px; }
-          .subtext { font-size: 7.5px; text-align: center; margin-top: 1px; line-height: 1; }
+          .label { white-space: nowrap; margin-right: 5px; font-weight: bold; font-size: 9.5px; }
+          .value { border-bottom: 1px solid #000; flex-grow: 1; text-align: center; min-height: 14px; font-family: Arial, sans-serif; font-size: 10px; padding: 0 4px; }
+          .subtext { font-size: 7px; text-align: center; margin-top: 1px; line-height: 1.05; }
           
-          .table-title { text-align: center; font-weight: bold; text-transform: uppercase; margin: 15px 0 8px 0; font-size: 13px; }
-          table { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 10px; margin-bottom: 10px; }
-          th, td { border: 1px solid #000; padding: 3px; text-align: center; vertical-align: middle; }
-          th { font-family: 'Times New Roman', Times, serif; font-size: 9.5px; font-weight: normal; }
+          .table-title { text-align: center; font-weight: bold; text-transform: uppercase; margin: 12px 0 6px 0; font-size: 12px; }
+          table { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 9px; margin-bottom: 8px; }
+          th, td { border: 1px solid #000; padding: 3px 2px; text-align: center; vertical-align: middle; }
+          th { font-family: 'Times New Roman', Times, serif; font-size: 8.5px; font-weight: normal; }
           
-          .signatures { display: flex; justify-content: space-between; margin-top: 15px; }
-          .sig-block { width: 45%; text-align: center; position: relative; }
-          .sig-line { border-bottom: 1px solid #000; height: 18px; margin-top: 5px; }
+          .signatures { display: flex; justify-content: space-between; margin-top: 12px; }
+          .sig-block { width: 48%; text-align: left; position: relative; }
+          .sig-line { border-bottom: 1px solid #000; height: 16px; margin-top: 12px; position: relative; }
+          .field-subtext { font-size: 7px; text-align: center; margin-top: 1px; }
           .page-break { page-break-after: always; }
           
-          .info-box { border: 1px solid #000; padding: 5px; margin-bottom: 15px; }
-          .stamp-box { display: inline-block; position: relative; width: 0; height: 0; vertical-align: top; }
-          .cso-seal-overlay { position: absolute; width: 140px; top: -35px; left: 50%; transform: translateX(-50%); pointer-events: none; mix-blend-mode: multiply; opacity: 0.9; z-index: 10; }
+          .cso-seal-overlay { position: absolute; width: 130px; top: -55px; left: 50%; transform: translateX(-50%); pointer-events: none; mix-blend-mode: multiply; opacity: 0.92; z-index: 10; }
         </style>
       </head>
       <body>
         <div class="container">
-          <!-- Page 1 Overlay Info -->
+          <!-- Page 1 Front Side -->
           <div class="top-right-appendix">
-            <a href="#">Додаток 7</a><br>
-            до <a href="#">Правил перевезень вантажів автомобільним транспортом в Україні</a><br>
+            Додаток 7<br>
+            до Правил перевезень вантажів автомобільним транспортом в Україні<br>
             (пункт 11.1 глави 11)
           </div>
           
           <div class="header-center">
             <div class="main-title">ТОВАРНО-ТРАНСПОРТНА НАКЛАДНА</div>
             <div class="date-line">
-              № « <span class="date-gap">${day}</span> » <span class="date-month-gap">${month}</span> 20<span class="date-gap">${year}</span> року
+              N _________ " <span class="date-gap">${day}</span> " <span class="date-month-gap">${month}</span> 20<span class="date-gap">${year}</span> року
             </div>
           </div>
           <div class="form-number">Форма № 1-ТН</div>
           
-          <div class="row" style="width: 400px; margin-bottom: 25px;">
+          <div class="row" style="width: 350px; margin-bottom: 10px;">
             <div class="field-wrap">
               <div class="field-top">
                 <span class="label">Місце складання</span>
-                <span class="value">${data.place}</span>
+                <span class="value">${data.place || ''}</span>
               </div>
             </div>
           </div>
@@ -400,107 +420,135 @@ function generateTTNHTMLWithData(proposal: Proposal, data: TTNData): string {
               <div class="field-top"><span class="label">Причіп/напівпричіп</span><span class="value">${data.trailer || ''}</span></div>
               <div class="subtext">(марка, модель, тип, реєстраційний номер)</div>
             </div>
-            <div class="field-wrap" style="flex: 1;">
-              <div class="field-top"><span class="label">Вид перевезень</span><span class="value">${data.transportType}</span></div>
+            <div class="field-wrap" style="flex: 1.2;">
+              <div class="field-top"><span class="label">Вид перевезень</span><span class="value">${data.transportType || ''}</span></div>
+            </div>
+          </div>
+
+          <!-- Line 2: Car storage place -->
+          <div class="row">
+            <div class="field-wrap">
+              <div class="field-top"><span class="label">Місце де зберігається автомобіль*</span><span class="value">${data.carStoragePlace || ''}</span></div>
+              <div class="subtext">(адреса місцезнаходження автомобільного перевізника, його структурного підрозділу або філії, де зберігається транспортний засіб)</div>
             </div>
           </div>
           
-          <!-- Line 2: Carrier, Driver -->
+          <!-- Line 3: Carrier, Driver -->
           <div class="row">
             <div class="field-wrap" style="flex: 2;">
               <div class="field-top"><span class="label">Автомобільний перевізник</span><span class="value">${data.carrier || ''}</span></div>
-              <div class="subtext">(повне найменування (прізвище (за наявності), власне ім'я та по батькові (за наявності), унікальний номер запису в Єдиному державному демографічному реєстрі (за наявності), код платника податків...)</div>
+              <div class="subtext">(повне найменування (прізвище (за наявності), власне ім'я та по батькові (за наявності), унікальний номер запису в Єдиному державному демографічному реєстрі (за наявності), код платника податків згідно з Єдиним державним реєстром підприємств та організацій України або податковий номер (реєстраційний номер облікової картки платника податків або серія (за наявності) та номер паспорта громадянина України (для фізичних осіб, які через свої релігійні переконання відмовляються від прийняття реєстраційного номера облікової картки платника податків та повідомили про це відповідний контролюючий орган і мають відмітку в паспорті))</div>
             </div>
-            <div class="field-wrap" style="flex: 1;">
+            <div class="field-wrap" style="flex: 1.2;">
               <div class="field-top"><span class="label">Водій</span><span class="value">${data.driver || ''}</span></div>
               <div class="subtext">(прізвище (за наявності), власне ім'я та по батькові (за наявності), унікальний номер запису в Єдиному державному демографічному реєстрі (за наявності), номер посвідчення водія)</div>
             </div>
           </div>
           
-          <!-- Line 3: Sender -->
+          <!-- Line 4: Sender -->
           <div class="row">
             <div class="field-wrap">
               <div class="field-top"><span class="label">Вантажовідправник</span><span class="value">${data.sender || ''}</span></div>
-              <div class="subtext">(повне найменування / ПІБ, унікальний номер запису в ЄДДР (за наявності), код платника податків згідно з ЄДРПОУ або податковий номер)</div>
+              <div class="subtext">(повне найменування (прізвище (за наявності), власне ім'я та по батькові (за наявності), унікальний номер запису в Єдиному державному демографічному реєстрі (за наявності), код платника податків згідно з Єдиним державним реєстром підприємств та організацій України або податковий номер (реєстраційний номер облікової картки платника податків або серія (за наявності) та номер паспорта громадянина України (для фізичних осіб, які через свої релігійні переконання відмовляються від прийняття реєстраційного номера облікової картки платника податків та повідомили про це відповідний контролюючий орган і мають відмітку в паспорті))</div>
             </div>
           </div>
           
-          <!-- Line 4: Receiver -->
+          <!-- Line 5: Receiver -->
           <div class="row">
             <div class="field-wrap">
               <div class="field-top"><span class="label">Вантажоодержувач</span><span class="value">${data.receiver || ''}</span></div>
-              <div class="subtext">(повне найменування / ПІБ, унікальний номер запису в ЄДДР (за наявності), код платника податків згідно з ЄДРПОУ або податковий номер)</div>
+              <div class="subtext">(повне найменування (прізвище (за наявності), власне ім'я та по батькові (за наявності), унікальний номер запису в Єдиному державному демографічному реєстрі (за наявності), код платника податків згідно з Єдиним державним реєстром підприємств та організацій України або податковий номер (реєстраційний номер облікової картки платника податків або серія (за наявності) та номер паспорта громадянина України (для фізичних осіб, які через свої релігійні переконання відмовляються від прийняття реєстраційного номера облікової картки платника податків та повідомили про це відповідний контролюючий орган і мають відмітку в паспорті))</div>
             </div>
           </div>
           
-          <!-- Line 5: Load/Unload Points -->
+          <!-- Line 6: Load/Unload Points -->
           <div class="row">
-            <div class="field-wrap">
+            <div class="field-wrap" style="flex: 1;">
               <div class="field-top"><span class="label">Пункт навантаження</span><span class="value">${data.loadPoint || ''}</span></div>
               <div class="subtext">(місцезнаходження)</div>
             </div>
-            <div class="field-wrap">
+            <div class="field-wrap" style="flex: 1;">
               <div class="field-top"><span class="label">Пункт розвантаження</span><span class="value">${data.unloadPoint || ''}</span></div>
               <div class="subtext">(місцезнаходження)</div>
             </div>
           </div>
           
-          <!-- Line 6: Qty places, weight, receiver driver -->
+          <!-- Line 7: Qty places, weight, receiver driver -->
           <div class="row">
             <div class="field-wrap" style="flex: 1;">
               <div class="field-top"><span class="label">кількість місць</span><span class="value">${totalQty}</span></div>
               <div class="subtext">(словами)</div>
             </div>
             <div class="field-wrap" style="flex: 1;">
-              <div class="field-top"><span class="label">масою брутто, т</span><span class="value"></span></div>
+              <div class="field-top"><span class="label">масою брутто, т</span><span class="value">${data.grossWeightWords || ''}</span></div>
               <div class="subtext">(словами)</div>
             </div>
-            <div class="field-wrap" style="flex: 1;">
+            <div class="field-wrap" style="flex: 1.5;">
               <div class="field-top"><span class="label">отримав водій/експедитор</span><span class="value">${data.driver || ''}</span></div>
               <div class="subtext">(прізвище (за наявності), власне ім'я та по батькові (за наявності), унікальний номер запису в ЄДДР (за наявності), посада, підпис)</div>
             </div>
           </div>
           
-          <!-- Line 7: Vehicle Data -->
-          <div class="row" style="margin-top: 10px;">
-            <span class="label" style="font-size: 9px;">Відомості про транспортний засіб (автомобіль/автопоїзд/комбінований транспортний засіб)</span>
-            <div class="field-wrap" style="width: 80px;"><div class="value">${data.carLength}</div><div class="subtext">(довжина, м)</div></div>
-            <div class="field-wrap" style="width: 80px;"><div class="value">${data.carWidth}</div><div class="subtext">(ширина, м)</div></div>
-            <div class="field-wrap" style="width: 80px;"><div class="value">${data.carHeight}</div><div class="subtext">(висота, м)</div></div>
-            <div class="field-wrap"><div class="value">${data.totalWeightWithCargo}</div><div class="subtext">(загальна вага/маса з вантажем та маса брутто, т)</div></div>
+          <!-- Line 8: Vehicle Data -->
+          <div class="row" style="margin-top: 5px;">
+            <span class="label" style="font-size: 8.5px;">Відомості про транспортний засіб<br>(автомобіль/автопоїзд/комбінований транспортний засіб)</span>
+            <div class="field-wrap" style="width: 75px;"><div class="value">${data.carLength || ''}</div><div class="subtext">(довжина, м)</div></div>
+            <div class="field-wrap" style="width: 75px;"><div class="value">${data.carWidth || ''}</div><div class="subtext">(ширина, м)</div></div>
+            <div class="field-wrap" style="width: 75px;"><div class="value">${data.carHeight || ''}</div><div class="subtext">(висота, м)</div></div>
+            <div class="field-wrap" style="flex: 1;"><div class="value">${data.totalWeightWithCargo || ''}</div><div class="subtext">(загальна вага/маса з вантажем та маса брутто, т)</div></div>
           </div>
           
-          <!-- Line 8: Total Sum -->
+          <!-- Line 9: Total Sum -->
           <div class="row">
             <span class="label">Усього відпущено на загальну суму</span>
-            <div class="field-wrap" style="flex: 3;"><div class="value">${data.totalSumWords}</div><div class="subtext">(словами, з урахуванням ПДВ)</div></div>
-            <span class="label">, у тому числі ПДВ</span>
-            <div class="field-wrap" style="flex: 1;"><div class="value">${data.vatSum}</div></div>
+            <div class="field-wrap" style="flex: 3;"><div class="value">${data.totalSumWords || ''}</div><div class="subtext">(словами, з урахуванням ПДВ)</div></div>
+            <span class="label">у тому числі ПДВ</span>
+            <div class="field-wrap" style="flex: 1;"><div class="value">${data.vatSum || ''}</div></div>
+            <span class="label">грн.</span>
           </div>
           
-          <!-- Line 9: Docs -->
+          <!-- Line 10: Docs -->
           <div class="row">
             <div class="field-wrap">
-              <div class="field-top"><span class="label">Супровідні документи на вантаж</span><span class="value">${data.additionalDocs}</span></div>
+              <div class="field-top"><span class="label">Супровідні документи на вантаж</span><span class="value">${data.additionalDocs || ''}</span></div>
             </div>
           </div>
 
           <div class="page-break"></div>
 
-          <!-- Page 2 -->
-          <div class="table-title">ВІДОМОСТІ ПРО ВАНТАЖ</div>
+          <!-- Page 2 Back Side -->
+          <div style="text-align: right; font-weight: bold; font-size: 9px; margin-bottom: 4px;">Зворотній бік</div>
+
+          <div class="table-title" style="margin-top: 0;">ВІДОМОСТІ ПРО ВАНТАЖ</div>
           <table>
             <thead>
               <tr>
-                <th style="width: 4%">№ з/п</th>
-                <th style="width: 35%">Найменування вантажу</th>
-                <th style="width: 8%">Одиниця виміру</th>
-                <th style="width: 8%">Кількість місць</th>
-                <th style="width: 10%">Ціна без ПДВ, грн</th>
-                <th style="width: 10%">Загальна сума з ПДВ, грн</th>
-                <th style="width: 8%">Вид пакування</th>
-                <th style="width: 10%">Документи з вантажем</th>
-                <th style="width: 7%">Маса брутто, т</th>
+                <th style="width: 3%">№<br>з/п</th>
+                <th style="width: 25%">Найменування вантажу (туші, напівтуші, четвертини, відруби, шматки м'яса)** / номер контейнера; клас небезпечних речовин, до якого віднесено вантаж, у разі перевезення небезпечних вантажів</th>
+                <th style="width: 10%">Ідентифікаційний номер тварини від якої отримано сировину**</th>
+                <th style="width: 6%">Вид тварини**</th>
+                <th style="width: 8%">Температурний режим транспортування***</th>
+                <th style="width: 7%">Одиниця вимірювання</th>
+                <th style="width: 6%">Кількість місць</th>
+                <th style="width: 8%">Ціна без ПДВ за одиницю, грн</th>
+                <th style="width: 9%">Загальна сума з ПДВ, грн</th>
+                <th style="width: 6%">Вид пакування</th>
+                <th style="width: 8%">Документи з вантажем</th>
+                <th style="width: 5%">Маса брутто, т</th>
+              </tr>
+              <tr style="font-size: 7.5px; text-align: center; font-weight: bold;">
+                <td>1</td>
+                <td>2</td>
+                <td>3</td>
+                <td>4</td>
+                <td>5</td>
+                <td>6</td>
+                <td>7</td>
+                <td>8</td>
+                <td>9</td>
+                <td>10</td>
+                <td>11</td>
+                <td>12</td>
               </tr>
             </thead>
             <tbody>
@@ -508,28 +556,34 @@ function generateTTNHTMLWithData(proposal: Proposal, data: TTNData): string {
             </tbody>
             <tfoot>
               <tr>
-                <td colspan="3" style="text-align: left; font-weight: bold;">Усього:</td>
+                <td colspan="5" style="text-align: left; font-weight: bold;">Усього:</td>
+                <td></td>
                 <td style="font-weight: bold;">${totalQty}</td>
-                <td></td><td></td><td></td><td></td><td></td>
+                <td></td>
+                <td style="font-weight: bold;">0,00</td>
+                <td></td>
+                <td></td>
+                <td></td>
               </tr>
             </tfoot>
           </table>
 
-          <div class="signatures">
+          <div class="signatures" style="margin-top: 15px;">
             <div class="sig-block">
-              Здав (відповідальна особа вантажовідправника)
-              <div class="sig-line"></div>
-              ${data.sealType !== 'none' ? `<img src="${window.location.origin}/proposals/doc/${data.sealType === 'cso' ? 'sign_cso.png' : 'fop_past.jpg'}" class="cso-seal-overlay">` : ''}
-              <div class="field-subtext">(ПІБ, посада, підпис)</div>
+              <div style="font-weight: bold; text-align: left; margin-bottom: 2px;">Здав (відповідальна особа вантажовідправника)</div>
+              <div class="sig-line" style="margin-top: 15px; position: relative;">
+                ${data.sealType !== 'none' ? `<img src="${window.location.origin}/proposals/doc/${data.sealType === 'cso' ? 'sign_cso.png' : 'fop_past.jpg'}" class="cso-seal-overlay">` : ''}
+              </div>
+              <div class="field-subtext">(прізвище (за наявності), власне ім'я та по батькові (за наявності), посада, підпис)</div>
             </div>
             <div class="sig-block">
-              Прийняв (відповідальна особа вантажоодержувача)
-              <div class="sig-line"></div>
-              <div class="field-subtext">(ПІБ, посада, підпис)</div>
+              <div style="font-weight: bold; text-align: left; margin-bottom: 2px;">Прийняв (відповідальна особа вантажоодержувача)</div>
+              <div class="sig-line" style="margin-top: 15px;"></div>
+              <div class="field-subtext">(прізвище (за наявності), власне ім'я та по батькові (за наявності), посада, підпис)</div>
             </div>
           </div>
 
-          <div class="table-title" style="margin-top: 25px;">ВАНТАЖНО-РОЗВАНТАЖУВАЛЬНІ ОПЕРАЦІЇ</div>
+          <div class="table-title" style="margin-top: 20px;">ВАНТАЖНО-РОЗВАНТАЖУВАЛЬНІ ОПЕРАЦІЇ</div>
           <table>
             <thead>
               <tr>
@@ -543,6 +597,14 @@ function generateTTNHTMLWithData(proposal: Proposal, data: TTNData): string {
                 <th style="width: 10%">вибуття</th>
                 <th style="width: 10%">простою</th>
               </tr>
+              <tr style="font-size: 7.5px; text-align: center; font-weight: bold;">
+                <td>1</td>
+                <td>2</td>
+                <td>3</td>
+                <td>4</td>
+                <td>5</td>
+                <td>6</td>
+              </tr>
             </thead>
             <tbody>
               <tr>
@@ -555,6 +617,12 @@ function generateTTNHTMLWithData(proposal: Proposal, data: TTNData): string {
               </tr>
             </tbody>
           </table>
+
+          <div style="font-size: 7px; margin-top: 8px; line-height: 1.25; text-align: left;">
+            * відомості заповнюються у випадках передбачених Положенням про робочий час і час відпочинку водіїв колісних транспортних засобів, затвердженого наказом Міністерства транспорту та зв'язку України від 07 червня 2010 року №340<br>
+            ** відомості заповнюються у разі перевезення туш, напівтуш, четвертин, відрубів, шматків м'яса.<br>
+            *** відомості заповнюються у разі перевезення харчових продуктів, які потребують дотримання температурного режиму.
+          </div>
         </div>
         <script>
           window.onload = () => setTimeout(() => window.print(), 800);
