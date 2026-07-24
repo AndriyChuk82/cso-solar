@@ -1,5 +1,6 @@
 import { CONFIG } from '../config';
 import type { Product, Category, SupplierOffer } from '../types';
+import { SOLARVERSE_STATIC_PRODUCTS } from '../data/solarverseData';
 
 /**
  * Очищує значення від об'єктів Google Sheets
@@ -1219,7 +1220,7 @@ export async function fetchAllData() {
         }).filter((p: any) => p.name.length > 2 && p.name !== 'Фото' && p.price > 0);
       }
       
-      if (res.solarverseProducts && Array.isArray(res.solarverseProducts)) {
+      if (res.solarverseProducts && Array.isArray(res.solarverseProducts) && res.solarverseProducts.length > 0) {
         solarverseProducts = res.solarverseProducts.map((p: any) => {
           return {
             id: p.id || `sv_${Math.random().toString(36).substring(7)}`,
@@ -1237,6 +1238,8 @@ export async function fetchAllData() {
             availabilityDate: p.availabilityDate
           };
         }).filter((p: any) => p.name.length > 2 && p.price > 0);
+      } else {
+        solarverseProducts = SOLARVERSE_STATIC_PRODUCTS;
       }
     }
     

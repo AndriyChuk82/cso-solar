@@ -25,6 +25,8 @@ export interface Product {
   power?: string;
   warranty?: string;
   inStock?: boolean;
+  originalName?: string;
+  warehouse?: string;
   image?: string;
   article?: string; // Артикул товару
   priceUah?: number; // Ціна в гривнях
