@@ -2599,8 +2599,16 @@ function getSolarverseProducts() {
 
 
         
-        // Check availability
-        const inStock = !(stockStr.toLowerCase().includes('нема') || stockStr.toLowerCase().includes('відсутн') || stockStr === '0' || stockStr.toLowerCase() === 'нет' || stockStr.toLowerCase() === 'ні');
+        // Check availability: 'в резерві', 'в дорозі', 'нема' count as out of stock
+        const lowerStock = stockStr.toLowerCase();
+        const inStock = (lowerStock.includes('наяв') || lowerStock.includes('склад')) &&
+                        !lowerStock.includes('дорог') &&
+                        !lowerStock.includes('резерв') &&
+                        !lowerStock.includes('нема') &&
+                        !lowerStock.includes('відсутн') &&
+                        lowerStock !== '0' &&
+                        lowerStock !== 'нет' &&
+                        lowerStock !== 'ні';
         
         // Extract manufacturer
         let manufacturer = '';

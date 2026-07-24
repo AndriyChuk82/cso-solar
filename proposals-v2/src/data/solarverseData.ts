@@ -102,7 +102,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "Сонячні батареї",
     "category": "ФМ",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Tongwei",
     "warehouse": "Київ"
   },
@@ -192,7 +192,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "АКБ та BMS",
     "category": "BESS",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Deye",
     "warehouse": ""
   },
@@ -207,7 +207,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "АКБ та BMS",
     "category": "BESS",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Deye",
     "warehouse": ""
   },
@@ -222,7 +222,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "АКБ та BMS",
     "category": "BESS",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Deye",
     "warehouse": ""
   },
@@ -267,7 +267,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "АКБ та BMS",
     "category": "BESS",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Deye",
     "warehouse": ""
   },
@@ -282,7 +282,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "АКБ та BMS",
     "category": "BESS",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "GSL",
     "warehouse": ""
   },
@@ -297,7 +297,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "АКБ та BMS",
     "category": "BESS",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "GSL",
     "warehouse": ""
   },
@@ -567,7 +567,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "Інвертори",
     "category": "Мережеві інвертори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Deye",
     "warehouse": ""
   },
@@ -762,7 +762,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "Інвертори",
     "category": "Гібридні інвертори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Solis",
     "warehouse": "Київ"
   },
@@ -822,7 +822,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "Інвертори",
     "category": "Гібридні інвертори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Solis",
     "warehouse": "Київ"
   },
@@ -837,7 +837,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "Інвертори",
     "category": "Гібридні інвертори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Solis",
     "warehouse": "Київ"
   },
@@ -852,7 +852,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "Інвертори",
     "category": "Гібридні інвертори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Solis",
     "warehouse": "Київ/Івано-Франкове"
   },
@@ -867,7 +867,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "Інвертори",
     "category": "Гібридні інвертори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Solis",
     "warehouse": "Київ"
   },
@@ -897,7 +897,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "Інвертори",
     "category": "Гібридні інвертори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Deye",
     "warehouse": "Київ"
   },
@@ -942,7 +942,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "Інвертори",
     "category": "Гібридні інвертори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Deye",
     "warehouse": "Київ"
   },
@@ -957,7 +957,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "Інвертори",
     "category": "Гібридні інвертори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Deye",
     "warehouse": "Київ"
   },
@@ -972,7 +972,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "Інвертори",
     "category": "Гібридні інвертори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Deye",
     "warehouse": "Київ"
   },
@@ -1002,7 +1002,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "Інвертори",
     "category": "Гібридні інвертори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Deye",
     "warehouse": "Київ"
   },
@@ -1032,7 +1032,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "АКБ та BMS",
     "category": "Аккумулятори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Deye",
     "warehouse": "Київ"
   },
@@ -1047,7 +1047,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "АКБ та BMS",
     "category": "Аккумулятори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Deye",
     "warehouse": "Київ"
   },
@@ -1077,7 +1077,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "АКБ та BMS",
     "category": "Аккумулятори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Deye",
     "warehouse": "Київ"
   },
@@ -1122,7 +1122,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "unit": "шт",
     "mainCategory": "АКБ та BMS",
     "category": "Аккумулятори",
-    "inStock": true,
+    "inStock": false,
     "manufacturer": "Dyness",
     "warehouse": "Київ"
   },

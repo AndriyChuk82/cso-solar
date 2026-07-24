@@ -1,1 +1,0 @@
-import{l as e}from"./index-vSTZLo51.js";export{e as fetchAllData};
