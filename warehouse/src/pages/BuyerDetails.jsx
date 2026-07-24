@@ -527,9 +527,8 @@ export default function BuyerDetails() {
   const processedTransactions = [];
   const linkedPaymentsMap = {}; // invoiceId -> array of payments
 
-  // Спочатку збираємо всі пов'язані платежі (які не архівні)
+  // Спочатку збираємо всі пов'язані платежі
   transactions.forEach(t => {
-    if (t.is_archived === true) return;
     if (t.type === 'payment') {
       const match = t.comment?.match(/\[invoice_id:([\w-]+)\]/);
       if (match) {
@@ -546,8 +545,8 @@ export default function BuyerDetails() {
       const match = t.comment?.match(/\[invoice_id:([\w-]+)\]/);
       if (match) {
         const invoiceId = match[1];
-        // Перевіряємо, чи існує накладна (вона має бути не архівна)
-        const invoiceExists = transactions.some(inv => inv.id === invoiceId && inv.is_archived !== true);
+        // Перевіряємо, чи існує накладна
+        const invoiceExists = transactions.some(inv => inv.id === invoiceId);
         if (invoiceExists) {
           // Якщо накладна існує, не додаємо цей платіж як окремий рядок
           return;
@@ -581,7 +580,6 @@ export default function BuyerDetails() {
   const isSingleDoc = selectedTxFilter !== 'ALL';
 
   processedTransactions.forEach(t => {
-    if (t.is_archived === true) return;
     
     const isReservedIssue = t.type === 'issue' && t.status === 'reserved';
     const amt = isReservedIssue ? 0 : (parseFloat(t.amount) || 0);

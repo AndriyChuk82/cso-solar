@@ -101,9 +101,8 @@ export default function BuyersReport() {
   const processedTransactions = [];
   const linkedPaymentsMap = {}; // invoiceId -> array of payments
 
-  // Спочатку збираємо всі пов'язані платежі (які не архівні)
+  // Спочатку збираємо всі пов'язані платежі
   transactions.forEach(t => {
-    if (t.is_archived === true) return;
     if (t.type === 'payment') {
       const match = t.comment?.match(/\[invoice_id:([\w-]+)\]/);
       if (match) {
@@ -120,7 +119,7 @@ export default function BuyersReport() {
       const match = t.comment?.match(/\[invoice_id:([\w-]+)\]/);
       if (match) {
         const invoiceId = match[1];
-        const invoiceExists = transactions.some(inv => inv.id === invoiceId && inv.is_archived !== true);
+        const invoiceExists = transactions.some(inv => inv.id === invoiceId);
         if (invoiceExists) {
           // Якщо накладна існує, не додаємо цей платіж як окремий рядок
           return;
@@ -145,7 +144,7 @@ export default function BuyersReport() {
   const trialBalanceRows = buyers.map(buyer => {
     // Сортуємо транзакції клієнта хронологічно для правильного розрахунку накопичувального підсумку
     const buyerTx = [...processedTransactions]
-      .filter(t => t.buyer_id === buyer.id && t.is_archived !== true)
+      .filter(t => t.buyer_id === buyer.id)
       .sort((a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at));
     
     let uahOpening = 0, usdOpening = 0;

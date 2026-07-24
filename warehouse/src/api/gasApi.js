@@ -531,10 +531,9 @@ export async function getBuyersWithBalances() {
 
   txs.forEach(t => {
     if (!balanceMap[t.buyer_id]) return;
-    if (t.is_archived === true) return; // Ігноруємо архівні транзакції для активного балансу
     if (t.status === 'reserved') {
       balanceMap[t.buyer_id].reservedCount += 1;
-      return; // Ігноруємо резерви для активного балансу
+      return; // Ігноруємо незавершені броні для фінансового балансу
     }
     if (t.status === 'pending_price') {
       balanceMap[t.buyer_id].pendingCount += 1;
