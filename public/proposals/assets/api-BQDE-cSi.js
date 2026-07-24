@@ -1,1 +1,0 @@
-import{l as e}from"./index-Do7rBeqt.js";export{e as fetchAllData};

@@ -2,7 +2,7 @@ import { Product } from '../types';
 
 export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
   {
-    "id": "sv_lr7_60hvh_540m",
+    "id": "sv________________longi_solar_lr7_60hvh__540____23_93__37_11v_14_55a_1990_1134_30mm__lr7_60hvh_540m_",
     "name": "Longi LR7-60HVH-540M",
     "originalName": "LR7-60HVH-540M",
     "description": "Сонячна панель Longi Solar LR7-60HVH  540Вт (23.93%,37.11V:14.55A,1990*1134*30mm)(LR7-60HVH-540M)",
@@ -17,7 +17,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_lr8_66hgd_610m",
+    "id": "sv________________longi_solar_lr8_66hgd__610____22_8__40_51v_15_01a_2382_1134_30mm__lr8_66hgd_610m_",
     "name": "Longi LR8-66HGD-610M",
     "originalName": "LR8-66HGD-610M",
     "description": "Сонячна панель Longi Solar LR8-66HGD  610Вт (22,8%,40.51V:15.01A,2382*1134*30mm)(LR8-66HGD-610M)",
@@ -32,7 +32,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_sg66tg5b__715m",
+    "id": "sv________________sungrow_sg66tg5b_715m__23__40_65v_17_54a_2384_1303_33mm___sg66tg5b__715m_",
     "name": "Sungrow SG66TG5B -715M",
     "originalName": "SG66TG5B -715M",
     "description": "Сонячна панель Sungrow SG66TG5B 715M (23%,40,65V:17.54A,2384*1303*33mm) (SG66TG5B -715M)",
@@ -47,7 +47,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_twmnd_72hd575w",
+    "id": "sv________________tongwei_twmnd_72hd575w_575____22_3__43_08v_13_35a_2278_1134_30mm__twmnd_72hd575w_",
     "name": "Tongwei TWMND-72HD575W",
     "originalName": "TWMND-72HD575W",
     "description": "Сонячна панель TONGWEI TWMND-72HD575W 575Вт (22.3%,43.08V:13.35A,2278*1134*30mm)(TWMND-72HD575W)",
@@ -62,7 +62,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_twmnh_48hw465w",
+    "id": "sv________________tongwei_twmnh_48hw465w_465____twmnh_48hw465w_",
     "name": "Tongwei TWMNH-48HW465W",
     "originalName": "TWMNH-48HW465W",
     "description": "Сонячна панель TONGWEI TWMNH-48HW465W 465Вт (TWMNH-48HW465W)",
@@ -77,7 +77,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_twmnh_54hd505w",
+    "id": "sv________________tongwei_twmnh_54hd505w_505____22_7__33_940v_14_92a_1961_1134_30mm__twmnh_54hd505w_",
     "name": "Tongwei TWMNH-54HD505W",
     "originalName": "TWMNH-54HD505W",
     "description": "Сонячна панель TONGWEI TWMNH-54HD505W 505Вт (22.7%,33.940V:14.92A,1961*1134*30mm)(TWMNH-54HD505W)",
@@ -92,7 +92,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_twmnh_66hd635w",
+    "id": "sv________________tongwei_twmnh_66hd635w_635____twmnh_66hd635w_",
     "name": "Tongwei TWMNH-66HD635W",
     "originalName": "TWMNH-66HD635W",
     "description": "Сонячна панель TONGWEI TWMNH-66HD635W 635Вт (TWMNH-66HD635W)",
@@ -107,7 +107,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_dyness_bf100_c100",
+    "id": "sv____________________________dyness_bf100_100kwh_364v_280ah_lifepo4_ip55_fire_extinguisher_watercooled_bf100_c100_",
     "name": "DYNESS BF100-C100",
     "originalName": "DYNESS BF100-C100",
     "description": "Система збереження енергії DYNESS BF100 100kWh 364v 280AH lifepo4 IP55 Fire Extinguisher,WaterCooled(BF100-C100)",
@@ -122,7 +122,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_dyness_dh200f",
+    "id": "sv____________________________dyness_dh200f_100kw_pcs_768v_280ah_215kwh_lifepo4_ip55__3x50kw_mppt_fire_extinguisher_air_conditioner_dh200f_",
     "name": "DYNESS DH200F",
     "originalName": "DYNESS DH200F",
     "description": "Система збереження енергії DYNESS DH200F 100kW PCS 768v 280AH 215kwh lifepo4 IP55, 3x50kW MPPT Fire Extinguisher,air conditioner(DH200F)",
@@ -137,7 +137,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_dyness_dh200y",
+    "id": "sv____________________________dyness_dh200y_100kw_pcs_845v_280ah_232kwh_lifepo4_ip55__3x50kw_mppt_fire_extinguisher_watercooled_dh200y_",
     "name": "DYNESS DH200Y",
     "originalName": "DYNESS DH200Y",
     "description": "Система збереження енергії DYNESS DH200Y 100kW PCS 845v 280AH 232kwh lifepo4 IP55, 3x50kW MPPT Fire Extinguisher,WaterCooled(DH200Y)",
@@ -152,7 +152,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_ms_gs215_2h3",
+    "id": "sv____________________________deye_ms_gs215__100_kw__380_400vac__50_60hz_hv_215kwh_lifepo4_",
     "name": "Deye MS-GS215-2H3",
     "originalName": "MS-GS215-2H3",
     "description": "Система зберігання енергії Deye MS-GS215 (100 kW (380/400Vac, 50/60Hz)HV 215kWh LiFePO4)",
@@ -167,7 +167,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_ge_f240_bc_2_a3",
+    "id": "sv____________________________deye_ge_f240_240kwh__768v__314ah__lifepo4__ge_f240_bc_2_a3_",
     "name": "Deye GE-F240-BC-2-A3",
     "originalName": "GE-F240-BC-2-A3",
     "description": "Система зберігання енергії DEYE GE-F240 240kWh, 768V, 314Ah, LiFePO4 (GE-F240-BC-2-A3)",
@@ -182,7 +182,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_ge_f256_bc_2_a3",
+    "id": "sv____________________________deye_ge_f256_256kwh__820v__314ah__lifepo4__ge_f256_bc_2_a3_",
     "name": "Deye GE-F256-BC-2-A3",
     "originalName": "GE-F256-BC-2-A3",
     "description": "Система зберігання енергії DEYE GE-F256 256kWh, 820V, 314Ah, LiFePO4 (GE-F256-BC-2-A3)",
@@ -197,7 +197,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_mc_l430_2h3",
+    "id": "sv____________________________deye_mc_l430_2h3_200kw_768v_280ah_430_08kwh_lifepo4_ip54__fireextinguisher__liquidcooling__mc_l430_2h3_",
     "name": "Deye MC-L430-2H3",
     "originalName": "MC-L430-2H3",
     "description": "Система збереження енергії DEYE MC-L430-2H3 200kW 768V 280Ah 430.08kWh LiFePO4 IP54, FireExtinguisher, LiquidCooling (MC-L430-2H3)",
@@ -212,7 +212,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_mc_l430_bc_3",
+    "id": "sv____________________________deye_mc_l430_bc_3_768v_280ah_430_08kwh_lifepo4_ip54__fireextinguisher__liquidcooling__mc_l430_bc_3_",
     "name": "Deye MC-L430-BC-3",
     "originalName": "MC-L430-BC-3",
     "description": "Система збереження енергії DEYE MC-L430-BC-3 768V 280Ah 430.08kWh LiFePO4 IP54, FireExtinguisher, LiquidCooling (MC-L430-BC-3)",
@@ -227,7 +227,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_ems1000",
+    "id": "sv___________ems_____deye_ms_gs215__ems1000_",
     "name": "Deye EMS1000",
     "originalName": "EMS1000",
     "description": "Контролер EMS для DEYE MS-GS215 (EMS1000)",
@@ -242,7 +242,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_ms_ts500_2",
+    "id": "sv______________________deye_ms_ts500_500kw_10ms_____ms_gs215__ms_ts500_",
     "name": "Deye MS-TS500-2",
     "originalName": "MS-TS500-2",
     "description": "Комутаційна шафа АВР DEYE MS-TS500 500KW 10ms для MS-GS215 (MS-TS500)",
@@ -257,7 +257,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_ge_f60",
+    "id": "sv____________________________deye_ge_f60_50kw__lifepo4__hv_500_700v__100ah__61_44kwh__ge_f60_",
     "name": "Deye GE-F60",
     "originalName": "GE-F60",
     "description": "Система зберігання енергії DEYE GE-F60 50KW, LiFePO4, HV 500-700V, 100Ah, 61.44kWh (GE-F60)",
@@ -272,7 +272,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_gsl_r128k",
+    "id": "sv______________________gsl_460_8v_280ah_128kwh_lifepo4_gsl_r128k_",
     "name": "GSL-R128K",
     "originalName": "GSL-R128K",
     "description": "Акумуляторна батарея GSL 460.8v 280AH 128kwh lifepo4(GSL-R128K)",
@@ -287,7 +287,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_gsl_r186k",
+    "id": "sv______________________gsl_665_6v_280ah_186kwh_lifepo4_gsl_r186k_",
     "name": "GSL-R186K",
     "originalName": "GSL-R186K",
     "description": "Акумуляторна батарея GSL 665.6v 280AH 186kwh lifepo4(GSL-R186K)",
@@ -302,7 +302,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_gsl_bess_r209k",
+    "id": "sv____________________________gsl_bess_r209k_665_6v_314ah_209kwh_lifepo4_ip65__fire_extinguisher_airconditioner_with_air_channel_gsl_bess_r209k_",
     "name": "GSL-BESS-R209K",
     "originalName": "GSL-BESS-R209K",
     "description": "Система збереження енергії GSL-BESS-R209K 665.6v 314AH 209kwh lifepo4 IP65, Fire Extinguisher,AirConditioner with air channel(GSL-BESS-R209K)",
@@ -317,7 +317,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sg30cx_p2",
+    "id": "sv____________________sungrow_sg30cx_p2_30kw_3_mppt_220_380v____________asg01763_",
     "name": "Sungrow SG30CX-P2",
     "originalName": "SG30CX-P2",
     "description": "Мережевий інвертор SUNGROW SG30CX-P2 30kW 3 MPPT 220/380V Трифазний (ASG01763)",
@@ -332,7 +332,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sg50cx_p2",
+    "id": "sv____________________sungrow_sg50cx_p2_v1_50kw_4_mppt_220_380v____________asg01767_",
     "name": "Sungrow SG50CX-P2",
     "originalName": "SG50CX-P2",
     "description": "Мережевий інвертор SUNGROW SG50CX-P2_V1 50KW 4 MPPT 220/380V Трифазний (ASG01767)",
@@ -347,7 +347,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sg110cx_v112",
+    "id": "sv____________________sungrow_sg110cx_v112_110kw_9_mppt_220_380v____________asg02271_",
     "name": "Sungrow SG110CX-V112",
     "originalName": "SG110CX-V112",
     "description": "Мережевий інвертор SUNGROW SG110CX-V112 110KW 9 MPPT 220/380V Трифазний (ASG02271)",
@@ -362,7 +362,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sg125cx_p2",
+    "id": "sv____________________sungrow_sg125cx_p2_v_125kw_12_mppt_220_380v____________asg02271_",
     "name": "Sungrow SG125CX-P2",
     "originalName": "SG125CX-P2",
     "description": "Мережевий інвертор SUNGROW SG125CX-P2_V 125KW 12 MPPT 220/380V Трифазний (ASG02271)",
@@ -377,7 +377,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_com100d_eu",
+    "id": "sv________________________sungrow_com100d_eu_logger_up_to_30_devices_rs485__ethernet__4g__wlan__asq00183_",
     "name": "Sungrow COM100D-EU",
     "originalName": "COM100D-EU",
     "description": "Модуль коммунікаційний SUNGROW COM100D-EU Logger up to 30 devices RS485, Ethernet, 4G, WLAN (ASQ00183)",
@@ -392,7 +392,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_s5_gr3p15k",
+    "id": "sv____________________solis_s5_gr3p15k_15kw_2_mppt_220_380v____________s5_gr3p15k_",
     "name": "Solis S5-GR3P15K",
     "originalName": "S5-GR3P15K",
     "description": "Мережевий інвертор SOLIS S5-GR3P15K 15KW 2 MPPT 220/380V Трифазний (S5-GR3P15K)",
@@ -407,7 +407,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_s5_gr3p20k",
+    "id": "sv____________________solis_s5_gr3p20k_20kw_2_mppt_220_380v____________s5_gr3p20k_",
     "name": "Solis S5-GR3P20K",
     "originalName": "S5-GR3P20K",
     "description": "Мережевий інвертор SOLIS S5-GR3P20K 20KW 2 MPPT 220/380V Трифазний (S5-GR3P20K)",
@@ -422,7 +422,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_s5_gc30k",
+    "id": "sv____________________solis_s5_gc30k_30kw_3_mppt_220_380v_____________wi_fi__",
     "name": "Solis S5-GC30K",
     "originalName": "S5-GC30K",
     "description": "Мережевий інвертор Solis S5-GC30K 30KW 3 MPPT 220/380V Трифазний + Wi-Fi🔥",
@@ -437,7 +437,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_solis_100k_5g_pro",
+    "id": "sv____________________solis_solis_100k_5g_pro_100kw_8_mppt_220_380v_____________",
     "name": "Solis-100K-5G-PRO",
     "originalName": "Solis-100K-5G-PRO",
     "description": "Мережевий інвертор SOLIS Solis-100K-5G-PRO 100KW 8 MPPT 220/380V Трифазний 🔥",
@@ -452,7 +452,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sun_10k_g06p3_eu_am2_p1",
+    "id": "sv____________________deye_sun_10k_g06_10kw_2_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-10K-G06P3-EU-AM2-P1",
     "originalName": "SUN-10K-G06P3-EU-AM2-P1",
     "description": "Мережевий інвертор DEYE SUN-10K-G06 10KW 2 MPPT Wi-Fi 220/380V Трифазний",
@@ -467,7 +467,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sun_15k_g06p3_eu_am2_p1",
+    "id": "sv____________________deye_sun_15k_g06_15kw_2_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-15K-G06P3-EU-AM2-P1",
     "originalName": "SUN-15K-G06P3-EU-AM2-P1",
     "description": "Мережевий інвертор DEYE SUN-15K-G06 15KW 2 MPPT Wi-Fi 220/380V Трифазний",
@@ -482,7 +482,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sun_20k_g05",
+    "id": "sv____________________deye_sun_20k_g05_20kw_2_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-20K-G05",
     "originalName": "SUN-20K-G05",
     "description": "Мережевий інвертор DEYE SUN-20K-G05 20KW 2 MPPT Wi-Fi 220/380V Трифазний",
@@ -497,7 +497,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sun_25k_g05",
+    "id": "sv____________________deye_sun_25k_g05_25kw_2_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-25K-G05",
     "originalName": "SUN-25K-G05",
     "description": "Мережевий інвертор DEYE SUN-25K-G05 25KW 2 MPPT Wi-Fi 220/380V Трифазний",
@@ -512,7 +512,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sun_30k_g04",
+    "id": "sv____________________deye_sun_30k_g04_30kw_2_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-30K-G04",
     "originalName": "SUN-30K-G04",
     "description": "Мережевий інвертор DEYE SUN-30K-G04 30KW 2 MPPT Wi-Fi 220/380V Трифазний",
@@ -527,7 +527,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sun_50k_g04",
+    "id": "sv____________________deye_sun_50k_g04_50kw_4_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-50K-G04",
     "originalName": "SUN-50K-G04",
     "description": "Мережевий інвертор DEYE SUN-50K-G04 50KW 4 MPPT Wi-Fi 220/380V Трифазний",
@@ -542,7 +542,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sun_60k_g04p3_eu_am4",
+    "id": "sv____________________deye_sun_60k_g04_60kw_4_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-60K-G04P3-EU-AM4",
     "originalName": "SUN-60K-G04P3-EU-AM4",
     "description": "Мережевий інвертор DEYE SUN-60K-G04 60KW 4 MPPT Wi-Fi 220/380V Трифазний",
@@ -557,7 +557,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sun_80k_g04p3_eu_am4",
+    "id": "sv____________________deye_sun_80k_g_80kw_4_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-80K-G04P3-EU-AM4",
     "originalName": "SUN-80K-G04P3-EU-AM4",
     "description": "Мережевий інвертор DEYE SUN-80K-G 80KW 4 MPPT Wi-Fi 220/380V Трифазний",
@@ -572,7 +572,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sun_100__g03",
+    "id": "sv____________________deye_sun_100k_g03_100kw_6_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-100К-G03",
     "originalName": "SUN-100К-G03",
     "description": "Мережевий інвертор DEYE SUN-100K-G03 100KW 6 MPPT Wi-Fi 220/380V Трифазний",
@@ -587,7 +587,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sun_110k_g03",
+    "id": "sv____________________deye_sun_110k_g03_110kw_6_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-110K-G03",
     "originalName": "SUN-110K-G03",
     "description": "Мережевий інвертор DEYE SUN-110K-G03 110KW 6 MPPT Wi-Fi 220/380V Трифазний",
@@ -602,7 +602,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sun_120k_g01p3_eu",
+    "id": "sv____________________deye_sun_120k_g01p3_eu_120kw_8_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-120K-G01P3-EU",
     "originalName": "SUN-120K-G01P3-EU",
     "description": "Мережевий інвертор DEYE SUN-120K-G01P3-EU 120KW 8 MPPT Wi-Fi 220/380V Трифазний",
@@ -617,7 +617,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sun_125k_g01p3_eu",
+    "id": "sv____________________deye_sun_125k_g01p3_eu_125kw_8_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-125K-G01P3-EU",
     "originalName": "SUN-125K-G01P3-EU",
     "description": "Мережевий інвертор DEYE SUN-125K-G01P3-EU 125KW 8 MPPT Wi-Fi 220/380V Трифазний",
@@ -632,7 +632,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sun_130k_g01p3_eu_am8",
+    "id": "sv____________________deye_sun_130k_g01p3_eu_130kw_8_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-130K-G01P3-EU-AM8",
     "originalName": "SUN-130K-G01P3-EU-AM8",
     "description": "Мережевий інвертор DEYE SUN-130K-G01P3-EU 130KW 8 MPPT Wi-Fi 220/380V Трифазний",
@@ -647,7 +647,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sun_135k_g01p3_eu_am8",
+    "id": "sv____________________deye_sun_135k_g01p3_eu_135kw_8_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-135K-G01P3-EU-AM8",
     "originalName": "SUN-135K-G01P3-EU-AM8",
     "description": "Мережевий інвертор DEYE SUN-135K-G01P3-EU 135KW 8 MPPT Wi-Fi 220/380V Трифазний",
@@ -662,7 +662,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_sdm630mct_etl",
+    "id": "sv___________smart_meter_eastron_sdm630mct_etl____________________________esct_t36_500a_1a_________________________________",
     "name": "SDM630MCT-ETL",
     "originalName": "SDM630MCT-ETL",
     "description": "Лічільник Smart meter EASTRON SDM630MCT-ETL, з трансформаторами струму ESCT-T36 500A/1A(тільки в комплекті з Інвертором)",
@@ -677,7 +677,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": ""
   },
   {
-    "id": "sv_dtsu666",
+    "id": "sv___________chint_dtsu666_3_phase_meter_for_direct_measurement_up_to_80a__no_need_transformers_for_sungrow_bb002821_",
     "name": "Sungrow DTSU666",
     "originalName": "DTSU666",
     "description": "Лічільник CHINT DTSU666 3-PHASE METER for direct measurement up to 80A, no need transformers for SUNGROW(BB002821)",
@@ -693,66 +693,66 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
   },
   {
     "id": "sv_730400015060qurt",
-    "name": "730400015060QURT",
-    "originalName": "730400015060QURT",
-    "description": "Кабель сонячний KBE DB+ 4mm2 червоний (Німеччина) 500м",
+    "name": "Кабель сонячний KBE DB+ 4mm2 червоний (Німеччина) 500м",
+    "originalName": "Кабель сонячний KBE DB+ 4mm2 червоний (Німеччина) 500м",
+    "description": "730400015060QURT",
     "price": 400,
     "priceVat": 480,
     "currency": "USD",
-    "unit": "м",
+    "unit": "шт",
     "mainCategory": "Кабель",
     "category": "Сонячний кабель",
     "inStock": true,
-    "manufacturer": "Solarverse",
+    "manufacturer": "KBE",
     "warehouse": "Київ"
   },
   {
     "id": "sv_730400015060qusw",
-    "name": "730400015060QUSW",
-    "originalName": "730400015060QUSW",
-    "description": "Кабель сонячний KBE DB+ 4mm2 чорний (Німеччина) 500м",
+    "name": "Кабель сонячний KBE DB+ 4mm2 чорний (Німеччина) 500м",
+    "originalName": "Кабель сонячний KBE DB+ 4mm2 чорний (Німеччина) 500м",
+    "description": "730400015060QUSW",
     "price": 400,
     "priceVat": 480,
     "currency": "USD",
-    "unit": "м",
+    "unit": "шт",
     "mainCategory": "Кабель",
     "category": "Сонячний кабель",
     "inStock": true,
-    "manufacturer": "Solarverse",
+    "manufacturer": "KBE",
     "warehouse": "Київ"
   },
   {
     "id": "sv_730600015060qusw",
-    "name": "730600015060QUSW",
-    "originalName": "730600015060QUSW",
-    "description": "Кабель сонячний KBE DB+ 6mm2 чорний (Німеччина) 500м",
+    "name": "Кабель сонячний KBE DB+ 6mm2 чорний (Німеччина) 500м",
+    "originalName": "Кабель сонячний KBE DB+ 6mm2 чорний (Німеччина) 500м",
+    "description": "730600015060QUSW",
     "price": 550,
     "priceVat": 660,
     "currency": "USD",
-    "unit": "м",
+    "unit": "шт",
     "mainCategory": "Кабель",
     "category": "Сонячний кабель",
     "inStock": true,
-    "manufacturer": "Solarverse",
+    "manufacturer": "KBE",
     "warehouse": "Київ"
   },
   {
     "id": "sv_730600015060qurt",
-    "name": "730600015060QURT",
-    "originalName": "730600015060QURT",
-    "description": "Кабель сонячний KBE DB+ 6mm2 червоний (Німеччина) 500м",
+    "name": "Кабель сонячний KBE DB+ 6mm2 червоний (Німеччина) 500м",
+    "originalName": "Кабель сонячний KBE DB+ 6mm2 червоний (Німеччина) 500м",
+    "description": "730600015060QURT",
     "price": 550,
     "priceVat": 660,
     "currency": "USD",
-    "unit": "м",
+    "unit": "шт",
     "mainCategory": "Кабель",
     "category": "Сонячний кабель",
     "inStock": true,
-    "manufacturer": "Solarverse",
+    "manufacturer": "KBE",
     "warehouse": "Київ"
   },
   {
-    "id": "sv_s6_eh1p6k_l_plus",
+    "id": "sv____________________solis_s6_eh1p6k_l_plus_6kw_48v_2_mppt_wi_fi_220v___________",
     "name": "Solis S6-EH1P6K-L-PLUS",
     "originalName": "S6-EH1P6K-L-PLUS",
     "description": "Гібридний інвертор SOLIS S6-EH1P6K-L-PLUS 6KW 48V 2 MPPT Wi-Fi 220V Однофазний",
@@ -767,7 +767,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_s6_eh1p8k_l_plus",
+    "id": "sv____________________solis_s6_eh1p8k_l_plus_8kw_48v_2_mppt_wi_fi_220v___________",
     "name": "Solis S6-EH1P8K-L-PLUS",
     "originalName": "S6-EH1P8K-L-PLUS",
     "description": "Гібридний інвертор SOLIS S6-EH1P8K-L-PLUS 8KW 48V 2 MPPT Wi-Fi 220V Однофазний",
@@ -782,7 +782,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_s6_eh3p12k02_nv_yd_l",
+    "id": "sv____________________solis_s6_eh3p12k02_nv_yd_l_12kw_48v_2_mppt_wi_fi_220_380v__________",
     "name": "Solis S6-EH3P12K02-NV-YD-L",
     "originalName": "S6-EH3P12K02-NV-YD-L",
     "description": "Гібридний інвертор SOLIS S6-EH3P12K02-NV-YD-L 12KW 48V 2 MPPT Wi-Fi 220/380V Трифазний",
@@ -797,7 +797,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_s6_eh3p15k02_nv_yd_l",
+    "id": "sv____________________solis_s6_eh3p15k02_nv_yd_l_15kw_48v_2_mppt_wi_fi_220_380v__________",
     "name": "Solis S6-EH3P15K02-NV-YD-L",
     "originalName": "S6-EH3P15K02-NV-YD-L",
     "description": "Гібридний інвертор SOLIS S6-EH3P15K02-NV-YD-L 15KW 48V 2 MPPT Wi-Fi 220/380V Трифазний",
@@ -812,7 +812,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ/Івано-Франкове"
   },
   {
-    "id": "sv_s6_eh3p20k_h",
+    "id": "sv____________________solis_s6_eh3p20k_h_20kw_hv_battery_2_mppt_wi_fi_220_380v__________",
     "name": "Solis S6-EH3P20K-H",
     "originalName": "S6-EH3P20K-H",
     "description": "Гібридний інвертор SOLIS S6-EH3P20K-H 20KW HV-battery 2 MPPT Wi-Fi 220/380V Трифазний",
@@ -827,7 +827,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_s6_eh3p30k_h",
+    "id": "sv____________________solis_s6_eh3p30k_h_30kw_hv_battery_3_mppt_wi_fi_220_380v__________",
     "name": "Solis S6-EH3P30K-H",
     "originalName": "S6-EH3P30K-H",
     "description": "Гібридний інвертор SOLIS S6-EH3P30K-H 30KW HV-battery 3 MPPT Wi-Fi 220/380V Трифазний",
@@ -842,7 +842,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_s6_eh3p50k_h",
+    "id": "sv____________________solis_s6_eh3p50k_h_50kw_hv_battery_4_mppt_wi_fi_220_380v__________",
     "name": "Solis S6-EH3P50K-H",
     "originalName": "S6-EH3P50K-H",
     "description": "Гібридний інвертор SOLIS S6-EH3P50K-H 50KW HV-battery 4 MPPT Wi-Fi 220/380V Трифазний",
@@ -857,7 +857,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ/Івано-Франкове"
   },
   {
-    "id": "sv_s6_eh3p125k_h",
+    "id": "sv____________________solis_s6_eh3p125k_h_125kw_hv_battery",
     "name": "Solis S6-EH3P125K-H",
     "originalName": "S6-EH3P125K-H",
     "description": "Гібридний інвертор SOLIS S6-EH3P125K-H 125KW HV-battery",
@@ -872,7 +872,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_sun_6k_sg05lp1_eu_am2_p",
+    "id": "sv____________________deye_6kw_48v_battery_2_mppt_wi_fi_230v_1_ph_1_____",
     "name": "Deye SUN-6K-SG05LP1-EU-AM2-P",
     "originalName": "SUN-6K-SG05LP1-EU-AM2-P",
     "description": "Гібридний інвертор DEYE 6kW 48V-battery 2 MPPT Wi-Fi 230V 1-ph 1 фаза",
@@ -887,7 +887,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_sun_8k_sg05lp1_eu_am2_p",
+    "id": "sv____________________deye_8kw_sg05_with_wifi__230v_single_phase__ce__vde_1_____",
     "name": "Deye SUN-8K-SG05LP1-EU-AM2-P",
     "originalName": "SUN-8K-SG05LP1-EU-AM2-P",
     "description": "Гібридний інвертор DEYE 8kW SG05 with wifi, 230V SINGLE PHASE, CE. VDE 1 фаза",
@@ -902,7 +902,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_sun_10k_sg02lp1_eu_am3",
+    "id": "sv____________________deye_10kw_48v_battery_3_mppt_wi_fi_230v_1_____",
     "name": "Deye SUN-10K-SG02LP1-EU-AM3",
     "originalName": "SUN-10K-SG02LP1-EU-AM3",
     "description": "Гібридний інвертор DEYE 10kW 48V-battery 3 MPPT Wi-Fi 230V 1 фаза",
@@ -917,7 +917,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_sun_12k_sg02lp1_eu_am3",
+    "id": "sv____________________deye_12kw_48v_battery_3_mppt_wi_fi_230v_1_____",
     "name": "Deye SUN-12K-SG02LP1-EU-AM3",
     "originalName": "SUN-12K-SG02LP1-EU-AM3",
     "description": "Гібридний інвертор DEYE 12kW 48V-battery 3 MPPT Wi-Fi 230V 1 фаза",
@@ -932,7 +932,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_sun_16k_sg01lp1_eu",
+    "id": "sv____________________deye_16kw_48v_3_mppt_wi_fi_220v_1_____",
     "name": "Deye SUN-16K-SG01LP1-EU",
     "originalName": "SUN-16K-SG01LP1-EU",
     "description": "Гібридний інвертор DEYE 16KW 48V 3 MPPT Wi-Fi 220V 1 фаза",
@@ -947,7 +947,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_sun_18k_sg01lp1_eu_am3_p",
+    "id": "sv____________________deye_18kw_48v_3_mppt_wi_fi_220v_1_____",
     "name": "Deye SUN-18K-SG01LP1-EU-AM3-P",
     "originalName": "SUN-18K-SG01LP1-EU-AM3-P",
     "description": "Гібридний інвертор DEYE 18KW 48V 3 MPPT Wi-Fi 220V 1 фаза",
@@ -962,7 +962,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_sun_10k_sg05lp3_eu_sm2",
+    "id": "sv____________________deye_10kw_sg05_with_wifi__230v_three_phase__ce__vde__________",
     "name": "Deye SUN-10K-SG05LP3-EU-SM2",
     "originalName": "SUN-10K-SG05LP3-EU-SM2",
     "description": "Гібридний інвертор DEYE 10kW SG05 with wifi, 230V THREE PHASE, CE. VDE Трифазний",
@@ -977,7 +977,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_sun_12k_sg05lp3_eu_sm2",
+    "id": "sv____________________deye_12kw_sg05_with_wifi__230v_three_phase__ce__vde__________",
     "name": "Deye SUN-12K-SG05LP3-EU-SM2",
     "originalName": "SUN-12K-SG05LP3-EU-SM2",
     "description": "Гібридний інвертор DEYE 12kW SG05 with wifi, 230V THREE PHASE, CE. VDE Трифазний",
@@ -992,7 +992,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_sun_15k_sg05lp3_eu_sm2",
+    "id": "sv____________________deye_sun_15k_sg05lp3_eu_sm2_15kw_48v_2_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-15K-SG05LP3-EU-SM2",
     "originalName": "SUN-15K-SG05LP3-EU-SM2",
     "description": "Гібридний інвертор DEYE SUN-15K-SG05LP3-EU-SM2 15KW 48V 2 MPPT Wi-Fi 220/380V Трифазний",
@@ -1007,7 +1007,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_sun_20k_sg05lp3_eu_sm2",
+    "id": "sv____________________deye_sun_20k_sg05lp3_eu_sm2_20kw_48v_2_mppt_wi_fi_220_380v__________",
     "name": "Deye SUN-20K-SG05LP3-EU-SM2",
     "originalName": "SUN-20K-SG05LP3-EU-SM2",
     "description": "Гібридний інвертор DEYE SUN-20K-SG05LP3-EU-SM2 20KW 48V 2 MPPT Wi-Fi 220/380V Трифазний",
@@ -1022,7 +1022,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_se_f16_c",
+    "id": "sv______________________deye_se_f16_lifepo4_lv_51_2v_314ah_16kwh__se_f16_c_",
     "name": "Deye SE-F16-C",
     "originalName": "SE-F16-C",
     "description": "Акумуляторна батарея DEYE SE-F16 LiFePO4 LV 51.2V 314Ah 16kWh (SE-F16-C)",
@@ -1037,7 +1037,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_se_f12_c",
+    "id": "sv______________________deye_se_f12_c_lifepo4_lv_51_2v_230ah_11_8kwh__se_f12_c_",
     "name": "Deye SE-F12-C",
     "originalName": "SE-F12-C",
     "description": "Акумуляторна батарея DEYE SE-F12-C LiFePO4 LV 51.2V 230Ah 11.8kWh (SE-F12-C)",
@@ -1052,7 +1052,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_se_g5_1_pro_b",
+    "id": "sv______________________deye_se_g5_1_pro_b_lifepo4_lv_51_2v_100ah_5_12kwh__se_g5_1_pro_b_",
     "name": "Deye SE-G5.1 Pro-B",
     "originalName": "SE-G5.1 Pro-B",
     "description": "Акумуляторна батарея DEYE SE-G5.1 Pro-B LiFePO4 LV 51.2v 100AH 5.12kwh (SE-G5.1 Pro-B)",
@@ -1067,7 +1067,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_se_f5_pro_c",
+    "id": "sv______________________deye_se_f5_pro_lifepo4_lv_51_2v_100ah_5_12kwh_se_f5_pro_c_",
     "name": "Deye SE-F5 Pro-C",
     "originalName": "SE-F5 Pro-C",
     "description": "Акумуляторна батарея DEYE SE-F5 Pro LiFePO4 LV 51.2v 100AH 5.12kwh(SE-F5 Pro-C)",
@@ -1082,7 +1082,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_se_f5_plus_l",
+    "id": "sv______________________deye_se_f5_plus_lifepo4_lv_51_2v_100ah_5_12kwh__se_f5_plus_l_",
     "name": "Deye SE-F5 Plus-L",
     "originalName": "SE-F5 Plus-L",
     "description": "Акумуляторна батарея DEYE SE-F5 Plus LiFePO4 LV 51.2V 100Ah 5.12kWh (SE-F5 Plus-L)",
@@ -1097,7 +1097,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_dl5_0c",
+    "id": "sv______________________dyness_dl5_0c_51_2v_100ah__5_12kwh_lifepo4_dl5_0c_",
     "name": "Dyness DL5.0C",
     "originalName": "DL5.0C",
     "description": "Акумуляторний модуль Dyness DL5.0C 51.2v 100ah, 5.12kwh LiFePo4(DL5.0C)",
@@ -1112,7 +1112,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_dl5_0c_pro",
+    "id": "sv______________________dyness_dl5_0c_pro_51_2v_100ah__5_12kwh_lifepo4_dl5_0c_pro_",
     "name": "Dyness DL5.0C Pro",
     "originalName": "DL5.0C Pro",
     "description": "Акумуляторний модуль Dyness DL5.0C Pro 51.2v 100ah, 5.12kwh LiFePo4(DL5.0C Pro)",
@@ -1127,7 +1127,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_powerbrick_plus",
+    "id": "sv______________________dyness_powerbrick_plus_51_2v_314ah_16_07kwh__powerbrick_plus_",
     "name": "Dyness PowerBrick Plus",
     "originalName": "PowerBrick Plus",
     "description": "Акумуляторний модуль Dyness PowerBrick Plus 51.2V 314Ah 16.07kWh (PowerBrick Plus)",
@@ -1142,7 +1142,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_rs_r51100a",
+    "id": "sv______________________ecosolex_rs_r51100a_lifepo4_lv_51_2v_100ah_5_12kwh__rs_r51100a_",
     "name": "RS-R51100A",
     "originalName": "RS-R51100A",
     "description": "Акумуляторна батарея Ecosolex RS-R51100A LiFePO4 LV 51.2V 100Ah 5.12kWh (RS-R51100A)",
@@ -1157,7 +1157,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_gsl051100ab_gbp2",
+    "id": "sv______________________gsl_51_2v_100ah_5_12kwh_lifepo4__gsl051100ab_gbp2_",
     "name": "GSL051100AB-GBP2",
     "originalName": "GSL051100AB-GBP2",
     "description": "Акумуляторна батарея GSL 51.2v 100AH 5.12kwh lifepo4 (GSL051100AB-GBP2)",
@@ -1172,7 +1172,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_gsl051200ab_gbp2",
+    "id": "sv______________________gsl_51_2v_200ah_10_24kwh_lifepo4__gsl051200ab_gbp2_",
     "name": "GSL051200AB-GBP2",
     "originalName": "GSL051200AB-GBP2",
     "description": "Акумуляторна батарея GSL 51.2v 200AH 10.24kwh lifepo4 (GSL051200AB-GBP2)",
@@ -1187,7 +1187,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_gsl_w_a16k",
+    "id": "sv______________________gsl_51_2v_314ah_16kwh_lifepo4__gsl_w_a16k_",
     "name": "GSL-W-A16K",
     "originalName": "GSL-W-A16K",
     "description": "Акумуляторна батарея GSL 51.2V 314Ah 16kWh LiFePO4 (GSL-W-A16K)",
@@ -1202,7 +1202,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_zn_p48100esa1",
+    "id": "sv______________________gsl_48v_100ah_4_8kwh_lifepo4_zn_p48100esa1_",
     "name": "GSL ZN-P48100ESA1",
     "originalName": "ZN-P48100ESA1",
     "description": "Акумуляторна батарея GSL 48v 100AH 4.8kwh lifepo4(ZN-P48100ESA1)",
@@ -1217,7 +1217,7 @@ export const SOLARVERSE_STATIC_PRODUCTS: Product[] = [
     "warehouse": "Київ"
   },
   {
-    "id": "sv_gsl_51_100_gsl51100_3_5u",
+    "id": "sv______________________gsl51100_100ah_51_2v_5_12kwh_lifepo4_gsl_51_100_gsl51100_3_5u_",
     "name": "GSL-51-100/GSL51100-3.5U",
     "originalName": "GSL-51-100/GSL51100-3.5U",
     "description": "Акумуляторна батарея GSL51100 100Ah 51.2V 5.12KWh LiFePo4(GSL-51-100/GSL51100-3.5U)",
