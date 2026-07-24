@@ -846,30 +846,101 @@ export default function BuyerDetails() {
               <h1 className="text-xl md:text-2xl font-bold text-[var(--text)]">{buyer.name}</h1>
               {buyer.phone && <p className="text-xs md:text-sm text-[var(--text-secondary)]">{buyer.phone}</p>}
               
-              {/* Картки загального балансу клієнта */}
-              <div className="flex flex-wrap gap-3 mt-2 no-print">
-                <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-3 py-2 flex flex-col min-w-[130px] shadow-sm">
+              {/* Картки загального балансу та компактний календар в один рядок */}
+              <div className="flex flex-wrap items-center gap-2.5 mt-2 no-print">
+                <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-3 py-1.5 flex flex-col justify-center min-w-[120px] shadow-sm">
                   <span className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Баланс UAH</span>
-                  <span className={`text-sm md:text-base font-extrabold mt-0.5 ${totalUahBalance < 0 ? 'text-red-500' : totalUahBalance > 0 ? 'text-green-500' : 'text-[var(--text-secondary)]'}`}>
+                  <span className={`text-xs md:text-sm font-extrabold mt-0.5 ${totalUahBalance < 0 ? 'text-red-500' : totalUahBalance > 0 ? 'text-green-500' : 'text-[var(--text-secondary)]'}`}>
                     {totalUahBalance > 0 ? '+' : ''}{totalUahBalance.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} грн
                   </span>
                   {totalReservedUah > 0 && (
-                    <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">
+                    <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold">
                       ⏳ Бронь: ({totalReservedUah.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} грн)
                     </span>
                   )}
                 </div>
 
-                <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-3 py-2 flex flex-col min-w-[130px] shadow-sm">
+                <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-3 py-1.5 flex flex-col justify-center min-w-[120px] shadow-sm">
                   <span className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Баланс USD</span>
-                  <span className={`text-sm md:text-base font-extrabold mt-0.5 ${totalUsdBalance < 0 ? 'text-red-500' : totalUsdBalance > 0 ? 'text-green-500' : 'text-[var(--text-secondary)]'}`}>
+                  <span className={`text-xs md:text-sm font-extrabold mt-0.5 ${totalUsdBalance < 0 ? 'text-red-500' : totalUsdBalance > 0 ? 'text-green-500' : 'text-[var(--text-secondary)]'}`}>
                     {totalUsdBalance > 0 ? '+' : ''}${totalUsdBalance.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                   {totalReservedUsd > 0 && (
-                    <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">
+                    <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold">
                       ⏳ Бронь: (${totalReservedUsd.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                     </span>
                   )}
+                </div>
+
+                {/* Компактний календар поряд з балансами */}
+                <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-2.5 py-1.5 flex items-center gap-2 shadow-sm flex-wrap">
+                  <div className="flex items-center gap-1 bg-[var(--bg)] px-2 py-0.5 rounded-lg border border-[var(--border)]">
+                    <span className="text-[11px]">📅</span>
+                    <input
+                      type="date"
+                      className="bg-transparent text-[11px] text-[var(--text)] font-semibold focus:outline-none cursor-pointer p-0"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                    />
+                    <span className="text-[var(--text-secondary)] text-[10px] font-bold">—</span>
+                    <input
+                      type="date"
+                      className="bg-transparent text-[11px] text-[var(--text)] font-semibold focus:outline-none cursor-pointer p-0"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Компактні кнопки-пресети */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      title="Поточний місяць"
+                      onClick={() => {
+                        const m = getCurrentMonthRange();
+                        setDateFrom(m.firstDay);
+                        setDateTo(m.lastDay);
+                      }}
+                      className={`px-2 py-0.5 text-[10px] font-semibold rounded transition-colors ${
+                        dateFrom === getCurrentMonthRange().firstDay && dateTo === getCurrentMonthRange().lastDay
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'bg-[var(--bg)] border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--border-light)]'
+                      }`}
+                    >
+                      Поточний місяць
+                    </button>
+                    <button
+                      type="button"
+                      title="Минулий місяць"
+                      onClick={() => {
+                        const pm = getPreviousMonthRange();
+                        setDateFrom(pm.firstDay);
+                        setDateTo(pm.lastDay);
+                      }}
+                      className={`px-2 py-0.5 text-[10px] font-semibold rounded transition-colors ${
+                        dateFrom === getPreviousMonthRange().firstDay && dateTo === getPreviousMonthRange().lastDay
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'bg-[var(--bg)] border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--border-light)]'
+                      }`}
+                    >
+                      Минулий
+                    </button>
+                    <button
+                      type="button"
+                      title="За весь час"
+                      onClick={() => {
+                        setDateFrom('');
+                        setDateTo('');
+                      }}
+                      className={`px-2 py-0.5 text-[10px] font-semibold rounded transition-colors ${
+                        !dateFrom && !dateTo
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'bg-[var(--bg)] border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--border-light)]'
+                      }`}
+                    >
+                      Всі
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -896,80 +967,6 @@ export default function BuyerDetails() {
         <div className="p-12 text-center text-red-500">Клієнт не знайдений</div>
       ) : (
         <div className="space-y-6">
-          
-          {/* Фінансовий період відображення операцій (ховається при друку) */}
-          <div className="card p-3 border border-[var(--border)] bg-[var(--bg-card)] rounded-xl space-y-2 no-print shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold text-[var(--text)] flex items-center gap-1.5">
-                  📅 Період операцій:
-                </span>
-                <div className="flex items-center gap-1.5 bg-[var(--bg)] p-1 rounded-lg border border-[var(--border)]">
-                  <input
-                    type="date"
-                    className="bg-transparent text-xs text-[var(--text)] font-semibold focus:outline-none px-1 cursor-pointer"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                  />
-                  <span className="text-[var(--text-secondary)] text-xs font-bold">—</span>
-                  <input
-                    type="date"
-                    className="bg-transparent text-xs text-[var(--text)] font-semibold focus:outline-none px-1 cursor-pointer"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Швидкі кнопки підказки періоду */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const m = getCurrentMonthRange();
-                    setDateFrom(m.firstDay);
-                    setDateTo(m.lastDay);
-                  }}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-colors ${
-                    dateFrom === getCurrentMonthRange().firstDay && dateTo === getCurrentMonthRange().lastDay
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                      : 'bg-[var(--bg)] border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--border-light)]'
-                  }`}
-                >
-                  📅 Поточний місяць
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const pm = getPreviousMonthRange();
-                    setDateFrom(pm.firstDay);
-                    setDateTo(pm.lastDay);
-                  }}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-colors ${
-                    dateFrom === getPreviousMonthRange().firstDay && dateTo === getPreviousMonthRange().lastDay
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                      : 'bg-[var(--bg)] border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--border-light)]'
-                  }`}
-                >
-                  🗓️ Минулий місяць
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDateFrom('');
-                    setDateTo('');
-                  }}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-colors ${
-                    !dateFrom && !dateTo
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                      : 'bg-[var(--bg)] border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--border-light)]'
-                  }`}
-                >
-                  ♾️ За весь час
-                </button>
-              </div>
-            </div>
-          </div>
 
           {/* Перемикач вкладок (ховається при друку) */}
           <div className="flex gap-2 border-b border-[var(--border)] pb-2 no-print">
