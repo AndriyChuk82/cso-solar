@@ -8,16 +8,19 @@ import { FileText, Camera, Printer, Image, Loader2, AlertCircle } from 'lucide-r
 const DRIVE_FOLDER_URL = 'https://drive.google.com/drive/u/0/folders/1rAqPA1euecPf4Rb4ME6IgLQzeT0noiTq';
 const PHOTO_LIMIT = 1_500_000;
 
-const DOC_OPTIONS = [
+const LEFT_DOC_OPTIONS = [
   { value: '1', label: '1. Заява на встановлення' },
   { value: '2', label: '2. Протокол відповідності (+фото)' },
   { value: '3', label: '3. Однолінійна схема' },
+  { value: 'inverter_cert', label: '📄 Паспорт інвертора (зі сховища)' },
+  { value: 'panel_cert', label: '📄 Паспорт сонячної панелі (зі сховища)' },
+];
+
+const RIGHT_DOC_OPTIONS = [
   { value: '4', label: '4. Акт приймання-передачі' },
   { value: '5', label: '5. Договір про встановлення' },
   { value: '6', label: '6. Акт тех. вимог (п. 4.12.2)' },
   { value: '7', label: '7. Технічні паспорти обладнання (QR-коди)' },
-  { value: 'inverter_cert', label: '📄 Паспорт інвертора (зі сховища)' },
-  { value: 'panel_cert', label: '📄 Паспорт сонячної панелі (зі сховища)' },
 ];
 
 function fileToBase64(file: File): Promise<string> {
@@ -229,24 +232,49 @@ export function DocumentGenerator({ formData, matchedCerts }: DocumentGeneratorP
       <div className="space-y-2">
         <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Оберіть шаблони:</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {DOC_OPTIONS.map((doc) => (
-            <label
-              key={doc.value}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-all cursor-pointer select-none ${
-                selected.includes(doc.value)
-                  ? 'border-[#f59e0b] bg-[#f59e0b]/5 dark:bg-[#f59e0b]/10 text-gray-900 dark:text-white font-semibold'
-                  : 'border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 text-gray-600 dark:text-slate-300'
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={selected.includes(doc.value)}
-                onChange={() => toggleDoc(doc.value)}
-                className="w-4 h-4 accent-[#f59e0b] rounded"
-              />
-              <span className="text-xs leading-normal">{doc.label}</span>
-            </label>
-          ))}
+          {/* Колонка 1: 1, 2, 3 та паспорти */}
+          <div className="flex flex-col gap-1.5">
+            {LEFT_DOC_OPTIONS.map((doc) => (
+              <label
+                key={doc.value}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-all cursor-pointer select-none ${
+                  selected.includes(doc.value)
+                    ? 'border-[#f59e0b] bg-[#f59e0b]/5 dark:bg-[#f59e0b]/10 text-gray-900 dark:text-white font-semibold'
+                    : 'border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 text-gray-600 dark:text-slate-300'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.includes(doc.value)}
+                  onChange={() => toggleDoc(doc.value)}
+                  className="w-4 h-4 accent-[#f59e0b] rounded"
+                />
+                <span className="text-xs leading-normal">{doc.label}</span>
+              </label>
+            ))}
+          </div>
+
+          {/* Колонка 2: 4, 5, 6, 7 */}
+          <div className="flex flex-col gap-1.5">
+            {RIGHT_DOC_OPTIONS.map((doc) => (
+              <label
+                key={doc.value}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-all cursor-pointer select-none ${
+                  selected.includes(doc.value)
+                    ? 'border-[#f59e0b] bg-[#f59e0b]/5 dark:bg-[#f59e0b]/10 text-gray-900 dark:text-white font-semibold'
+                    : 'border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 text-gray-600 dark:text-slate-300'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.includes(doc.value)}
+                  onChange={() => toggleDoc(doc.value)}
+                  className="w-4 h-4 accent-[#f59e0b] rounded"
+                />
+                <span className="text-xs leading-normal">{doc.label}</span>
+              </label>
+            ))}
+          </div>
         </div>
       </div>
 
