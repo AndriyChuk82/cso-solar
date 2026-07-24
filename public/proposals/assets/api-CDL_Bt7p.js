@@ -1,0 +1,1 @@
+import{l as e}from"./index-CTXv1xL9.js";export{e as fetchAllData};

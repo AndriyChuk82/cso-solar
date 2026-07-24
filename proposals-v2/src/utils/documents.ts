@@ -361,7 +361,7 @@ function generateTTNHTMLWithData(proposal: Proposal, data: TTNData): string {
           
           .info-box { border: 1px solid #000; padding: 5px; margin-bottom: 15px; }
           .stamp-box { display: inline-block; position: relative; width: 0; height: 0; vertical-align: top; }
-          .cso-seal-overlay { position: absolute; width: 140px; top: 10px; left: 50%; transform: translateX(-50%); pointer-events: none; mix-blend-mode: multiply; opacity: 0.9; z-index: 10; }
+          .cso-seal-overlay { position: absolute; width: 140px; top: -35px; left: 50%; transform: translateX(-50%); pointer-events: none; mix-blend-mode: multiply; opacity: 0.9; z-index: 10; }
         </style>
       </head>
       <body>
