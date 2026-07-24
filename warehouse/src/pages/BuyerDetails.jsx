@@ -84,6 +84,27 @@ function updateCommentAmount(comment, amount, currency) {
   return comment;
 }
 
+function getCurrentMonthRange() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const firstDay = `${year}-${month}-01`;
+  const lastDayObj = new Date(year, now.getMonth() + 1, 0);
+  const lastDay = `${year}-${month}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
+  return { firstDay, lastDay };
+}
+
+function getPreviousMonthRange() {
+  const now = new Date();
+  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const year = prev.getFullYear();
+  const month = String(prev.getMonth() + 1).padStart(2, '0');
+  const firstDay = `${year}-${month}-01`;
+  const lastDayObj = new Date(year, prev.getMonth() + 1, 0);
+  const lastDay = `${year}-${month}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
+  return { firstDay, lastDay };
+}
+
 export default function BuyerDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -95,9 +116,10 @@ export default function BuyerDetails() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Держава для звіту взаєморозрахунків
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
+  // Стан періоду відображення (за замовчуванням — поточний місяць)
+  const defaultMonth = getCurrentMonthRange();
+  const [dateFrom, setDateFrom] = useState(defaultMonth.firstDay);
+  const [dateTo, setDateTo] = useState(defaultMonth.lastDay);
   const [currencyFilter, setCurrencyFilter] = useState('ALL'); // 'ALL', 'UAH', 'USD'
 
   // Керування вкладками та фільтром окремого документа
@@ -567,8 +589,16 @@ export default function BuyerDetails() {
     }
   });
 
-  const activeTransactions = processedTransactions.filter(t => t.is_archived !== true);
-  const archivedTransactions = processedTransactions.filter(t => t.is_archived === true);
+  // Фільтрація документів за виведеним періодом дат
+  const filteredProcessedTransactions = processedTransactions.filter(t => {
+    if (!dateFrom && !dateTo) return true;
+    if (dateFrom && t.date < dateFrom) return false;
+    if (dateTo && t.date > dateTo) return false;
+    return true;
+  });
+
+  const activeTransactions = filteredProcessedTransactions.filter(t => t.is_archived !== true);
+  const archivedTransactions = filteredProcessedTransactions.filter(t => t.is_archived === true);
 
   // Обчислення початкового та кінцевого балансу для звіту
   let uahOpening = 0;
@@ -867,6 +897,80 @@ export default function BuyerDetails() {
       ) : (
         <div className="space-y-6">
           
+          {/* Фінансовий період відображення операцій (ховається при друку) */}
+          <div className="card p-3 border border-[var(--border)] bg-[var(--bg-card)] rounded-xl space-y-2 no-print shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-[var(--text)] flex items-center gap-1.5">
+                  📅 Період операцій:
+                </span>
+                <div className="flex items-center gap-1.5 bg-[var(--bg)] p-1 rounded-lg border border-[var(--border)]">
+                  <input
+                    type="date"
+                    className="bg-transparent text-xs text-[var(--text)] font-semibold focus:outline-none px-1 cursor-pointer"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                  />
+                  <span className="text-[var(--text-secondary)] text-xs font-bold">—</span>
+                  <input
+                    type="date"
+                    className="bg-transparent text-xs text-[var(--text)] font-semibold focus:outline-none px-1 cursor-pointer"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Швидкі кнопки підказки періоду */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const m = getCurrentMonthRange();
+                    setDateFrom(m.firstDay);
+                    setDateTo(m.lastDay);
+                  }}
+                  className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-colors ${
+                    dateFrom === getCurrentMonthRange().firstDay && dateTo === getCurrentMonthRange().lastDay
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'bg-[var(--bg)] border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--border-light)]'
+                  }`}
+                >
+                  📅 Поточний місяць
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const pm = getPreviousMonthRange();
+                    setDateFrom(pm.firstDay);
+                    setDateTo(pm.lastDay);
+                  }}
+                  className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-colors ${
+                    dateFrom === getPreviousMonthRange().firstDay && dateTo === getPreviousMonthRange().lastDay
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'bg-[var(--bg)] border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--border-light)]'
+                  }`}
+                >
+                  🗓️ Минулий місяць
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDateFrom('');
+                    setDateTo('');
+                  }}
+                  className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-colors ${
+                    !dateFrom && !dateTo
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'bg-[var(--bg)] border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--border-light)]'
+                  }`}
+                >
+                  ♾️ За весь час
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Перемикач вкладок (ховається при друку) */}
           <div className="flex gap-2 border-b border-[var(--border)] pb-2 no-print">
             <button
