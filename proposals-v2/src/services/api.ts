@@ -262,14 +262,18 @@ export async function fetchHeliusProducts(): Promise<Product[]> {
       
       const name = colA;
       const stockStr = (row[2] || '').trim(); // Column C (Availability)
-      const priceStr = (row[4] || '').trim(); // Column E (Price without VAT - оптова)
-      const priceVatStr = (row[6] || '').trim(); // Column G (Price with VAT / РІЦ / РРЦ)
+      const priceColEStr = (row[4] || '').trim(); // Column E (Базова оптова ціна)
+      const priceColFStr = (row[5] || '').trim(); // Column F (Дилерська ціна)
+      const priceVatStr = (row[6] || '').trim();  // Column G (Price with VAT / РІЦ / РРЦ)
       
       if (!name || name.length < 5 || name === 'Модель') continue;
       
-      const cleanedPriceStr = priceStr.replace(/[^0-9.,]/g, '').replace(',', '.');
-      const price = parseFloat(cleanedPriceStr);
-      if (isNaN(price) || price <= 0) continue;
+      const cleanE = parseFloat(priceColEStr.replace(/[^0-9.,]/g, '').replace(',', '.'));
+      const cleanF = parseFloat(priceColFStr.replace(/[^0-9.,]/g, '').replace(',', '.'));
+      
+      // Дилерська ціна у Хеліус знаходиться в колонці F (row[5]), а колонка E — це базова/округлена ціна
+      const price = !isNaN(cleanF) && cleanF > 0 ? cleanF : (!isNaN(cleanE) && cleanE > 0 ? cleanE : 0);
+      if (price <= 0) continue;
 
       const cleanedPriceVatStr = priceVatStr.replace(/[^0-9.,]/g, '').replace(',', '.');
       const priceVatVal = parseFloat(cleanedPriceVatStr);
