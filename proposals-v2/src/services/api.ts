@@ -1263,29 +1263,22 @@ export async function fetchAllData() {
 export async function fetchRates(): Promise<{ usd: number; eur: number; source: string; error?: string }> {
   console.log('📡 Отримання актуальних курсів валют Говерла...');
 
-  // 1. Пробуємо GAS backend (серверний виклик Говерли через Google Cloud без обмежень CORS, 100% гарантія Говерли)
-  try {
-    const res = await gasRequest('getRates');
-    if (res && res.success && res.usd && res.eur && res.usd > 40 && res.eur > 40) {
-      console.log('✅ Курси Говерла успішно отримано через GAS:', res);
-      return { usd: res.usd, eur: res.eur, source: res.source || 'hoverla_gas' };
-    }
-  } catch (e) {
-    console.warn('⚠️ GAS fetch for Hoverla rates failed, trying direct browser fetch...', e);
-  }
-
-  // 2. Спробуємо Hoverla напряму з браузера
+  // 1. Спробуємо Hoverla напряму з браузера (найшвидший виклик 100 мс)
   try {
     const payload = {
       operationName: "Point",
       variables: { alias: "goverla-ua" },
       query: "query Point($alias: Alias!) { point(alias: $alias) { rates { currency { codeAlpha } bid { absolute } ask { absolute } } } }"
     };
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
     const response = await fetch('https://api.goverla.ua/graphql', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
     if (response.ok) {
       const data = await response.json();
       const rates = data?.data?.point?.rates || [];
@@ -1301,7 +1294,18 @@ export async function fetchRates(): Promise<{ usd: number; eur: number; source: 
       }
     }
   } catch (err) {
-    console.warn('⚠️ Direct Hoverla request failed...');
+    console.warn('⚠️ Direct Hoverla request failed, trying GAS proxy...');
+  }
+
+  // 2. Пробуємо GAS backend (серверний виклик Говерли через Google Cloud)
+  try {
+    const res = await gasRequest('getRates');
+    if (res && res.success && res.usd && res.eur && res.usd > 40 && res.eur > 40) {
+      console.log('✅ Курси Говерла успішно отримано через GAS:', res);
+      return { usd: res.usd, eur: res.eur, source: res.source || 'hoverla_gas' };
+    }
+  } catch (e) {
+    console.warn('⚠️ GAS fetch for Hoverla rates failed, trying PrivatBank...', e);
   }
 
   // 3. Резервне джерело: ПриватБанк

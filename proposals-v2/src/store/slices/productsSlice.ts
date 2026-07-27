@@ -169,15 +169,30 @@ export const createProductsSlice: StateCreator<
               newState.settings = { ...state.settings, usdRate, eurRate };
               const historyList = state.history || [];
               if (state.proposal && !isSavedProposal(state.proposal, historyList)) {
-                const propUsd = state.proposal.rates?.usdToUah;
-                const isPropUsdValid = propUsd && propUsd >= 44.5;
                 newState.proposal = {
                   ...state.proposal,
                   rates: {
-                    usdToUah: isPropUsdValid ? propUsd : usdRate,
-                    eurToUah: isEurValid ? (state.proposal.rates?.eurToUah || eurRate) : eurRate
+                    usdToUah: usdRate,
+                    eurToUah: eurRate
                   }
                 };
+              }
+              if (state.tabs && Array.isArray(state.tabs)) {
+                newState.tabs = state.tabs.map((tab: any) => {
+                  if (tab.proposal && !isSavedProposal(tab.proposal, historyList)) {
+                    return {
+                      ...tab,
+                      proposal: {
+                        ...tab.proposal,
+                        rates: {
+                          usdToUah: usdRate,
+                          eurToUah: eurRate
+                        }
+                      }
+                    };
+                  }
+                  return tab;
+                });
               }
             }
             return newState;

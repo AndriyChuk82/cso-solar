@@ -16,11 +16,13 @@ function App() {
   const error = useProposalStore(selectError);
   const loadProducts = useProposalStore((state) => state.loadProducts);
   const loadKpClients = useProposalStore((state) => state.loadKpClients);
+  const refreshRates = useProposalStore((state) => state.refreshRates);
 
   useEffect(() => {
     loadProducts();
     loadKpClients();
-  }, [loadProducts, loadKpClients]);
+    refreshRates();
+  }, [loadProducts, loadKpClients, refreshRates]);
 
   return (
     <ErrorBoundary>
