@@ -1,6 +1,6 @@
 import { StateCreator } from 'zustand';
 import { Product, Category } from '../../types';
-import { fetchAllProducts, fetchRates } from '../../services/api';
+import { fetchAllProducts, fetchRates, isSavedProposal } from '../../services/api';
 import { CONFIG } from '../../config';
 
 /**
@@ -113,8 +113,20 @@ export const createProductsSlice: StateCreator<
                 };
                 if (rates && rates.usd && rates.eur) {
                   newState.settings = { ...state.settings, usdRate: rates.usd, eurRate: rates.eur };
-                  if (state.proposal) {
+                  const historyList = state.history || [];
+                  if (state.proposal && !isSavedProposal(state.proposal, historyList)) {
                     newState.proposal = { ...state.proposal, rates: { usdToUah: rates.usd, eurToUah: rates.eur } };
+                  }
+                  if (state.tabs && Array.isArray(state.tabs)) {
+                    newState.tabs = state.tabs.map((tab: any) => {
+                      if (tab.proposal && !isSavedProposal(tab.proposal, historyList)) {
+                        return {
+                          ...tab,
+                          proposal: { ...tab.proposal, rates: { usdToUah: rates.usd, eurToUah: rates.eur } }
+                        };
+                      }
+                      return tab;
+                    });
                   }
                 }
                 return newState;
@@ -155,7 +167,8 @@ export const createProductsSlice: StateCreator<
               const eurRate = isEurValid ? cache.rates.eur : CONFIG.DEFAULT_EUR_UAH;
 
               newState.settings = { ...state.settings, usdRate, eurRate };
-              if (state.proposal) {
+              const historyList = state.history || [];
+              if (state.proposal && !isSavedProposal(state.proposal, historyList)) {
                 const propUsd = state.proposal.rates?.usdToUah;
                 const isPropUsdValid = propUsd && propUsd >= 44.5;
                 newState.proposal = {

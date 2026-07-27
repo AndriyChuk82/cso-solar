@@ -1,7 +1,7 @@
 import { StateCreator } from 'zustand';
 import { Proposal, ProposalItem, Product, SellerId, SupplierOffer, ProposalTab } from '../../types';
 import { CONFIG, SELLERS } from '../../config';
-import { saveProposalToSheet, fetchProposalsHistory, deleteProposalFromSheet, normalizeProposal } from '../../services/api';
+import { saveProposalToSheet, fetchProposalsHistory, deleteProposalFromSheet, normalizeProposal, isSavedProposal } from '../../services/api';
 import { toast } from 'sonner';
 
 /**
@@ -771,8 +771,8 @@ export const createProposalSlice: StateCreator<
     },
 
     updateProposalRates: (usd: number, eur: number, isManual?: boolean) => {
-      const { proposal } = get();
-      if (proposal.status === 'sent' && !isManual) return;
+      const { proposal, history } = get();
+      if (isSavedProposal(proposal, history) && !isManual) return;
       const updatedProposal = {
         ...proposal,
         rates: { usdToUah: usd, eurToUah: eur },

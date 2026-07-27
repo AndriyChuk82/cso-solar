@@ -1416,6 +1416,13 @@ export function normalizeProposal(proposal: any): any {
   };
 }
 
+export function isSavedProposal(proposal: any, history: any[] = []): boolean {
+  if (!proposal) return false;
+  if (proposal.status && proposal.status !== 'draft') return true;
+  if (history && Array.isArray(history) && history.some((h: any) => h.id === proposal.id)) return true;
+  return false;
+}
+
 export async function fetchProposalsHistory() {
   const res = await gasRequest('getProposals');
   if (!res || !res.success) {

@@ -1,0 +1,1 @@
+import{l as e}from"./index-Dw-UY8L6.js";export{e as fetchAllData};

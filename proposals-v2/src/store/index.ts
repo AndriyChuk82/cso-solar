@@ -5,7 +5,7 @@ import { createSettingsSlice, SettingsSlice } from './slices/settingsSlice';
 import { createFavoritesSlice, FavoritesSlice } from './slices/favoritesSlice';
 import { createProposalSlice, ProposalSlice } from './slices/proposalSlice';
 import { createClientsSlice, ClientsSlice } from './slices/clientsSlice';
-import { normalizeProposal } from '../services/api';
+import { normalizeProposal, isSavedProposal } from '../services/api';
 
 /**
  * Комбінований тип стору - об'єднання всіх слайсів
@@ -57,6 +57,10 @@ export const useProposalStore = create<ProposalStore>()(
           const sanitizeRates = (prop: any) => {
             if (!prop) return prop;
             const norm = normalizeProposal(prop);
+            // Якщо КП є збереженою (status !== 'draft' або є в історії) - НЕ ЗМІНЮЄМО її створений/збережений курс!
+            if (isSavedProposal(norm, stateAny.history)) {
+              return norm;
+            }
             if (!norm.rates || !norm.rates.usdToUah || norm.rates.usdToUah <= 44.5) {
               norm.rates = {
                 usdToUah: stateAny.settings?.usdRate || CONFIG.DEFAULT_USD_UAH,
