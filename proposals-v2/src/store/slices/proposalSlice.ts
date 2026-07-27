@@ -123,8 +123,8 @@ function createEmptyProposal(history: Proposal[] = [], rates?: { usdToUah: numbe
     currency: 'USD',
     notes: '',
     rates: rates || {
-      usdToUah: 41.5,
-      eurToUah: 51.0,
+      usdToUah: CONFIG.DEFAULT_USD_UAH,
+      eurToUah: CONFIG.DEFAULT_EUR_UAH,
     },
     seller: SELLERS.tov_cso,
     status: 'draft',

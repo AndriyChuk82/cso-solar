@@ -149,9 +149,22 @@ export const createProductsSlice: StateCreator<
                 error: null
               };
             if (cache.rates) {
-              newState.settings = { ...state.settings, usdRate: cache.rates.usd, eurRate: cache.rates.eur };
+              const isUsdValid = cache.rates.usd && cache.rates.usd >= 44.5;
+              const isEurValid = cache.rates.eur && cache.rates.eur >= 50.0;
+              const usdRate = isUsdValid ? cache.rates.usd : CONFIG.DEFAULT_USD_UAH;
+              const eurRate = isEurValid ? cache.rates.eur : CONFIG.DEFAULT_EUR_UAH;
+
+              newState.settings = { ...state.settings, usdRate, eurRate };
               if (state.proposal) {
-                newState.proposal = { ...state.proposal, rates: { usdToUah: cache.rates.usd, eurToUah: cache.rates.eur } };
+                const propUsd = state.proposal.rates?.usdToUah;
+                const isPropUsdValid = propUsd && propUsd >= 44.5;
+                newState.proposal = {
+                  ...state.proposal,
+                  rates: {
+                    usdToUah: isPropUsdValid ? propUsd : usdRate,
+                    eurToUah: isEurValid ? (state.proposal.rates?.eurToUah || eurRate) : eurRate
+                  }
+                };
               }
             }
             return newState;

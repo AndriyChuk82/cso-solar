@@ -46,17 +46,37 @@ export const useProposalStore = create<ProposalStore>()(
         if (state) {
           const stateAny = state as any;
           
-          // Міграція: нормалізація старих КП у локальній історії та активному стані
+          // Очищення застарілих 44 / 51.43 курсів з settings
+          if (stateAny.settings) {
+            if (!stateAny.settings.usdRate || stateAny.settings.usdRate <= 44.5) {
+              stateAny.settings.usdRate = CONFIG.DEFAULT_USD_UAH;
+              stateAny.settings.eurRate = CONFIG.DEFAULT_EUR_UAH;
+            }
+          }
+
+          const sanitizeRates = (prop: any) => {
+            if (!prop) return prop;
+            const norm = normalizeProposal(prop);
+            if (!norm.rates || !norm.rates.usdToUah || norm.rates.usdToUah <= 44.5) {
+              norm.rates = {
+                usdToUah: stateAny.settings?.usdRate || CONFIG.DEFAULT_USD_UAH,
+                eurToUah: stateAny.settings?.eurRate || CONFIG.DEFAULT_EUR_UAH,
+              };
+            }
+            return norm;
+          };
+
+          // Міграція: нормалізація та санітизація курсів у локальній історії та активному стані
           if (stateAny.history && Array.isArray(stateAny.history)) {
             stateAny.history = stateAny.history.map(normalizeProposal);
           }
           if (stateAny.proposal) {
-            stateAny.proposal = normalizeProposal(stateAny.proposal);
+            stateAny.proposal = sanitizeRates(stateAny.proposal);
           }
           if (stateAny.tabs && Array.isArray(stateAny.tabs)) {
             stateAny.tabs = stateAny.tabs.map((tab: any) => ({
               ...tab,
-              proposal: normalizeProposal(tab.proposal)
+              proposal: sanitizeRates(tab.proposal)
             }));
           }
 
