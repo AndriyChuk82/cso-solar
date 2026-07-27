@@ -1,0 +1,1 @@
+import{l as e}from"./index-98lWQhDB.js";export{e as fetchAllData};

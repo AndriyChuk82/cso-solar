@@ -2252,7 +2252,55 @@ function getCustomMaterials() {
 function getRates() {
   let result = { success: true, usd: 45.0, eur: 51.50, source: 'default', debug: [] };
   
-  // 1. Try PrivatBank
+  // 1. Primary Source: Goverla (Говерла - Чорний ринок / Готівковий курс)
+  const aliases = ["goverla-ua", "main"];
+  for (let alias of aliases) {
+    try {
+      const payload = {
+        query: "query Point($alias: Alias!) { point(alias: $alias) { rates { currency { codeAlpha } ask { absolute } } } }",
+        variables: { alias: alias }
+      };
+
+      const options = {
+        method: 'post',
+        contentType: 'application/json',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': 'https://goverla.ua/'
+        },
+        payload: JSON.stringify(payload),
+        muteHttpExceptions: true
+      };
+
+      const response = UrlFetchApp.fetch('https://api.goverla.ua/graphql', options);
+      const code = response.getResponseCode();
+      const text = response.getContentText();
+      
+      result.debug.push({ alias, code, text: text.substring(0, 200) });
+
+      if (code === 200) {
+        const data = JSON.parse(text);
+        const point = data?.data?.point;
+        
+        if (point && point.rates) {
+          const rates = point.rates;
+          const usd = rates.find(r => r.currency.codeAlpha === 'USD');
+          const eur = rates.find(r => r.currency.codeAlpha === 'EUR');
+          
+          if (usd || eur) {
+            if (usd) result.usd = usd.ask.absolute / 100;
+            if (eur) result.eur = eur.ask.absolute / 100;
+            result.source = 'hoverla_' + alias;
+            return result;
+          }
+        }
+      }
+    } catch (err) {
+      result.debug.push({ alias, error: err.toString() });
+    }
+  }
+
+  // 2. Backup Fallback: PrivatBank
   try {
     const pbRes = UrlFetchApp.fetch('https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5', { muteHttpExceptions: true });
     if (pbRes.getResponseCode() === 200) {
@@ -2272,7 +2320,7 @@ function getRates() {
     result.debug.push({ source: 'privatbank', error: err.toString() });
   }
 
-  // 2. Try Monobank
+  // 3. Backup Fallback: Monobank
   try {
     const monoRes = UrlFetchApp.fetch('https://api.monobank.ua/bank/currency', { muteHttpExceptions: true });
     if (monoRes.getResponseCode() === 200) {
@@ -2291,13 +2339,6 @@ function getRates() {
   } catch (err) {
     result.debug.push({ source: 'monobank', error: err.toString() });
   }
-
-  // 3. Try Goverla
-  const aliases = ["goverla-ua", "main"];
-  for (let alias of aliases) {
-    try {
-      const payload = {
-        query: "query Point($alias: Alias!) { point(alias: $alias) { rates { currency { codeAlpha } ask { absolute } } } }",
         variables: { alias: alias }
       };
 
