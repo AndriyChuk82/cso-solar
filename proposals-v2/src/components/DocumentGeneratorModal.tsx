@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { X, FileText, Receipt, Package, Truck, Shield, Download, Printer } from 'lucide-react';
 import { Proposal } from '../types';
-import { printInvoice, printDeliveryNote, printContract } from '../utils/documents';
+import { printInvoice, printDeliveryNote, printContract, printInvoiceWithData } from '../utils/documents';
 import { TTNModal } from './TTNModal';
 import { WarrantyModal } from './WarrantyModal';
+import { InvoiceModal } from './InvoiceModal';
 import { printTTNWithData, printWarrantyWithData } from '../utils/documents';
 
 interface DocumentGeneratorModalProps {
@@ -28,11 +29,16 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, proposal }
   const [selectedDoc, setSelectedDoc] = useState<DocumentType>('proposal');
   const [showTTNModal, setShowTTNModal] = useState(false);
   const [showWarrantyModal, setShowWarrantyModal] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [includeStamp, setIncludeStamp] = useState(true);
 
   const handleGenerate = async () => {
     try {
-      // TTN та Warranty потребують додаткових даних
+      if (selectedDoc === 'invoice') {
+        setShowInvoiceModal(true);
+        return;
+      }
+
       if (selectedDoc === 'ttn') {
         setShowTTNModal(true);
         return;
@@ -47,9 +53,6 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, proposal }
       switch (selectedDoc) {
         case 'proposal':
           setTimeout(() => window.print(), 100);
-          break;
-        case 'invoice':
-          printInvoice(proposal);
           break;
         case 'expense':
           printDeliveryNote(proposal);
@@ -158,6 +161,20 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, proposal }
           </div>
         </div>
       </div>
+
+      {/* Invoice Modal */}
+      {showInvoiceModal && (
+        <InvoiceModal
+          isOpen={showInvoiceModal}
+          onClose={() => setShowInvoiceModal(false)}
+          proposal={proposal}
+          onPrint={(data) => printInvoiceWithData(proposal, data)}
+          onComplete={() => {
+            setShowInvoiceModal(false);
+            onClose();
+          }}
+        />
+      )}
 
       {/* TTN Modal */}
       {showTTNModal && (

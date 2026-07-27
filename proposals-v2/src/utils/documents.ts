@@ -3,6 +3,7 @@ import { formatCurrency, convertCurrency } from './currency';
 import { formatDate } from './calculations';
 import { TTNData } from '../components/TTNModal';
 import { WarrantyData } from '../components/WarrantyModal';
+import { InvoiceData } from '../components/InvoiceModal';
 import { SELLERS } from '../config';
 import { numberToWords } from './numberToWords';
 
@@ -17,6 +18,21 @@ export function printInvoice(proposal: Proposal) {
   }
 
   const html = generateInvoiceHTML(proposal);
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
+
+/**
+ * Друк рахунку-фактури з даними контрагента з модального вікна
+ */
+export function printInvoiceWithData(proposal: Proposal, data: InvoiceData) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Будь ласка, дозвольте спливаючі вікна для друку');
+    return;
+  }
+
+  const html = generateInvoiceHTML(proposal, data);
   printWindow.document.write(html);
   printWindow.document.close();
 }
@@ -78,19 +94,22 @@ export function printContract(proposal: Proposal, withStamp: boolean = true) {
   printWindow.document.close();
 }
 
-function generateInvoiceHTML(proposal: Proposal): string {
+function generateInvoiceHTML(proposal: Proposal, data?: InvoiceData): string {
   const accentColor = '#F59E0B';
   const currencySymbol = proposal.currency === 'UAH' ? '₴' : (proposal.currency === 'EUR' ? '€' : '$');
-  const dateStr = proposal.date ? new Date(proposal.date).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
-  const invoiceNumber = (proposal.number || '').replace('КП-', '');
+  const dateStr = data?.invoiceDate 
+    ? new Date(data.invoiceDate).toLocaleDateString('uk-UA') 
+    : (proposal.date ? new Date(proposal.date).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA'));
+  const invoiceNumber = data?.invoiceNumber || (proposal.number || '').replace('КП-', '');
+  const withStamp = data?.includeStamp !== undefined ? data.includeStamp : true;
   
   // Robust seller detection
   const sellerId = proposal.seller?.id || (proposal as any).sellerId || 'tov_cso';
   const seller = SELLERS[sellerId as keyof typeof SELLERS] || proposal.seller || SELLERS.tov_cso;
 
   const rates = {
-    USD: proposal.rates?.usdToUah || 41.5,
-    EUR: proposal.rates?.eurToUah || 51.0,
+    USD: proposal.rates?.usdToUah || 45.0,
+    EUR: proposal.rates?.eurToUah || 51.5,
     UAH: 1
   };
 
@@ -127,6 +146,14 @@ function generateInvoiceHTML(proposal: Proposal): string {
     `;
   }).join('');
 
+  const buyerName = data?.buyerName || proposal.clientName || '____________________';
+  const buyerTaxId = data?.buyerTaxId || (proposal as any).clientTaxId;
+  const buyerIban = data?.buyerIban || (proposal as any).clientIban;
+  const buyerBank = data?.buyerBank || (proposal as any).clientBank;
+  const buyerPhone = data?.buyerPhone || proposal.clientPhone;
+  const buyerEmail = data?.buyerEmail || proposal.clientEmail;
+  const buyerAddress = data?.buyerAddress || proposal.clientAddress;
+
   return `
     <html>
       <head>
@@ -149,7 +176,7 @@ function generateInvoiceHTML(proposal: Proposal): string {
         <hr style="height: 3px; background-color: ${accentColor}; border: none; margin: 10px 0 20px;">
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px;">
-          <div style="font-size: 11px;">
+          <div style="font-size: 11px; line-height: 1.6;">
             <div style="text-transform: uppercase; font-size: 9px; color: #9CA3AF; font-weight: 600; margin-bottom: 5px;">Постачальник</div>
             <strong>${seller.fullName}</strong><br>
             ЄДРПОУ: ${seller.taxId}<br>
@@ -157,12 +184,15 @@ function generateInvoiceHTML(proposal: Proposal): string {
             Банк: ${seller.bank}<br>
             Адреса: ${seller.address}
           </div>
-          <div style="font-size: 11px;">
+          <div style="font-size: 11px; line-height: 1.6;">
             <div style="text-transform: uppercase; font-size: 9px; color: #9CA3AF; font-weight: 600; margin-bottom: 5px;">Покупець</div>
-            <strong>${proposal.clientName || '____________________'}</strong><br>
-            Тел: ${proposal.clientPhone || '-'}<br>
-            Email: ${proposal.clientEmail || '-'}<br>
-            Адреса: ${proposal.clientAddress || '-'}
+            <strong>${buyerName}</strong><br>
+            ${buyerTaxId ? `<strong>ЄДРПОУ / ІПН:</strong> ${buyerTaxId}<br>` : ''}
+            ${buyerIban ? `<strong>р/р (IBAN):</strong> ${buyerIban}<br>` : ''}
+            ${buyerBank ? `<strong>Банк:</strong> ${buyerBank}<br>` : ''}
+            ${buyerPhone ? `Тел: ${buyerPhone}<br>` : ''}
+            ${buyerEmail ? `Email: ${buyerEmail}<br>` : ''}
+            ${buyerAddress ? `Адреса: ${buyerAddress}` : ''}
           </div>
         </div>
 
@@ -191,12 +221,13 @@ function generateInvoiceHTML(proposal: Proposal): string {
           </tbody>
         </table>
 
-        <div style="margin-top: 50px; display: flex; justify-content: space-between;">
-          <div style="font-size: 10px; text-align: center; width: 200px;">
+        <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div style="font-size: 10px; text-align: center; width: 220px; position: relative;">
             <div style="border-bottom: 1px solid #1F2937; height: 30px;"></div>
             Виписав (ПІБ, підпис)
+            ${(withStamp && seller.stamp) ? `<img src="${seller.stamp}" style="position: absolute; bottom: 15px; left: 30px; width: 140px; height: auto; opacity: 0.95; pointer-events: none; mix-blend-mode: multiply; filter: contrast(1.5) brightness(1.2);">` : ''}
           </div>
-          <div style="font-size: 10px; text-align: center; width: 200px;">
+          <div style="font-size: 10px; text-align: center; width: 220px;">
             <div style="border-bottom: 1px solid #1F2937; height: 30px;"></div>
             Отримав (ПІБ, підпис)
           </div>
