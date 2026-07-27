@@ -111,13 +111,10 @@ export const createProductsSlice: StateCreator<
                   categories,
                   customMaterials,
                 };
-                if (rates) {
-                  const currentUsd = state.settings?.usdRate;
-                  if (!currentUsd || currentUsd === 41.5 || currentUsd === 44.0) {
-                    newState.settings = { ...state.settings, usdRate: rates.usd, eurRate: rates.eur };
-                    if (state.proposal) {
-                      newState.proposal = { ...state.proposal, rates: { usdToUah: rates.usd, eurToUah: rates.eur } };
-                    }
+                if (rates && rates.usd && rates.eur) {
+                  newState.settings = { ...state.settings, usdRate: rates.usd, eurRate: rates.eur };
+                  if (state.proposal) {
+                    newState.proposal = { ...state.proposal, rates: { usdToUah: rates.usd, eurToUah: rates.eur } };
                   }
                 }
                 return newState;

@@ -1011,7 +1011,7 @@ export function mergeSupplierProducts(
 
 // --- ОСНОВНА ФУНКЦІЯ (АВТОРИЗОВАНА ЧЕРЕЗ GAS, ГАРАНТІЯ ПРАВИЛЬНИХ ЦІН) ---
 export async function fetchAllData() {
-  let rates: { usd: number; eur: number; source?: string; debug?: any[] } = { usd: 44.0, eur: 51.43, source: 'default' };
+  let rates: { usd: number; eur: number; source?: string; debug?: any[] } = { usd: CONFIG.DEFAULT_USD_UAH, eur: CONFIG.DEFAULT_EUR_UAH, source: 'default' };
   let customMaterialsFromGAS: Product[] = [];
   let gasProducts: Product[] = [];
   let solarverseProducts: Product[] = [];
@@ -1035,8 +1035,8 @@ export async function fetchAllData() {
     if (res.success) {
       if (res.rates) {
         rates = {
-          usd: parseFloat(sanitize(res.rates.usd || res.rates.usdRate)) || 44.0,
-          eur: parseFloat(sanitize(res.rates.eur || res.rates.eurRate)) || 51.43,
+          usd: parseFloat(sanitize(res.rates.usd || res.rates.usdRate)) || CONFIG.DEFAULT_USD_UAH,
+          eur: parseFloat(sanitize(res.rates.eur || res.rates.eurRate)) || CONFIG.DEFAULT_EUR_UAH,
           source: sanitize(res.rates.source),
           debug: res.rates.debug
         };
@@ -1259,11 +1259,47 @@ export async function fetchAllData() {
   }
 }
 
-// --- КУРСИ ВАЛЮТ (Швидкий проксі) ---
-export async function fetchRates() {
-  console.log('📡 Отримання курсів валют...');
-  
-  // 1. Спробуємо Hoverla напряму з браузера (оскільки IP користувача не заблоковано Cloudflare)
+// --- КУРСИ ВАЛЮТ (Багатоджерельний виклик з відкритим CORS) ---
+export async function fetchRates(): Promise<{ usd: number; eur: number; source: string; error?: string }> {
+  console.log('📡 Отримання актуальних курсів валют...');
+
+  // 1. ПриватБанк (комерційний курс продажу — відкритий CORS, 100% надійність)
+  try {
+    const response = await fetch('https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5');
+    if (response.ok) {
+      const data = await response.json();
+      const usdItem = data.find((c: any) => c.ccy === 'USD');
+      const eurItem = data.find((c: any) => c.ccy === 'EUR');
+      const usd = usdItem ? parseFloat(usdItem.sale) : 0;
+      const eur = eurItem ? parseFloat(eurItem.sale) : 0;
+      if (usd > 0 && eur > 0) {
+        console.log('✅ Курси отримано з ПриватБанку:', { usd, eur });
+        return { usd, eur, source: 'privatbank' };
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ PrivatBank rate fetch failed, trying Monobank...');
+  }
+
+  // 2. Monobank (комерційний курс продажу)
+  try {
+    const response = await fetch('https://api.monobank.ua/bank/currency');
+    if (response.ok) {
+      const data = await response.json();
+      const usdItem = data.find((c: any) => c.currencyCodeA === 840 && c.currencyCodeB === 980);
+      const eurItem = data.find((c: any) => c.currencyCodeA === 978 && c.currencyCodeB === 980);
+      const usd = usdItem ? (usdItem.rateSell || usdItem.rateCross) : 0;
+      const eur = eurItem ? (eurItem.rateSell || eurItem.rateCross) : 0;
+      if (usd > 0 && eur > 0) {
+        console.log('✅ Курси отримано з Monobank:', { usd, eur });
+        return { usd, eur, source: 'monobank' };
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Monobank rate fetch failed, trying Hoverla...');
+  }
+
+  // 3. Hoverla / Goverla
   try {
     const payload = {
       operationName: "Point",
@@ -1290,22 +1326,28 @@ export async function fetchRates() {
       }
     }
   } catch (err) {
-    console.warn('⚠️ Direct Hoverla request failed, trying Vercel...');
+    console.warn('⚠️ Direct Hoverla request failed, trying NBU...');
   }
 
-  // 2. Спробуємо спеціальний надійний проксі на Vercel
+  // 4. НБУ (Офіційний курс)
   try {
-    const response = await fetch('/api/fetch-rates');
+    const response = await fetch('https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json');
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ Курси отримано через Vercel API:', data);
-      return { usd: data.usd, eur: data.eur, source: 'vercel_api' };
+      const usdItem = data.find((c: any) => c.cc === 'USD');
+      const eurItem = data.find((c: any) => c.cc === 'EUR');
+      const usd = usdItem ? parseFloat(usdItem.rate) : 0;
+      const eur = eurItem ? parseFloat(eurItem.rate) : 0;
+      if (usd > 0 && eur > 0) {
+        console.log('✅ Курси отримано з НБУ:', { usd, eur });
+        return { usd, eur, source: 'nbu' };
+      }
     }
   } catch (err) {
-    console.warn('⚠️ Vercel Proxy for rates failed, trying GAS...');
+    console.warn('⚠️ NBU rate fetch failed, trying GAS...');
   }
 
-  // 3. Якщо проксі впав, пробуємо GAS
+  // 5. Пробуємо GAS backend
   try {
     const res = await gasRequest('getRates');
     if (res.success && res.usd && res.eur) {
@@ -1316,11 +1358,11 @@ export async function fetchRates() {
     console.error('❌ GAS fetch for rates failed:', e);
   }
 
-  // 4. Якщо все провалилося — повертаємо об'єкт помилки
+  // 6. Актуальний дефолтний фолбек (45.00 USD / 51.50 EUR)
   return { 
-    usd: null, 
-    eur: null, 
-    error: '⚠️ Не вдалося оновити курси валют з Hoverla.ua. Будь ласка, спробуйте пізніше.' 
+    usd: CONFIG.DEFAULT_USD_UAH, 
+    eur: CONFIG.DEFAULT_EUR_UAH, 
+    source: 'default'
   };
 }
 

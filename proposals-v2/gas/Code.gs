@@ -2250,10 +2250,50 @@ function getCustomMaterials() {
 }
 
 function getRates() {
-  let result = { success: true, usd: 44.0, eur: 51.43, source: 'default', debug: [] };
+  let result = { success: true, usd: 45.0, eur: 51.50, source: 'default', debug: [] };
   
+  // 1. Try PrivatBank
+  try {
+    const pbRes = UrlFetchApp.fetch('https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5', { muteHttpExceptions: true });
+    if (pbRes.getResponseCode() === 200) {
+      const data = JSON.parse(pbRes.getContentText());
+      const usdItem = data.find(c => c.ccy === 'USD');
+      const eurItem = data.find(c => c.ccy === 'EUR');
+      const usd = usdItem ? parseFloat(usdItem.sale) : 0;
+      const eur = eurItem ? parseFloat(eurItem.sale) : 0;
+      if (usd > 0 && eur > 0) {
+        result.usd = usd;
+        result.eur = eur;
+        result.source = 'privatbank';
+        return result;
+      }
+    }
+  } catch (err) {
+    result.debug.push({ source: 'privatbank', error: err.toString() });
+  }
+
+  // 2. Try Monobank
+  try {
+    const monoRes = UrlFetchApp.fetch('https://api.monobank.ua/bank/currency', { muteHttpExceptions: true });
+    if (monoRes.getResponseCode() === 200) {
+      const data = JSON.parse(monoRes.getContentText());
+      const usdItem = data.find(c => c.currencyCodeA === 840 && c.currencyCodeB === 980);
+      const eurItem = data.find(c => c.currencyCodeA === 978 && c.currencyCodeB === 980);
+      const usd = usdItem ? (usdItem.rateSell || usdItem.rateCross) : 0;
+      const eur = eurItem ? (eurItem.rateSell || eurItem.rateCross) : 0;
+      if (usd > 0 && eur > 0) {
+        result.usd = usd;
+        result.eur = eur;
+        result.source = 'monobank';
+        return result;
+      }
+    }
+  } catch (err) {
+    result.debug.push({ source: 'monobank', error: err.toString() });
+  }
+
+  // 3. Try Goverla
   const aliases = ["goverla-ua", "main"];
-  
   for (let alias of aliases) {
     try {
       const payload = {
@@ -2298,6 +2338,26 @@ function getRates() {
     } catch (err) {
       result.debug.push({ alias, error: err.toString() });
     }
+  }
+
+  // 4. Try NBU
+  try {
+    const nbuRes = UrlFetchApp.fetch('https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json', { muteHttpExceptions: true });
+    if (nbuRes.getResponseCode() === 200) {
+      const data = JSON.parse(nbuRes.getContentText());
+      const usdItem = data.find(c => c.cc === 'USD');
+      const eurItem = data.find(c => c.cc === 'EUR');
+      const usd = usdItem ? parseFloat(usdItem.rate) : 0;
+      const eur = eurItem ? parseFloat(eurItem.rate) : 0;
+      if (usd > 0 && eur > 0) {
+        result.usd = usd;
+        result.eur = eur;
+        result.source = 'nbu';
+        return result;
+      }
+    }
+  } catch (err) {
+    result.debug.push({ source: 'nbu', error: err.toString() });
   }
 
   return result;
