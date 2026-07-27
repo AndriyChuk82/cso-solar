@@ -1263,7 +1263,18 @@ export async function fetchAllData() {
 export async function fetchRates(): Promise<{ usd: number; eur: number; source: string; error?: string }> {
   console.log('📡 Отримання актуальних курсів валют Говерла...');
 
-  // 1. Спробуємо Hoverla напряму з браузера
+  // 1. Пробуємо GAS backend (серверний виклик Говерли через Google Cloud без обмежень CORS, 100% гарантія Говерли)
+  try {
+    const res = await gasRequest('getRates');
+    if (res && res.success && res.usd && res.eur && res.usd > 40 && res.eur > 40) {
+      console.log('✅ Курси Говерла успішно отримано через GAS:', res);
+      return { usd: res.usd, eur: res.eur, source: res.source || 'hoverla_gas' };
+    }
+  } catch (e) {
+    console.warn('⚠️ GAS fetch for Hoverla rates failed, trying direct browser fetch...', e);
+  }
+
+  // 2. Спробуємо Hoverla напряму з браузера
   try {
     const payload = {
       operationName: "Point",
@@ -1290,18 +1301,7 @@ export async function fetchRates(): Promise<{ usd: number; eur: number; source: 
       }
     }
   } catch (err) {
-    console.warn('⚠️ Direct Hoverla request failed due to CORS, requesting via GAS server proxy...');
-  }
-
-  // 2. Пробуємо GAS backend (серверний виклик Говерли через Google Cloud без обмежень CORS)
-  try {
-    const res = await gasRequest('getRates');
-    if (res.success && res.usd && res.eur) {
-      console.log('✅ Курси Говерла отримано через GAS:', res);
-      return { usd: res.usd, eur: res.eur, source: res.source || 'hoverla_gas' };
-    }
-  } catch (e) {
-    console.error('❌ GAS fetch for rates failed:', e);
+    console.warn('⚠️ Direct Hoverla request failed...');
   }
 
   // 3. Резервне джерело: ПриватБанк

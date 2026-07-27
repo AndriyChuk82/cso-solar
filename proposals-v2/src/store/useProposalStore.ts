@@ -234,21 +234,41 @@ export const useProposalStore = create<ProposalStore>()(
               // Якщо кеш свіжий (менше 5 хвилин) - використовуємо його
               if (cacheAge < CACHE_DURATION) {
                 console.log('✅ Завантажено з кешу (вік:', Math.round(cacheAge / 1000), 'сек)');
+                
+                const cachedUsd = cache.rates?.usd;
+                const cachedEur = cache.rates?.eur;
+                const isUsdValid = cachedUsd && cachedUsd >= 44.5;
+                const isEurValid = cachedEur && cachedEur >= 50.0;
+
                 set({
                   products: cache.products,
                   categories: cache.categories,
                   settings: {
                     ...get().settings,
-                    usdRate: cache.rates.usd,
-                    eurRate: cache.rates.eur
+                    usdRate: isUsdValid ? cachedUsd : CONFIG.DEFAULT_USD_UAH,
+                    eurRate: isEurValid ? cachedEur : CONFIG.DEFAULT_EUR_UAH
                   },
                   loading: false
                 });
 
+                // ЗАВЖДИ оновлюємо курси Говерли при відкритті нової вкладки / перезавантаженні
+                fetchRates().then(freshRates => {
+                  if (freshRates && freshRates.usd && freshRates.eur) {
+                    console.log('✅ Отримано свіжі курси Говерли при старті:', freshRates);
+                    set(state => ({
+                      settings: {
+                        ...state.settings,
+                        usdRate: freshRates.usd,
+                        eurRate: freshRates.eur
+                      }
+                    }));
+                  }
+                }).catch(e => console.warn('⚠️ Не вдалося оновити курси Говерли у фоні:', e));
+
                 // Оновлюємо в фоні якщо кеш старіший за 2 хвилини
                 if (cacheAge > 2 * 60 * 1000) {
-                  console.log('🔄 Оновлюємо дані в фоні...');
-                  get().loadProducts(); // Рекурсивно викликаємо але кеш вже застарів
+                  console.log('🔄 Оновлюємо товари в фоні...');
+                  get().loadProducts();
                 }
                 return;
               }
