@@ -221,15 +221,16 @@ function generateInvoiceHTML(proposal: Proposal, data?: InvoiceData): string {
           </tbody>
         </table>
 
-        <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: flex-end;">
-          <div style="font-size: 10px; text-align: center; width: 220px; position: relative;">
-            <div style="border-bottom: 1px solid #1F2937; height: 30px;"></div>
-            Виписав (ПІБ, підпис)
-            ${(withStamp && seller.stamp) ? `<img src="${seller.stamp}" style="position: absolute; bottom: 15px; left: 30px; width: 140px; height: auto; opacity: 0.95; pointer-events: none; mix-blend-mode: multiply; filter: contrast(1.5) brightness(1.2);">` : ''}
+        <div style="margin-top: 70px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div style="font-size: 10px; text-align: center; width: 220px;">
+            <div style="border-bottom: 1px solid #1F2937; height: 30px; position: relative;">
+              ${(withStamp && seller.stamp) ? `<img src="${seller.stamp}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -45%); width: 135px; height: auto; opacity: 0.95; pointer-events: none; mix-blend-mode: multiply; filter: contrast(1.5) brightness(1.2);">` : ''}
+            </div>
+            <div style="margin-top: 5px;">Виписав (ПІБ, підпис)</div>
           </div>
           <div style="font-size: 10px; text-align: center; width: 220px;">
             <div style="border-bottom: 1px solid #1F2937; height: 30px;"></div>
-            Отримав (ПІБ, підпис)
+            <div style="margin-top: 5px;">Отримав (ПІБ, підпис)</div>
           </div>
         </div>
 
