@@ -55,6 +55,57 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
     return null;
   };
 
+  // Helper: Parse battery capacity (in kWh) dynamically from battery title/description
+  const parseBatteryCapacity = (bat: Product | { name: string; description?: string }): number => {
+    if (!bat) return 5.12;
+    const name = bat.name || '';
+    const desc = bat.description || '';
+    const text = `${name} ${desc}`;
+
+    // 1. Пошук чіткого kWh / кВт·год / кВтг / kwh у назві чи описі
+    const kwhMatches = Array.from(text.matchAll(/(\d+(?:\.\d+)?)\s*(?:квт[·\s]*год|квтг|kwh)/gi));
+    for (const m of kwhMatches) {
+      const val = parseFloat(m[1]);
+      if (val >= 1 && val <= 500) {
+        return val;
+      }
+    }
+
+    // 2. Розрахунок за V (вольти) та Ah (ампер-години): (V * Ah) / 1000
+    const ahMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:Ah|Аг|А\*г|Ач)/i);
+    const vMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:V|В)(?!\w)/i);
+    if (ahMatch && vMatch) {
+      const ah = parseFloat(ahMatch[1]);
+      const v = parseFloat(vMatch[1]);
+      if (ah > 0 && v > 0) {
+        const calcKwh = Math.round((ah * v) / 1000 * 100) / 100;
+        if (calcKwh >= 1 && calcKwh <= 500) {
+          return calcKwh;
+        }
+      }
+    }
+
+    // 3. Пошук за Ah (ампер-годинами) якщо вольти не вказано
+    if (ahMatch) {
+      const ah = parseFloat(ahMatch[1]);
+      const calcKwh = Math.round((ah * 51.2) / 1000 * 100) / 100;
+      if (calcKwh >= 1 && calcKwh <= 500) {
+        return calcKwh;
+      }
+    }
+
+    // 4. Пошук за назвами моделей
+    const lower = text.toLowerCase();
+    if (lower.includes('f16') || lower.includes('se-f16')) return 16.08;
+    if (lower.includes('f12') || lower.includes('se-f12')) return 11.8;
+    if (lower.includes('m6.1') || lower.includes('rw-m6.1')) return 6.14;
+    if (lower.includes('g5.1') || lower.includes('pro-b') || lower.includes('pro-c')) return 5.12;
+    if (lower.includes('bos-g3.7') || lower.includes('bos-g 3.7')) return 3.77;
+    if (lower.includes('bos-g')) return 5.12;
+
+    return 5.12;
+  };
+
   // Helper: Find closest product by power
   const findClosestProduct = (category: string, keywords: string[], targetPower: number): Product | null => {
     const prods = products.filter(p => {
@@ -226,9 +277,12 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
 
   useEffect(() => {
     if (filteredBatteries.batteries.length > 0) {
-      setSelectedBatteryId(filteredBatteries.batteries[0].id);
+      const exists = filteredBatteries.batteries.some(b => b.id === selectedBatteryId);
+      if (!exists) {
+        setSelectedBatteryId(filteredBatteries.batteries[0].id);
+      }
     }
-  }, [filteredBatteries.batteries]);
+  }, [filteredBatteries.batteries, selectedBatteryId]);
 
   // Generate proposal items
   const handleGenerate = () => {
@@ -327,8 +381,9 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
     if (stationType === 'hybrid' && backup > 0 && selectedBatteryId) {
       const bat = allAvailableProducts.find(p => p.id === selectedBatteryId);
       if (bat) {
-        const batCap = 5.12; // kWh per battery
-        batCount = Math.ceil(backup / batCap);
+        const batCap = parseBatteryCapacity(bat);
+        batCount = Math.max(1, Math.ceil(backup / batCap));
+        console.log(`🔋 Selected battery: "${bat.name}" | Dynamic capacity: ${batCap} kWh | Requested backup: ${backup} kWh => Qty: ${batCount}`);
         items.push(createItem(bat, batCount));
       }
 
