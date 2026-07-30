@@ -296,7 +296,12 @@ export async function getOperations(filters = {}) {
 
   if (filters.warehouseId) operations = operations.filter(op => String(op.warehouse_id).trim() === String(filters.warehouseId).trim());
   if (filters.productId) operations = operations.filter(op => String(op.product_id).trim() === String(filters.productId).trim());
-  if (filters.type) operations = operations.filter(op => op.type === filters.type);
+  if (filters.type) {
+    operations = operations.filter(op => {
+      const typeInfo = getOperationTypeDetails(op);
+      return typeInfo.key === filters.type || op.type === filters.type;
+    });
+  }
   if (filters.dateFrom) operations = operations.filter(op => op.date >= filters.dateFrom);
   if (filters.dateTo) operations = operations.filter(op => op.date <= filters.dateTo);
 
@@ -304,6 +309,58 @@ export async function getOperations(filters = {}) {
   const displayOps = [...operations].reverse();
 
   return { success: true, operations: displayOps, rawOperations: operations };
+}
+
+export function getOperationTypeDetails(op) {
+  if (!op) return { key: 'income', label: 'Прихід', badgeClass: 'badge-income' };
+  
+  const comment = String(op.comment || op.note || op.primitka || '').trim();
+  const lowerComment = comment.toLowerCase();
+  
+  // 1. Переміщення між складами
+  if (
+    op.type === 'transfer' || 
+    op.transfer_id || 
+    lowerComment.startsWith('переміщення') || 
+    lowerComment.includes('переміщення між') ||
+    lowerComment.includes('звідусіль')
+  ) {
+    return {
+      key: 'transfer',
+      label: 'Переміщення',
+      badgeClass: 'badge-transfer'
+    };
+  }
+
+  // 2. Підсумок дня / Інвентаризація / Коригування
+  if (
+    op.type === 'balance' || 
+    op.type === 'adjustment' || 
+    lowerComment.includes('підсумок дня') || 
+    lowerComment.includes('коригування')
+  ) {
+    return {
+      key: 'balance',
+      label: 'Підсумок дня',
+      badgeClass: 'badge-balance'
+    };
+  }
+
+  // 3. Розхід
+  if (op.type === 'expense' || op.type === 'issue') {
+    return {
+      key: 'expense',
+      label: 'Розхід',
+      badgeClass: 'badge-expense'
+    };
+  }
+
+  // 4. Прихід
+  return {
+    key: 'income',
+    label: 'Прихід',
+    badgeClass: 'badge-income'
+  };
 }
 
 export async function addOperation(operation) {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useDeferredValue } from 'react';
 import { Link } from 'react-router-dom';
-import { getOperations, getWarehouses, deleteOperation, updateOperation, formatUserName } from '../api/gasApi';
+import { getOperations, getWarehouses, deleteOperation, updateOperation, formatUserName, getOperationTypeDetails } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { exportToExcel } from '../utils/exportUtils';
@@ -156,6 +156,9 @@ export default function Journal() {
   // Пошукова фільтрація на клієнті та сортування
   const filteredOperations = useMemo(() => {
     const list = operations.filter((op) => {
+      if (filters.type && getOperationTypeDetails(op).key !== filters.type) {
+        return false;
+      }
       if (!deferredSearch.trim()) return true;
       const content = `${op.product_name || ''} ${op.product_article || ''} ${op.comment || ''}`;
       return matchesSearch(content, deferredSearch);
@@ -164,7 +167,7 @@ export default function Journal() {
       list.sort((a, b) => (a.product_name || '').localeCompare(b.product_name || '', undefined, { numeric: true, sensitivity: 'base' }));
     }
     return list;
-  }, [operations, deferredSearch, sortAsc]);
+  }, [operations, deferredSearch, sortAsc, filters.type]);
 
   const totalPages = Math.ceil(filteredOperations.length / PAGE_SIZE);
   const paginatedOperations = useMemo(() => {
@@ -180,7 +183,7 @@ export default function Journal() {
       'Дата': formatDate(op.date),
       'Склад': op.warehouse_name || '',
       'Товар': op.product_name || '',
-      'Тип': CONFIG.OPERATION_LABELS[op.type] || op.type,
+      'Тип': getOperationTypeDetails(op).label,
       'Од.': op.unit || '',
       'К-сть': formatQuantity(op.quantity, op.product_category, op.product_name),
       'Залишок після': formatQuantity(op.balance_after, op.product_category, op.product_name),
@@ -397,59 +400,61 @@ export default function Journal() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedOperations.map((op) => (
-                    <tr key={op.id} className={`row-${op.type}`}>
-                      <td style={{ fontSize: '0.8rem', width: '1px' }}>{formatDate(op.date)}</td>
-                      <td style={{ fontSize: '0.8rem', width: '1px' }}>{op.warehouse_name}</td>
-                      <td style={{ fontSize: '0.85rem', width: '100%' }}>{op.product_name || '—'}</td>
-                      <td style={{ width: '1px' }}>
-                        <span className={`badge badge-${op.type}`} style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
-                          {CONFIG.OPERATION_LABELS[op.type] || op.type}
-                        </span>
-                      </td>
-                      <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem', width: '1px', textAlign: 'center' }}>{op.unit || '—'}</td>
-                      <td style={{ fontSize: '0.85rem', whiteSpace: 'pre-line', textAlign: 'right', width: '1px' }}>
-                        {formatQuantity(op.quantity, op.product_category, op.product_name)}
-                      </td>
-                      <td style={{ fontSize: '0.82rem', whiteSpace: 'pre-line', textAlign: 'right', width: '1px' }}>
-                        {op.balance_after != null ? formatQuantity(op.balance_after, op.product_category, op.product_name) : '—'}
-                      </td>
-                      <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', minWidth: '220px', maxWidth: '350px', whiteSpace: 'normal', lineHeight: '1.2' }}>
-                        {typeof (op.comment || op.note || op.primitka) === 'object' ? JSON.stringify(op.comment || op.note || op.primitka) : String(op.comment || op.note || op.primitka || '—')}
-                      </td>
-                      <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '1px', whiteSpace: 'nowrap' }}>{formatUserName(op.user_name || op.user)}</td>
-                      {user?.isAdmin && (
-                        <td>
-                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', position: 'relative', zIndex: 100 }}>
-                            <button
-                              className="btn-action-edit"
-                              onClick={(e) => { e.stopPropagation(); handleOpenEdit(op); }}
-                              title="Редагувати"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              className="btn-action-delete"
-                              onClick={(e) => { e.stopPropagation(); handleDelete(op.id); }}
-                              title="Видалити"
-                            >
-                              🗑️
-                            </button>
-                          </div>
+                  {paginatedOperations.map((op) => {
+                    const typeInfo = getOperationTypeDetails(op);
+                    return (
+                      <tr key={op.id} className={`row-${typeInfo.key}`}>
+                        <td style={{ fontSize: '0.8rem', width: '1px' }}>{formatDate(op.date)}</td>
+                        <td style={{ fontSize: '0.8rem', width: '1px' }}>{op.warehouse_name}</td>
+                        <td style={{ fontSize: '0.85rem', width: '100%' }}>{op.product_name || '—'}</td>
+                        <td style={{ width: '1px' }}>
+                          <span className={`badge ${typeInfo.badgeClass}`} style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
+                            {typeInfo.label}
+                          </span>
                         </td>
-                      )}
-                    </tr>
-                  ))}
+                        <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem', width: '1px', textAlign: 'center' }}>{op.unit || '—'}</td>
+                        <td style={{ fontSize: '0.85rem', whiteSpace: 'pre-line', textAlign: 'right', width: '1px' }}>
+                          {formatQuantity(op.quantity, op.product_category, op.product_name)}
+                        </td>
+                        <td style={{ fontSize: '0.82rem', whiteSpace: 'pre-line', textAlign: 'right', width: '1px' }}>
+                          {op.balance_after != null ? formatQuantity(op.balance_after, op.product_category, op.product_name) : '—'}
+                        </td>
+                        <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', minWidth: '220px', maxWidth: '350px', whiteSpace: 'normal', lineHeight: '1.2' }}>
+                          {typeof (op.comment || op.note || op.primitka) === 'object' ? JSON.stringify(op.comment || op.note || op.primitka) : String(op.comment || op.note || op.primitka || '—')}
+                        </td>
+                        <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '1px', whiteSpace: 'nowrap' }}>{formatUserName(op.user_name || op.user)}</td>
+                        {user?.isAdmin && (
+                          <td>
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', position: 'relative', zIndex: 100 }}>
+                              <button
+                                className="btn-action-edit"
+                                onClick={(e) => { e.stopPropagation(); handleOpenEdit(op); }}
+                                title="Редагувати"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                className="btn-action-delete"
+                                onClick={(e) => { e.stopPropagation(); handleDelete(op.id); }}
+                                title="Видалити"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
 
               {/* Мобільна версія (список карток) */}
               <div className="mobile-report-cards space-y-3">
                 {paginatedOperations.map((op) => {
-                  const isIssue = op.type === 'issue' || op.type === 'expense';
-                  const isIncome = op.type === 'income';
-                  const isTransfer = op.type === 'transfer';
-                  const isAdj = op.type === 'adjustment';
+                  const typeInfo = getOperationTypeDetails(op);
+                  const isIssue = typeInfo.key === 'expense';
+                  const isIncome = typeInfo.key === 'income';
                   const amt = parseFloat(op.quantity) || 0;
 
                   return (
@@ -457,8 +462,8 @@ export default function Journal() {
                       {/* Шапка: дата та тип */}
                       <div className="flex justify-between items-center text-xs font-semibold">
                         <span className="text-[var(--text-secondary)]">📅 {formatDate(op.date)}</span>
-                        <span className={`badge badge-${op.type}`} style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
-                          {CONFIG.OPERATION_LABELS[op.type] || op.type}
+                        <span className={`badge ${typeInfo.badgeClass}`} style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
+                          {typeInfo.label}
                         </span>
                       </div>
 
@@ -572,7 +577,7 @@ export default function Journal() {
               <div className="modal-body">
                 <div style={{ marginBottom: '16px', background: 'var(--bg-light)', padding: '10px', borderRadius: '8px', fontSize: '0.85rem' }}>
                   <strong>Товар:</strong> {editModal.op.product_name}<br/>
-                  <strong>Тип:</strong> {CONFIG.OPERATION_LABELS[editModal.op.type]}
+                  <strong>Тип:</strong> {getOperationTypeDetails(editModal.op).label}
                 </div>
 
                 <div className="form-group">
