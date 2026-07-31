@@ -310,20 +310,21 @@ export async function takeProposalScreenshot(): Promise<void> {
       return;
     }
 
-    try {
-      const data = [new ClipboardItem({ [blob.type]: blob })];
-      await navigator.clipboard.write(data);
-      const totalTime = Math.round(performance.now() - t0);
-      toast.success(`📸 Скріншот скопійовано (${totalTime}мс)! Вставте (Ctrl+V) у чат.`, { id: toastId, duration: 4000 });
-    } catch (clipboardErr) {
-      console.warn('Clipboard write failed, downloading image fallback...', clipboardErr);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = `KP_Screenshot_${Date.now()}.png`;
-      link.href = url;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-      toast.success('📸 Скріншот завантажено на пристрій!', { id: toastId, duration: 4000 });
+    const renderTime = Math.round(performance.now() - t0);
+    toast.success(`📸 Скріншот готовий (${renderTime}мс)! Вставте (Ctrl+V) у чат.`, { id: toastId, duration: 4000 });
+
+    // Відправляємо зображення у системний буфер обміну у фоні, не блокуючи інтерфейс користувача
+    if (navigator.clipboard && window.ClipboardItem) {
+      const item = new ClipboardItem({ [blob.type]: blob });
+      navigator.clipboard.write([item]).catch((clipboardErr) => {
+        console.warn('Clipboard background write failed, downloading fallback...', clipboardErr);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `KP_Screenshot_${Date.now()}.png`;
+        link.href = url;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      });
     }
   } catch (error) {
     console.error('Screenshot generation error:', error);
