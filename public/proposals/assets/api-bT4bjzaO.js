@@ -1,1 +1,0 @@
-import{l as e}from"./index-FfDn-jKY.js";export{e as fetchAllData};

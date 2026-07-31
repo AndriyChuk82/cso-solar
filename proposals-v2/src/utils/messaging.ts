@@ -31,8 +31,34 @@ export async function sendToTelegram(
   }
 }
 
+function formatDisplayDate(dateStr: string): string {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}.${month}.${year}`;
+    }
+  } catch (e) {
+    // fallback
+  }
+  return dateStr;
+}
+
+function buildProposalCaption(proposal: Proposal): string {
+  const dateFormatted = formatDisplayDate(proposal.date);
+  let caption = `📋 ${proposal.number} від ${dateFormatted}`;
+  if (proposal.clientName && proposal.clientName.trim()) {
+    caption += `\n👤 Клієнт: ${proposal.clientName.trim()}`;
+  }
+  return caption;
+}
+
 async function sendTelegramText(proposal: Proposal, botToken?: string, chatId?: string) {
-  let text = `📋 <b>${escapeHtml(proposal.number)}</b> від ${proposal.date}\n`;
+  const dateFormatted = formatDisplayDate(proposal.date);
+  let text = `📋 <b>${escapeHtml(proposal.number)}</b> від ${dateFormatted}\n`;
   if (proposal.clientName) text += `👤 ${escapeHtml(proposal.clientName)}\n`;
   if (proposal.clientPhone) text += `📞 ${escapeHtml(proposal.clientPhone)}\n`;
   text += '\n';
@@ -65,7 +91,7 @@ async function sendTelegramPhoto(proposal: Proposal, botToken?: string, chatId?:
     });
 
     const photoBase64 = canvas.toDataURL('image/png').split(',')[1];
-    const caption = `📋 ${proposal.number} від ${proposal.date}`;
+    const caption = buildProposalCaption(proposal);
 
     await telegramRequest('sendPhoto', { photoBase64, caption }, botToken, chatId);
   } catch (error) {
@@ -89,7 +115,7 @@ async function sendTelegramPdf(proposal: Proposal, botToken?: string, chatId?: s
     reader.readAsDataURL(pdfBlob);
   });
 
-  const caption = `📋 ${proposal.number} від ${proposal.date}`;
+  const caption = buildProposalCaption(proposal);
   const filename = `${proposal.number}.pdf`;
 
   await telegramRequest('sendDocument', { pdfBase64, caption, filename }, botToken, chatId);
