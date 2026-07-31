@@ -10,6 +10,7 @@ import { formatQuantity } from '../utils/formatUtils';
 import CONFIG from '../config';
 import { Button } from '@cso/design-system';
 import ResizableHeader from '../components/ResizableHeader';
+import { DocumentGeneratorModal } from '../components/DocumentGeneratorModal';
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -50,6 +51,9 @@ export default function Journal() {
   const [sortAsc, setSortAsc] = useState(false);
   const [editModal, setEditModal] = useState(null); // { op, formData }
   const [savingEdit, setSavingEdit] = useState(false);
+  const [selectedOpIds, setSelectedOpIds] = useState(new Set());
+  const [showDocModal, setShowDocModal] = useState(false);
+
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -175,6 +179,39 @@ export default function Journal() {
     return filteredOperations.slice(start, start + PAGE_SIZE);
   }, [filteredOperations, currentPage]);
 
+  function handleToggleSelect(id) {
+    setSelectedOpIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  const isAllPageSelected = useMemo(() => {
+    if (paginatedOperations.length === 0) return false;
+    return paginatedOperations.every((op) => selectedOpIds.has(op.id));
+  }, [paginatedOperations, selectedOpIds]);
+
+  function handleToggleSelectAllPage() {
+    if (isAllPageSelected) {
+      setSelectedOpIds((prev) => {
+        const next = new Set(prev);
+        paginatedOperations.forEach((op) => next.delete(op.id));
+        return next;
+      });
+    } else {
+      setSelectedOpIds((prev) => {
+        const next = new Set(prev);
+        paginatedOperations.forEach((op) => next.add(op.id));
+        return next;
+      });
+    }
+  }
+
   function handleExport() {
     if (filteredOperations.length === 0) return showToast('Немає операцій для експорту', 'info');
     
@@ -275,7 +312,20 @@ export default function Journal() {
             </Link>
           </div>
         </div>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {selectedOpIds.size > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Button variant="warning" size="sm" onClick={() => setShowDocModal(true)}>
+                🛡️ Сформувати документи ({selectedOpIds.size})
+              </Button>
+              <button
+                className="text-xs text-[var(--text-secondary)] hover:underline"
+                onClick={() => setSelectedOpIds(new Set())}
+              >
+                Очистити ({selectedOpIds.size})
+              </button>
+            </div>
+          )}
           <Button variant="ghost" size="sm" onClick={handleExport} disabled={filteredOperations.length === 0}>
             📥 Експорт Excel
           </Button>
@@ -387,6 +437,15 @@ export default function Journal() {
               <table className="desktop-report-table data-table compact-table">
                 <thead>
                    <tr>
+                    <th style={{ width: '30px', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={isAllPageSelected}
+                        onChange={handleToggleSelectAllPage}
+                        title="Вибрати всі на цій сторінці"
+                        style={{ cursor: 'pointer' }}
+                      />
+                    </th>
                     <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="date">Дата</ResizableHeader></th>
                     <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="warehouse">Склад</ResizableHeader></th>
                     <th style={{ width: '100%' }}><ResizableHeader pageId="journal" columnId="product">Товар</ResizableHeader></th>
@@ -402,8 +461,17 @@ export default function Journal() {
                 <tbody>
                   {paginatedOperations.map((op) => {
                     const typeInfo = getOperationTypeDetails(op);
+                    const isSelected = selectedOpIds.has(op.id);
                     return (
-                      <tr key={op.id} className={`row-${typeInfo.key}`}>
+                      <tr key={op.id} className={`row-${typeInfo.key} ${isSelected ? 'bg-amber-500/10' : ''}`}>
+                        <td style={{ textAlign: 'center', width: '30px' }}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleSelect(op.id)}
+                            style={{ cursor: 'pointer' }}
+                          />
+                        </td>
                         <td style={{ fontSize: '0.8rem', width: '1px' }}>{formatDate(op.date)}</td>
                         <td style={{ fontSize: '0.8rem', width: '1px' }}>{op.warehouse_name}</td>
                         <td style={{ fontSize: '0.85rem', width: '100%' }}>{op.product_name || '—'}</td>
@@ -457,11 +525,20 @@ export default function Journal() {
                   const isIncome = typeInfo.key === 'income';
                   const amt = parseFloat(op.quantity) || 0;
 
+                  const isSelected = selectedOpIds.has(op.id);
                   return (
-                    <div key={op.id} className="p-3 border border-[var(--border)] rounded-xl bg-[var(--bg-card)] space-y-2 text-xs">
-                      {/* Шапка: дата та тип */}
+                    <div key={op.id} className={`p-3 border border-[var(--border)] rounded-xl bg-[var(--bg-card)] space-y-2 text-xs ${isSelected ? 'ring-2 ring-amber-500/50 bg-amber-500/5' : ''}`}>
+                      {/* Шапка: чекбокс, дата та тип */}
                       <div className="flex justify-between items-center text-xs font-semibold">
-                        <span className="text-[var(--text-secondary)]">📅 {formatDate(op.date)}</span>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleSelect(op.id)}
+                            style={{ cursor: 'pointer' }}
+                          />
+                          <span className="text-[var(--text-secondary)]">📅 {formatDate(op.date)}</span>
+                        </div>
                         <span className={`badge ${typeInfo.badgeClass}`} style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
                           {typeInfo.label}
                         </span>
@@ -641,6 +718,36 @@ export default function Journal() {
           </div>
         </div>
       )}
+
+      {showDocModal && selectedOpIds.size > 0 && (
+        <DocumentGeneratorModal
+          isOpen={showDocModal}
+          onClose={() => setShowDocModal(false)}
+          issueData={{
+            buyerName: (() => {
+              const selectedOps = operations.filter((op) => selectedOpIds.has(op.id));
+              for (const op of selectedOps) {
+                if (op.buyer_name || op.client_name || op.buyerName || op.clientName) {
+                  return op.buyer_name || op.client_name || op.buyerName || op.clientName;
+                }
+              }
+              return '';
+            })(),
+            date: new Date().toISOString().split('T')[0],
+            number: `Ж-ОП-${Date.now().toString().slice(-6)}`,
+            items: operations
+              .filter((op) => selectedOpIds.has(op.id))
+              .map((op) => ({
+                name: op.product_name || op.productName || 'Без назви',
+                productName: op.product_name || op.productName || 'Без назви',
+                quantity: parseFloat(op.quantity) || 1,
+                unit: op.unit || 'шт',
+                price: parseFloat(op.price || op.cost || 0)
+              }))
+          }}
+        />
+      )}
     </div>
   );
 }
+
