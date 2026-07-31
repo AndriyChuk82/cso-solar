@@ -13,7 +13,7 @@ export function InvoiceModal({ isOpen, onClose, issueData, onPrint, onComplete }
   const [buyerEmail, setBuyerEmail] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState(defaultInvoiceNo);
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
-  const [includeStamp, setIncludeStamp] = useState(true);
+  const [includeStamp, setIncludeStamp] = useState(false);
 
   useEffect(() => {
     if (isOpen && issueData) {
@@ -23,7 +23,7 @@ export function InvoiceModal({ isOpen, onClose, issueData, onPrint, onComplete }
       setBuyerAddress(issueData.clientAddress || issueData.address || '');
       setInvoiceNumber(issueData.number || defaultInvoiceNo);
       setInvoiceDate(issueData.date ? issueData.date.split('T')[0] : new Date().toISOString().split('T')[0]);
-      setIncludeStamp(true);
+      setIncludeStamp(false);
     }
   }, [isOpen, issueData]);
 

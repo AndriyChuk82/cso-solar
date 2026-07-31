@@ -29,7 +29,7 @@ export function TTNModal({ isOpen, onClose, issueData, onPrint, onComplete }) {
   const [additionalDocs, setAdditionalDocs] = useState('');
   const [carStoragePlace, setCarStoragePlace] = useState('');
   const [grossWeightWords, setGrossWeightWords] = useState('');
-  const [sealType, setSealType] = useState('fop');
+  const [sealType, setSealType] = useState('none');
 
   useEffect(() => {
     if (isOpen && issueData) {

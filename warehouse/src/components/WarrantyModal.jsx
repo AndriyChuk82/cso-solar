@@ -8,7 +8,7 @@ export function WarrantyModal({ isOpen, onClose, issueData, onPrint, onComplete 
   const [editedItems, setEditedItems] = useState({});
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [buyer, setBuyer] = useState('');
-  const [sealType, setSealType] = useState('fop');
+  const [sealType, setSealType] = useState('none');
   const [notes, setNotes] = useState('');
 
   useEffect(() => {

@@ -30,7 +30,7 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, proposal }
   const [showTTNModal, setShowTTNModal] = useState(false);
   const [showWarrantyModal, setShowWarrantyModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-  const [includeStamp, setIncludeStamp] = useState(true);
+  const [includeStamp, setIncludeStamp] = useState(false);
 
   const handleGenerate = async () => {
     try {
