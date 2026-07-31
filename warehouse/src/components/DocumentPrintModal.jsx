@@ -8,7 +8,10 @@ const SELLERS = {
     fullName: "ФОП Пастушок Марія Володимирівна",
     office: "Україна, 80700, Львівська обл., Золочівський р-н, с. Вороняки, вул. Шкільна, б. 38",
     phone: "(067) 374-08-12",
-    edrpou: "2987104829"
+    taxId: "2987104829",
+    taxIdType: "РНОКПП",
+    iban: "UA89322313000002600123456789",
+    logo: "https://i.ibb.co/32JD4dc/logo.png"
   },
   tov_cso: {
     id: "tov_cso",
@@ -16,7 +19,10 @@ const SELLERS = {
     fullName: 'ТОВ "Центр сервісного обслуговування"',
     office: "Львівська обл., м. Золочів, вул. І. Труша 1Б",
     phone: "(067) 374-08-02",
-    edrpou: "38920194"
+    taxId: "38920194",
+    taxIdType: "ЄДРПОУ",
+    iban: "UA54322313000002600987654321",
+    logo: "https://i.ibb.co/32JD4dc/logo.png"
   }
 };
 
@@ -42,7 +48,15 @@ export default function DocumentPrintModal({ isOpen, onClose, initialData = {} }
   const [docDate, setDocDate] = useState(new Date().toISOString().split('T')[0]);
 
   const [sellerKey, setSellerKey] = useState('fop_pastushok');
-  const [customSeller, setCustomSeller] = useState({ fullName: '', office: '', phone: '', edrpou: '' });
+  const [customSeller, setCustomSeller] = useState({
+    fullName: '',
+    office: '',
+    phone: '',
+    taxId: '',
+    taxIdType: 'ЄДРПОУ',
+    iban: '',
+    logo: 'https://i.ibb.co/32JD4dc/logo.png'
+  });
 
   const [buyer, setBuyer] = useState({ name: '', phone: '', address: '', edrpou: '' });
   const [currency, setCurrency] = useState('UAH');
@@ -124,7 +138,7 @@ export default function DocumentPrintModal({ isOpen, onClose, initialData = {} }
 
   const totalSum = items.reduce((acc, i) => acc + (parseFloat(i.total) || (parseFloat(i.qty) * parseFloat(i.price)) || 0), 0);
   const totalQty = items.reduce((acc, i) => acc + (parseFloat(i.qty) || 0), 0);
-  const currencySymbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : 'грн';
+  const currencySymbol = currency === 'USD' ? 'USD' : currency === 'EUR' ? 'EUR' : 'грн';
 
   function updateItem(index, field, value) {
     setItems(prev => prev.map((item, i) => {
@@ -151,6 +165,8 @@ export default function DocumentPrintModal({ isOpen, onClose, initialData = {} }
     setItems(prev => prev.filter((_, i) => i !== index));
   }
 
+  const dateStr = docDate ? new Date(docDate).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
+
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto">
       <style>{`
@@ -171,7 +187,7 @@ export default function DocumentPrintModal({ isOpen, onClose, initialData = {} }
             padding: 15mm 15mm !important;
             box-shadow: none !important;
             background: white !important;
-            color: black !important;
+            color: #0f172a !important;
           }
           .no-print {
             display: none !important;
@@ -183,7 +199,7 @@ export default function DocumentPrintModal({ isOpen, onClose, initialData = {} }
         {/* Шапка модального вікна (no-print) */}
         <div className="p-3 sm:p-4 border-b border-[var(--border)] bg-[var(--bg)] flex flex-wrap items-center justify-between gap-3 no-print">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-sm text-[var(--text)]">🖨️ Генератор документів</span>
+            <span className="font-bold text-sm text-[var(--text)]">🖨️ Генератор документів (стиль КП)</span>
             
             {/* Перемикач типів документів */}
             <div className="flex bg-[var(--bg-card)] border border-[var(--border)] p-1 rounded-xl gap-1">
@@ -191,7 +207,7 @@ export default function DocumentPrintModal({ isOpen, onClose, initialData = {} }
                 type="button"
                 onClick={() => setDocType('invoice')}
                 className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors ${
-                  docType === 'invoice' ? 'bg-blue-600 text-white shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
+                  docType === 'invoice' ? 'bg-amber-500 text-white shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
                 }`}
               >
                 📄 Видаткова
@@ -209,7 +225,7 @@ export default function DocumentPrintModal({ isOpen, onClose, initialData = {} }
                 type="button"
                 onClick={() => setDocType('ttn')}
                 className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors ${
-                  docType === 'ttn' ? 'bg-emerald-600 text-white shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
+                  docType === 'ttn' ? 'bg-orange-600 text-white shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
                 }`}
               >
                 🚚 ТТН
@@ -232,7 +248,7 @@ export default function DocumentPrintModal({ isOpen, onClose, initialData = {} }
             <button
               type="button"
               onClick={() => window.print()}
-              className="px-4 py-1.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow transition-colors flex items-center gap-1.5"
+              className="px-4 py-1.5 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow transition-colors flex items-center gap-1.5"
             >
               🖨️ Друкувати
             </button>
@@ -378,92 +394,202 @@ export default function DocumentPrintModal({ isOpen, onClose, initialData = {} }
           </div>
         )}
 
-        {/* Область перегляду та друку документа */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-neutral-100 dark:bg-neutral-900 text-neutral-900">
-          <div className="doc-print-area bg-white text-black p-8 sm:p-10 max-w-[800px] mx-auto shadow-lg font-sans text-xs leading-normal border border-gray-200 rounded-sm">
+        {/* Область перегляду та друку документа (1:1 ІДЕНТИЧНО ШАБЛОНУ КП) */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-neutral-200 dark:bg-neutral-900">
+          <div className="doc-print-area bg-white text-slate-900 p-8 sm:p-10 max-w-[210mm] mx-auto shadow-2xl rounded-2xl border border-[#e8e4d1] font-sans leading-relaxed text-xs">
             
-            {/* ----------------- 📄 1. ВИДАТКОВА НАКЛАДНА ----------------- */}
-            {docType === 'invoice' && (
-              <div>
-                {/* Шапка */}
-                <div className="flex justify-between items-start border-b-2 border-amber-500 pb-4 mb-4">
-                  <div>
-                    <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" className="h-10 w-auto mb-1" />
-                    <div className="font-extrabold text-sm">{seller.fullName}</div>
-                    <div className="text-[10px] text-gray-600">{seller.office} | Тел: {seller.phone}</div>
+            {/* 1. ШАПКА ДОКУМЕНТА (Grid 140px / 1fr / 325px як у КП) */}
+            <div className="grid grid-cols-[140px_1fr_325px] gap-6 items-center border-b-2 border-amber-500 pb-5 mb-6">
+              {/* Колонку 1: Логотип */}
+              <div className="flex items-center">
+                <img src={seller.logo} alt="CSO Solar Logo" className="h-16 w-auto object-contain" />
+              </div>
+
+              {/* Колонка 2: Центрований заголовок */}
+              <div className="text-center flex flex-col justify-center gap-0.5">
+                <h1 className="text-base font-black text-slate-900 tracking-wider uppercase leading-snug whitespace-nowrap">
+                  {docType === 'invoice' ? 'ВИДАТКОВА НАКЛАДНА' : docType === 'warranty' ? 'ГАРАНТІЙНИЙ ТАЛОН' : 'ТОВАРНО-ТРАНСПОРТНА НАКЛАДНА'}
+                </h1>
+                <div className="text-sm font-bold text-amber-600">
+                  № {docNumber}
+                </div>
+                <div className="text-xs text-slate-500 font-semibold">
+                  від {dateStr}
+                </div>
+              </div>
+
+              {/* Колонка 3: Картка постачальника */}
+              <div className="flex justify-end">
+                <div className="border border-[#e8e4d1] rounded-xl p-3 bg-slate-50/30 w-full max-w-[325px] text-[10px] text-slate-700">
+                  <div className="border-b border-[#e8e4d1]/80 pb-1.5 mb-2 text-right">
+                    <span className="font-extrabold text-slate-900 uppercase tracking-wide text-[11px] block leading-snug">
+                      {seller.fullName}
+                    </span>
                   </div>
-                  <div className="text-right">
-                    <div className="text-xl font-extrabold text-amber-600">ВИДАТКОВА НАКЛАДНА</div>
-                    <div className="text-sm font-bold mt-1">№ {docNumber}</div>
-                    <div className="text-xs text-gray-500">від {new Date(docDate).toLocaleDateString('uk-UA')} р.</div>
+
+                  <div className="space-y-1 text-[10px]">
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-slate-400 font-medium">{seller.taxIdType || 'ЄДРПОУ'}:</span>
+                      <span className="font-bold text-slate-800 text-right">{seller.taxId}</span>
+                    </div>
+                    {seller.iban && (
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="text-slate-400 font-medium">IBAN:</span>
+                        <span className="font-bold text-slate-800 text-right whitespace-nowrap">{seller.iban}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-start gap-2">
+                      <span className="text-slate-400 font-medium">Телефон:</span>
+                      <span className="font-bold text-slate-800 text-right whitespace-pre-line leading-tight">{seller.phone}</span>
+                    </div>
+                    <div className="flex justify-between items-start gap-2 pt-0.5">
+                      <span className="text-slate-400 font-medium shrink-0">Адреса:</span>
+                      <span className="font-bold text-slate-800 text-right leading-tight whitespace-normal break-words max-w-[245px]">{seller.office}</span>
+                    </div>
                   </div>
                 </div>
+              </div>
+            </div>
 
-                {/* Сторони */}
-                <div className="grid grid-cols-2 gap-4 mb-5 p-3 bg-gray-50 rounded border border-gray-200">
-                  <div>
-                    <span className="text-[9px] uppercase font-bold text-gray-500 block">Постачальник:</span>
-                    <div className="font-bold text-xs">{seller.fullName}</div>
-                    <div className="text-[10px] text-gray-600">{seller.office}</div>
+            {/* 2. БЛОК ЗАМОВНИКА / ПОКУПЦЯ */}
+            <div className="mb-6 text-xs">
+              <div className="py-2 px-1">
+                <div className="border-b border-[#e8e4d1]/80 pb-1.5 mb-2.5">
+                  <span className="text-[10px] uppercase font-bold text-amber-600 tracking-wider">
+                    {docType === 'ttn' ? 'ВАНТАЖООДЕРЖУВАЧ / ПОКУПЕЦЬ' : 'ПОКУПЕЦЬ / ЗАМОВНИК'}
+                  </span>
+                </div>
+                <div className="space-y-2 text-slate-700 font-medium">
+                  <div className="font-extrabold text-slate-900 text-sm tracking-tight">
+                    {buyer.name || 'Шановний Клієнт'}
                   </div>
-                  <div>
-                    <span className="text-[9px] uppercase font-bold text-gray-500 block">Покупець:</span>
-                    <div className="font-bold text-xs">{buyer.name || 'Одержувач'}</div>
-                    <div className="text-[10px] text-gray-600">{buyer.phone} {buyer.address && `| ${buyer.address}`}</div>
+                  <div className="flex flex-wrap gap-x-6 gap-y-1.5 text-[11px]">
+                    {buyer.phone && (
+                      <div className="flex items-center"><span className="text-slate-400 font-medium mr-1.5">Телефон:</span> <span className="text-slate-800 font-bold">{buyer.phone}</span></div>
+                    )}
+                    {(buyer.address || logistics.destination) && (
+                      <div className="flex items-center"><span className="text-slate-400 font-medium mr-1.5">Адреса:</span> <span className="text-slate-800 font-semibold">{logistics.destination || buyer.address}</span></div>
+                    )}
                   </div>
                 </div>
+              </div>
+            </div>
 
-                {/* Таблиця товарів */}
-                <table className="w-full border-collapse mb-4 text-xs">
-                  <thead>
-                    <tr className="bg-gray-100 text-gray-700 font-bold border-y border-gray-300">
-                      <th className="py-2 px-1 text-center w-8">№</th>
-                      <th className="py-2 px-2 text-left">Найменування товару</th>
-                      <th className="py-2 px-1 text-center w-12">Од.</th>
-                      <th className="py-2 px-1 text-right w-16">К-сть</th>
-                      <th className="py-2 px-2 text-right w-24">Ціна ({currencySymbol})</th>
-                      <th className="py-2 px-2 text-right w-28">Сума ({currencySymbol})</th>
-                      <th className="py-2 px-1 w-6 no-print"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {items.map((item, idx) => (
-                      <tr key={item.id || idx}>
-                        <td className="py-2 px-1 text-center font-mono">{idx + 1}</td>
-                        <td className="py-2 px-2">
+            {/* 3. ДАНІ ПЕРЕВІЗНИКА (Тільки для ТТН) */}
+            {docType === 'ttn' && (
+              <div className="mb-6 p-3 border border-[#e8e4d1] rounded-xl bg-slate-50/40 text-xs">
+                <div className="border-b border-[#e8e4d1]/80 pb-1 mb-2">
+                  <span className="text-[10px] uppercase font-bold text-amber-600 tracking-wider">ЛОГІСТИКА ТА ТРАНСПОРТ</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-[11px]">
+                  <div>
+                    <div><span className="text-slate-400 font-medium">Перевізник:</span> <span className="font-bold text-slate-800">{logistics.carrier}</span></div>
+                    <div><span className="text-slate-400 font-medium">Водій:</span> <span className="font-bold text-slate-800">{logistics.driverName || 'не вказано'}</span></div>
+                  </div>
+                  <div>
+                    <div><span className="text-slate-400 font-medium">Номер авто:</span> <span className="font-bold text-slate-800">{logistics.vehicleNo || '—'}</span></div>
+                    <div><span className="text-slate-400 font-medium">Пункт навантаження:</span> <span className="font-bold text-slate-800">{logistics.departure}</span></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 4. ТАБЛИЦЯ ТОВАРІВ / ОБЛАДНАННЯ (Точна стилістика proposal-print-table) */}
+            <div className="mb-6">
+              <table className="proposal-print-table w-full text-left border-collapse border border-[#e8e4d1] text-xs">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-600 text-[10px] uppercase font-extrabold tracking-wider border-b border-[#e8e4d1]">
+                    <th className="border border-[#e8e4d1] p-2.5 text-center w-8">#</th>
+                    <th className="border border-[#e8e4d1] p-2.5">Найменування обладнання та послуг</th>
+                    <th className="border border-[#e8e4d1] p-2.5 text-center w-12">Од.</th>
+                    <th className="border border-[#e8e4d1] p-2.5 text-center w-20">Кількість</th>
+                    
+                    {docType === 'warranty' ? (
+                      <>
+                        <th className="border border-[#e8e4d1] p-2.5 text-left w-48">Серійний номер (S/N)</th>
+                        <th className="border border-[#e8e4d1] p-2.5 text-center w-24">Гарантія</th>
+                      </>
+                    ) : (
+                      <>
+                        <th className="border border-[#e8e4d1] p-2.5 text-center w-24">Ціна, {currencySymbol}</th>
+                        <th className="border border-[#e8e4d1] p-2.5 text-center w-28">Сума, {currencySymbol}</th>
+                      </>
+                    )}
+                    <th className="border border-[#e8e4d1] p-1 w-6 no-print"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, index) => {
+                    const price = parseFloat(item.price) || 0;
+                    const sum = parseFloat(item.total) || (price * (item.qty || 0));
+
+                    return (
+                      <tr key={item.id || index} className="hover:bg-slate-50/30">
+                        <td className="border border-[#e8e4d1]/80 p-2.5 text-center text-slate-400 font-mono">
+                          {index + 1}
+                        </td>
+                        <td className="border border-[#e8e4d1]/80 p-2.5">
                           <input
                             type="text"
-                            className="w-full bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none font-medium text-xs"
+                            className="w-full bg-transparent border-b border-transparent hover:border-slate-300 focus:border-amber-500 focus:bg-white focus:outline-none font-semibold text-slate-800 text-xs"
                             value={item.name}
-                            onChange={(e) => updateItem(idx, 'name', e.target.value)}
+                            onChange={(e) => updateItem(index, 'name', e.target.value)}
                           />
                         </td>
-                        <td className="py-2 px-1 text-center">{item.unit}</td>
-                        <td className="py-2 px-1 text-right">
+                        <td className="border border-[#e8e4d1]/80 p-2.5 text-center text-slate-500">
+                          {item.unit || 'шт'}
+                        </td>
+                        <td className="border border-[#e8e4d1]/80 p-2.5 text-center font-medium text-slate-800">
                           <input
                             type="number"
                             step="any"
-                            className="w-14 text-right bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none font-bold text-xs"
+                            className="w-14 text-center bg-transparent border-b border-transparent hover:border-slate-300 focus:border-amber-500 focus:bg-white focus:outline-none font-bold text-xs"
                             value={item.qty}
-                            onChange={(e) => updateItem(idx, 'qty', e.target.value)}
+                            onChange={(e) => updateItem(index, 'qty', e.target.value)}
                           />
                         </td>
-                        <td className="py-2 px-2 text-right">
-                          <input
-                            type="number"
-                            step="any"
-                            className="w-20 text-right bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none font-medium text-xs"
-                            value={item.price}
-                            onChange={(e) => updateItem(idx, 'price', e.target.value)}
-                          />
-                        </td>
-                        <td className="py-2 px-2 text-right font-bold">
-                          {item.total.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </td>
-                        <td className="py-2 px-1 text-center no-print">
+
+                        {docType === 'warranty' ? (
+                          <>
+                            <td className="border border-[#e8e4d1]/80 p-2 text-left">
+                              <input
+                                type="text"
+                                className="w-full bg-amber-50/40 border border-amber-200 focus:border-amber-500 focus:bg-white focus:outline-none rounded px-2 py-1 text-xs font-mono"
+                                placeholder="Вкажіть S/N..."
+                                value={item.serials}
+                                onChange={(e) => updateItem(index, 'serials', e.target.value)}
+                              />
+                            </td>
+                            <td className="border border-[#e8e4d1]/80 p-2.5 text-center font-bold text-amber-700">
+                              <input
+                                type="number"
+                                className="w-12 text-center bg-transparent border-b border-transparent hover:border-slate-300 focus:border-amber-500 focus:bg-white focus:outline-none font-bold text-xs"
+                                value={item.warrantyMonths}
+                                onChange={(e) => updateItem(index, 'warrantyMonths', e.target.value)}
+                              /> міс.
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="border border-[#e8e4d1]/80 p-2.5 text-center text-slate-600">
+                              <input
+                                type="number"
+                                step="any"
+                                className="w-20 text-center bg-transparent border-b border-transparent hover:border-slate-300 focus:border-amber-500 focus:bg-white focus:outline-none font-medium text-xs"
+                                value={item.price}
+                                onChange={(e) => updateItem(index, 'price', e.target.value)}
+                              />
+                            </td>
+                            <td className="border border-[#e8e4d1]/80 p-2.5 text-center font-bold text-slate-800">
+                              {sum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                          </>
+                        )}
+                        
+                        <td className="border border-[#e8e4d1]/80 p-1 text-center no-print">
                           <button
                             type="button"
-                            onClick={() => removeItem(idx)}
+                            onClick={() => removeItem(index)}
                             className="text-red-500 hover:text-red-700 font-bold px-1"
                             title="Видалити рядок"
                           >
@@ -471,278 +597,98 @@ export default function DocumentPrintModal({ isOpen, onClose, initialData = {} }
                           </button>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-                {/* Додати рядок (no-print) */}
-                <div className="mb-4 no-print">
-                  <button
-                    type="button"
-                    onClick={addItem}
-                    className="px-2.5 py-1 text-xs font-semibold rounded bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 flex items-center gap-1"
-                  >
-                    ➕ Додати товар
-                  </button>
-                </div>
+            {/* Кнопка додавання товару (no-print) */}
+            <div className="mb-6 no-print">
+              <button
+                type="button"
+                onClick={addItem}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-[#e8e4d1] flex items-center gap-1.5"
+              >
+                ➕ Додати рядок товару
+              </button>
+            </div>
 
-                {/* Підсумки */}
-                <div className="flex justify-between items-start pt-2 border-t-2 border-gray-300 mb-6">
-                  <div className="text-xs space-y-1">
-                    <div>Всього найменувань: <span className="font-bold">{items.length}</span> на суму: <span className="font-bold">{totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencySymbol}</span></div>
-                    <div className="italic text-gray-700 font-medium">
-                      Сума прописом: <span className="font-bold">{numberToWordsUah(totalSum, currency)}</span>
-                    </div>
+            {/* 5. ФІНАНСОВИЙ ПІДСУМОК ТА ПРИМІТКИ (Ідентично КП) */}
+            <div className="flex justify-between items-start gap-8 mb-8 text-xs">
+              {/* Примітки / Умови / Сума прописом */}
+              <div className="flex-1 border border-[#e8e4d1]/80 rounded-xl p-4 bg-slate-50/25">
+                <span className="text-[10px] uppercase font-bold text-[#a89a74] tracking-wider">
+                  {docType === 'warranty' ? 'УМОВИ ГАРАНТІЇ CSO SOLAR:' : 'СУМА ПРОПИСОМ ТА ПРИМІТКИ:'}
+                </span>
+                
+                {docType === 'warranty' ? (
+                  <div className="text-[11px] text-slate-600 leading-relaxed mt-1.5 font-medium space-y-1">
+                    <p>1. Гарантійний ремонт здійснюється при наявності талону та збережених заводських пломб і S/N.</p>
+                    <p>2. Гарантія не поширюється на вироби з механічними пошкодженнями чи слідів некоректного монтажу.</p>
+                    <p>3. Обладнання приймається на сервіс в оригінальному пакуванні.</p>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-xs text-slate-700 leading-normal mt-1.5 font-medium">
+                    <div className="font-bold text-slate-900">{numberToWordsUah(totalSum, currency)}</div>
+                    {notes && <div className="mt-2 text-slate-500 italic border-t border-[#e8e4d1]/60 pt-1.5">{notes}</div>}
+                  </div>
+                )}
 
-                {/* Підписи */}
-                <div className="grid grid-cols-2 gap-8 pt-6 border-t border-gray-200 mt-12 text-xs">
-                  <div>
-                    <div className="font-bold mb-8">Відпустив (Постачальник):</div>
-                    <div className="border-b border-gray-400 w-full mb-1"></div>
-                    <div className="text-[10px] text-gray-500 flex justify-between">
-                      <span>(підпис)</span>
-                      <span>{seller.shortName}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="font-bold mb-8">Отримав (Покупець):</div>
-                    <div className="border-b border-gray-400 w-full mb-1"></div>
-                    <div className="text-[10px] text-gray-500 flex justify-between">
-                      <span>(підпис)</span>
-                      <span>{buyer.name || '____________'}</span>
-                    </div>
-                  </div>
+                <div className="text-[9px] text-[#a89a74] font-medium mt-3 pt-2 border-t border-[#e8e4d1]/60 font-mono">
+                  Консультації та сервіс CSO Solar: +38 (067) 374-08-12 | cso-solar.com.ua
                 </div>
               </div>
-            )}
 
-            {/* ----------------- 🛡️ 2. ГАРАНТІЙНИЙ ТАЛОН ----------------- */}
-            {docType === 'warranty' && (
+              {/* Розрахунки суми (з градієнтом КП) */}
+              <div className="w-80 border border-[#e8e4d1] rounded-xl overflow-hidden shadow-sm bg-white">
+                <div className="p-3 bg-slate-50/50 border-b border-[#e8e4d1]/65 space-y-1.5 text-slate-500 text-xs font-semibold">
+                  <div className="flex justify-between">
+                    <span>Всього найменувань:</span>
+                    <span className="font-bold text-slate-800">{items.length} позицій</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Загальна кількість:</span>
+                    <span className="font-bold text-slate-800">{totalQty} {items[0]?.unit || 'шт'}</span>
+                  </div>
+                </div>
+                
+                {/* Головний підсумок */}
+                <div className="p-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white flex justify-between items-center shadow-inner">
+                  <span className="font-bold text-xs uppercase tracking-wider">
+                    {docType === 'ttn' ? 'Оголошена вартість:' : 'ВСЬОГО ДО СПЛАТИ:'}
+                  </span>
+                  <span className="font-black text-sm whitespace-nowrap">
+                    {totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currencySymbol}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 6. ПІДПИСИ (Футер) */}
+            <div className="grid grid-cols-2 gap-12 pt-6 border-t border-[#e8e4d1] text-xs">
               <div>
-                {/* Шапка */}
-                <div className="flex justify-between items-start border-b-2 border-amber-500 pb-4 mb-4">
-                  <div>
-                    <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" className="h-10 w-auto mb-1" />
-                    <div className="font-extrabold text-sm">{seller.fullName}</div>
-                    <div className="text-[10px] text-gray-600">{seller.office} | Тел: {seller.phone}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xl font-extrabold text-amber-600">ГАРАНТІЙНИЙ ТАЛОН</div>
-                    <div className="text-sm font-bold mt-1">№ ГТ-{docNumber.replace(/[^\d]/g, '') || Math.floor(1000+Math.random()*9000)}</div>
-                    <div className="text-xs text-gray-500">від {new Date(docDate).toLocaleDateString('uk-UA')} р.</div>
-                  </div>
+                <div className="font-bold text-slate-800 mb-8">
+                  {docType === 'ttn' ? 'Відправив (Вантажовідправник):' : 'Відпустив (Постачальник):'}
                 </div>
-
-                {/* Покупець */}
-                <div className="mb-4 p-3 bg-amber-500/5 rounded border border-amber-500/20">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-[9px] uppercase font-bold text-gray-500 block">Покупець / Клієнт:</span>
-                      <div className="font-bold text-xs">{buyer.name || 'Одержувач'}</div>
-                    </div>
-                    <div>
-                      <span className="text-[9px] uppercase font-bold text-gray-500 block">Телефон:</span>
-                      <div className="font-bold text-xs">{buyer.phone || '—'}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Таблиця обладнання та серійних номерів */}
-                <div className="mb-4">
-                  <div className="font-bold text-xs uppercase tracking-wider text-gray-700 mb-2">Перелік гарантійного обладнання:</div>
-                  <table className="w-full border-collapse text-xs">
-                    <thead>
-                      <tr className="bg-gray-100 text-gray-700 font-bold border-y border-gray-300">
-                        <th className="py-2 px-1 text-center w-8">№</th>
-                        <th className="py-2 px-2 text-left">Обладнання / Модель</th>
-                        <th className="py-2 px-1 text-center w-12">К-сть</th>
-                        <th className="py-2 px-2 text-left w-48">Серійні номери (S/N)</th>
-                        <th className="py-2 px-2 text-center w-28">Гарантія</th>
-                        <th className="py-2 px-1 w-6 no-print"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {items.map((item, idx) => (
-                        <tr key={item.id || idx}>
-                          <td className="py-2 px-1 text-center font-mono">{idx + 1}</td>
-                          <td className="py-2 px-2">
-                            <input
-                              type="text"
-                              className="w-full bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none font-bold text-xs"
-                              value={item.name}
-                              onChange={(e) => updateItem(idx, 'name', e.target.value)}
-                            />
-                          </td>
-                          <td className="py-2 px-1 text-center font-bold">{item.qty} {item.unit}</td>
-                          <td className="py-2 px-2">
-                            <input
-                              type="text"
-                              className="w-full bg-amber-50/50 border border-amber-200 focus:border-amber-500 focus:bg-white focus:outline-none rounded px-1.5 py-0.5 text-xs font-mono"
-                              placeholder="Введіть S/N..."
-                              value={item.serials}
-                              onChange={(e) => updateItem(idx, 'serials', e.target.value)}
-                            />
-                          </td>
-                          <td className="py-2 px-2 text-center font-semibold text-amber-700">
-                            <input
-                              type="number"
-                              className="w-12 text-center bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:bg-white focus:outline-none font-bold text-xs"
-                              value={item.warrantyMonths}
-                              onChange={(e) => updateItem(idx, 'warrantyMonths', e.target.value)}
-                            /> міс.
-                          </td>
-                          <td className="py-2 px-1 text-center no-print">
-                            <button
-                              type="button"
-                              onClick={() => removeItem(idx)}
-                              className="text-red-500 hover:text-red-700 font-bold px-1"
-                            >
-                              ✕
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Умови гарантії */}
-                <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded text-[10px] space-y-1 text-gray-700 leading-tight">
-                  <div className="font-bold text-xs text-gray-900 mb-1">Умови гарантійного обслуговування CSO Solar:</div>
-                  <p>1. Гарантійний ремонт здійснюється при наявності даного талону та збереженні заводських пломб і серійних номерів.</p>
-                  <p>2. Гарантія не поширюється на вироби із механічними пошкодженнями, слідами затоплення, термічного впливу або неправильного монтажу.</p>
-                  <p>3. Обладнання приймається на діагностику та гарантійне обслуговування в комплекті з оригінальним пакуванням.</p>
-                </div>
-
-                {/* Підписи */}
-                <div className="grid grid-cols-2 gap-8 pt-6 border-t border-gray-200 mt-8 text-xs">
-                  <div>
-                    <div className="font-bold mb-8">Продавець (CSO Solar):</div>
-                    <div className="border-b border-gray-400 w-full mb-1"></div>
-                    <div className="text-[10px] text-gray-500 flex justify-between">
-                      <span>(підпис, М.П.)</span>
-                      <span>{seller.shortName}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="font-bold mb-8">Покупець (з умовами ознайомлений):</div>
-                    <div className="border-b border-gray-400 w-full mb-1"></div>
-                    <div className="text-[10px] text-gray-500 flex justify-between">
-                      <span>(підпис)</span>
-                      <span>{buyer.name || '____________'}</span>
-                    </div>
-                  </div>
+                <div className="border-b border-slate-400 w-full mb-1"></div>
+                <div className="text-[10px] text-slate-500 flex justify-between">
+                  <span>(підпис, М.П.)</span>
+                  <span className="font-bold">{seller.shortName}</span>
                 </div>
               </div>
-            )}
-
-            {/* ----------------- 🚚 3. ТОВАРНО-ТРАНСПОРТНА НАКЛАДНА (ТТН) ----------------- */}
-            {docType === 'ttn' && (
               <div>
-                {/* Шапка */}
-                <div className="flex justify-between items-start border-b-2 border-emerald-600 pb-3 mb-3">
-                  <div>
-                    <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" className="h-9 w-auto mb-1" />
-                    <div className="font-extrabold text-xs">{seller.fullName}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-extrabold text-emerald-700">ТОВАРНО-ТРАНСПОРТНА НАКЛАДНА</div>
-                    <div className="text-xs font-bold">№ ТТН-{docNumber.replace(/[^\d]/g, '') || Math.floor(1000+Math.random()*9000)}</div>
-                    <div className="text-[10px] text-gray-500">від {new Date(docDate).toLocaleDateString('uk-UA')} р.</div>
-                  </div>
+                <div className="font-bold text-slate-800 mb-8">
+                  {docType === 'warranty' ? 'Покупець (з умовами ознайомлений):' : docType === 'ttn' ? 'Прийняв вантаж (Одержувач):' : 'Отримав (Покупець):'}
                 </div>
-
-                {/* Перевізник та Авто */}
-                <div className="grid grid-cols-2 gap-3 mb-3 p-2.5 bg-gray-50 rounded border border-gray-200 text-xs">
-                  <div>
-                    <div><span className="font-bold">Перевізник:</span> {logistics.carrier}</div>
-                    <div><span className="font-bold">Водій / Експедитор:</span> {logistics.driverName || 'не вказано'}</div>
-                  </div>
-                  <div>
-                    <div><span className="font-bold">Автомобіль / Держномер:</span> {logistics.vehicleNo || '—'}</div>
-                    <div><span className="font-bold">Пункт навантаження:</span> {logistics.departure}</div>
-                  </div>
-                </div>
-
-                {/* Відправник / Одержувач */}
-                <div className="grid grid-cols-2 gap-3 mb-3 text-xs">
-                  <div className="p-2 border border-gray-200 rounded">
-                    <span className="text-[9px] uppercase font-bold text-gray-500 block">Вантажовідправник:</span>
-                    <div className="font-bold">{seller.fullName}</div>
-                    <div className="text-[10px] text-gray-600">{seller.office}</div>
-                  </div>
-                  <div className="p-2 border border-gray-200 rounded">
-                    <span className="text-[9px] uppercase font-bold text-gray-500 block">Вантажоодержувач:</span>
-                    <div className="font-bold">{buyer.name || 'Покупець'}</div>
-                    <div className="text-[10px] text-gray-600">{logistics.destination || buyer.address || buyer.phone}</div>
-                  </div>
-                </div>
-
-                {/* Таблиця вантажу */}
-                <table className="w-full border-collapse mb-3 text-xs">
-                  <thead>
-                    <tr className="bg-gray-100 text-gray-700 font-bold border-y border-gray-300">
-                      <th className="py-1.5 px-1 text-center w-8">№</th>
-                      <th className="py-1.5 px-2 text-left">Найменування вантажу</th>
-                      <th className="py-1.5 px-1 text-center w-12">Од.</th>
-                      <th className="py-1.5 px-1 text-right w-16">К-сть</th>
-                      <th className="py-1.5 px-2 text-right w-24">Оголошена вартість ({currencySymbol})</th>
-                      <th className="py-1.5 px-1 w-6 no-print"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {items.map((item, idx) => (
-                      <tr key={item.id || idx}>
-                        <td className="py-1.5 px-1 text-center font-mono">{idx + 1}</td>
-                        <td className="py-1.5 px-2 font-medium">{item.name}</td>
-                        <td className="py-1.5 px-1 text-center">{item.unit}</td>
-                        <td className="py-1.5 px-1 text-right font-bold">{item.qty}</td>
-                        <td className="py-1.5 px-2 text-right font-bold">
-                          {item.total.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </td>
-                        <td className="py-1.5 px-1 text-center no-print">
-                          <button
-                            type="button"
-                            onClick={() => removeItem(idx)}
-                            className="text-red-500 hover:text-red-700 font-bold px-1"
-                          >
-                            ✕
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {/* Разом вантажні місця та вага */}
-                <div className="grid grid-cols-3 gap-2 mb-4 p-2 bg-emerald-50 border border-emerald-200 rounded text-center text-xs">
-                  <div><span className="text-[10px] text-gray-500 block uppercase">Всього місць:</span> <span className="font-extrabold text-emerald-800">{logistics.placesCount || items.length}</span></div>
-                  <div><span className="text-[10px] text-gray-500 block uppercase">Загальна вага (кг):</span> <span className="font-extrabold text-emerald-800">{logistics.grossWeight || '—'} кг</span></div>
-                  <div><span className="text-[10px] text-gray-500 block uppercase">Загальна вартість:</span> <span className="font-extrabold text-emerald-800">{totalSum.toLocaleString('uk-UA')} {currencySymbol}</span></div>
-                </div>
-
-                {/* 3 підписи */}
-                <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200 mt-6 text-[10px]">
-                  <div>
-                    <div className="font-bold mb-6">Сдав (Вантажовідправник):</div>
-                    <div className="border-b border-gray-400 w-full mb-1"></div>
-                    <div className="text-gray-500 text-center">(підпис)</div>
-                  </div>
-                  <div>
-                    <div className="font-bold mb-6">Прийняв водій-експедитор:</div>
-                    <div className="border-b border-gray-400 w-full mb-1"></div>
-                    <div className="text-gray-500 text-center">(підпис)</div>
-                  </div>
-                  <div>
-                    <div className="font-bold mb-6">Прийняв (Вантажоодержувач):</div>
-                    <div className="border-b border-gray-400 w-full mb-1"></div>
-                    <div className="text-gray-500 text-center">(підпис)</div>
-                  </div>
+                <div className="border-b border-slate-400 w-full mb-1"></div>
+                <div className="text-[10px] text-slate-500 flex justify-between">
+                  <span>(підпис)</span>
+                  <span className="font-bold">{buyer.name || '____________________'}</span>
                 </div>
               </div>
-            )}
+            </div>
+
           </div>
         </div>
       </div>
