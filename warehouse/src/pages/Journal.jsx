@@ -10,6 +10,7 @@ import { formatQuantity } from '../utils/formatUtils';
 import CONFIG from '../config';
 import { Button } from '@cso/design-system';
 import ResizableHeader from '../components/ResizableHeader';
+import DocumentPrintModal from '../components/DocumentPrintModal';
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -51,9 +52,38 @@ export default function Journal() {
   const [editModal, setEditModal] = useState(null); // { op, formData }
   const [savingEdit, setSavingEdit] = useState(false);
 
+  // Стан для вибору позицій та друку документів
+  const [selectedOpIds, setSelectedOpIds] = useState([]);
+  const [printModalData, setPrintModalData] = useState(null);
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 15;
+
+  function toggleSelectOp(id) {
+    setSelectedOpIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  }
+
+  function openPrintModalForOps(opsToPrint, defaultDocType = 'invoice') {
+    if (!opsToPrint || opsToPrint.length === 0) return;
+    
+    const firstOp = opsToPrint[0];
+    setPrintModalData({
+      docType: defaultDocType,
+      docNumber: `ВН-${Math.floor(1000 + Math.random() * 9000)}`,
+      docDate: firstOp.date || new Date().toISOString().split('T')[0],
+      warehouseName: firstOp.warehouse_name || '',
+      items: opsToPrint.map(op => ({
+        product_name: op.product_name,
+        quantity: Math.abs(parseFloat(op.quantity) || 1),
+        unit: op.unit || 'шт',
+        price: 0,
+        total: 0
+      }))
+    });
+  }
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -365,6 +395,57 @@ export default function Journal() {
         </div>
       </div>
 
+      {/* Плашка дій над таблицею при обраних чекбоксах */}
+      {selectedOpIds.length > 0 && (
+        <div className="card p-2.5 bg-blue-500/10 border border-blue-500/30 rounded-xl mb-3 flex flex-wrap items-center justify-between gap-2 text-xs no-print">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-blue-700 dark:text-blue-300">
+              ☑️ Обрано позицій: {selectedOpIds.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedOpIds([])}
+              className="text-[11px] text-[var(--text-secondary)] hover:underline"
+            >
+              Скасувати вибір
+            </button>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] font-semibold text-[var(--text-secondary)]">Зформувати бланк:</span>
+            <button
+              type="button"
+              onClick={() => {
+                const selected = operations.filter(op => selectedOpIds.includes(op.id));
+                openPrintModalForOps(selected, 'invoice');
+              }}
+              className="px-3 py-1 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors flex items-center gap-1"
+            >
+              📄 Видаткова
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const selected = operations.filter(op => selectedOpIds.includes(op.id));
+                openPrintModalForOps(selected, 'warranty');
+              }}
+              className="px-3 py-1 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors flex items-center gap-1"
+            >
+              🛡️ Гарантійка
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const selected = operations.filter(op => selectedOpIds.includes(op.id));
+                openPrintModalForOps(selected, 'ttn');
+              }}
+              className="px-3 py-1 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors flex items-center gap-1"
+            >
+              🚚 ТТН
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Таблиця */}
       <div className="card">
         <div className="data-table-wrap">
@@ -387,6 +468,22 @@ export default function Journal() {
               <table className="desktop-report-table data-table compact-table">
                 <thead>
                    <tr>
+                    <th style={{ width: '1px', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={paginatedOperations.length > 0 && paginatedOperations.every(op => selectedOpIds.includes(op.id))}
+                        onChange={() => {
+                          const pageIds = paginatedOperations.map(op => op.id);
+                          const allSelected = pageIds.every(id => selectedOpIds.includes(id));
+                          if (allSelected) {
+                            setSelectedOpIds(prev => prev.filter(id => !pageIds.includes(id)));
+                          } else {
+                            setSelectedOpIds(prev => Array.from(new Set([...prev, ...pageIds])));
+                          }
+                        }}
+                        title="Вибрати всі на сторінці"
+                      />
+                    </th>
                     <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="date">Дата</ResizableHeader></th>
                     <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="warehouse">Склад</ResizableHeader></th>
                     <th style={{ width: '100%' }}><ResizableHeader pageId="journal" columnId="product">Товар</ResizableHeader></th>
@@ -396,14 +493,22 @@ export default function Journal() {
                     <th style={{ textAlign: 'right', width: '1px' }}><ResizableHeader pageId="journal" columnId="balance">Залишок</ResizableHeader></th>
                     <th style={{ minWidth: '220px' }}><ResizableHeader pageId="journal" columnId="comment">Коментар</ResizableHeader></th>
                     <th style={{ width: '1px' }}><ResizableHeader pageId="journal" columnId="user">Автор</ResizableHeader></th>
-                    {user?.isAdmin && <th style={{ width: '1px', textAlign: 'center', textTransform: 'uppercase' }}>Дії</th>}
+                    <th style={{ width: '1px', textAlign: 'center', textTransform: 'uppercase' }}>Дії</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedOperations.map((op) => {
                     const typeInfo = getOperationTypeDetails(op);
+                    const isSelected = selectedOpIds.includes(op.id);
                     return (
-                      <tr key={op.id} className={`row-${typeInfo.key}`}>
+                      <tr key={op.id} className={`row-${typeInfo.key} ${isSelected ? 'bg-blue-500/10' : ''}`}>
+                        <td style={{ width: '1px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectOp(op.id)}
+                          />
+                        </td>
                         <td style={{ fontSize: '0.8rem', width: '1px' }}>{formatDate(op.date)}</td>
                         <td style={{ fontSize: '0.8rem', width: '1px' }}>{op.warehouse_name}</td>
                         <td style={{ fontSize: '0.85rem', width: '100%' }}>{op.product_name || '—'}</td>
@@ -423,26 +528,35 @@ export default function Journal() {
                           {typeof (op.comment || op.note || op.primitka) === 'object' ? JSON.stringify(op.comment || op.note || op.primitka) : String(op.comment || op.note || op.primitka || '—')}
                         </td>
                         <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '1px', whiteSpace: 'nowrap' }}>{formatUserName(op.user_name || op.user)}</td>
-                        {user?.isAdmin && (
-                          <td>
-                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', position: 'relative', zIndex: 100 }}>
-                              <button
-                                className="btn-action-edit"
-                                onClick={(e) => { e.stopPropagation(); handleOpenEdit(op); }}
-                                title="Редагувати"
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                className="btn-action-delete"
-                                onClick={(e) => { e.stopPropagation(); handleDelete(op.id); }}
-                                title="Видалити"
-                              >
-                                🗑️
-                              </button>
-                            </div>
-                          </td>
-                        )}
+                        <td>
+                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', position: 'relative', zIndex: 100 }}>
+                            <button
+                              className="btn-action-edit"
+                              onClick={(e) => { e.stopPropagation(); openPrintModalForOps([op], 'invoice'); }}
+                              title="Зформувати та надрукувати документ"
+                            >
+                              🖨️
+                            </button>
+                            {user?.isAdmin && (
+                              <>
+                                <button
+                                  className="btn-action-edit"
+                                  onClick={(e) => { e.stopPropagation(); handleOpenEdit(op); }}
+                                  title="Редагувати"
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  className="btn-action-delete"
+                                  onClick={(e) => { e.stopPropagation(); handleDelete(op.id); }}
+                                  title="Видалити"
+                                >
+                                  🗑️
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     );
                   })}
@@ -641,6 +755,13 @@ export default function Journal() {
           </div>
         </div>
       )}
+
+      {/* Модальне вікно друку документів */}
+      <DocumentPrintModal
+        isOpen={!!printModalData}
+        onClose={() => setPrintModalData(null)}
+        initialData={printModalData}
+      />
     </div>
   );
 }
