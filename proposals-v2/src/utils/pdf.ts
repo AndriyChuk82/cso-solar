@@ -1,126 +1,83 @@
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import { Proposal, ProposalItem } from '../types';
+import { toPng } from 'html-to-image';
+import { Proposal } from '../types';
 
 /**
- * Генерує PDF, який повністю повторює дизайн друкованої форми
+ * Генерує PDF, який 100% ідентичний офіційному дизайну друкованої форми КП
  */
 export async function exportToPDF(proposal: Proposal, returnBlob = false, showCost = false): Promise<Blob | void> {
-  const currencySymbol = proposal.currency === 'UAH' ? '₴' : (proposal.currency === 'EUR' ? '€' : '$');
-  const dateStr = new Date(proposal.date).toLocaleDateString('uk-UA');
-  const accentColor = '#F59E0B';
+  const printTemplate = document.getElementById('print-proposal-template');
+  const mainEl = document.getElementById('proposal-container') || document.getElementById('mainContent');
 
-  // Створюємо тимчасовий контейнер для рендерингу
-  const container = document.createElement('div');
-  container.style.position = 'absolute';
-  container.style.left = '-9999px';
-  container.style.top = '0';
-  container.style.width = '800px'; // Фіксована ширина для стабільного рендерингу
-  container.style.backgroundColor = '#ffffff';
+  if (!mainEl && !printTemplate) throw new Error('Елемент пропозиції не знайдено');
 
-  container.innerHTML = `
-    <div style="font-family: Arial, sans-serif; color: #1F2937; padding: 40px 50px; background: #fff;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <img src="https://i.ibb.co/32JD4dc/logo.png" height="70" class="print-logo">
-        <div style="text-align: right;">
-          <div style="color: ${accentColor}; font-weight: 800; font-size: 15px; letter-spacing: 0.5px; margin-bottom: 5px;">КОМЕРЦІЙНА ПРОПОЗИЦІЯ</div>
-          <div style="font-size: 11px; color: #1F2937; line-height: 1.4;">
-            <strong style="font-size: 13px;">${proposal.seller.fullName}</strong><br>
-            ${proposal.seller.address}<br>
-            <span style="color: #6B7280;">${proposal.seller.phone}</span>
-          </div>
-        </div>
-      </div>
+  const targetEl = (!showCost && printTemplate) ? printTemplate : mainEl!;
 
-      <hr style="height: 3px; background-color: ${accentColor}; margin: 20px 0; border: none;">
+  let restoreStyle: (() => void) | null = null;
+  if (!showCost && printTemplate) {
+    const origDisplay = printTemplate.style.display;
+    const origWidth = printTemplate.style.width;
+    const origMaxWidth = printTemplate.style.maxWidth;
+    const origMargin = printTemplate.style.margin;
+    const origPadding = printTemplate.style.padding;
+    const origBackground = printTemplate.style.background;
 
-      <div style="background: #faf5ec; padding: 15px 25px; border-radius: 4px; margin-bottom: 30px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-          <div style="display: flex; gap: 40px;">
-            <div style="flex: 1;"><label style="display: block; font-size: 9px; color: #9CA3AF; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Номер</label><span style="display: block; font-size: 13px; font-weight: 600; color: #111827;">${proposal.number}</span></div>
-            <div style="flex: 1;"><label style="display: block; font-size: 9px; color: #9CA3AF; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Дата</label><span style="display: block; font-size: 13px; font-weight: 600; color: #111827;">${dateStr}</span></div>
-          </div>
-          <div style="display: flex; gap: 40px;">
-            <div style="flex: 1;"><label style="display: block; font-size: 9px; color: #9CA3AF; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Клієнт</label><span style="display: block; font-size: 13px; font-weight: 600; color: #111827;">${proposal.clientName || 'Не вказано'}</span></div>
-            <div style="flex: 1;"><label style="display: block; font-size: 9px; color: #9CA3AF; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Контакт</label><span style="display: block; font-size: 13px; font-weight: 600; color: #111827;">${proposal.clientPhone || '-'}</span></div>
-          </div>
-        </div>
-      </div>
+    printTemplate.classList.remove('hidden', 'print:block');
+    printTemplate.style.setProperty('display', 'block', 'important');
+    printTemplate.style.width = '850px';
+    printTemplate.style.maxWidth = '850px';
+    printTemplate.style.margin = '0 auto';
+    printTemplate.style.padding = '30px';
+    printTemplate.style.background = '#ffffff';
 
-      <table style="width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid #E5E7EB;">
-        <thead>
-          <tr style="background: #faf5ec;">
-            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase;">№</th>
-            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase; text-align: left;">Найменування</th>
-            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase;">Од.</th>
-            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase;">К-сть</th>
-            ${showCost ? `
-              <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase; background: #EFF6FF;">Собівартість</th>
-              <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase; background: #DBEAFE;">Сума соб.</th>
-            ` : ''}
-            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase;">Ціна (${currencySymbol})</th>
-            <th style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 10px; color: #4B5563; text-transform: uppercase;">Сума (${currencySymbol})</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${proposal.items.map((item: ProposalItem, i: number) => `
-            <tr>
-              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
-              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px;">
-                <strong>${item.name || item.product.name}</strong>
-                ${(item.description || item.product.description) ? `<div style="font-size: 9px; color: #6B7280; margin-top: 2px;">${item.description || item.product.description}</div>` : ''}
-              </td>
-              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.unit || 'шт.'}</td>
-              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.quantity}</td>
-              ${showCost ? `
-                <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; background: #EFF6FF;">${(Math.round(item.costPrice * 100) / 100).toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
-                <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; background: #DBEAFE;">${(Math.round(item.costPrice * 100) / 100 * item.quantity).toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
-              ` : ''}
-              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${(Math.round(item.price * 100) / 100).toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
-              <td style="padding: 12px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 600;">${(Math.round(item.price * 100) / 100 * item.quantity).toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-
-      <div style="margin-top: 20px; display: flex; flex-direction: column; align-items: flex-end;">
-        <div style="background: #faf5ec; border: 1px solid #E5E7EB; padding: 15px 25px; border-radius: 4px; text-align: right; min-width: 300px;">
-          ${showCost ? `
-            <div style="font-size: 12px; color: #15803d; margin-bottom: 8px; font-weight: 600;">
-              ПРИБУТОК: ${currencySymbol} ${((proposal.subtotal || 0) - proposal.items.reduce((sum, item) => sum + (item.costPrice * item.quantity), 0)).toLocaleString('uk-UA', { minimumFractionDigits: 2 })} (${(((proposal.subtotal - proposal.items.reduce((sum, item) => sum + (item.costPrice * item.quantity), 0)) / proposal.subtotal) * 100).toFixed(1)}%)
-            </div>
-          ` : ''}
-          <div style="font-size: 18px; font-weight: 800; color: #B45309;">
-            <span>ЗАГАЛОМ:</span> <span style="margin-left: 5px;">${currencySymbol} ${proposal.total.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}</span>
-          </div>
-        </div>
-        <div style="margin-top: 10px; font-size: 10px; color: #9CA3AF; text-align: right;">
-          Курс: 1 USD = ${proposal.rates?.usdToUah || '41.50'} грн | 1 EUR = ${proposal.rates?.eurToUah || '51.00'} грн
-        </div>
-      </div>
-
-      ${proposal.notes ? `<div style="margin-top: 40px; padding: 15px; border-left: 3px solid #E5E7EB; background: #faf5ec; font-size: 11px; color: #4B5563;"><strong>ПРИМІТКИ:</strong><br>${proposal.notes.replace(/\n/g, '<br>')}</div>` : ''}
-    </div>
-  `;
-
-  document.body.appendChild(container);
+    restoreStyle = () => {
+      printTemplate.style.display = origDisplay;
+      printTemplate.style.width = origWidth;
+      printTemplate.style.maxWidth = origMaxWidth;
+      printTemplate.style.margin = origMargin;
+      printTemplate.style.padding = origPadding;
+      printTemplate.style.background = origBackground;
+      printTemplate.classList.add('hidden', 'print:block');
+    };
+  }
 
   try {
-    const canvas = await html2canvas(container, {
-      scale: 1.5, // 1.5x scale для відмінної якості при невеликій вазі файлу
-      useCORS: true,
-      logging: false,
+    const captureWidth = (!showCost && printTemplate) ? 850 : (targetEl.scrollWidth || 1200);
+
+    const dataUrl = await toPng(targetEl, {
+      quality: 0.88,
+      pixelRatio: 1.5,
+      backgroundColor: '#ffffff',
+      width: captureWidth,
+      style: {
+        margin: '0',
+        padding: '30px',
+        width: `${captureWidth}px`,
+        maxWidth: `${captureWidth}px`,
+        display: 'block',
+        transform: 'none',
+      },
+      cacheBust: false,
+      filter: (node: Node) => {
+        if (node instanceof HTMLElement && (node.tagName === 'SCRIPT' || node.tagName === 'IFRAME')) {
+          return false;
+        }
+        return true;
+      }
     });
 
-    // Використовуємо стиснення JPEG 0.88 замість сирого PNG, щоб зменшити розмір PDF з 5.5 МБ до ~350 КБ
-    const imgData = canvas.toDataURL('image/jpeg', 0.88);
+    if (restoreStyle) restoreStyle();
+
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+    const img = new Image();
+    img.src = dataUrl;
+    await new Promise((res) => { img.onload = res; });
 
-    document.body.removeChild(container);
+    const pdfHeight = (img.height * pdfWidth) / img.width;
+
+    pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
 
     if (returnBlob) {
       return pdf.output('blob');
@@ -128,8 +85,8 @@ export async function exportToPDF(proposal: Proposal, returnBlob = false, showCo
       pdf.save(`${proposal.number.replace(/\//g, '-')}.pdf`);
     }
   } catch (error) {
+    if (restoreStyle) restoreStyle();
     console.error('PDF Export Error:', error);
-    document.body.removeChild(container);
     throw error;
   }
 }

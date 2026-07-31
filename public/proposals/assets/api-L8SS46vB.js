@@ -1,1 +1,0 @@
-import{l as e}from"./index-sy9vFDA_.js";export{e as fetchAllData};
