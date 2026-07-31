@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Trash2 } from 'lucide-react';
 import { SELLERS, numberToWords } from '../utils/documents';
 
-export function TTNModal({ isOpen, onClose, issueData, onPrint, onComplete }) {
+export function TTNModal({ isOpen, onClose, issueData, onPrint, onComplete, initialSealType = 'none' }) {
   const [items, setItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [editedItems, setEditedItems] = useState({});
@@ -29,7 +29,7 @@ export function TTNModal({ isOpen, onClose, issueData, onPrint, onComplete }) {
   const [additionalDocs, setAdditionalDocs] = useState('');
   const [carStoragePlace, setCarStoragePlace] = useState('');
   const [grossWeightWords, setGrossWeightWords] = useState('');
-  const [sealType, setSealType] = useState('none');
+  const [sealType, setSealType] = useState(initialSealType);
 
   useEffect(() => {
     if (isOpen && issueData) {
@@ -40,6 +40,7 @@ export function TTNModal({ isOpen, onClose, issueData, onPrint, onComplete }) {
       setReceiver(issueData.buyerName || issueData.clientName || '');
       setUnloadPoint(issueData.clientAddress || issueData.address || '');
       setDate(issueData.date ? issueData.date.split('T')[0] : new Date().toISOString().split('T')[0]);
+      setSealType(initialSealType || 'none');
 
       // Calculate total sum if available
       const totalAmount = issueData.amount || issueItems.reduce((acc, item) => acc + ((parseFloat(item.price) || 0) * (parseFloat(item.quantity) || 1)), 0);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, FileText, User, Building, Phone, Mail, MapPin, Receipt, Calendar, Check } from 'lucide-react';
 
-export function InvoiceModal({ isOpen, onClose, issueData, onPrint, onComplete }) {
+export function InvoiceModal({ isOpen, onClose, issueData, onPrint, onComplete, initialSealType = 'none' }) {
   const defaultInvoiceNo = issueData?.number || issueData?.issueNumber || `РФ-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-001`;
 
   const [buyerName, setBuyerName] = useState('');
@@ -13,7 +13,7 @@ export function InvoiceModal({ isOpen, onClose, issueData, onPrint, onComplete }
   const [buyerEmail, setBuyerEmail] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState(defaultInvoiceNo);
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
-  const [includeStamp, setIncludeStamp] = useState(false);
+  const [includeStamp, setIncludeStamp] = useState(initialSealType !== 'none');
 
   useEffect(() => {
     if (isOpen && issueData) {
@@ -23,9 +23,9 @@ export function InvoiceModal({ isOpen, onClose, issueData, onPrint, onComplete }
       setBuyerAddress(issueData.clientAddress || issueData.address || '');
       setInvoiceNumber(issueData.number || defaultInvoiceNo);
       setInvoiceDate(issueData.date ? issueData.date.split('T')[0] : new Date().toISOString().split('T')[0]);
-      setIncludeStamp(false);
+      setIncludeStamp(initialSealType !== 'none');
     }
-  }, [isOpen, issueData]);
+  }, [isOpen, issueData, initialSealType]);
 
   if (!isOpen) return null;
 

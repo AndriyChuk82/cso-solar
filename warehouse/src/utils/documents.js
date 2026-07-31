@@ -202,6 +202,9 @@ function generateDeliveryNoteHTML(issue, customData = {}) {
   const currencySymbol = issue.currency === 'USD' ? '$' : (issue.currency === 'EUR' ? '€' : 'грн.');
   const totalSumWordsStr = totalSum > 0 ? numberToWords(totalSum) : '';
 
+  const sealType = customData.sealType !== undefined ? customData.sealType : (customData.includeStamp ? 'fop' : 'none');
+  const stampUrl = sealType === 'cso' ? SELLERS.tov_cso.stamp : (sealType === 'fop' ? SELLERS.fop_pastushok.stamp : null);
+
   return `
     <!DOCTYPE html>
     <html lang="uk">
@@ -269,7 +272,7 @@ function generateDeliveryNoteHTML(issue, customData = {}) {
         <div style="margin-top: 60px; display: flex; justify-content: space-between;">
           <div style="text-align: center; font-size: 10px; width: 220px; position: relative;">
             <div style="border-bottom: 1px solid #1F2937; height: 35px; position: relative;">
-              <img src="${seller.stamp}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -45%); width: 135px; opacity: 0.95; pointer-events: none; mix-blend-mode: multiply;">
+              ${stampUrl ? `<img src="${stampUrl}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -45%); width: 135px; opacity: 0.95; pointer-events: none; mix-blend-mode: multiply;">` : ''}
             </div>
             <div style="margin-top: 5px;">Відпустив (підпис, ФОП Пастушок)</div>
           </div>

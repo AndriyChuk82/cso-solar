@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { X, Trash2, Plus } from 'lucide-react';
 import { SELLERS } from '../utils/documents';
 
-export function WarrantyModal({ isOpen, onClose, issueData, onPrint, onComplete }) {
+export function WarrantyModal({ isOpen, onClose, issueData, onPrint, onComplete, initialSealType = 'none' }) {
   const [items, setItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [editedItems, setEditedItems] = useState({});
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [buyer, setBuyer] = useState('');
-  const [sealType, setSealType] = useState('none');
+  const [sealType, setSealType] = useState(initialSealType);
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
@@ -18,8 +18,9 @@ export function WarrantyModal({ isOpen, onClose, issueData, onPrint, onComplete 
       setSelectedItems(issueItems.map((_, idx) => `item_${idx}`));
       setBuyer(issueData.buyerName || issueData.clientName || '');
       setDate(issueData.date ? issueData.date.split('T')[0] : new Date().toISOString().split('T')[0]);
+      setSealType(initialSealType || 'none');
     }
-  }, [isOpen, issueData]);
+  }, [isOpen, issueData, initialSealType]);
 
   if (!isOpen) return null;
 
