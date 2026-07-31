@@ -249,16 +249,21 @@ export async function takeProposalScreenshot(): Promise<void> {
     const targetEl = (!showCost && printTemplate) ? printTemplate : mainEl!;
 
     const canvas = await html2canvas(targetEl, {
-      scale: 1.0, // 1.0x scale на 850px ширині — миттєвий підсекундний малюнок (~200мс)
-      useCORS: false,
-      allowTaint: true,
+      scale: 1.5, // 1.5x scale для високої чіткості та підсекундної швидкості (~300мс)
+      useCORS: true,
+      allowTaint: false, // ГАРАНТІЯ: allowTaint має бути false, щоб toBlob не видавав SecurityError
       logging: false,
       backgroundColor: '#ffffff',
       scrollX: 0,
       scrollY: 0,
       windowWidth: showCost ? 1200 : 850,
-      imageTimeout: 500,
+      imageTimeout: 1000,
       onclone: (clonedDoc) => {
+        // Усі зображення у клоні мають мати crossOrigin anonymous
+        clonedDoc.querySelectorAll('img').forEach((img) => {
+          img.setAttribute('crossOrigin', 'anonymous');
+        });
+
         const clonedPrint = clonedDoc.getElementById('print-proposal-template');
         const clonedMain = clonedDoc.getElementById(mainEl?.id || 'proposal-container');
 
@@ -286,7 +291,19 @@ export async function takeProposalScreenshot(): Promise<void> {
     const t1 = performance.now();
     console.log(`⚡ html2canvas completed in ${Math.round(t1 - t0)}ms`);
 
-    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
+    let blob: Blob | null = null;
+    try {
+      blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
+    } catch (err) {
+      console.warn('toBlob failed, trying dataURL conversion:', err);
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        const res = await fetch(dataUrl);
+        blob = await res.blob();
+      } catch (dataUrlErr) {
+        console.error('DataURL fallback failed:', dataUrlErr);
+      }
+    }
 
     if (!blob) {
       toast.error('Не вдалося створити зображення', { id: toastId });
