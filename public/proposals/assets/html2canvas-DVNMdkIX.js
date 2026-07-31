@@ -1,0 +1,1 @@
+import{t as e}from"./index-Bo9s-Z2e.js";export default e();

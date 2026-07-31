@@ -230,9 +230,10 @@ async function sendViberLink(proposal: Proposal) {
 
 export async function takeProposalScreenshot(): Promise<void> {
   const toastId = toast.loading('📸 Створення скріншоту КП...');
+  const t0 = performance.now();
 
   // Миттєве відмалювання спінера у браузері
-  await new Promise((resolve) => setTimeout(resolve, 50));
+  await new Promise((resolve) => setTimeout(resolve, 30));
 
   try {
     const { settings } = useProposalStore.getState();
@@ -248,15 +249,15 @@ export async function takeProposalScreenshot(): Promise<void> {
     const targetEl = (!showCost && printTemplate) ? printTemplate : mainEl!;
 
     const canvas = await html2canvas(targetEl, {
-      scale: 1.3,
-      useCORS: true,
+      scale: 1.0, // 1.0x scale на 850px ширині — миттєвий підсекундний малюнок (~200мс)
+      useCORS: false,
       allowTaint: true,
       logging: false,
       backgroundColor: '#ffffff',
       scrollX: 0,
       scrollY: 0,
       windowWidth: showCost ? 1200 : 850,
-      imageTimeout: 1000,
+      imageTimeout: 500,
       onclone: (clonedDoc) => {
         const clonedPrint = clonedDoc.getElementById('print-proposal-template');
         const clonedMain = clonedDoc.getElementById(mainEl?.id || 'proposal-container');
@@ -282,6 +283,9 @@ export async function takeProposalScreenshot(): Promise<void> {
       }
     });
 
+    const t1 = performance.now();
+    console.log(`⚡ html2canvas completed in ${Math.round(t1 - t0)}ms`);
+
     const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
 
     if (!blob) {
@@ -292,7 +296,8 @@ export async function takeProposalScreenshot(): Promise<void> {
     try {
       const data = [new ClipboardItem({ [blob.type]: blob })];
       await navigator.clipboard.write(data);
-      toast.success('📸 Скріншот скопійовано у буфер обміну! Вставте (Ctrl+V) у Viber або будь-який чат.', { id: toastId, duration: 4000 });
+      const totalTime = Math.round(performance.now() - t0);
+      toast.success(`📸 Скріншот скопійовано (${totalTime}мс)! Вставте (Ctrl+V) у чат.`, { id: toastId, duration: 4000 });
     } catch (clipboardErr) {
       console.warn('Clipboard write failed, downloading image fallback...', clipboardErr);
       const url = URL.createObjectURL(blob);
