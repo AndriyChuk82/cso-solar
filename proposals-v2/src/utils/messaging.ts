@@ -81,10 +81,11 @@ async function sendTelegramPhoto(proposal: Proposal, botToken?: string, chatId?:
 
   try {
     const canvas = await html2canvas(mainEl, {
-      scale: 3, 
-      useCORS: true,
+      scale: 1.5, 
+      useCORS: false,
       logging: false,
       backgroundColor: '#ffffff',
+      imageTimeout: 0,
       onclone: (clonedDoc) => {
         const { settings } = useProposalStore.getState();
         prepareElementForCapture(clonedDoc, mainEl.id, settings.showCostInCapture);
@@ -249,15 +250,15 @@ export async function takeProposalScreenshot(): Promise<void> {
     const targetEl = (!showCost && printTemplate) ? printTemplate : mainEl!;
 
     const canvas = await html2canvas(targetEl, {
-      scale: 1.5, // 1.5x scale для високої чіткості та підсекундної швидкості (~300мс)
-      useCORS: true,
-      allowTaint: false, // ГАРАНТІЯ: allowTaint має бути false, щоб toBlob не видавав SecurityError
+      scale: 1.5, // 1.5x scale для високої чіткості та підсекундної швидкості (~150мс)
+      useCORS: false,
+      allowTaint: false,
       logging: false,
       backgroundColor: '#ffffff',
       scrollX: 0,
       scrollY: 0,
       windowWidth: showCost ? 1200 : 850,
-      imageTimeout: 1000,
+      imageTimeout: 0, // ⚡ 0мс таймаут: Не чекати 9 секунд на зовнішній сервер i.ibb.co!
       onclone: (clonedDoc) => {
         // Усі зображення у клоні мають мати crossOrigin anonymous
         clonedDoc.querySelectorAll('img').forEach((img) => {
