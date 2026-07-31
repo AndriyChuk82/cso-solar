@@ -277,11 +277,22 @@ export async function takeProposalScreenshot(): Promise<void> {
       };
     }
 
-    // ⚡ html-to-image використовує рідний браузерний SVG двигун для створення PNG за 100-200мс без затримок
+    const captureWidth = (!showCost && printTemplate) ? 850 : (targetEl.scrollWidth || 1200);
+
+    // ⚡ html-to-image з чіткими габаритами width: 850 та margin: 0 для 100% повнорозмірного відмалювання
     const dataUrl = await toPng(targetEl, {
       quality: 0.95,
       pixelRatio: 1.5,
       backgroundColor: '#ffffff',
+      width: captureWidth,
+      style: {
+        margin: '0',
+        padding: '30px',
+        width: `${captureWidth}px`,
+        maxWidth: `${captureWidth}px`,
+        display: 'block',
+        transform: 'none',
+      },
       cacheBust: false,
       filter: (node: Node) => {
         if (node instanceof HTMLElement && (node.tagName === 'SCRIPT' || node.tagName === 'IFRAME')) {
