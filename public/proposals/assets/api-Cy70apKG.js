@@ -1,1 +1,0 @@
-import{l as e}from"./index-IHIoYost.js";export{e as fetchAllData};

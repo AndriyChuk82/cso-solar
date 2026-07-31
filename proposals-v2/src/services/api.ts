@@ -788,7 +788,7 @@ function splitGluedWords(str: string): string {
   }
 
   // 2. Інвертори (Гібридний інвертор / Мережевий інвертор)
-  const isInverter = (low.includes('growatt') || low.includes('must') || low.includes('victron') || low.includes('solis') || low.includes('huawei') || low.includes('sun-') || low.includes('sun2000') || low.includes('s5-') || low.includes('s6-') || low.includes('ktl')) &&
+  const isInverter = (low.includes('growatt') || low.includes('must') || low.includes('victron') || low.includes('solis') || low.includes('huawei') || low.includes('sun-') || low.includes('sun2000') || low.includes('s5-') || low.includes('s6-') || low.includes('ktl') || low.includes('pcs')) &&
                      !low.includes('інвертор') &&
                      !low.includes('акб') &&
                      !low.includes('акумул') &&
@@ -807,7 +807,7 @@ function splitGluedWords(str: string): string {
                      !low.includes('кабель');
 
   if (isInverter) {
-    if (low.includes('sg') || low.includes('hyb') || low.includes('гібрид')) {
+    if (low.includes('sg') || low.includes('hyb') || low.includes('гібрид') || low.includes('pcs') || low.includes('hp3') || low.includes('hp') || low.includes('lp3') || low.includes('lp') || low.includes('eh3p') || low.includes('rhi') || low.includes('eh1p')) {
       res = `Гібридний інвертор ${res}`;
     } else {
       res = `Мережевий інвертор ${res}`;
