@@ -1,6 +1,7 @@
 import { Proposal } from '../types';
 import { formatCurrency } from './currency';
 import html2canvas from 'html2canvas';
+import { toBlob } from 'html-to-image';
 import { exportToPDF } from './pdf';
 import { useProposalStore } from '../store';
 import { toast } from 'sonner';
@@ -228,52 +229,98 @@ async function sendViberLink(proposal: Proposal) {
 }
 
 export async function takeProposalScreenshot(): Promise<void> {
-  const mainEl = document.getElementById('proposal-container') || document.getElementById('mainContent');
-  if (!mainEl) {
-    toast.error('Елемент пропозиції не знайдено');
-    return;
-  }
-
   const toastId = toast.loading('📸 Створення скріншоту КП...');
 
-  // Даємо браузеру час для миттєвого відображення повідомлення завантаження
-  await new Promise((resolve) => setTimeout(resolve, 60));
+  // Миттєве відмалювання спінера у браузері
+  await new Promise((resolve) => setTimeout(resolve, 50));
 
   try {
-    const canvas = await html2canvas(mainEl, {
-      scale: 2, // 2x Retina scale замість 3x дає миттєве рендерення 1.5с (замість 8-10с) при ідеальній чіткості
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      onclone: (clonedDoc) => {
-        const { settings } = useProposalStore.getState();
-        prepareElementForCapture(clonedDoc, mainEl.id, settings.showCostInCapture);
-      }
-    });
+    const { settings } = useProposalStore.getState();
+    const showCost = settings.showCostInCapture;
+    const printTemplate = document.getElementById('print-proposal-template');
+    const mainEl = document.getElementById('proposal-container') || document.getElementById('mainContent');
 
-    return new Promise<void>((resolve) => {
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          toast.error('Не вдалося створити зображення', { id: toastId });
-          resolve();
-          return;
+    let blob: Blob | null = null;
+
+    // ⚡ Варіант 1: НАДШВИДКИЙ рендеринг через html-to-image (до 200-300мс)
+    if (printTemplate && !showCost) {
+      const origDisplay = printTemplate.style.display;
+      const origWidth = printTemplate.style.width;
+      const origMargin = printTemplate.style.margin;
+      const origPadding = printTemplate.style.padding;
+      const origBg = printTemplate.style.background;
+      
+      printTemplate.classList.remove('hidden');
+      printTemplate.style.setProperty('display', 'block', 'important');
+      printTemplate.style.width = '800px';
+      printTemplate.style.margin = '0 auto';
+      printTemplate.style.padding = '24px';
+      printTemplate.style.background = '#ffffff';
+
+      try {
+        blob = await toBlob(printTemplate, {
+          pixelRatio: 2,
+          quality: 0.95,
+          backgroundColor: '#ffffff',
+        });
+      } catch (err) {
+        console.warn('html-to-image fast capture failed, falling back to html2canvas:', err);
+      } finally {
+        printTemplate.style.display = origDisplay;
+        printTemplate.style.width = origWidth;
+        printTemplate.style.margin = origMargin;
+        printTemplate.style.padding = origPadding;
+        printTemplate.style.background = origBg;
+        if (!origDisplay || origDisplay === 'none') {
+          printTemplate.classList.add('hidden');
         }
-        try {
-          const data = [new ClipboardItem({ [blob.type]: blob })];
-          await navigator.clipboard.write(data);
-          toast.success('📸 Скріншот скопійовано у буфер обміну! Вставте (Ctrl+V) у Viber або будь-який чат.', { id: toastId, duration: 4000 });
-          resolve();
-        } catch (err) {
-          console.warn('Clipboard write failed, downloading image fallback...', err);
-          const link = document.createElement('a');
-          link.download = `KP_Screenshot_${Date.now()}.png`;
-          link.href = canvas.toDataURL('image/png');
-          link.click();
-          toast.success('📸 Скріншот завантажено на пристрій!', { id: toastId, duration: 4000 });
-          resolve();
+      }
+    }
+
+    // ⚡ Варіант 2: Якщо html-to-image не відпрацював або showCost = true -> прискорений html2canvas
+    if (!blob && mainEl) {
+      const targetEl = (!showCost && printTemplate) ? printTemplate : mainEl;
+      if (!showCost && printTemplate) {
+        printTemplate.classList.remove('hidden');
+        printTemplate.style.setProperty('display', 'block', 'important');
+      }
+
+      const canvas = await html2canvas(targetEl, {
+        scale: 1.5,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        onclone: (clonedDoc) => {
+          prepareElementForCapture(clonedDoc, mainEl.id, showCost);
         }
-      }, 'image/png');
-    });
+      });
+
+      if (!showCost && printTemplate) {
+        printTemplate.classList.add('hidden');
+      }
+
+      blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
+    }
+
+    if (!blob) {
+      toast.error('Не вдалося створити зображення', { id: toastId });
+      return;
+    }
+
+    try {
+      const data = [new ClipboardItem({ [blob.type]: blob })];
+      await navigator.clipboard.write(data);
+      toast.success('📸 Скріншот скопійовано у буфер обміну! Вставте (Ctrl+V) у Viber або будь-який чат.', { id: toastId, duration: 4000 });
+    } catch (clipboardErr) {
+      console.warn('Clipboard write failed, downloading image fallback...', clipboardErr);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `KP_Screenshot_${Date.now()}.png`;
+      link.href = url;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      toast.success('📸 Скріншот завантажено на пристрій!', { id: toastId, duration: 4000 });
+    }
   } catch (error) {
     console.error('Screenshot generation error:', error);
     toast.error('Помилка при створенні скріншоту', { id: toastId });
