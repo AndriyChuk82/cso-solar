@@ -236,9 +236,12 @@ export async function takeProposalScreenshot(): Promise<void> {
 
   const toastId = toast.loading('📸 Створення скріншоту КП...');
 
+  // Даємо браузеру час для миттєвого відображення повідомлення завантаження
+  await new Promise((resolve) => setTimeout(resolve, 60));
+
   try {
     const canvas = await html2canvas(mainEl, {
-      scale: 3,
+      scale: 2, // 2x Retina scale замість 3x дає миттєве рендерення 1.5с (замість 8-10с) при ідеальній чіткості
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
@@ -258,7 +261,7 @@ export async function takeProposalScreenshot(): Promise<void> {
         try {
           const data = [new ClipboardItem({ [blob.type]: blob })];
           await navigator.clipboard.write(data);
-          toast.success('📸 Скріншот скопійовано у буфер обміну! Вставте (Ctrl+V) у Viber або будь-який чат.', { id: toastId });
+          toast.success('📸 Скріншот скопійовано у буфер обміну! Вставте (Ctrl+V) у Viber або будь-який чат.', { id: toastId, duration: 4000 });
           resolve();
         } catch (err) {
           console.warn('Clipboard write failed, downloading image fallback...', err);
@@ -266,7 +269,7 @@ export async function takeProposalScreenshot(): Promise<void> {
           link.download = `KP_Screenshot_${Date.now()}.png`;
           link.href = canvas.toDataURL('image/png');
           link.click();
-          toast.success('📸 Скріншот завантажено на пристрій!', { id: toastId });
+          toast.success('📸 Скріншот завантажено на пристрій!', { id: toastId, duration: 4000 });
           resolve();
         }
       }, 'image/png');

@@ -1,0 +1,1 @@
+import{l as e}from"./index-ChlJX74-.js";export{e as fetchAllData};
