@@ -1,0 +1,1 @@
+import{t as e}from"./index-BkwaM_Qz.js";export default e();

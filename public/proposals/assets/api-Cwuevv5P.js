@@ -1,0 +1,1 @@
+import{l as e}from"./index-BkwaM_Qz.js";export{e as fetchAllData};

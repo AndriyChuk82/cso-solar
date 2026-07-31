@@ -240,67 +240,47 @@ export async function takeProposalScreenshot(): Promise<void> {
     const printTemplate = document.getElementById('print-proposal-template');
     const mainEl = document.getElementById('proposal-container') || document.getElementById('mainContent');
 
-    let blob: Blob | null = null;
-
-    // ⚡ Варіант 1: НАДШВИДКИЙ рендеринг через html-to-image (до 200-300мс)
-    if (printTemplate && !showCost) {
-      const origDisplay = printTemplate.style.display;
-      const origWidth = printTemplate.style.width;
-      const origMargin = printTemplate.style.margin;
-      const origPadding = printTemplate.style.padding;
-      const origBg = printTemplate.style.background;
-      
-      printTemplate.classList.remove('hidden');
-      printTemplate.style.setProperty('display', 'block', 'important');
-      printTemplate.style.width = '800px';
-      printTemplate.style.margin = '0 auto';
-      printTemplate.style.padding = '24px';
-      printTemplate.style.background = '#ffffff';
-
-      try {
-        blob = await toBlob(printTemplate, {
-          pixelRatio: 2,
-          quality: 0.95,
-          backgroundColor: '#ffffff',
-        });
-      } catch (err) {
-        console.warn('html-to-image fast capture failed, falling back to html2canvas:', err);
-      } finally {
-        printTemplate.style.display = origDisplay;
-        printTemplate.style.width = origWidth;
-        printTemplate.style.margin = origMargin;
-        printTemplate.style.padding = origPadding;
-        printTemplate.style.background = origBg;
-        if (!origDisplay || origDisplay === 'none') {
-          printTemplate.classList.add('hidden');
-        }
-      }
+    if (!mainEl && !printTemplate) {
+      toast.error('Елемент пропозиції не знайдено', { id: toastId });
+      return;
     }
 
-    // ⚡ Варіант 2: Якщо html-to-image не відпрацював або showCost = true -> прискорений html2canvas
-    if (!blob && mainEl) {
-      const targetEl = (!showCost && printTemplate) ? printTemplate : mainEl;
-      if (!showCost && printTemplate) {
-        printTemplate.classList.remove('hidden');
-        printTemplate.style.setProperty('display', 'block', 'important');
-      }
+    const targetEl = (!showCost && printTemplate) ? printTemplate : mainEl!;
 
-      const canvas = await html2canvas(targetEl, {
-        scale: 1.5,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        onclone: (clonedDoc) => {
-          prepareElementForCapture(clonedDoc, mainEl.id, showCost);
+    const canvas = await html2canvas(targetEl, {
+      scale: 2, // 2x Retina чіткість
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: showCost ? 1200 : 850,
+      onclone: (clonedDoc) => {
+        const clonedPrint = clonedDoc.getElementById('print-proposal-template');
+        const clonedMain = clonedDoc.getElementById(mainEl?.id || 'proposal-container');
+
+        if (!showCost && clonedPrint) {
+          clonedPrint.classList.remove('hidden');
+          clonedPrint.classList.remove('print:block');
+          clonedPrint.style.setProperty('display', 'block', 'important');
+          clonedPrint.style.width = '850px';
+          clonedPrint.style.maxWidth = '850px';
+          clonedPrint.style.margin = '0 auto';
+          clonedPrint.style.padding = '30px';
+          clonedPrint.style.background = '#ffffff';
+
+          clonedDoc.body.innerHTML = '';
+          clonedDoc.body.appendChild(clonedPrint);
+          clonedDoc.body.style.background = '#ffffff';
+          clonedDoc.body.style.margin = '0';
+          clonedDoc.body.style.padding = '0';
+        } else if (clonedMain) {
+          prepareElementForCapture(clonedDoc, clonedMain.id, showCost);
         }
-      });
-
-      if (!showCost && printTemplate) {
-        printTemplate.classList.add('hidden');
       }
+    });
 
-      blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
-    }
+    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
 
     if (!blob) {
       toast.error('Не вдалося створити зображення', { id: toastId });
