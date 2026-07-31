@@ -734,7 +734,14 @@ export default function Journal() {
               return '';
             })(),
             date: new Date().toISOString().split('T')[0],
-            number: `Ж-ОП-${Date.now().toString().slice(-6)}`,
+            number: (() => {
+              const d = new Date();
+              const day = String(d.getDate()).padStart(2, '0');
+              const month = String(d.getMonth() + 1).padStart(2, '0');
+              const hour = String(d.getHours()).padStart(2, '0');
+              const min = String(d.getMinutes()).padStart(2, '0');
+              return `ВН-${day}${month}-${hour}${min}`;
+            })(),
             items: operations
               .filter((op) => selectedOpIds.has(op.id))
               .map((op) => ({

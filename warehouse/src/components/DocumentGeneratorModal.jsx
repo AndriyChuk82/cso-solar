@@ -15,11 +15,23 @@ const documentTypes = [
 export function DocumentGeneratorModal({ isOpen, onClose, onComplete, issueData }) {
   const [selectedDoc, setSelectedDoc] = useState('warranty');
   const [sealType, setSealType] = useState('none');
+  const [docNumber, setDocNumber] = useState('');
   const [showTTNModal, setShowTTNModal] = useState(false);
   const [showWarrantyModal, setShowWarrantyModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
+  React.useEffect(() => {
+    if (isOpen && issueData) {
+      setDocNumber(issueData.number || issueData.issueNumber || `ВН-${new Date().toLocaleDateString('uk-UA').replace(/\./g, '')}-01`);
+    }
+  }, [isOpen, issueData]);
+
   if (!isOpen) return null;
+
+  const currentIssueData = {
+    ...issueData,
+    number: docNumber.trim() || issueData?.number || ''
+  };
 
   const handleGenerate = () => {
     try {
@@ -36,7 +48,7 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, issueData 
         return;
       }
       if (selectedDoc === 'expense') {
-        printDeliveryNote(issueData, { sealType });
+        printDeliveryNote(currentIssueData, { sealType });
         if (onComplete) onComplete();
         else onClose();
         return;
@@ -137,6 +149,20 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, issueData 
               </div>
             </div>
 
+            {/* Номер документа */}
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-1">
+              <label className="font-bold text-xs text-slate-800 dark:text-slate-200 block">
+                Номер документа (накладній / рахунку):
+              </label>
+              <input
+                type="text"
+                value={docNumber}
+                onChange={(e) => setDocNumber(e.target.value)}
+                className="w-full p-2 text-xs border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-primary"
+                placeholder="Введіть номер..."
+              />
+            </div>
+
             <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded-lg p-2.5 text-center">
               <p className="text-[11px] text-amber-800 dark:text-amber-200 font-medium">
                 Документ відкриється у новому вікні для друку або збереження в PDF
@@ -168,9 +194,9 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, issueData 
         <InvoiceModal
           isOpen={showInvoiceModal}
           onClose={() => setShowInvoiceModal(false)}
-          issueData={issueData}
+          issueData={currentIssueData}
           initialSealType={sealType}
-          onPrint={(data) => printInvoiceWithData(issueData, data)}
+          onPrint={(data) => printInvoiceWithData(currentIssueData, data)}
           onComplete={() => {
             setShowInvoiceModal(false);
             if (onComplete) onComplete();
@@ -184,9 +210,9 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, issueData 
         <TTNModal
           isOpen={showTTNModal}
           onClose={() => setShowTTNModal(false)}
-          issueData={issueData}
+          issueData={currentIssueData}
           initialSealType={sealType}
-          onPrint={(data) => printTTNWithData(issueData, data)}
+          onPrint={(data) => printTTNWithData(currentIssueData, data)}
           onComplete={() => {
             setShowTTNModal(false);
             if (onComplete) onComplete();
@@ -200,9 +226,9 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, issueData 
         <WarrantyModal
           isOpen={showWarrantyModal}
           onClose={() => setShowWarrantyModal(false)}
-          issueData={issueData}
+          issueData={currentIssueData}
           initialSealType={sealType}
-          onPrint={(data) => printWarrantyWithData(issueData, data)}
+          onPrint={(data) => printWarrantyWithData(currentIssueData, data)}
           onComplete={() => {
             setShowWarrantyModal(false);
             if (onComplete) onComplete();
