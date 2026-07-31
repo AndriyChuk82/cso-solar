@@ -1247,8 +1247,36 @@ export async function fetchAllData() {
       }
     }
     
+    const normalizeCableSpool = (prod: Product): Product => {
+      if (!prod || !prod.name) return prod;
+      const nameLower = prod.name.toLowerCase();
+      if (nameLower.includes('кабель') && (prod.unit === 'шт' || !prod.unit || prod.unit === 'б/о')) {
+        const match = nameLower.match(/(\d{2,4})\s*(?:м|m)\b/i);
+        if (match) {
+          const meters = parseInt(match[1], 10);
+          if (meters >= 50 && prod.price > 10) {
+            const perMeterPrice = Math.round((prod.price / meters) * 100) / 100;
+            const perMeterPriceVat = prod.priceVat ? Math.round((prod.priceVat / meters) * 100) / 100 : undefined;
+            return {
+              ...prod,
+              price: perMeterPrice,
+              priceVat: perMeterPriceVat,
+              unit: 'м',
+              name: prod.name.replace(/\s*\d{2,4}\s*(?:м|m)\b/gi, '').trim()
+            };
+          }
+        }
+      }
+      return prod;
+    };
+
     // Merge Pravylne Elektrozhivlenya, Biz Solar, Helius, and Solarverse products
-    const products = mergeSupplierProducts(gasProducts, bizProducts, heliusProducts, solarverseProducts);
+    const products = mergeSupplierProducts(
+      gasProducts.map(normalizeCableSpool),
+      bizProducts.map(normalizeCableSpool),
+      heliusProducts.map(normalizeCableSpool),
+      solarverseProducts.map(normalizeCableSpool)
+    );
     
     const endTime = performance.now();
     console.log(`⚡ Каталоги завантажено та злито за ${Math.round(endTime - startTime)}мс! Усього згрупованих товарів: ${products.length}`);

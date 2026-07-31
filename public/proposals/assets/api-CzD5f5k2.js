@@ -1,0 +1,1 @@
+import{l as e}from"./index-Ck3Hyacp.js";export{e as fetchAllData};
