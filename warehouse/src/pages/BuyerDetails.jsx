@@ -69,6 +69,8 @@ import { getBuyerTransactions, updateBuyerTransaction, deleteBuyerTransaction, g
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@cso/design-system';
+import { DocumentGeneratorModal } from '../components/DocumentGeneratorModal';
+
 
 
 function updateCommentAmount(comment, amount, currency) {
@@ -155,6 +157,34 @@ export default function BuyerDetails() {
   // Видача заброньованих товарів (Резерви)
   const [reserveReleaseTx, setReserveReleaseTx] = useState(null);
   const [reserveReleaseForm, setReserveReleaseForm] = useState(null);
+
+  // Стан друку документів
+  const [printIssueData, setPrintIssueData] = useState(null);
+  const [showDocModal, setShowDocModal] = useState(false);
+
+  const handlePrintIssue = (t) => {
+    const issueItems = (t.items || []).map(i => ({
+      name: i.product_name || i.name,
+      productName: i.product_name || i.name,
+      quantity: i.quantity,
+      unit: i.unit,
+      price: i.price
+    }));
+
+    setPrintIssueData({
+      ...t,
+      buyerName: buyer?.name || t.buyerName || '',
+      clientName: buyer?.name || t.buyerName || '',
+      clientPhone: buyer?.phone || t.phone || '',
+      clientAddress: buyer?.address || t.address || '',
+      items: issueItems,
+      currency: t.currency || 'UAH',
+      amount: t.amount,
+      date: t.date
+    });
+    setShowDocModal(true);
+  };
+
 
   const handleSaveAdjustment = async (e) => {
     e.preventDefault();
@@ -1172,7 +1202,25 @@ export default function BuyerDetails() {
                                 <span className="text-[var(--text-secondary)] opacity-50">—</span>
                               )}
                             </td>
-                            <td className="p-2 align-top text-[var(--text-secondary)]">{details}</td>
+                            <td className="p-2 align-top text-[var(--text-secondary)]">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1">{details}</div>
+                                {isIssue && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePrintIssue(t);
+                                    }}
+                                    className="px-2.5 py-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-md border border-indigo-200 dark:border-indigo-800/60 flex items-center gap-1 transition shrink-0 shadow-sm"
+                                    title="Сформувати друковані документи (Гарантійний талон, ТТН, Видаткова, Рахунок)"
+                                  >
+                                    <span>🖨️</span> Друк
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+
                           </tr>
                         );
                       })
@@ -2296,6 +2344,15 @@ export default function BuyerDetails() {
           </div>
         </div>
       )}
+      {/* Модальне вікно друку документів */}
+      {showDocModal && printIssueData && (
+        <DocumentGeneratorModal
+          isOpen={showDocModal}
+          onClose={() => setShowDocModal(false)}
+          issueData={printIssueData}
+        />
+      )}
     </div>
   );
 }
+

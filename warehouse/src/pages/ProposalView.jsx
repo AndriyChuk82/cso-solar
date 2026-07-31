@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProposals } from '../api/gasApi';
+import { DocumentGeneratorModal } from '../components/DocumentGeneratorModal';
+
 
 const SELLERS = {
   fop_pastushok: {
@@ -29,6 +31,8 @@ export default function ProposalView() {
   const [proposal, setProposal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isDeliveryMode, setIsDeliveryMode] = useState(false);
+  const [showDocModal, setShowDocModal] = useState(false);
+
 
   useEffect(() => {
     async function load() {
@@ -94,8 +98,10 @@ export default function ProposalView() {
         <button className="btn btn-outline" onClick={() => navigate('/proposals')}>⬅️ Назад</button>
         <button className={`btn ${!isDeliveryMode ? 'btn-primary' : 'btn-outline'}`} onClick={() => setIsDeliveryMode(false)}>📄 Комерційна пропозиція</button>
         <button className={`btn ${isDeliveryMode ? 'btn-primary' : 'btn-outline'}`} onClick={() => setIsDeliveryMode(true)}>📦 Видаткова накладна</button>
+        <button className="btn btn-primary" onClick={() => setShowDocModal(true)}>🛡️ Сформувати документи (Гарантія / ТТН / Рахунок)</button>
         <button className="btn btn-success" onClick={() => window.print()}>🖨️ Друкувати</button>
       </div>
+
 
       <div className="print-header">
         <div className="logo-box">
@@ -187,6 +193,27 @@ export default function ProposalView() {
           </>
         )}
       </div>
+
+      {showDocModal && proposal && (
+        <DocumentGeneratorModal
+          isOpen={showDocModal}
+          onClose={() => setShowDocModal(false)}
+          issueData={{
+            ...proposal,
+            buyerName: proposal.clientName,
+            clientPhone: proposal.clientPhone,
+            number: proposal.id ? `КП-${proposal.id.slice(-6).toUpperCase()}` : '',
+            items: (proposal.items || []).map(i => ({
+              name: i.productName || i.name,
+              productName: i.productName || i.name,
+              quantity: i.quantity,
+              unit: i.unit,
+              price: i.price
+            }))
+          }}
+        />
+      )}
     </div>
   );
 }
+
