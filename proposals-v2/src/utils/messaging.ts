@@ -1,7 +1,7 @@
 import { Proposal } from '../types';
 import { formatCurrency } from './currency';
 import html2canvas from 'html2canvas';
-import { toBlob } from 'html-to-image';
+import { toPng, toBlob } from 'html-to-image';
 import { exportToPDF } from './pdf';
 import { useProposalStore } from '../store';
 import { toast } from 'sonner';
@@ -233,7 +233,6 @@ export async function takeProposalScreenshot(): Promise<void> {
   const toastId = toast.loading('📸 Створення скріншоту КП...');
   const t0 = performance.now();
 
-  // Миттєве відмалювання спінера у браузері
   await new Promise((resolve) => setTimeout(resolve, 30));
 
   try {
@@ -249,84 +248,68 @@ export async function takeProposalScreenshot(): Promise<void> {
 
     const targetEl = (!showCost && printTemplate) ? printTemplate : mainEl!;
 
-    const canvas = await html2canvas(targetEl, {
-      scale: 1.5, // 1.5x scale для високої чіткості та підсекундної швидкості (~150мс)
-      useCORS: false,
-      allowTaint: false,
-      logging: false,
+    // Тимчасово робимо друкований шаблон видимим з шириною 850px та відступами
+    let restoreStyle: (() => void) | null = null;
+    if (!showCost && printTemplate) {
+      const origDisplay = printTemplate.style.display;
+      const origWidth = printTemplate.style.width;
+      const origMaxWidth = printTemplate.style.maxWidth;
+      const origMargin = printTemplate.style.margin;
+      const origPadding = printTemplate.style.padding;
+      const origBackground = printTemplate.style.background;
+
+      printTemplate.classList.remove('hidden', 'print:block');
+      printTemplate.style.setProperty('display', 'block', 'important');
+      printTemplate.style.width = '850px';
+      printTemplate.style.maxWidth = '850px';
+      printTemplate.style.margin = '0 auto';
+      printTemplate.style.padding = '30px';
+      printTemplate.style.background = '#ffffff';
+
+      restoreStyle = () => {
+        printTemplate.style.display = origDisplay;
+        printTemplate.style.width = origWidth;
+        printTemplate.style.maxWidth = origMaxWidth;
+        printTemplate.style.margin = origMargin;
+        printTemplate.style.padding = origPadding;
+        printTemplate.style.background = origBackground;
+        printTemplate.classList.add('hidden', 'print:block');
+      };
+    }
+
+    // ⚡ html-to-image використовує рідний браузерний SVG двигун для створення PNG за 100-200мс без затримок
+    const dataUrl = await toPng(targetEl, {
+      quality: 0.95,
+      pixelRatio: 1.5,
       backgroundColor: '#ffffff',
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: showCost ? 1200 : 850,
-      imageTimeout: 0, // ⚡ 0мс таймаут: Не чекати 9 секунд на зовнішній сервер i.ibb.co!
-      onclone: (clonedDoc) => {
-        const clonedPrint = clonedDoc.getElementById('print-proposal-template');
-        const clonedMain = clonedDoc.getElementById(mainEl?.id || 'proposal-container');
-
-        if (!showCost && clonedPrint) {
-          clonedPrint.classList.remove('hidden');
-          clonedPrint.classList.remove('print:block');
-          clonedPrint.style.setProperty('display', 'block', 'important');
-          clonedPrint.style.width = '850px';
-          clonedPrint.style.maxWidth = '850px';
-          clonedPrint.style.margin = '0 auto';
-          clonedPrint.style.padding = '30px';
-          clonedPrint.style.background = '#ffffff';
-
-          // ⚡ ГОЛОВНЕ ВИПРАВЛЕННЯ 9-СЕКУНДНОЇ ЗАТРИМКИ:
-          // Очищаємо head від зовнішніх мережевих шрифтів Google Fonts, щоб html2canvas рендерив за 80мс без затримок у 9 секунд
-          clonedDoc.head.innerHTML = '<style>body, table, td, th, div, span, p { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important; }</style>';
-
-          clonedDoc.body.innerHTML = '';
-          clonedDoc.body.appendChild(clonedPrint);
-          clonedDoc.body.style.background = '#ffffff';
-          clonedDoc.body.style.margin = '0';
-          clonedDoc.body.style.padding = '0';
-        } else if (clonedMain) {
-          // Очищаємо мережеві шрифти, залишаючи системні Tailwind стилі
-          clonedDoc.head.querySelectorAll('link[href*="fonts.googleapis"]').forEach(el => el.remove());
-          clonedDoc.head.querySelectorAll('link[href*="fonts.gstatic"]').forEach(el => el.remove());
-          prepareElementForCapture(clonedDoc, clonedMain.id, showCost);
+      cacheBust: false,
+      filter: (node: Node) => {
+        if (node instanceof HTMLElement && (node.tagName === 'SCRIPT' || node.tagName === 'IFRAME')) {
+          return false;
         }
+        return true;
       }
     });
 
-    const t1 = performance.now();
-    console.log(`⚡ html2canvas completed in ${Math.round(t1 - t0)}ms`);
-
-    let blob: Blob | null = null;
-    try {
-      blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
-    } catch (err) {
-      console.warn('toBlob failed, trying dataURL conversion:', err);
-      try {
-        const dataUrl = canvas.toDataURL('image/png');
-        const res = await fetch(dataUrl);
-        blob = await res.blob();
-      } catch (dataUrlErr) {
-        console.error('DataURL fallback failed:', dataUrlErr);
-      }
-    }
-
-    if (!blob) {
-      toast.error('Не вдалося створити зображення', { id: toastId });
-      return;
-    }
+    if (restoreStyle) restoreStyle();
 
     const renderTime = Math.round(performance.now() - t0);
+    console.log(`⚡ html-to-image completed in ${renderTime}ms`);
+
     toast.success(`📸 Скріншот готовий (${renderTime}мс)! Вставте (Ctrl+V) у чат.`, { id: toastId, duration: 4000 });
 
-    // Відправляємо зображення у системний буфер обміну у фоні, не блокуючи інтерфейс користувача
+    // Отримання блоба для буфера обміну
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
+
     if (navigator.clipboard && window.ClipboardItem) {
       const item = new ClipboardItem({ [blob.type]: blob });
       navigator.clipboard.write([item]).catch((clipboardErr) => {
         console.warn('Clipboard background write failed, downloading fallback...', clipboardErr);
-        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.download = `KP_Screenshot_${Date.now()}.png`;
-        link.href = url;
+        link.href = dataUrl;
         link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
       });
     }
   } catch (error) {
