@@ -248,13 +248,15 @@ export async function takeProposalScreenshot(): Promise<void> {
     const targetEl = (!showCost && printTemplate) ? printTemplate : mainEl!;
 
     const canvas = await html2canvas(targetEl, {
-      scale: 2, // 2x Retina чіткість
+      scale: 1.3,
       useCORS: true,
+      allowTaint: true,
       logging: false,
       backgroundColor: '#ffffff',
       scrollX: 0,
       scrollY: 0,
       windowWidth: showCost ? 1200 : 850,
+      imageTimeout: 1000,
       onclone: (clonedDoc) => {
         const clonedPrint = clonedDoc.getElementById('print-proposal-template');
         const clonedMain = clonedDoc.getElementById(mainEl?.id || 'proposal-container');

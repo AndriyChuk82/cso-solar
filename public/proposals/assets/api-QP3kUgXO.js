@@ -1,0 +1,1 @@
+import{l as e}from"./index-Dcg74c0c.js";export{e as fetchAllData};
