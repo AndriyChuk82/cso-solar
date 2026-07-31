@@ -69,7 +69,6 @@ import { getBuyerTransactions, updateBuyerTransaction, deleteBuyerTransaction, g
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@cso/design-system';
-import DocumentPrintModal from '../components/DocumentPrintModal';
 
 
 function updateCommentAmount(comment, amount, currency) {
@@ -129,29 +128,6 @@ export default function BuyerDetails() {
 
   // Редагування транзакції
   const [editTx, setEditTx] = useState(null);
-
-  // Стан для друку документів (Видаткова, Гарантійка, ТТН)
-  const [printModalData, setPrintModalData] = useState(null);
-
-  function openPrintModalForIssue(tx, defaultDocType = 'invoice') {
-    setPrintModalData({
-      docType: defaultDocType,
-      docNumber: `ВН-${(tx.id || '').slice(-6).toUpperCase()}`,
-      docDate: tx.date || new Date().toISOString().split('T')[0],
-      buyerName: buyer?.name || '',
-      buyerPhone: buyer?.phone || '',
-      buyerAddress: buyer?.address || '',
-      currency: tx.currency || 'UAH',
-      pickedUpBy: tx.picked_up_by || '',
-      items: (tx.items || []).map(i => ({
-        product_name: i.product_name,
-        quantity: i.quantity,
-        unit: i.unit,
-        price: i.price,
-        total: i.total || ((parseFloat(i.quantity) || 0) * (parseFloat(i.price) || 0))
-      }))
-    });
-  }
 
   // Стан для історії змін документа
   const [txHistoryLogs, setTxHistoryLogs] = useState([]);
@@ -1106,34 +1082,6 @@ export default function BuyerDetails() {
                                     • {i.product_name} — <span className="font-semibold text-[var(--text)]">{i.quantity} {i.unit}</span>
                                   </div>
                                 ))}
-                              </div>
-
-                              {/* Кнопки друку документів */}
-                              <div className="mt-2 pt-1 border-t border-[var(--border)]/30 flex items-center gap-1.5 flex-wrap" onClick={(e) => e.stopPropagation()}>
-                                <button
-                                  type="button"
-                                  onClick={() => openPrintModalForIssue(t, 'invoice')}
-                                  className="px-2 py-0.5 text-[10px] font-semibold rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 border border-blue-500/30 transition-colors"
-                                  title="Надрукувати видаткову накладну"
-                                >
-                                  📄 Видаткова
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => openPrintModalForIssue(t, 'warranty')}
-                                  className="px-2 py-0.5 text-[10px] font-semibold rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 transition-colors"
-                                  title="Надрукувати гарантійний талон з S/N"
-                                >
-                                  🛡️ Гарантійка
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => openPrintModalForIssue(t, 'ttn')}
-                                  className="px-2 py-0.5 text-[10px] font-semibold rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 transition-colors"
-                                  title="Надрукувати ТТН"
-                                >
-                                  🚚 ТТН
-                                </button>
                               </div>
                               {/* Відображення пов'язаних оплат */}
                               {t.linkedPayments && t.linkedPayments.length > 0 && (
@@ -2348,13 +2296,6 @@ export default function BuyerDetails() {
           </div>
         </div>
       )}
-
-      {/* Модальне вікно генератора печатних документів */}
-      <DocumentPrintModal
-        isOpen={!!printModalData}
-        onClose={() => setPrintModalData(null)}
-        initialData={printModalData}
-      />
     </div>
   );
 }
