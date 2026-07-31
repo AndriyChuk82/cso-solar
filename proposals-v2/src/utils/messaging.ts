@@ -3,6 +3,7 @@ import { formatCurrency } from './currency';
 import html2canvas from 'html2canvas';
 import { exportToPDF } from './pdf';
 import { useProposalStore } from '../store';
+import { toast } from 'sonner';
 
 const IS_DEPLOYED = window.location.protocol === 'https:';
 
@@ -198,6 +199,56 @@ async function sendViberLink(proposal: Proposal) {
     : `viber://forward?text=${encodeURIComponent(text)}`;
 
   window.open(url);
+}
+
+export async function takeProposalScreenshot(): Promise<void> {
+  const mainEl = document.getElementById('proposal-container') || document.getElementById('mainContent');
+  if (!mainEl) {
+    toast.error('Елемент пропозиції не знайдено');
+    return;
+  }
+
+  const toastId = toast.loading('📸 Створення скріншоту КП...');
+
+  try {
+    const canvas = await html2canvas(mainEl, {
+      scale: 3,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      onclone: (clonedDoc) => {
+        const { settings } = useProposalStore.getState();
+        prepareElementForCapture(clonedDoc, mainEl.id, settings.showCostInCapture);
+      }
+    });
+
+    return new Promise<void>((resolve) => {
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          toast.error('Не вдалося створити зображення', { id: toastId });
+          resolve();
+          return;
+        }
+        try {
+          const data = [new ClipboardItem({ [blob.type]: blob })];
+          await navigator.clipboard.write(data);
+          toast.success('📸 Скріншот скопійовано у буфер обміну! Вставте (Ctrl+V) у Viber або будь-який чат.', { id: toastId });
+          resolve();
+        } catch (err) {
+          console.warn('Clipboard write failed, downloading image fallback...', err);
+          const link = document.createElement('a');
+          link.download = `KP_Screenshot_${Date.now()}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          toast.success('📸 Скріншот завантажено на пристрій!', { id: toastId });
+          resolve();
+        }
+      }, 'image/png');
+    });
+  } catch (error) {
+    console.error('Screenshot generation error:', error);
+    toast.error('Помилка при створенні скріншоту', { id: toastId });
+  }
 }
 
 async function sendViberPhoto() {

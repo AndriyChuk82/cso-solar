@@ -10,7 +10,7 @@ import {
   selectHistory,
 } from '../../store/selectors';
 import { useCurrencyConverter, useProposalCalculations } from '../../hooks/useCurrency';
-import { sendToTelegram, sendToViber } from '../../utils/messaging';
+import { sendToTelegram, takeProposalScreenshot } from '../../utils/messaging';
 import { SELLERS } from '../../config';
 
 import { ClientInfoForm } from './ClientInfoForm';
@@ -19,7 +19,6 @@ import { ProposalItemsTable } from './ProposalItemsTable';
 import { ProposalSummary } from './ProposalSummary';
 import { ProposalActions } from './ProposalActions';
 import { TelegramModal } from '../TelegramModal';
-import { ViberModal } from '../ViberModal';
 import { SolarWizard } from '../SolarWizard';
 import { DocumentGeneratorModal } from '../DocumentGeneratorModal';
 import { PrintProposalTemplate } from './PrintProposalTemplate';
@@ -51,7 +50,6 @@ export function ProposalBuilderTable() {
   const setActiveCurrency = useProposalStore((state) => state.setActiveCurrency);
 
   const [showTelegramModal, setShowTelegramModal] = useState(false);
-  const [showViberModal, setShowViberModal] = useState(false);
   const [showSolarWizard, setShowSolarWizard] = useState(false);
   const [showDocModal, setShowDocModal] = useState(false);
   const [isRefreshingRates, setIsRefreshingRates] = useState(false);
@@ -172,16 +170,6 @@ export function ProposalBuilderTable() {
     }
   };
 
-  const handleViberSend = async (format: 'link' | 'photo' | 'pdf') => {
-    try {
-      await sendToViber(proposal, format);
-      toast.success('Відправлено в Viber!');
-    } catch (error) {
-      console.error('Viber send error:', error);
-      toast.error(`Помилка: ${error instanceof Error ? error.message : 'Невідома помилка'}`);
-    }
-  };
-
   // Обробники для конвертації цін назад в USD
   const handleUpdateCostPrice = (itemId: string, displayPrice: number) => {
     const usdPrice = convert(displayPrice, activeCurrency, 'USD');
@@ -267,7 +255,7 @@ export function ProposalBuilderTable() {
           onSave={handleSave}
           onShowDocModal={() => setShowDocModal(true)}
           onShowTelegram={() => setShowTelegramModal(true)}
-          onShowViber={() => setShowViberModal(true)}
+          onTakeScreenshot={takeProposalScreenshot}
           onShowSolarWizard={() => setShowSolarWizard(true)}
           onClear={handleClear}
         />
@@ -289,11 +277,6 @@ export function ProposalBuilderTable() {
         isOpen={showTelegramModal}
         onClose={() => setShowTelegramModal(false)}
         onSend={handleTelegramSend}
-      />
-      <ViberModal
-        isOpen={showViberModal}
-        onClose={() => setShowViberModal(false)}
-        onSend={handleViberSend}
       />
       <SolarWizard
         isOpen={showSolarWizard}

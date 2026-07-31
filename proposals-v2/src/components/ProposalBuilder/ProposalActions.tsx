@@ -1,11 +1,11 @@
-import { Save, FileText, Send, Trash2, Zap } from 'lucide-react';
+import { Save, FileText, Send, Trash2, Zap, Camera } from 'lucide-react';
 
 interface ProposalActionsProps {
   hasItems: boolean;
   onSave: () => void;
   onShowDocModal: () => void;
   onShowTelegram: () => void;
-  onShowViber: () => void;
+  onTakeScreenshot: () => void;
   onShowSolarWizard: () => void;
   onClear: () => void;
 }
@@ -15,7 +15,7 @@ export function ProposalActions({
   onSave,
   onShowDocModal,
   onShowTelegram,
-  onShowViber,
+  onTakeScreenshot,
   onShowSolarWizard,
   onClear,
 }: ProposalActionsProps) {
@@ -59,11 +59,12 @@ export function ProposalActions({
           </button>
           
           <button
-            onClick={onShowViber}
-            className="flex items-center gap-1.5 px-3.5 py-2 border border-[#7360f2]/20 dark:border-[#7360f2]/30 text-[#7360f2] dark:text-[#a78bfa] hover:bg-[#7360f2] hover:text-white dark:hover:text-white rounded-xl active:scale-95 transition-all font-bold text-xs bg-transparent shrink-0"
+            onClick={onTakeScreenshot}
+            className="flex items-center gap-1.5 px-3.5 py-2 border border-purple-500/30 dark:border-purple-400/30 text-purple-600 dark:text-purple-300 hover:bg-purple-600 hover:text-white dark:hover:text-white rounded-xl active:scale-95 transition-all font-bold text-xs bg-transparent shrink-0"
+            title="Зробити та скопіювати скріншот КП"
           >
-            <Send className="w-3.5 h-3.5" />
-            Viber
+            <Camera className="w-3.5 h-3.5" />
+            Скріншот
           </button>
           
           <button
