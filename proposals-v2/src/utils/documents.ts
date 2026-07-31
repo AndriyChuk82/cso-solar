@@ -383,10 +383,9 @@ export function generateTTNHTML(data: any): string {
           * { box-sizing: border-box; }
           body { font-family: 'Times New Roman', Times, serif; font-size: 10.5pt; color: #000; background: #fff; margin: 0; padding: 0; line-height: 1.25; }
           .container { width: 275mm; margin: 0 auto; position: relative; }
-          .top-right-appendix { position: absolute; top: 0; right: 0; text-align: right; font-size: 8.5pt; line-height: 1.2; font-family: 'Times New Roman', serif; }
-          .form-number-right { position: absolute; top: 38px; right: 0; font-weight: bold; font-size: 9.5pt; font-family: 'Times New Roman', serif; }
+          .top-right-appendix { position: absolute; top: 0; right: 0; text-align: right; font-size: 8pt; line-height: 1.15; font-family: 'Times New Roman', serif; max-width: 200px; }
 
-          .header-center { text-align: center; margin-top: 15px; margin-bottom: 18px; }
+          .header-center { text-align: center; margin-top: 10px; margin-bottom: 18px; }
           .main-title { font-size: 14pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
           .date-line { font-size: 11pt; margin-top: 5px; font-weight: bold; }
           .date-gap { display: inline-block; border-bottom: 1px solid #000; min-width: 35px; text-align: center; font-family: Arial, sans-serif; font-size: 10.5pt; }
@@ -418,10 +417,11 @@ export function generateTTNHTML(data: any): string {
           <!-- Page 1 Front Side -->
           <div class="top-right-appendix">
             Додаток 7<br>
-            до Правил перевезень вантажів автомобільним транспортом в Україні<br>
+            до Правил перевезень вантажів<br>
+            автомобільним транспортом в Україні<br>
             (пункт 11.1 глави 11)
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 4px;">Форма № 1-ТН</div>
           </div>
-          <div class="form-number-right">Форма № 1-ТН</div>
           
           <div class="header-center">
             <div class="main-title">ТОВАРНО-ТРАНСПОРТНА НАКЛАДНА</div>
