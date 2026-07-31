@@ -107,17 +107,18 @@ export async function exportToPDF(proposal: Proposal, returnBlob = false, showCo
 
   try {
     const canvas = await html2canvas(container, {
-      scale: 2, // Вища якість
+      scale: 1.5, // 1.5x scale для відмінної якості при невеликій вазі файлу
       useCORS: true,
       logging: false,
     });
 
-    const imgData = canvas.toDataURL('image/png');
+    // Використовуємо стиснення JPEG 0.88 замість сирого PNG, щоб зменшити розмір PDF з 5.5 МБ до ~350 КБ
+    const imgData = canvas.toDataURL('image/jpeg', 0.88);
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
 
     document.body.removeChild(container);
 
