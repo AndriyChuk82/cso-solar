@@ -2,7 +2,7 @@
  * Офіційні шаблони друку документів з модуля Комерційні Пропозиції (КП):
  * - Гарантійний талон
  * - Видаткова накладна
- * - ТТН (Форма № 1-ТН)
+ * - ТТН (Форма № 1-ТН - Додаток 7) - 100% точна копія з додатку КП
  */
 
 export function printOfficialDocumentFromKP(docType, data) {
@@ -274,7 +274,7 @@ export function generateOfficialDeliveryNoteHTML(data) {
 }
 
 /**
- * Офіційна ТТН (Форма № 1-ТН) з КП
+ * Офіційна ТТН (Форма № 1-ТН - Додаток 7) з додатку КП — 100% ТОЧНА КОПІЯ З ЗВОРОТНИМ БОКОМ
  */
 export function generateOfficialTTNHTML(data) {
   const dateObj = data.docDate ? new Date(data.docDate) : new Date();
@@ -284,21 +284,28 @@ export function generateOfficialTTNHTML(data) {
   const year = String(dateObj.getFullYear()).slice(-2);
 
   const items = data.items || [];
+  let totalQty = 0;
+  let totalSum = 0;
+
   const itemsHTML = items.map((item, i) => {
     const qty = parseFloat(item.qty) || 1;
+    totalQty += qty;
+    const price = parseFloat(item.price) || 0;
+    const sum = parseFloat(item.total) || (qty * price);
+    totalSum += sum;
     const name = item.name || 'Товар';
     const unit = item.unit || 'шт';
     return `
       <tr>
         <td>${i + 1}</td>
-        <td style="text-align: left;">${name}</td>
+        <td style="text-align: left; font-weight: bold;">${name}</td>
         <td></td>
         <td></td>
         <td></td>
         <td>${unit}</td>
         <td>${qty}</td>
         <td>—</td>
-        <td>—</td>
+        <td>${sum > 0 ? sum.toLocaleString('uk-UA', { minimumFractionDigits: 2 }) : '—'}</td>
         <td></td>
         <td></td>
         <td></td>
@@ -306,8 +313,16 @@ export function generateOfficialTTNHTML(data) {
     `;
   }).join('');
 
-  const sellerName = data.seller?.fullName || 'ФОП Пастушок Марія Володимирівна';
+  const sellerName = data.seller?.fullName || 'ТОВ «Центр сервісного обслуговування», ЄДРПОУ 31758743';
   const buyerName = data.buyer?.name || 'Покупець';
+  const place = data.logistics?.departure || 'м. Тернопіль';
+  const car = data.logistics?.vehicleNo || 'Автомобільний';
+  const driver = data.logistics?.driverName || '';
+  const carrier = data.logistics?.carrier || sellerName;
+  const loadPoint = data.logistics?.departure || 'м. Тернопіль';
+  const unloadPoint = data.logistics?.destination || data.buyer?.address || '';
+  const grossWeightWords = data.logistics?.grossWeight ? `${data.logistics.grossWeight} кг` : '—';
+  const placesCount = data.logistics?.placesCount || items.length;
 
   return `
     <!DOCTYPE html>
@@ -320,96 +335,273 @@ export function generateOfficialTTNHTML(data) {
           @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .no-print { display: none !important; }
+            .page-break { page-break-after: always; }
           }
           * { box-sizing: border-box; }
           body { font-family: 'Times New Roman', Times, serif; font-size: 11px; color: #000; background: #fff; margin: 0; padding: 0; line-height: 1.25; }
           .container { width: 280mm; margin: 0 auto; position: relative; }
+          
           .top-right-appendix { position: absolute; top: 0; right: 0; text-align: right; font-size: 9.5px; line-height: 1.25; }
-          .header-center { text-align: center; margin-top: 20px; margin-bottom: 15px; }
+          
+          .header-center { text-align: center; margin-top: 25px; margin-bottom: 22px; }
           .main-title { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+          .form-number { position: absolute; top: 60px; right: 0; font-weight: bold; font-size: 11px; }
+          
           .date-line { font-size: 13px; margin-top: 6px; font-weight: bold; }
           .date-gap { display: inline-block; border-bottom: 1px solid #000; min-width: 35px; text-align: center; }
           .date-month-gap { display: inline-block; border-bottom: 1px solid #000; min-width: 100px; text-align: center; }
-          .row { display: flex; align-items: flex-end; margin-bottom: 12px; width: 100%; }
+          
+          .row { display: flex; align-items: flex-end; margin-bottom: 18px; width: 100%; }
           .field-wrap { display: flex; flex-direction: column; flex-grow: 1; margin-right: 15px; }
+          .field-wrap:last-child { margin-right: 0; }
           .field-top { display: flex; align-items: flex-end; }
           .label { white-space: nowrap; margin-right: 6px; font-weight: bold; font-size: 11px; }
-          .value { border-bottom: 1px solid #000; flex-grow: 1; text-align: center; min-height: 18px; font-family: Arial, sans-serif; font-size: 11px; padding: 0 4px; }
-          table { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 9px; margin-bottom: 15px; }
-          th, td { border: 1px solid #000; padding: 4px 2px; text-align: center; vertical-align: middle; }
-          .signatures { display: flex; justify-content: space-between; margin-top: 20px; }
-          .sig-block { width: 30%; text-align: center; }
-          .sig-line { border-bottom: 1px solid #000; height: 25px; margin-top: 10px; }
+          .value { border-bottom: 1px solid #000; flex-grow: 1; text-align: center; min-height: 18px; font-family: Arial, sans-serif; font-size: 11.5px; padding: 0 4px; line-height: 1.2; font-weight: bold; }
+          .subtext { font-size: 8px; text-align: center; margin-top: 2px; line-height: 1.1; }
+          
+          .table-title { text-align: center; font-weight: bold; text-transform: uppercase; margin: 12px 0 6px 0; font-size: 12px; }
+          table { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 9px; margin-bottom: 8px; }
+          th, td { border: 1px solid #000; padding: 3px 2px; text-align: center; vertical-align: middle; }
+          th { font-family: 'Times New Roman', Times, serif; font-size: 8.5px; font-weight: normal; }
+          
+          .signatures { display: flex; justify-content: space-between; margin-top: 12px; }
+          .sig-block { width: 48%; text-align: left; position: relative; }
+          .sig-line { border-bottom: 1px solid #000; height: 16px; margin-top: 12px; position: relative; }
+          .field-subtext { font-size: 7px; text-align: center; margin-top: 1px; }
+          .page-break { page-break-after: always; }
         </style>
       </head>
       <body>
         <div class="container">
+          <!-- Page 1 Front Side -->
           <div class="top-right-appendix">
             Додаток 7<br>
-            до Правил перевезень вантажів автомобільним транспортом в Україні
+            до Правил перевезень вантажів автомобільним транспортом в Україні<br>
+            (пункт 11.1 глави 11)
           </div>
           
           <div class="header-center">
             <div class="main-title">ТОВАРНО-ТРАНСПОРТНА НАКЛАДНА</div>
             <div class="date-line">
-              N ${data.docNumber || ''} " <span class="date-gap">${day}</span> " <span class="date-month-gap">${month}</span> 20<span class="date-gap">${year}</span> року
+              N ${data.docNumber || '_________'} " <span class="date-gap">${day}</span> " <span class="date-month-gap">${month}</span> 20<span class="date-gap">${year}</span> року
+            </div>
+          </div>
+          <div class="form-number">Форма № 1-ТН</div>
+          
+          <div class="row" style="width: 350px; margin-bottom: 10px;">
+            <div class="field-wrap">
+              <div class="field-top">
+                <span class="label">Місце складання</span>
+                <span class="value">${place}</span>
+              </div>
             </div>
           </div>
           
+          <!-- Line 1: Car, Trailer, TransportType -->
           <div class="row">
-            <div class="field-wrap">
-              <div class="field-top"><span class="label">Вантажовідправник:</span><span class="value">${sellerName}</span></div>
+            <div class="field-wrap" style="flex: 2;">
+              <div class="field-top"><span class="label">Автомобіль</span><span class="value">${car}</span></div>
+              <div class="subtext">(марка, модель, тип, реєстраційний номер)</div>
             </div>
-            <div class="field-wrap">
-              <div class="field-top"><span class="label">Вантажоодержувач:</span><span class="value">${buyerName}</span></div>
+            <div class="field-wrap" style="flex: 2;">
+              <div class="field-top"><span class="label">Причіп/напівпричіп</span><span class="value"></span></div>
+              <div class="subtext">(марка, модель, тип, реєстраційний номер)</div>
+            </div>
+            <div class="field-wrap" style="flex: 1.2;">
+              <div class="field-top"><span class="label">Вид перевезень</span><span class="value">Автомобільні</span></div>
             </div>
           </div>
 
+          <!-- Line 2: Car storage place -->
           <div class="row">
             <div class="field-wrap">
-              <div class="field-top"><span class="label">Автомобіль:</span><span class="value">${data.logistics?.vehicleNo || '—'}</span></div>
+              <div class="field-top"><span class="label">Місце де зберігається автомобіль*</span><span class="value"></span></div>
+              <div class="subtext">(адреса місцезнаходження автомобільного перевізника, його структурного підрозділу або філії, де зберігається транспортний засіб)</div>
             </div>
+          </div>
+          
+          <!-- Line 3: Carrier, Driver -->
+          <div class="row">
+            <div class="field-wrap" style="flex: 2;">
+              <div class="field-top"><span class="label">Автомобільний перевізник</span><span class="value">${carrier}</span></div>
+              <div class="subtext">(повне найменування (прізвище, ім'я та по батькові), код ЄДРПОУ/РНОКПП)</div>
+            </div>
+            <div class="field-wrap" style="flex: 1.2;">
+              <div class="field-top"><span class="label">Водій</span><span class="value">${driver}</span></div>
+              <div class="subtext">(прізвище, ім'я та по батькові, номер посвідчення водія)</div>
+            </div>
+          </div>
+          
+          <!-- Line 4: Sender -->
+          <div class="row">
             <div class="field-wrap">
-              <div class="field-top"><span class="label">Водій:</span><span class="value">${data.logistics?.driverName || '—'}</span></div>
+              <div class="field-top"><span class="label">Вантажовідправник</span><span class="value">${sellerName}</span></div>
+              <div class="subtext">(повне найменування, код ЄДРПОУ або податковий номер)</div>
+            </div>
+          </div>
+          
+          <!-- Line 5: Receiver -->
+          <div class="row">
+            <div class="field-wrap">
+              <div class="field-top"><span class="label">Вантажоодержувач</span><span class="value">${buyerName}</span></div>
+              <div class="subtext">(повне найменування, код ЄДРПОУ або податковий номер)</div>
+            </div>
+          </div>
+          
+          <!-- Line 6: Load/Unload Points -->
+          <div class="row">
+            <div class="field-wrap" style="flex: 1;">
+              <div class="field-top"><span class="label">Пункт навантаження</span><span class="value">${loadPoint}</span></div>
+              <div class="subtext">(місцезнаходження)</div>
+            </div>
+            <div class="field-wrap" style="flex: 1;">
+              <div class="field-top"><span class="label">Пункт розвантаження</span><span class="value">${unloadPoint}</span></div>
+              <div class="subtext">(місцезнаходження)</div>
+            </div>
+          </div>
+          
+          <!-- Line 7: Qty places, weight, receiver driver -->
+          <div class="row">
+            <div class="field-wrap" style="flex: 1;">
+              <div class="field-top"><span class="label">кількість місць</span><span class="value">${placesCount}</span></div>
+              <div class="subtext">(словами)</div>
+            </div>
+            <div class="field-wrap" style="flex: 1;">
+              <div class="field-top"><span class="label">масою брутто, т</span><span class="value">${grossWeightWords}</span></div>
+              <div class="subtext">(словами)</div>
+            </div>
+            <div class="field-wrap" style="flex: 1.5;">
+              <div class="field-top"><span class="label">отримав водій/експедитор</span><span class="value">${driver}</span></div>
+              <div class="subtext">(прізвище, ім'я та по батькові, посада, підпис)</div>
+            </div>
+          </div>
+          
+          <!-- Line 8: Vehicle Data -->
+          <div class="row" style="margin-top: 5px;">
+            <span class="label" style="font-size: 8.5px;">Відомості про транспортний засіб<br>(автомобіль/автопоїзд/комбінований транспортний засіб)</span>
+            <div class="field-wrap" style="width: 75px;"><div class="value"></div><div class="subtext">(довжина, м)</div></div>
+            <div class="field-wrap" style="width: 75px;"><div class="value"></div><div class="subtext">(ширина, м)</div></div>
+            <div class="field-wrap" style="width: 75px;"><div class="value"></div><div class="subtext">(висота, м)</div></div>
+            <div class="field-wrap" style="flex: 1;"><div class="value"></div><div class="subtext">(загальна вага/маса з вантажем та маса брутто, т)</div></div>
+          </div>
+          
+          <!-- Line 9: Total Sum -->
+          <div class="row">
+            <span class="label">Усього відпущено на загальну суму</span>
+            <div class="field-wrap" style="flex: 3;"><div class="value">${totalSum > 0 ? totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2 }) + ' грн.' : '—'}</div><div class="subtext">(словами, з урахуванням ПДВ)</div></div>
+            <span class="label">у тому числі ПДВ</span>
+            <div class="field-wrap" style="flex: 1;"><div class="value">0,00</div></div>
+            <span class="label">грн.</span>
+          </div>
+          
+          <!-- Line 10: Docs -->
+          <div class="row">
+            <div class="field-wrap">
+              <div class="field-top"><span class="label">Супровідні документи на вантаж</span><span class="value"></span></div>
             </div>
           </div>
 
+          <div class="page-break"></div>
+
+          <!-- Page 2 Back Side -->
+          <div style="text-align: right; font-weight: bold; font-size: 9px; margin-bottom: 4px;">Зворотній бік</div>
+
+          <div class="table-title" style="margin-top: 0;">ВІДОМОСТІ ПРО ВАНТАЖ</div>
           <table>
             <thead>
               <tr>
-                <th style="width: 25px">№</th>
-                <th>Найменування вантажу</th>
-                <th>Документи</th>
-                <th>Спосіб пакування</th>
-                <th>К-сть місць</th>
-                <th>Одиниця виміру</th>
-                <th>Кількість</th>
-                <th>Маса брутто, т</th>
-                <th>Оголошена вартість</th>
-                <th>Вид пакування</th>
-                <th>Штрихкод</th>
-                <th>Примітки</th>
+                <th style="width: 3%">№<br>з/п</th>
+                <th style="width: 25%">Найменування вантажу (туші, напівтуші, четвертини, відруби, шматки м'яса)** / номер контейнера; клас небезпечних речовин, до якого віднесено вантаж, у разі перевезення небезпечних вантажів</th>
+                <th style="width: 10%">Ідентифікаційний номер тварини від якої отримано сировину**</th>
+                <th style="width: 6%">Вид тварини**</th>
+                <th style="width: 8%">Температурний режим транспортування***</th>
+                <th style="width: 7%">Одиниця вимірювання</th>
+                <th style="width: 6%">Кількість місць</th>
+                <th style="width: 8%">Ціна без ПДВ за одиницю, грн</th>
+                <th style="width: 9%">Загальна сума з ПДВ, грн</th>
+                <th style="width: 6%">Вид пакування</th>
+                <th style="width: 8%">Документи з вантажем</th>
+                <th style="width: 5%">Маса брутто, т</th>
+              </tr>
+              <tr style="font-size: 7.5px; text-align: center; font-weight: bold;">
+                <td>1</td>
+                <td>2</td>
+                <td>3</td>
+                <td>4</td>
+                <td>5</td>
+                <td>6</td>
+                <td>7</td>
+                <td>8</td>
+                <td>9</td>
+                <td>10</td>
+                <td>11</td>
+                <td>12</td>
               </tr>
             </thead>
             <tbody>
               ${itemsHTML}
             </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="5" style="text-align: left; font-weight: bold;">Усього:</td>
+                <td></td>
+                <td style="font-weight: bold;">${totalQty}</td>
+                <td></td>
+                <td style="font-weight: bold;">${totalSum > 0 ? totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2 }) : '0,00'}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+            </tfoot>
           </table>
 
-          <div class="signatures">
+          <div class="signatures" style="margin-top: 15px;">
             <div class="sig-block">
-              <div><strong>Сдав (Вантажовідправник):</strong></div>
-              <div class="sig-line"></div>
+              <div style="font-weight: bold; text-align: left; margin-bottom: 2px;">Здав (відповідальна особа вантажовідправника)</div>
+              <div class="sig-line" style="margin-top: 15px;"></div>
+              <div class="field-subtext">(прізвище (за наявності), власне ім'я та по батькові (за наявності), посада, підпис)</div>
             </div>
             <div class="sig-block">
-              <div><strong>Прийняв водій:</strong></div>
-              <div class="sig-line"></div>
-            </div>
-            <div class="sig-block">
-              <div><strong>Прийняв (Вантажоодержувач):</strong></div>
-              <div class="sig-line"></div>
+              <div style="font-weight: bold; text-align: left; margin-bottom: 2px;">Прийняв (відповідальна особа вантажоодержувача)</div>
+              <div class="sig-line" style="margin-top: 15px;"></div>
+              <div class="field-subtext">(прізвище (за наявності), власне ім'я та по батькові (за наявності), посада, підпис)</div>
             </div>
           </div>
+
+          <div class="table-title" style="margin-top: 20px;">ВАНТАЖНО-РОЗВАНТАЖУВАЛЬНІ ОПЕРАЦІЇ</div>
+          <table>
+            <thead>
+              <tr>
+                <th rowspan="2" style="width: 25%">Операція</th>
+                <th rowspan="2" style="width: 15%">Маса брутто, т</th>
+                <th colspan="3">Час (год хв)</th>
+                <th rowspan="2" style="width: 30%">Підпис відповідальної особи</th>
+              </tr>
+              <tr>
+                <th style="width: 10%">прибуття</th>
+                <th style="width: 10%">вибуття</th>
+                <th style="width: 10%">простою</th>
+              </tr>
+              <tr style="font-size: 7.5px; text-align: center; font-weight: bold;">
+                <td>1</td>
+                <td>2</td>
+                <td>3</td>
+                <td>4</td>
+                <td>5</td>
+                <td>6</td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="text-align: left;">Завантаження</td>
+                <td></td><td></td><td></td><td></td><td></td>
+              </tr>
+              <tr>
+                <td style="text-align: left;">Розвантаження</td>
+                <td></td><td></td><td></td><td></td><td></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
         <script>
           window.onload = () => setTimeout(() => window.print(), 500);
