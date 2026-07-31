@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { numberToWordsUah } from '../utils/numberToWords';
+import { printOfficialDocumentFromKP } from '../utils/documentTemplates';
 
 const SELLERS = {
   fop_pastushok: {
@@ -167,6 +168,19 @@ export default function DocumentPrintModal({ isOpen, onClose, initialData = {} }
 
   const dateStr = docDate ? new Date(docDate).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
 
+  function handlePrintOfficialDocument() {
+    printOfficialDocumentFromKP(docType, {
+      docNumber,
+      docDate,
+      seller,
+      buyer,
+      currency,
+      items,
+      logistics,
+      notes
+    });
+  }
+
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto">
       <style>{`
@@ -247,10 +261,11 @@ export default function DocumentPrintModal({ isOpen, onClose, initialData = {} }
             </button>
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={handlePrintOfficialDocument}
               className="px-4 py-1.5 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow transition-colors flex items-center gap-1.5"
+              title="Друк офіційного бланка з додатку КП"
             >
-              🖨️ Друкувати
+              🖨️ Друкувати бланк КП
             </button>
             <button
               type="button"
