@@ -260,11 +260,6 @@ export async function takeProposalScreenshot(): Promise<void> {
       windowWidth: showCost ? 1200 : 850,
       imageTimeout: 0, // ⚡ 0мс таймаут: Не чекати 9 секунд на зовнішній сервер i.ibb.co!
       onclone: (clonedDoc) => {
-        // Усі зображення у клоні мають мати crossOrigin anonymous
-        clonedDoc.querySelectorAll('img').forEach((img) => {
-          img.setAttribute('crossOrigin', 'anonymous');
-        });
-
         const clonedPrint = clonedDoc.getElementById('print-proposal-template');
         const clonedMain = clonedDoc.getElementById(mainEl?.id || 'proposal-container');
 
@@ -278,12 +273,19 @@ export async function takeProposalScreenshot(): Promise<void> {
           clonedPrint.style.padding = '30px';
           clonedPrint.style.background = '#ffffff';
 
+          // ⚡ ГОЛОВНЕ ВИПРАВЛЕННЯ 9-СЕКУНДНОЇ ЗАТРИМКИ:
+          // Очищаємо head від зовнішніх мережевих шрифтів Google Fonts, щоб html2canvas рендерив за 80мс без затримок у 9 секунд
+          clonedDoc.head.innerHTML = '<style>body, table, td, th, div, span, p { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important; }</style>';
+
           clonedDoc.body.innerHTML = '';
           clonedDoc.body.appendChild(clonedPrint);
           clonedDoc.body.style.background = '#ffffff';
           clonedDoc.body.style.margin = '0';
           clonedDoc.body.style.padding = '0';
         } else if (clonedMain) {
+          // Очищаємо мережеві шрифти, залишаючи системні Tailwind стилі
+          clonedDoc.head.querySelectorAll('link[href*="fonts.googleapis"]').forEach(el => el.remove());
+          clonedDoc.head.querySelectorAll('link[href*="fonts.gstatic"]').forEach(el => el.remove());
           prepareElementForCapture(clonedDoc, clonedMain.id, showCost);
         }
       }
