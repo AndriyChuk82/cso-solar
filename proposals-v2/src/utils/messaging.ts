@@ -76,27 +76,76 @@ async function sendTelegramText(proposal: Proposal, botToken?: string, chatId?: 
 }
 
 async function sendTelegramPhoto(proposal: Proposal, botToken?: string, chatId?: string) {
+  const { settings } = useProposalStore.getState();
+  const showCost = settings.showCostInCapture;
+  const printTemplate = document.getElementById('print-proposal-template');
   const mainEl = document.getElementById('proposal-container') || document.getElementById('mainContent');
-  if (!mainEl) throw new Error('Елемент пропозиції не знайдено');
+
+  if (!mainEl && !printTemplate) throw new Error('Елемент пропозиції не знайдено');
+
+  const targetEl = (!showCost && printTemplate) ? printTemplate : mainEl!;
+
+  let restoreStyle: (() => void) | null = null;
+  if (!showCost && printTemplate) {
+    const origDisplay = printTemplate.style.display;
+    const origWidth = printTemplate.style.width;
+    const origMaxWidth = printTemplate.style.maxWidth;
+    const origMargin = printTemplate.style.margin;
+    const origPadding = printTemplate.style.padding;
+    const origBackground = printTemplate.style.background;
+
+    printTemplate.classList.remove('hidden', 'print:block');
+    printTemplate.style.setProperty('display', 'block', 'important');
+    printTemplate.style.width = '850px';
+    printTemplate.style.maxWidth = '850px';
+    printTemplate.style.margin = '0 auto';
+    printTemplate.style.padding = '30px';
+    printTemplate.style.background = '#ffffff';
+
+    restoreStyle = () => {
+      printTemplate.style.display = origDisplay;
+      printTemplate.style.width = origWidth;
+      printTemplate.style.maxWidth = origMaxWidth;
+      printTemplate.style.margin = origMargin;
+      printTemplate.style.padding = origPadding;
+      printTemplate.style.background = origBackground;
+      printTemplate.classList.add('hidden', 'print:block');
+    };
+  }
 
   try {
-    const canvas = await html2canvas(mainEl, {
-      scale: 1.5, 
-      useCORS: false,
-      logging: false,
+    const captureWidth = (!showCost && printTemplate) ? 850 : (targetEl.scrollWidth || 1200);
+
+    const dataUrl = await toPng(targetEl, {
+      quality: 0.95,
+      pixelRatio: 1.5,
       backgroundColor: '#ffffff',
-      imageTimeout: 0,
-      onclone: (clonedDoc) => {
-        const { settings } = useProposalStore.getState();
-        prepareElementForCapture(clonedDoc, mainEl.id, settings.showCostInCapture);
+      width: captureWidth,
+      style: {
+        margin: '0',
+        padding: '30px',
+        width: `${captureWidth}px`,
+        maxWidth: `${captureWidth}px`,
+        display: 'block',
+        transform: 'none',
+      },
+      cacheBust: false,
+      filter: (node: Node) => {
+        if (node instanceof HTMLElement && (node.tagName === 'SCRIPT' || node.tagName === 'IFRAME')) {
+          return false;
+        }
+        return true;
       }
     });
 
-    const photoBase64 = canvas.toDataURL('image/png').split(',')[1];
+    if (restoreStyle) restoreStyle();
+
+    const photoBase64 = dataUrl.split(',')[1];
     const caption = buildProposalCaption(proposal);
 
     await telegramRequest('sendPhoto', { photoBase64, caption }, botToken, chatId);
   } catch (error) {
+    if (restoreStyle) restoreStyle();
     console.error('Telegram photo generation error:', error);
     throw error;
   }
