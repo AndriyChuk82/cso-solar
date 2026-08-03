@@ -70,8 +70,8 @@ CREATE INDEX IF NOT EXISTS idx_land_plots_active ON public.land_plots(active);
 DROP VIEW IF EXISTS public.landlord_balances CASCADE;
 DROP VIEW IF EXISTS public.plot_balances CASCADE;
 
--- 7. View: Баланс по кожній ділянці
-CREATE OR REPLACE VIEW public.plot_balances AS
+-- 7. View: Баланс по кожній ділянці (з security_invoker = true)
+CREATE OR REPLACE VIEW public.plot_balances WITH (security_invoker = true) AS
 SELECT
   p.id AS plot_id,
   p.landlord_id,
@@ -123,8 +123,8 @@ LEFT JOIN (
 ) pay ON pay.plot_id = p.id
 WHERE p.active = true;
 
--- 8. View: Зведений баланс по орендодавцю
-CREATE OR REPLACE VIEW public.landlord_balances AS
+-- 8. View: Зведений баланс по орендодавцю (з security_invoker = true)
+CREATE OR REPLACE VIEW public.landlord_balances WITH (security_invoker = true) AS
 SELECT
   l.id AS landlord_id,
   l.full_name,
