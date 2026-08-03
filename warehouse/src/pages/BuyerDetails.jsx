@@ -73,10 +73,19 @@ import { DocumentGeneratorModal } from '../components/DocumentGeneratorModal';
 
 
 
+function formatMoneyAmount(num) {
+  if (num === null || num === undefined || isNaN(num)) return '0';
+  const val = Number(num);
+  if (Number.isInteger(val)) {
+    return val.toLocaleString('uk-UA');
+  }
+  return val.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 function updateCommentAmount(comment, amount, currency) {
   if (!comment) return comment;
   const num = parseFloat(amount) || 0;
-  const formattedAmount = num.toLocaleString('uk-UA');
+  const formattedAmount = formatMoneyAmount(num);
   const currencyLabel = currency === 'UAH' ? 'UAH' : 'USD';
   
   const regex = /(на суму\s+)[\d\s,.\u00A0]+(\s*(?:UAH|USD|грн|\$))/i;
@@ -1180,24 +1189,24 @@ export default function BuyerDetails() {
                             </td>
                             <td className="p-2 text-center align-top font-medium">
                               {isIssue && t.status !== 'reserved' && amt > 0 ? (
-                                <span className="text-red-500">{amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
+                                <span className="text-red-500">{formatMoneyAmount(amt)} {t.currency === 'UAH' ? 'грн' : '$'}</span>
                               ) : isIssue && t.status === 'reserved' && amt > 0 ? (
                                 <span className="text-gray-400 font-normal italic" title="Резерв не списується в борг до видачі">
-                                  ({amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'})
+                                  ({formatMoneyAmount(amt)} {t.currency === 'UAH' ? 'грн' : '$'})
                                 </span>
                               ) : isAdj && amt < 0 ? (
-                                <span className="text-red-500">{Math.abs(amt).toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
+                                <span className="text-red-500">{formatMoneyAmount(Math.abs(amt))} {t.currency === 'UAH' ? 'грн' : '$'}</span>
                               ) : (
                                 <span className="text-[var(--text-secondary)] opacity-50">—</span>
                               )}
                             </td>
                             <td className="p-2 text-center align-top font-medium">
                               {t.type === 'payment' && amt > 0 ? (
-                                <span className="text-green-600">{amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
+                                <span className="text-green-600">{formatMoneyAmount(amt)} {t.currency === 'UAH' ? 'грн' : '$'}</span>
                               ) : isAdj && amt > 0 ? (
-                                <span className="text-green-600">{amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
+                                <span className="text-green-600">{formatMoneyAmount(amt)} {t.currency === 'UAH' ? 'грн' : '$'}</span>
                               ) : isIssue && t.paidAmount > 0 ? (
-                                <span className="text-green-600">{t.paidAmount.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}</span>
+                                <span className="text-green-600">{formatMoneyAmount(t.paidAmount)} {t.currency === 'UAH' ? 'грн' : '$'}</span>
                               ) : (
                                 <span className="text-[var(--text-secondary)] opacity-50">—</span>
                               )}
