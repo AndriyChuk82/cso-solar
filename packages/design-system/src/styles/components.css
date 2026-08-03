@@ -210,15 +210,16 @@
 
 /* Primary Button - Orange (Main action) */
 .btn-primary {
-  background: hsl(var(--primary));
+  background: var(--primary, #f59e0b);
   color: white;
-  border-color: hsl(var(--primary));
+  border-color: var(--primary, #f59e0b);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: hsl(var(--primary-light));
-  border-color: hsl(var(--primary-light));
+  background: var(--primary-dark, #d97706);
+  border-color: var(--primary-dark, #d97706);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: white;
 }
 
 .btn-primary:active:not(:disabled) {

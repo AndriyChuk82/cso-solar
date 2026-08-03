@@ -4,6 +4,7 @@ import {
   Package,
   Layout,
   Zap,
+  Landmark,
   LogOut,
   User,
   ArrowRight
@@ -62,6 +63,15 @@ const MODULES: ModuleInfo[] = [
     icon: Zap,
     permKey: 'gt',
     color: 'text-primary'
+  },
+  {
+    id: 'land-lease',
+    name: 'Оренда землі',
+    description: 'Облік оренди земельних ділянок та орендодавців',
+    path: '/land-lease',
+    icon: Landmark,
+    permKey: 'land-lease',
+    color: 'text-primary'
   }
 ];
 
@@ -107,7 +117,8 @@ export default function App() {
           'proposals': ['proposals', 'кп', 'комперційні'],
           'warehouse': ['warehouse', 'склад'],
           'projects': ['projects', 'проєкти', 'проекти'],
-          'gt': ['gt', 'зелений тариф', 'зт']
+          'gt': ['gt', 'зелений тариф', 'зт'],
+          'land-lease': ['land-lease', 'оренда', 'оренда землі', 'земля']
         };
 
         const isAdmin = role === 'admin' || role === 'адмін' || role === 'адміністратор';

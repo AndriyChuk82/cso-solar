@@ -1,0 +1,317 @@
+@import "../../packages/design-system/src/styles/index.css";
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Layout ===== */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.app-layout {
+  display: flex;
+  min-height: calc(100vh - 64px);
+}
+
+.app-sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: var(--bg-sidebar, #f4f1e1);
+  border-right: 1px solid var(--border-light, #e5e7eb);
+  overflow-y: auto;
+  position: sticky;
+  top: 64px;
+  height: calc(100vh - 64px);
+  transition: transform 0.3s ease;
+}
+
+.app-main {
+  flex: 1;
+  padding: 12px;
+  background: var(--bg-main, #fbfaf5);
+  overflow-x: hidden;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .app-main {
+    padding: 24px;
+  }
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+  padding: 16px 12px;
+}
+
+.nav-section {
+  margin-bottom: 20px;
+}
+
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted, #6b7280);
+  padding: 4px 12px;
+  margin-bottom: 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  color: var(--text-secondary, #374151);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.nav-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-main, #111827);
+}
+
+.dark .nav-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-item.active {
+  background: var(--primary-bg, #fffbeb);
+  color: var(--primary-dark, #d97706);
+  font-weight: 600;
+}
+
+.dark .nav-item.active {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--primary-light, #fcd34d);
+}
+
+.nav-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Mobile Sidebar */
+@media (max-width: 1023px) {
+  .app-sidebar {
+    position: fixed;
+    left: 0;
+    top: 64px;
+    z-index: 50;
+    transform: translateX(-100%);
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
+  }
+  .app-sidebar.open {
+    transform: translateX(0);
+  }
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    top: 64px;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 45;
+  }
+  .sidebar-backdrop.visible {
+    display: block;
+  }
+}
+
+/* Loading Screen */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 16px;
+  background: var(--bg-main, #fbfaf5);
+  color: var(--text-secondary, #374151);
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--primary, #f59e0b);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Leaflet Dark Mode Overrides */
+.dark .leaflet-container {
+  background: #1a1a2e;
+}
+
+.dark .leaflet-tile {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+
+.dark .leaflet-control-zoom a {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-color: #334155;
+}
+
+.dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-tip {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* KPI Cards */
+.kpi-card {
+  @apply bg-white dark:bg-neutral-800 rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 dark:border-neutral-700 transition-all duration-200;
+}
+.kpi-card:hover {
+  @apply shadow-md;
+}
+.kpi-value {
+  @apply text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1.5;
+}
+.kpi-label {
+  @apply text-[11px] sm:text-xs font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-wider;
+}
+
+/* Status badges */
+.badge {
+  @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap;
+}
+.badge-success {
+  @apply bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400;
+}
+.badge-danger {
+  @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400;
+}
+.badge-warning {
+  @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400;
+}
+
+/* Table Styles */
+.data-table-container {
+  @apply w-full overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0;
+}
+.data-table {
+  @apply w-full text-sm min-w-[580px];
+}
+.data-table thead th {
+  @apply text-center text-xs font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider py-3 px-3 bg-gray-50 dark:bg-neutral-800/50 border-b border-gray-200 dark:border-neutral-700 sticky top-0 whitespace-nowrap;
+}
+.data-table tbody td {
+  @apply text-center py-3 px-3 border-b border-gray-100 dark:border-neutral-700/50 whitespace-nowrap;
+}
+.data-table tbody tr {
+  @apply hover:bg-gray-50/50 dark:hover:bg-neutral-700/20 transition-colors cursor-pointer;
+}
+
+/* Form Styles - Prevent iOS input auto-zoom by setting text-base on mobile */
+.form-group {
+  @apply mb-3.5;
+}
+.form-label {
+  @apply block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1;
+}
+.form-input {
+  @apply w-full px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-base sm:text-sm focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 outline-none transition min-h-[44px] sm:min-h-[40px];
+}
+.form-input.pl-10,
+.form-input.pl-11,
+.input-with-icon-left {
+  padding-left: 2.75rem !important;
+}
+.form-select {
+  @apply w-full px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-base sm:text-sm focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 outline-none transition min-h-[44px] sm:min-h-[40px];
+}
+.form-textarea {
+  @apply w-full px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-base sm:text-sm focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 outline-none transition resize-y;
+}
+
+/* Button Styles */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] sm:min-h-[38px] active:scale-[0.98];
+}
+.btn-primary {
+  background-color: #f59e0b !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  @apply shadow-sm hover:shadow transition-colors;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #d97706 !important;
+  color: #ffffff !important;
+  border-color: #d97706 !important;
+}
+.btn-secondary {
+  @apply bg-gray-100 dark:bg-neutral-700 hover:bg-gray-200 dark:hover:bg-neutral-600 text-gray-700 dark:text-neutral-200;
+}
+.btn-danger {
+  @apply bg-red-500 hover:bg-red-600 text-white shadow-sm;
+}
+.btn-ghost {
+  @apply hover:bg-gray-100 dark:hover:bg-neutral-700 text-gray-600 dark:text-neutral-300;
+}
+
+/* Leaflet Stacking Context Isolation */
+.leaflet-container {
+  z-index: 1;
+}
+
+/* Modal Responsive */
+.modal-overlay {
+  @apply fixed inset-0 bg-black/60 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm;
+}
+.modal-content {
+  @apply bg-white dark:bg-neutral-800 rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-h-[92vh] sm:max-h-[90vh] overflow-y-auto max-w-2xl;
+}
+.modal-header {
+  @apply flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-neutral-700 sticky top-0 bg-white dark:bg-neutral-800 z-10;
+}
+.modal-body {
+  @apply px-4 py-4 sm:px-6 sm:py-5;
+}
+.modal-footer {
+  @apply flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 px-4 py-3.5 sm:px-6 sm:py-4 border-t border-gray-200 dark:border-neutral-700 sticky bottom-0 bg-white dark:bg-neutral-800 z-10;
+}
+
+/* Page header */
+.page-header {
+  @apply mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3;
+}
+.page-title {
+  @apply text-xl sm:text-2xl font-bold text-gray-900 dark:text-white;
+}
+.page-subtitle {
+  @apply text-xs sm:text-sm text-gray-500 dark:text-neutral-400 mt-0.5;
+}

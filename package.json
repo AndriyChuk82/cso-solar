@@ -9,15 +9,17 @@
     "projects",
     "proposals-v2",
     "green-tariff-v2",
-    "dashboard"
+    "dashboard",
+    "land-lease"
   ],
   "scripts": {
-    "build": "cd green-tariff-v2 && npm install && npm run build",
+    "build": "npm run build --workspace=packages/design-system && npm run build --workspace=dashboard && npm run build --workspace=warehouse && npm run build --workspace=proposals-v2 && npm run build --workspace=projects && npm run build --workspace=green-tariff-v2 && npm run build --workspace=land-lease",
     "dev:dashboard": "npm run dev --workspace=dashboard",
     "dev:warehouse": "npm run dev --workspace=warehouse",
     "dev:proposals-v2": "npm run dev --workspace=proposals-v2",
     "dev:projects": "npm run dev --workspace=projects",
     "dev:green-tariff-v2": "npm run dev --workspace=green-tariff-v2",
+    "dev:land-lease": "npm run dev --workspace=land-lease",
     "dev:all": "concurrently \"npm run dev:dashboard\" \"npm run dev:warehouse\" \"npm run dev:proposals-v2\" \"npm run dev:projects\"",
     "agy": "powershell -NoProfile -Command \"& 'C:\\Users\\Чикайло Андрій\\AppData\\Local\\agy\\bin\\agy.exe'\"",
     "hash-password": "node scripts/hash-password.js",
