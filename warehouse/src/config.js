@@ -45,6 +45,7 @@ const CONFIG = {
     { id: 'gt',        label: 'Зелений тариф' },
     { id: 'projects',  label: 'Проєкти' },
     { id: 'proposals', label: 'Комерційні пропозиції' },
+    { id: 'land-lease', label: 'Оренда землі' },
   ],
   // Конфігурація Комерційних пропозицій
   CP_SPREADSHEETS: {
