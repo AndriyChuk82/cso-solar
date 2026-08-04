@@ -1050,7 +1050,7 @@ export default function BuyerIssueForm() {
                       </td>
 
                       {/* Сума */}
-                      <td className="p-2 text-right font-mono font-semibold text-[var(--text)] whitespace-nowrap">
+                      <td className="p-2 text-right font-semibold text-[var(--text)] whitespace-nowrap">
                         {item.productId && item.price !== '' ? (
                           `${(parseFloat(item.quantity || 0) * parseFloat(item.price || 0)).toLocaleString('uk-UA', { minimumFractionDigits: 2 })} ${item.currency === 'UAH' ? 'грн' : '$'}`
                         ) : (
