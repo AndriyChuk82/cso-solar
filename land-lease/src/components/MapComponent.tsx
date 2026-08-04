@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, Polygon, useMap, useMapEvents, LayersControl } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Polygon, Tooltip, useMap, useMapEvents, LayersControl } from 'react-leaflet'
 import L from 'leaflet'
 import type { LandPlot } from '../types'
 import { formatArea, formatMoney } from '../utils/formatters'
@@ -144,18 +144,31 @@ export default function MapComponent({ plots, height = '500px', zoom = 6, onPlot
             <div style={{ minWidth: '180px' }}>
               <strong className="text-sm">{plot.landlord?.full_name || 'Орендодавець'}</strong>
               <p className="text-xs text-gray-500 mt-1">{plot.address}</p>
-              <p className="text-xs mt-1">Площа: {formatArea(Number(plot.area_hectares))}</p>
+              <p className="text-xs mt-1 font-semibold text-emerald-700">Площа: {formatArea(Number(plot.area_hectares))}</p>
               {plot.balance && (
                 <div className="mt-2 pt-2 border-t border-gray-200">
                   {Number(plot.balance.debt_money) > 0 && (
                     <p className="text-xs text-red-600">Борг: {formatMoney(Number(plot.balance.debt_money))}</p>
                   )}
-                  {Number(plot.balance.debt_grain) > 0 && (
-                    <p className="text-xs text-amber-600">Зерно: {Number(plot.balance.debt_grain)} кг</p>
-                  )}
-                  {Number(plot.balance.debt_money) <= 0 && Number(plot.balance.debt_grain) <= 0 && (
+                  {Number(plot.balance.debt_money) <= 0 && (
                     <p className="text-xs text-green-600">✓ Оплачено</p>
                   )}
+                </div>
+              )}
+            </div>
+          )
+
+          const tooltipContent = (
+            <div className="p-1 font-sans">
+              <div className="font-bold text-xs text-gray-900">
+                👤 {plot.landlord?.full_name || 'Орендодавець'}
+              </div>
+              <div className="text-xs font-semibold text-emerald-700 mt-0.5">
+                📏 {formatArea(Number(plot.area_hectares))}
+              </div>
+              {plot.address && (
+                <div className="text-[11px] text-gray-500 mt-0.5 max-w-[180px] truncate">
+                  📍 {plot.address}
                 </div>
               )}
             </div>
@@ -176,8 +189,25 @@ export default function MapComponent({ plots, height = '500px', zoom = 6, onPlot
                   }}
                   eventHandlers={{
                     click: () => onPlotClick?.(plot),
+                    mouseover: (e) => {
+                      const layer = e.target
+                      layer.setStyle({
+                        fillOpacity: 0.7,
+                        weight: 4.5,
+                      })
+                    },
+                    mouseout: (e) => {
+                      const layer = e.target
+                      layer.setStyle({
+                        fillOpacity: 0.45,
+                        weight: 3,
+                      })
+                    },
                   }}
                 >
+                  <Tooltip sticky direction="top" opacity={0.95}>
+                    {tooltipContent}
+                  </Tooltip>
                   <Popup>{popupContent}</Popup>
                 </Polygon>
               )}
@@ -190,6 +220,9 @@ export default function MapComponent({ plots, height = '500px', zoom = 6, onPlot
                     click: () => onPlotClick?.(plot),
                   }}
                 >
+                  <Tooltip sticky direction="top" opacity={0.95}>
+                    {tooltipContent}
+                  </Tooltip>
                   <Popup>{popupContent}</Popup>
                 </Marker>
               )}
