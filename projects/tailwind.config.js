@@ -8,6 +8,12 @@ export default {
   theme: {
     extend: {
       colors: {
+        primary: {
+          DEFAULT: 'var(--primary, #f59e0b)',
+          light: 'var(--primary-light, #fbbf24)',
+          dark: 'var(--primary-dark, #d97706)',
+          bg: 'var(--primary-bg, #fffbeb)',
+        },
         brand: {
           light: '#fbbf24',
           DEFAULT: '#F59E0B',

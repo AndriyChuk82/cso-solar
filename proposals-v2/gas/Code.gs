@@ -18,6 +18,9 @@ const PROPOSALS_SPREADSHEET_ID = '1JzZFwvw6-m5JqP2Nra2azUvoWfuoY6Bsh-3qWtLPZ_k';
 const BACKUP_FOLDER_ID = '14kNr3Ex0bdVb0gddRzShkr8X88BYhtmL';
 const MATERIALS_SPREADSHEET_ID = '1dXuNar4t3aemQSk5LnPOXxcB7DAqqEzraWEFASa2r4g';
 const CUSTOM_MATERIALS_SPREADSHEET_ID = '1JzZFwvw6-m5JqP2Nra2azUvoWfuoY6Bsh-3qWtLPZ_k';
+const PRIMARY_SPREADSHEET_ID = '1HANizDH1A5Vd_aNU9Xu6mgRXJx2Yqb7mQz534CivyII';
+const HELIUS_SPREADSHEET_ID  = '1ddbl4d574RN5Q4WDMg4WW13heV_hOyYy';
+const PE_SPREADSHEET_ID      = '1dXuNar4t3aemQSk5LnPOXxcB7DAqqEzraWEFASa2r4g';
 const SHEETS_CONFIG = [
   { name: 'Сонячні батареї', mainCat: 'Сонячні батареї', gid: 1271219295 },
   { name: 'Гібридні інвертори', mainCat: 'Інвертори', gid: 2087142679 },
@@ -137,6 +140,9 @@ function doGet(e) {
       case 'syncProjectItems':
         result = handleSyncProjectItems(e.parameter.projectId);
         break;
+      case 'updatePrimaryPrices':
+        result = handleUpdatePrimaryPrices();
+        break;
       case 'getStockReport':
         result = handleStockReport(e.parameter.warehouseId, e.parameter.date);
         break;
@@ -236,6 +242,9 @@ function doPost(e) {
         break;
       case 'deleteProjectItem':
         result = handleDeleteProjectItem(data.itemId);
+        break;
+      case 'updatePrimaryPrices':
+        result = handleUpdatePrimaryPrices();
         break;
       case 'savePayment':
         result = handleSavePayment(data.payment, data.user);
@@ -2798,4 +2807,325 @@ function getSolarverseDebugInfo() {
     return { error: err.toString() };
   }
 }
+
+// ===== ОБ'ЄДНАННЯ ЦІН ДЛЯ ОСНОВНОЇ ТАБЛИЦІ =====
+
+function handleUpdatePrimaryPrices() {
+  try {
+    const ss = SpreadsheetApp.openById(PRIMARY_SPREADSHEET_ID);
+    const sheet = ss.getSheets().find(s => s.getName() !== 'Журнал_Оновлень' && s.getName() !== '_Прайс_Хеліус' && s.getName() !== 'Хеліус') || ss.getSheets()[0];
+    const lastRow = sheet.getLastRow();
+
+    if (lastRow < 2) {
+      return { success: false, error: 'Таблиця порожня або містить лише заголовок' };
+    }
+
+    const equipmentRange = sheet.getRange(2, 1, lastRow - 1, 1);
+    const equipmentValues = equipmentRange.getValues();
+
+    // Зчитуємо попередні ціни для порівняння змін
+    const oldCValues = sheet.getRange(2, 3, lastRow - 1, 1).getValues();
+    const oldDValues = sheet.getRange(2, 4, lastRow - 1, 1).getValues();
+
+    const heliusProducts = fetchHeliusNativeForPrimary(HELIUS_SPREADSHEET_ID);
+    const peProducts = fetchPENativeForPrimary(PE_SPREADSHEET_ID);
+
+    const velikiyGurtValues = [];
+    const dribniyGurtValues = [];
+    const colCNotes = [];
+    const colDNotes = [];
+
+    let matchedHeliusCount = 0;
+    let matchedPECount = 0;
+    const changesLog = [];
+
+    for (let i = 0; i < equipmentValues.length; i++) {
+      const name = String(equipmentValues[i][0] || '').trim();
+
+      if (!name) {
+        velikiyGurtValues.push(['']);
+        dribniyGurtValues.push(['']);
+        colCNotes.push(['']);
+        colDNotes.push(['']);
+        continue;
+      }
+
+      const pInfo = extractProductInfoForPrimary(name);
+      const oldC = parsePriceValueForPrimary(oldCValues[i][0]);
+      const oldD = parsePriceValueForPrimary(oldDValues[i][0]);
+
+      // 1. Хеліус
+      const hMatch = findBestMatchForPrimary(pInfo, heliusProducts);
+      if (hMatch) {
+        velikiyGurtValues.push([hMatch.price]);
+        matchedHeliusCount++;
+        if (oldC !== null && oldC !== hMatch.price) {
+          const diff = hMatch.price - oldC;
+          const diffStr = diff > 0 ? `+${diff} $` : `${diff} $`;
+          colCNotes.push([`🔄 Зміна ціни: ${oldC} $ ➔ ${hMatch.price} $ (${diffStr})`]);
+          changesLog.push({ row: i + 2, name: name, supplier: 'Хеліус (Великий гурт)', oldPrice: oldC, newPrice: hMatch.price, diff: diffStr });
+        } else {
+          colCNotes.push(['']);
+        }
+      } else {
+        velikiyGurtValues.push(['—']);
+        colCNotes.push([`❌ Не знайдено у прайсі Хеліус (пошукова назва: "${name}")`]);
+      }
+
+      // 2. ПЕ
+      const peMatch = findBestMatchForPrimary(pInfo, peProducts);
+      if (peMatch) {
+        dribniyGurtValues.push([peMatch.price]);
+        matchedPECount++;
+        if (oldD !== null && oldD !== peMatch.price) {
+          const diff = peMatch.price - oldD;
+          const diffStr = diff > 0 ? `+${diff} $` : `${diff} $`;
+          colDNotes.push([`🔄 Зміна ціни: ${oldD} $ ➔ ${peMatch.price} $ (${diffStr})`]);
+          changesLog.push({ row: i + 2, name: name, supplier: 'ПЕ (Дрібний гурт)', oldPrice: oldD, newPrice: peMatch.price, diff: diffStr });
+        } else {
+          colDNotes.push(['']);
+        }
+      } else {
+        dribniyGurtValues.push(['—']);
+        colDNotes.push([`❌ Не знайдено у прайсі ПЕ (пошукова назва: "${name}")`]);
+      }
+    }
+
+    const rangeC = sheet.getRange(2, 3, lastRow - 1, 1);
+    const rangeD = sheet.getRange(2, 4, lastRow - 1, 1);
+
+    rangeC.setValues(velikiyGurtValues);
+    rangeC.setNotes(colCNotes);
+
+    rangeD.setValues(dribniyGurtValues);
+    rangeD.setNotes(colDNotes);
+
+    // Отримуємо або створюємо вкладку "Журнал_Оновлень"
+    const timestamp = new Date().toLocaleString("uk-UA", { timeZone: "Europe/Kiev" });
+    let logSheet = ss.getSheetByName('Журнал_Оновлень');
+    if (!logSheet) {
+      logSheet = ss.insertSheet('Журнал_Оновлень');
+      logSheet.appendRow(['Дата та час', 'Подія / Рядок', 'Обладнання', 'Постачальник / Категорія', 'Стара ціна ($)', 'Нова ціна ($)', 'Зміна ($)']);
+      logSheet.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#e0e0e0');
+    }
+
+    // Додаємо запис про факт оновлення
+    logSheet.appendRow([
+      timestamp,
+      'Успішне оновлення',
+      `Всього товарів: ${equipmentValues.length}`,
+      `Хеліус: ${matchedHeliusCount}, ПЕ: ${matchedPECount}`,
+      '—',
+      '—',
+      `Змін цін: ${changesLog.length}`
+    ]);
+
+    // Якщо були конкретні зміни цін — записуємо кожну зміну окремо
+    if (changesLog.length > 0) {
+      changesLog.forEach(c => {
+        logSheet.appendRow([timestamp, `Рядок ${c.row}`, c.name, c.supplier, c.oldPrice, c.newPrice, c.diff]);
+      });
+    }
+
+    return {
+      success: true,
+      matchedHelius: matchedHeliusCount,
+      matchedPE: matchedPECount,
+      totalRows: equipmentValues.length,
+      priceChangesCount: changesLog.length,
+      priceChanges: changesLog,
+      debugHeliusCount: heliusProducts.length,
+      debugHeliusSample: heliusProducts.slice(0, 3),
+      updatedAt: timestamp
+    };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function fetchHeliusNativeForPrimary(spreadsheetId) {
+  const products = [];
+  try {
+    const ss = SpreadsheetApp.openById(PRIMARY_SPREADSHEET_ID);
+    const heliusSheet = ss.getSheetByName('_Прайс_Хеліус') || ss.getSheetByName('Хеліус');
+    
+    if (heliusSheet) {
+      const rows = heliusSheet.getDataRange().getValues();
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length < 2) continue;
+
+        const colA = String(row[0] || '').trim();
+        const colB = String(row[1] || '').trim();
+        const model = (colA + ' ' + colB).trim();
+
+        // Стовпець F (індекс 5) - Великий гурт (725$), далі Стовпець E (індекс 4) - РІЦ (745$)
+        let price = parsePriceValueForPrimary(row[5]) || parsePriceValueForPrimary(row[4]) || parsePriceValueForPrimary(row[6]);
+
+        if (model && price) {
+          // Хеліус не поставляє Solis — ігноруємо Solis у прайсі Хеліуса
+          if (model.toLowerCase().includes('solis')) continue;
+
+          const info = extractProductInfoForPrimary(model);
+          if (info) products.push({ model, price, info });
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Helius native fetch error:", e);
+  }
+  return products;
+}
+
+function fetchPENativeForPrimary(spreadsheetId) {
+  const products = [];
+  const targetSheets = ['Гібридні інвертори', 'Мережеві інвертори', 'АКБ'];
+
+  try {
+    const ss = SpreadsheetApp.openById(spreadsheetId);
+    targetSheets.forEach(sheetName => {
+      const sheet = ss.getSheetByName(sheetName);
+      if (!sheet) return;
+      const rows = sheet.getDataRange().getValues();
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length < 2) continue;
+        let model = '', priceRaw = '';
+        if (sheetName === 'АКБ') {
+          model = String(row[0] || '').trim();
+          priceRaw = String(row[1] || '').trim();
+        } else {
+          model = String(row[1] || '').trim();
+          priceRaw = String(row[3] || row[4] || '').trim();
+        }
+        const price = parsePriceValueForPrimary(priceRaw);
+        if (model && price) {
+          const info = extractProductInfoForPrimary(model);
+          if (info) products.push({ model, price, info });
+        }
+      }
+    });
+  } catch (e) {
+    console.error("PE native fetch error:", e);
+  }
+  return products;
+}
+
+function extractProductInfoForPrimary(name) {
+  if (!name) return null;
+  const s = name.trim();
+  const low = s.toLowerCase();
+
+  // 1. Вилучити сонячні панелі (ручне проставляння)
+  if (low.includes('longi') || low.includes('ja solar') || low.includes('jasolar') || low.includes('панель') || low.includes('панелі')) {
+    return null;
+  }
+
+  // 2. Вилучити велику систему 240kWh (ручне проставляння)
+  if (low.includes('240kwh') || low.includes('bos-b a3')) {
+    return null;
+  }
+
+  // 3. Вилучити кабель (ручне проставляння)
+  if (low.includes('кабель')) {
+    return null;
+  }
+
+  // Skip комплекти (full system kits) from being recognized as simple racks
+  if (low.includes('комплект')) return null;
+
+  if (low.includes('стійка') || low.includes('rack')) {
+    if (low.includes('8') || low.includes('lrack')) return { type: 'rack', key: 'rack8' };
+    if (low.includes('12') || low.includes('13') || low.includes('hrack')) return { type: 'rack', key: 'rack13' };
+    return { type: 'rack', key: cleanStrForPrimary(s) };
+  }
+  if (low.includes('pdu2') || low.includes('bms')) return { type: 'bms', key: 'bmspdu2' };
+
+  // Deye SE-F5-PRO-C <-> SE-F 5-PRO-C
+  let m = low.match(/se[-_\s]*f[-_\s]*5[-_\s]*pro[-_\s]*c/i);
+  if (m) return { type: 'battery', key: 'sef5proc' };
+
+  // Deye SE5.1 PRO-B <-> SE-G5.1 ProВ (кирилична В чи латинська B)
+  m = low.match(/se[-_\s]*g?5\.?1[-_\s]*pro[-_\s]*[bв]/i);
+  if (m) return { type: 'battery', key: 'seg51prob' };
+
+  m = low.match(/se[-_\s]*f12/i);
+  if (m) return { type: 'battery', key: 'sef12' };
+
+  m = low.match(/se[-_\s]*f16/i);
+  if (m) return { type: 'battery', key: 'sef16' };
+
+  // Deye BOS-G 5.1 PRO <-> DEYE BOS-G PRO / BOS-GPack5.1
+  m = low.match(/bos[-_\s]*g(pack)?[-_\s]*5\.?1/i);
+  if (m) return { type: 'battery', key: 'bosg51' };
+
+  // Huawei inverters (strict search)
+  if (low.includes('huawei') || low.includes('sun2000') || low.includes('sun 2000')) {
+    if (low.includes('30ktl') || low.includes('30k')) {
+      return { type: 'inverter', key: 'huawei_sun2000_30ktl_m3' };
+    }
+    return { type: 'inverter', key: 'huawei_' + cleanStrForPrimary(s) };
+  }
+
+  // Solis inverters (S5-GC30K <-> S5-GC30K / S5-GC3P30K)
+  if (low.includes('solis')) {
+    if (low.includes('gc30k') || low.includes('gc3p30k') || low.includes('s5-gc30k') || low.includes('3p-30k')) {
+      return { type: 'inverter', key: 'solis_s5_gc30k' };
+    }
+    return { type: 'inverter', key: 'solis_' + cleanStrForPrimary(s) };
+  }
+
+  // Deye SUN inverters - preserve exact kw, sg, and phase/type for 100% precision
+  m = low.match(/sun[-_\s]*0?(\d+k?)[-_\s]*(sg\d+)?[-_\s]*([lhb]p\d+)?/i);
+  if (m) {
+    const kw = parseInt(m[1], 10);
+    const sg = (m[2] || '').toLowerCase();
+    const p = (m[3] || '').toLowerCase();
+    
+    let keyParts = ['sun', kw + 'k'];
+    if (sg) keyParts.push(sg);
+    if (p) keyParts.push(p);
+    return { type: 'inverter', kw, sg, p, key: keyParts.join('_') };
+  }
+
+  return { type: 'other', key: cleanStrForPrimary(s) };
+}
+
+function findBestMatchForPrimary(targetInfo, catalog) {
+  if (!targetInfo) return null;
+  // 1. Exact key match
+  let match = catalog.find(item => item.info.type === targetInfo.type && item.info.key === targetInfo.key);
+  if (match) return match;
+
+  // 2. Fallback match for inverters: same kw and same p (type/phase)
+  if (targetInfo.type === 'inverter') {
+    match = catalog.find(item => item.info.type === 'inverter' && item.info.key.startsWith('sun_' + targetInfo.kw + 'k') && item.info.p === targetInfo.p);
+    if (match) return match;
+  }
+
+  return catalog.find(item => {
+    if (item.info.type !== targetInfo.type) return false;
+    if (targetInfo.key.length > 5 && (item.info.key.includes(targetInfo.key) || targetInfo.key.includes(item.info.key))) return true;
+    return false;
+  }) || null;
+}
+
+function cleanStrForPrimary(s) {
+  return (s || '').toLowerCase().replace(/[^a-z0-9]/gi, '');
+}
+
+function parsePriceValueForPrimary(str) {
+  if (!str) return null;
+  let s = String(str).trim();
+  if (s.toLowerCase().includes('гот') || s.includes('/')) {
+    const match = s.match(/[\d\s,.]+/);
+    if (match) s = match[0];
+  }
+  s = s.replace(/[$€₴]|грн/gi, '').trim();
+  s = s.replace(/\s/g, '').replace(',', '.');
+  const val = parseFloat(s);
+  return (isNaN(val) || val <= 0) ? null : val;
+}
+
 

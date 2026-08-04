@@ -12,9 +12,10 @@ export default {
       },
       colors: {
         primary: {
-          DEFAULT: '#d4a373',
-          light: '#e9c46a',
-          dark: '#bc8a5f',
+          DEFAULT: 'var(--primary, #f59e0b)',
+          light: 'var(--primary-light, #fbbf24)',
+          dark: 'var(--primary-dark, #d97706)',
+          bg: 'var(--primary-bg, #fffbeb)',
         },
         accent: {
           DEFAULT: '#374151',

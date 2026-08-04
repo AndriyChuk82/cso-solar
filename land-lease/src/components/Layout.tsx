@@ -70,9 +70,11 @@ export default function Layout({ user }: LayoutProps) {
                     🌱 Зелений тариф
                   </a>
                 )}
-                <a href="/land-lease/" className="px-3 py-2 text-sm font-medium text-primary bg-primary/10 dark:bg-primary/20 rounded-md">
-                  🌾 Оренда
-                </a>
+                {hasAccess(['land-lease', 'оренда', 'оренда землі', 'земля']) && (
+                  <a href="/land-lease/" className="px-3 py-2 text-sm font-medium text-primary bg-primary/10 dark:bg-primary/20 rounded-md">
+                    🌾 Оренда
+                  </a>
+                )}
               </nav>
 
               <div className="flex items-center gap-2 border-l border-gray-200 dark:border-neutral-700 pl-4">

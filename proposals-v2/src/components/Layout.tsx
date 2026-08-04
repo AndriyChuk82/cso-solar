@@ -32,11 +32,12 @@ export function Layout({ children }: LayoutProps) {
             'proposals': ['proposals', 'кп', 'комперційні'],
             'warehouse': ['warehouse', 'склад'],
             'projects': ['projects', 'проєкти', 'проекти'],
-            'gt': ['gt', 'зелений тариф', 'зт']
+            'gt': ['gt', 'зелений тариф', 'зт'],
+            'land-lease': ['land-lease', 'оренда', 'оренда землі', 'земля']
           };
 
           const allowed = isAdmin 
-            ? ['proposals', 'warehouse', 'projects', 'gt']
+            ? ['proposals', 'warehouse', 'projects', 'gt', 'land-lease']
             : Object.keys(mapping).filter(key => 
                 mapping[key].some(keyword => accessStr.includes(keyword))
               );
@@ -72,52 +73,34 @@ export function Layout({ children }: LayoutProps) {
             </div>
 
             <div className="flex items-center gap-4">
-              <nav className="flex items-center gap-1">
-                <a
-                  href="/dashboard/"
-                  className="p-2 text-gray-500 hover:text-[#f59e0b] hover:bg-gray-100/50 dark:hover:bg-neutral-800/50 rounded-lg transition-all duration-150 mr-1"
-                  title="Головна панель"
-                >
-                  <Home className="w-4 h-4" />
-                </a>
-                
+              <nav className="hidden md:flex items-center gap-1.5">
                 {hasAccess('proposals') && (
-                  <a
-                    href="/proposals/"
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-[#f59e0b] bg-[#f59e0b]/10 dark:bg-[#f59e0b]/20 rounded-lg transition-all duration-150"
-                  >
-                    <FileText className="w-4 h-4" />
-                    КП
+                  <a href="/proposals/" className="px-3 py-2 text-sm font-medium text-primary bg-primary/10 dark:bg-primary/20 rounded-md">
+                    📄 КП
                   </a>
                 )}
 
                 {hasAccess('warehouse') && (
-                  <a
-                    href="/warehouse/"
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-neutral-350 hover:text-[#f59e0b] hover:bg-gray-100/50 dark:hover:bg-neutral-800/50 rounded-lg transition-all duration-150"
-                  >
-                    <Package className="w-4 h-4" />
-                    Склад
+                  <a href="/warehouse/" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition">
+                    📦 Склад
                   </a>
                 )}
                 
                 {hasAccess('projects') && (
-                  <a
-                    href="/projects/"
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-neutral-350 hover:text-[#f59e0b] hover:bg-gray-100/50 dark:hover:bg-neutral-800/50 rounded-lg transition-all duration-150"
-                  >
-                    <BarChart2 className="w-4 h-4" />
-                    Проєкти
+                  <a href="/projects/" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition">
+                    📊 Проєкти
                   </a>
                 )}
                 
                 {hasAccess('gt') && (
-                  <a
-                    href="/green-tariff/"
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-neutral-350 hover:text-[#f59e0b] hover:bg-gray-100/50 dark:hover:bg-neutral-800/50 rounded-lg transition-all duration-150"
-                  >
-                    <Zap className="w-4 h-4" />
-                    Зелений тариф
+                  <a href="/green-tariff/" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition">
+                    🌱 Зелений тариф
+                  </a>
+                )}
+
+                {hasAccess('land-lease') && (
+                  <a href="/land-lease/" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition">
+                    🌾 Оренда
                   </a>
                 )}
               </nav>

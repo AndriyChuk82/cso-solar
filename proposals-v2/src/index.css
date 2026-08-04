@@ -375,45 +375,6 @@ button.bg-white {
   color: #166534 !important;
 }
 
-/* Хедер та навігаційні кнопки */
-header nav a {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  color: #4b5563 !important; /* Gray-600 */
-  background-color: transparent !important;
-  border: 1px solid transparent !important;
-  border-radius: 10px !important;
-  margin: 0 3px !important;
-  font-weight: 600 !important;
-  box-shadow: none !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-}
-
-.dark header nav a {
-  color: #d1d5db !important; /* Gray-300 */
-}
-
-header nav a:hover {
-  border-color: transparent !important;
-  color: var(--primary) !important;
-  background-color: rgba(245, 158, 11, 0.08) !important; /* Soft warm amber highlight */
-}
-
-.dark header nav a:hover {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-}
-
-/* Активна кнопка (поточний модуль) */
-header nav a[class*="text-primary"],
-header nav a[class*="bg-primary/10"],
-header nav a[class*="bg-primary/20"] {
-  background: linear-gradient(135deg, #f59e0b, #ea580c) !important; /* Amber to Orange gradient */
-  border-color: transparent !important;
-  color: #ffffff !important;
-  font-weight: 850 !important;
-  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.18) !important;
-}
 
 /* Уніфікація кнопок налаштувань, теми та історії праворуч */
 header .flex.items-center.gap-2.border-l button,

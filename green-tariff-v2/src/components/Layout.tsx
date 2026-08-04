@@ -28,11 +28,13 @@ export function Layout({ children }: LayoutProps) {
   }
 
   // Helper check for menu links based on module access
-  const hasAccess = (moduleName: string) => {
+  const hasAccess = (keys: string | string[]) => {
     if (!user) return false;
     const role = user.role.toLowerCase();
+    if (role.includes('admin') || role.includes('адмін') || role.includes('адміністратор')) return true;
     const access = user.module_access.toLowerCase();
-    return role.includes('admin') || access.includes(moduleName);
+    const keyList = Array.isArray(keys) ? keys : [keys];
+    return keyList.some(k => access.includes(k.toLowerCase()));
   };
 
   return (
@@ -57,44 +59,51 @@ export function Layout({ children }: LayoutProps) {
 
             {/* Navigation links */}
             <div className="flex items-center gap-6">
-              <nav className="hidden lg:flex items-center gap-1">
-                {hasAccess('proposals') && (
+              <nav className="hidden md:flex items-center gap-1.5">
+                {hasAccess(['proposals', 'кп', 'комперційні']) && (
                   <a
                     href="/proposals/"
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:text-[#f59e0b] hover:bg-gray-100/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-150"
+                    className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
                   >
-                    <FileText className="w-4 h-4" />
-                    КП
+                    📄 КП
                   </a>
                 )}
 
-                {hasAccess('warehouse') && (
+                {hasAccess(['warehouse', 'склад']) && (
                   <a
                     href="/warehouse/"
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:text-[#f59e0b] hover:bg-gray-100/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-150"
+                    className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
                   >
-                    <Package className="w-4 h-4" />
-                    Склад
+                    📦 Склад
                   </a>
                 )}
 
-                {hasAccess('projects') && (
+                {hasAccess(['projects', 'проєкти', 'проекти']) && (
                   <a
                     href="/projects/"
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:text-[#f59e0b] hover:bg-gray-100/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-150"
+                    className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
                   >
-                    <BarChart2 className="w-4 h-4" />
-                    Проєкти
+                    📊 Проєкти
                   </a>
                 )}
 
-                <a
-                  href="/green-tariff/"
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-[#f59e0b] bg-[#f59e0b]/10 dark:bg-[#f59e0b]/20 rounded-lg transition-all duration-150"
-                >
-                  <span className="text-sm">🌱</span>
-                  Зелений тариф v2
-                </a>
+                {hasAccess(['gt', 'зелений тариф', 'зт']) && (
+                  <a
+                    href="/green-tariff/"
+                    className="px-3 py-2 text-sm font-medium text-primary bg-primary/10 dark:bg-primary/20 rounded-md"
+                  >
+                    🌱 Зелений тариф
+                  </a>
+                )}
+
+                {hasAccess(['land-lease', 'оренда', 'оренда землі', 'земля']) && (
+                  <a
+                    href="/land-lease/"
+                    className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
+                  >
+                    🌾 Оренда
+                  </a>
+                )}
               </nav>
 
               {/* User settings / tools */}

@@ -104,6 +104,15 @@ export function Layout({ children }) {
                     🌱 Зелений тариф
                   </a>
                 )}
+
+                {(user?.isAdmin || user?.module_access?.includes('land-lease') || user?.module_access?.includes('оренда') || user?.module_access?.includes('оренда землі') || user?.module_access?.includes('земля')) && (
+                  <a
+                    href="/land-lease/"
+                    className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md transition"
+                  >
+                    🌾 Оренда
+                  </a>
+                )}
               </nav>
 
               <div className="flex items-center gap-2 border-l border-gray-200 dark:border-neutral-700 pl-3">

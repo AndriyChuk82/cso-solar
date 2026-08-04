@@ -1,1 +1,0 @@
-import{l as e}from"./index-PFxwgPtg.js";export{e as fetchAllData};
