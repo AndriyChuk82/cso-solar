@@ -674,7 +674,10 @@ export default function BuyerDetails() {
         });
       }
     } else {
-      if (t.date < dateFrom) {
+      const isBeforePeriod = dateFrom && t.date < dateFrom;
+      const isInPeriod = (!dateFrom && !dateTo) || ((!dateFrom || t.date >= dateFrom) && (!dateTo || t.date <= dateTo));
+
+      if (isBeforePeriod) {
         if (t.type === 'issue') {
           if (cur === 'UAH') uahOpening -= amt;
           if (cur === 'USD') usdOpening -= amt;
@@ -687,16 +690,18 @@ export default function BuyerDetails() {
         if (t.type === 'issue' && t.linkedPayments) {
           t.linkedPayments.forEach(lp => {
             const lpAmt = parseFloat(lp.amount) || 0;
-            if (lp.date < dateFrom) {
+            const lpIsBefore = dateFrom && lp.date < dateFrom;
+            const lpIsIn = (!dateFrom && !dateTo) || ((!dateFrom || lp.date >= dateFrom) && (!dateTo || lp.date <= dateTo));
+            if (lpIsBefore) {
               if (lp.currency === 'UAH') uahOpening += lpAmt;
               if (lp.currency === 'USD') usdOpening += lpAmt;
-            } else if (lp.date >= dateFrom && lp.date <= dateTo) {
+            } else if (lpIsIn) {
               if (lp.currency === 'UAH') uahPeriodPayment += lpAmt;
               if (lp.currency === 'USD') usdPeriodPayment += lpAmt;
             }
           });
         }
-      } else if (t.date >= dateFrom && t.date <= dateTo) {
+      } else if (isInPeriod) {
         if (t.type === 'issue') {
           if (cur === 'UAH') uahPeriodIssue += amt;
           if (cur === 'USD') usdPeriodIssue += amt;
@@ -709,10 +714,12 @@ export default function BuyerDetails() {
         if (t.type === 'issue' && t.linkedPayments) {
           t.linkedPayments.forEach(lp => {
             const lpAmt = parseFloat(lp.amount) || 0;
-            if (lp.date < dateFrom) {
+            const lpIsBefore = dateFrom && lp.date < dateFrom;
+            const lpIsIn = (!dateFrom && !dateTo) || ((!dateFrom || lp.date >= dateFrom) && (!dateTo || lp.date <= dateTo));
+            if (lpIsBefore) {
               if (lp.currency === 'UAH') uahOpening += lpAmt;
               if (lp.currency === 'USD') usdOpening += lpAmt;
-            } else if (lp.date >= dateFrom && lp.date <= dateTo) {
+            } else if (lpIsIn) {
               if (lp.currency === 'UAH') uahPeriodPayment += lpAmt;
               if (lp.currency === 'USD') usdPeriodPayment += lpAmt;
             }
