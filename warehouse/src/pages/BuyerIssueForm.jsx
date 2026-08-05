@@ -65,6 +65,17 @@ const getCleanManagerName = (name, email) => {
 
 function findBestMatch(kpName, products) {
   if (!kpName) return null;
+
+  const norm = kpName.toLowerCase().replace(/[^a-z0-9а-яєіїґ]/gi, '');
+  if (norm.includes('bosgpro') || norm.includes('bosg512kwh')) {
+    const p = products.find(prod => prod.id === '89e08b5c-e41a-42d2-ba45-98529e346892');
+    if (p) return p;
+  }
+  if (norm.includes('kbedb6mm') || norm.includes('kabelsoniachniikbe') || norm.includes('кабельсонячнийkbe') || (norm.includes('кабель') && norm.includes('соняч') && norm.includes('6mm'))) {
+    const p = products.find(prod => prod.id === '8ecc5425-db74-40a7-9f5d-2a667c502c65');
+    if (p) return p;
+  }
+
   const clean = (str) => {
     return str.toLowerCase()
       .replace(/[^a-z0-9а-яєіїґ]/gi, ' ')
@@ -139,8 +150,66 @@ function findBestMatch(kpName, products) {
   return null;
 }
 
+async function ensureProductsExist(items, productsList) {
+  const updatedItems = [...items];
+  for (let i = 0; i < updatedItems.length; i++) {
+    const item = updatedItems[i];
+    if (!item.productId) {
+      // 1. Check if it exists in DB products list first (case-insensitive)
+      const exactMatch = productsList.find(p => p.name.toLowerCase().trim() === item.productName.toLowerCase().trim());
+      if (exactMatch) {
+        updatedItems[i].productId = exactMatch.id;
+        continue;
+      }
+      
+      // 2. Create a new product
+      const newId = crypto.randomUUID ? crypto.randomUUID() : 'prod-' + Date.now() + Math.random().toString(36).substring(2, 5);
+      
+      // Guess category_id
+      const nameLower = item.productName.toLowerCase();
+      let categoryId = 'Розхідники';
+      if (nameLower.includes('інвертор') || nameLower.includes('sun-') || nameLower.includes('solis') || nameLower.includes('huawei')) {
+        categoryId = 'Інвертори';
+      } else if (nameLower.includes('акб') || nameLower.includes('акумулятор') || nameLower.includes('bms') || nameLower.includes('pdu') || nameLower.includes('battery')) {
+        categoryId = 'АКБ';
+      } else if (nameLower.includes('панель') || nameLower.includes('fem') || nameLower.includes('фем') || nameLower.includes('bifacial') || nameLower.includes('solar')) {
+        categoryId = 'Сонячні панелі';
+      } else if (nameLower.includes('кабель')) {
+        categoryId = 'Кабель солярний';
+      } else if (nameLower.includes('кріплення') || nameLower.includes('профіль') || nameLower.includes('прижим') || nameLower.includes('гвинт') || nameLower.includes('шуруп') || nameLower.includes('болт') || nameLower.includes('гайка') || nameLower.includes('з\'єднувач')) {
+        categoryId = 'Кріплення';
+      }
+      
+      const newProduct = {
+        id: newId,
+        name: item.productName.trim(),
+        unit: item.unit || 'шт',
+        category_id: categoryId,
+        active: true
+      };
+      
+      const { error } = await supabase.from('products').insert([newProduct]);
+      if (error) {
+        console.error('Failed to create custom product during import:', error);
+        throw new Error(`Не вдалося створити товар "${item.productName}": ${error.message}`);
+      }
+      
+      // Update item with new productId
+      updatedItems[i].productId = newId;
+      // Add to products list so we don't insert duplicate if name is repeated
+      productsList.push({
+        id: newId,
+        name: item.productName.trim(),
+        active: true
+      });
+    }
+  }
+  return updatedItems;
+}
+
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { supabase } from '../api/supabaseClient';
 import { getWarehouses, getCatalog, getBuyers, getBalances, addBuyerTransaction, getBuyerTransactionById, deleteBuyerTransaction, toggleArchiveTransaction, updateBuyerTransaction, getActivityLogs, formatUserName } from '../api/gasApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -576,12 +645,14 @@ export default function BuyerIssueForm() {
     if (!formData.buyerId) return showToast('Оберіть покупця', 'error');
     if (!formData.warehouseId) return showToast('Оберіть склад', 'error');
     
-    // Фільтруємо незаповнені рядки
-    const filledItems = formData.items.filter(item => item.productId !== '');
-    if (filledItems.length === 0) return showToast('Додайте хоча б один товар', 'error');
+    // Фільтруємо незаповнені рядки (повинен бути або productId, або введене ім'я товару)
+    const rawFilledItems = formData.items.filter(item => item.productId !== '' || (item.productName && item.productName.trim() !== ''));
+    if (rawFilledItems.length === 0) return showToast('Додайте хоча б один товар', 'error');
 
     setSaving(true);
     try {
+      // Створюємо незіставлені товари в базі даних перед списанням/проведенням
+      const filledItems = await ensureProductsExist(rawFilledItems, [...products]);
       const selectedBuyer = buyers.find(b => b.id === formData.buyerId);
       const uahItems = filledItems.filter(item => item.currency === 'UAH');
       const usdItems = filledItems.filter(item => item.currency === 'USD');
@@ -1087,8 +1158,8 @@ export default function BuyerIssueForm() {
                             type="number"
                             step="any"
                             min="0.001"
-                            required={!!item.productId}
-                            disabled={!item.productId}
+                            required
+                            disabled={isReleaseMode}
                             className="w-20 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none disabled:opacity-40 text-center font-semibold"
                             value={item.quantity}
                             onChange={(e) => updateRowField(index, 'quantity', e.target.value)}
@@ -1110,7 +1181,7 @@ export default function BuyerIssueForm() {
                             type="number"
                             step="any"
                             min="0"
-                            disabled={!item.productId}
+                            disabled={isReleaseMode}
                             className="w-20 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none disabled:opacity-40 text-center font-semibold"
                             placeholder="неоцінено"
                             value={item.price}
@@ -1118,7 +1189,7 @@ export default function BuyerIssueForm() {
                             onFocus={(e) => e.target.select()}
                           />
                           <select
-                            disabled={!item.productId}
+                            disabled={isReleaseMode}
                             className="w-14 p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none disabled:opacity-40 cursor-pointer"
                             value={item.currency || 'UAH'}
                             onChange={(e) => updateRowField(index, 'currency', e.target.value)}
@@ -1131,7 +1202,7 @@ export default function BuyerIssueForm() {
 
                       {/* Сума */}
                       <td className="p-2 text-right font-semibold text-[var(--text)] whitespace-nowrap">
-                        {item.productId && item.price !== '' ? (
+                        {item.price !== '' ? (
                           `${(parseFloat(item.quantity || 0) * parseFloat(item.price || 0)).toLocaleString('uk-UA', { minimumFractionDigits: 2 })} ${item.currency === 'UAH' ? 'грн' : '$'}`
                         ) : (
                           '—'
