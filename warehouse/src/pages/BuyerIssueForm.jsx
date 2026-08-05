@@ -572,7 +572,7 @@ export default function BuyerIssueForm() {
           finalPrice = priceUah;
         } else if (rawPrice > 0) {
           if (kpCurrency === 'USD') {
-            finalPrice = Math.round(rawPrice * usdRate * 100) / 100;
+            finalPrice = rawPrice * usdRate;
           } else {
             finalPrice = rawPrice;
           }
@@ -581,11 +581,15 @@ export default function BuyerIssueForm() {
         // Якщо обрано імпорт у доларах (USD)
         if (rawPrice > 0) {
           if (kpCurrency === 'UAH') {
-            finalPrice = Math.round((rawPrice / usdRate) * 10000) / 10000;
+            finalPrice = rawPrice / usdRate;
           } else {
             finalPrice = rawPrice;
           }
         }
+      }
+
+      if (finalPrice !== '') {
+        finalPrice = Math.round(parseFloat(finalPrice) * 100) / 100;
       }
       
       const matchedProduct = findBestMatch(name, products);
@@ -1187,6 +1191,12 @@ export default function BuyerIssueForm() {
                             value={item.price}
                             onChange={(e) => updateRowField(index, 'price', e.target.value)}
                             onFocus={(e) => e.target.select()}
+                            onBlur={(e) => {
+                              const val = parseFloat(e.target.value);
+                              if (!isNaN(val)) {
+                                updateRowField(index, 'price', (Math.round(val * 100) / 100).toString());
+                              }
+                            }}
                           />
                           <select
                             disabled={isReleaseMode}
