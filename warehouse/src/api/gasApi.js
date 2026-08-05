@@ -1246,6 +1246,7 @@ export async function getBuyerTransactionById(txId) {
       type: tx.type,
       amount: tx.amount,
       currency: tx.currency,
+      conversion_rate: tx.conversion_rate,
       comment: tx.comment,
       status: tx.status,
       pickedUpBy: tx.picked_up_by,
