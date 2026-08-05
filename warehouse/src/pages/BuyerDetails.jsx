@@ -1182,8 +1182,8 @@ export default function BuyerDetails() {
                                 </span>
                               ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                               {t.status === 'pending_price' && (
-                                <span className="text-[9px] font-bold text-yellow-600 bg-yellow-500/10 px-1 rounded ml-1">
-                                  без ціни
+                                <span className="text-[10px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-300 dark:border-amber-900/50 px-1.5 py-0.5 rounded-full ml-1.5 whitespace-nowrap animate-pulse">
+                                  ⚠️ Очікує ціну
                                 </span>
                               )}
                             </td>
@@ -1264,7 +1264,11 @@ export default function BuyerDetails() {
                                  {t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Тільки борг' : '📤 Видача')}
                               </span>
                             ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
-                            {t.status === 'pending_price' && ' (без ціни)'}
+                            {t.status === 'pending_price' && (
+                              <span className="text-[9px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-300 dark:border-amber-900/50 px-1.5 py-0.5 rounded-full ml-1 whitespace-nowrap animate-pulse inline-block">
+                                ⚠️ Очікує ціну
+                              </span>
+                            )}
                           </span>
                         </div>
                         <div>
@@ -1404,8 +1408,8 @@ export default function BuyerDetails() {
                             <td className="p-2 align-top font-semibold text-[var(--text)]">
                               {isIssue ? (t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Борг без списання' : '📤 Видача товарів')) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                               {t.status === 'pending_price' && (
-                                <span className="text-[9px] font-bold text-yellow-600 bg-yellow-500/10 px-1 rounded ml-1">
-                                  без ціни
+                                <span className="text-[10px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-300 dark:border-amber-900/50 px-1.5 py-0.5 rounded-full ml-1.5 whitespace-nowrap animate-pulse">
+                                  ⚠️ Очікує ціну
                                 </span>
                               )}
                             </td>
@@ -1464,7 +1468,11 @@ export default function BuyerDetails() {
                           <span>📅 {t.date}</span>
                           <span className="font-semibold text-[var(--text)]">
                             {isIssue ? (t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Тільки борг' : '📤 Видача')) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
-                            {t.status === 'pending_price' && ' (без ціни)'}
+                            {t.status === 'pending_price' && (
+                              <span className="text-[9px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-300 dark:border-amber-900/50 px-1.5 py-0.5 rounded-full ml-1 whitespace-nowrap animate-pulse inline-block">
+                                ⚠️ Очікує ціну
+                              </span>
+                            )}
                           </span>
                         </div>
                         <div>
@@ -1705,7 +1713,7 @@ export default function BuyerDetails() {
                                       );
                                     })}
                                     {t.status === 'pending_price' && (
-                                      <div className="text-yellow-600 font-semibold mt-1">⚠️ (Ціна очікується)</div>
+                                      <div className="text-amber-600 dark:text-amber-400 font-semibold mt-1 animate-pulse">⚠️ (Ціна очікується)</div>
                                     )}
                                   </div>
                                   {/* Відображення пов'язаних оплат в акті звірки */}
@@ -1832,7 +1840,7 @@ export default function BuyerDetails() {
                                   );
                                 })}
                                 {t.status === 'pending_price' && (
-                                  <div className="text-yellow-600 font-semibold mt-1">⚠️ (Ціна очікується)</div>
+                                  <div className="text-amber-600 dark:text-amber-400 font-semibold mt-1 animate-pulse">⚠️ (Ціна очікується)</div>
                                 )}
                               </div>
                             </div>

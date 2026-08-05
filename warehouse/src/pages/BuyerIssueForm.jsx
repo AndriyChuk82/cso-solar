@@ -965,12 +965,33 @@ export default function BuyerIssueForm() {
         >
           ←
         </button>
-        <div>
+        <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-lg font-bold text-[var(--text)]">{txId ? '✏️ Редагування накладної видачі' : '📤 Видача матеріалів (Накладна)'}</h1>
+          {txId && originalStatus === 'pending_price' && (
+            <span className="text-xs font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-300 dark:border-amber-900/50 px-2 py-0.5 rounded-full animate-pulse">
+              ⚠️ Очікує ціну
+            </span>
+          )}
+          {txId && originalStatus === 'reserved' && (
+            <span className="text-xs font-bold text-gray-700 bg-gray-100 dark:bg-gray-850/40 dark:text-gray-400 border border-gray-300 dark:border-gray-900/50 px-2 py-0.5 rounded-full">
+              ⏳ Бронь / Резерв
+            </span>
+          )}
+          {txId && originalStatus === 'debt_only' && (
+            <span className="text-xs font-bold text-blue-700 bg-blue-100 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-300 dark:border-blue-900/50 px-2 py-0.5 rounded-full">
+              💵 Тільки борг (Без списання)
+            </span>
+          )}
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {formData.items.some(item => item.price === '' || item.price === null) && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-2 animate-pulse">
+            <span>⚠️ Увага:</span>
+            <span>У накладній є неоцінені позиції. Статус документа автоматично буде збережено як <strong>"Очікує ціну" (без нарахування боргу)</strong>.</span>
+          </div>
+        )}
         {/* Компактні поля шапки (1С стиль) */}
         <div className="card p-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
           <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
@@ -1085,7 +1106,14 @@ export default function BuyerIssueForm() {
 
             {!isReleaseMode && (
               <div className="flex flex-col gap-1">
-                <label className="font-semibold text-[var(--text-secondary)]">Статус документа *</label>
+                <label className="font-semibold text-[var(--text-secondary)] flex items-center gap-1.5 flex-wrap">
+                  Статус документа *
+                  {formData.items.some(item => item.price === '' || item.price === null) && (
+                    <span className="text-[10px] text-amber-700 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded font-bold animate-pulse border border-amber-500/20">
+                      ⚠️ Очікує ціну
+                    </span>
+                  )}
+                </label>
                 <select
                   className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none font-semibold text-blue-600 dark:text-blue-400"
                   value={formData.status || 'completed'}
@@ -1095,6 +1123,9 @@ export default function BuyerIssueForm() {
                   <option value="completed">✅ Видано (Списати)</option>
                   <option value="reserved">⏳ Бронь / Резерв</option>
                   <option value="debt_only">💵 Тільки борг (Без списання)</option>
+                  {formData.status === 'pending_price' && (
+                    <option value="pending_price">⚠️ Очікує ціну (Неоцінено)</option>
+                  )}
                 </select>
               </div>
             )}
