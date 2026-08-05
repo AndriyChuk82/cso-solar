@@ -63,6 +63,56 @@ const getCleanManagerName = (name, email) => {
   }
 };
 
+function isStrictMismatch(name1, name2) {
+  const n1 = name1.toLowerCase();
+  const n2 = name2.toLowerCase();
+  
+  // 1. BOS-B vs BOS-G
+  const hasB1 = n1.includes('bos-b') || n1.includes('bos b');
+  const hasB2 = n2.includes('bos-b') || n2.includes('bos b');
+  const hasG1 = n1.includes('bos-g') || n1.includes('bos g');
+  const hasG2 = n2.includes('bos-g') || n2.includes('bos g');
+  if ((hasB1 && hasG2) || (hasG1 && hasB2)) return true;
+  
+  // 2. Capacity mismatch (Ah)
+  const getAh = (str) => {
+    const m = str.match(/(\d+)\s*ah/g);
+    return m ? m.map(x => parseInt(x)) : [];
+  };
+  const ah1 = getAh(n1);
+  const ah2 = getAh(n2);
+  if (ah1.length > 0 && ah2.length > 0) {
+    const hasCommonAh = ah1.some(val => ah2.includes(val));
+    if (!hasCommonAh) return true;
+  }
+  
+  // 3. Power rating mismatch (K, kW, KTL, kWh)
+  const getPower = (str) => {
+    const m = str.match(/(\d+(?:\.\d+)?)\s*(?:k|kw|ktl|kwh)/g);
+    return m ? m.map(x => parseFloat(x)) : [];
+  };
+  const p1 = getPower(n1);
+  const p2 = getPower(n2);
+  if (p1.length > 0 && p2.length > 0) {
+    const hasCommonPower = p1.some(val => p2.some(val2 => val === val2 || Math.abs(val - val2) < 0.1));
+    if (!hasCommonPower) return true;
+  }
+
+  // 4. Model number mismatch (e.g. SUN-30K vs SUN-80K vs SUN-12K)
+  const getModelNum = (str) => {
+    const m = str.match(/sun[- ]?(\d+)/g);
+    return m ? m.map(x => parseInt(x.replace(/[^\d]/g, ''))) : [];
+  };
+  const m1 = getModelNum(n1);
+  const m2 = getModelNum(n2);
+  if (m1.length > 0 && m2.length > 0) {
+    const hasCommonModelNum = m1.some(val => m2.includes(val));
+    if (!hasCommonModelNum) return true;
+  }
+
+  return false;
+}
+
 function findBestMatch(kpName, products) {
   if (!kpName) return null;
 
@@ -99,6 +149,7 @@ function findBestMatch(kpName, products) {
   for (const p of products) {
     if (!p.active) continue;
     const pName = p.name || '';
+    if (isStrictMismatch(kpName, pName)) continue;
     
     // 1. Exact lowercase check
     if (pName.toLowerCase().trim() === kpName.toLowerCase().trim()) {
