@@ -251,8 +251,8 @@ export default function BuyersDashboard() {
                       <td className="p-4 text-center">
                         <div className="flex flex-col gap-1 items-center justify-center">
                           {b.pendingCount > 0 && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                              ⚠️ {b.pendingCount} без ціни
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 animate-pulse whitespace-nowrap">
+                              ⚠️ Очікує ціну: {b.pendingCount}
                             </span>
                           )}
                           {b.reservedCount > 0 && (
@@ -309,8 +309,8 @@ export default function BuyersDashboard() {
                     </div>
                     <div className="flex flex-col gap-1 items-end">
                       {b.pendingCount > 0 && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                          ⚠️ {b.pendingCount} без ціни
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 animate-pulse whitespace-nowrap">
+                          ⚠️ Очікує ціну: {b.pendingCount}
                         </span>
                       )}
                       {b.reservedCount > 0 && (
