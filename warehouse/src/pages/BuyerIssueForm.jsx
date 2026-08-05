@@ -986,7 +986,7 @@ export default function BuyerIssueForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {formData.items.some(item => item.price === '' || item.price === null) && (
+        {formData.items.some(item => (item.productId || (item.productName && item.productName.trim() !== '')) && (item.price === '' || item.price === null)) && (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-2 animate-pulse">
             <span>⚠️ Увага:</span>
             <span>У накладній є неоцінені позиції. Статус документа автоматично буде збережено як <strong>"Очікує ціну" (без нарахування боргу)</strong>.</span>
@@ -1108,7 +1108,7 @@ export default function BuyerIssueForm() {
               <div className="flex flex-col gap-1">
                 <label className="font-semibold text-[var(--text-secondary)] flex items-center gap-1.5 flex-wrap">
                   Статус документа *
-                  {formData.items.some(item => item.price === '' || item.price === null) && (
+                  {formData.items.some(item => (item.productId || (item.productName && item.productName.trim() !== '')) && (item.price === '' || item.price === null)) && (
                     <span className="text-[10px] text-amber-700 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded font-bold animate-pulse border border-amber-500/20">
                       ⚠️ Очікує ціну
                     </span>
