@@ -767,7 +767,7 @@ export default function BuyerDetails() {
           return `${item.product_name} — ${item.quantity} ${item.unit}${priceTxt}`;
         });
         desc = `Видача матеріалу: ${itemDescs.join(', ')}`;
-        if (t.status === 'pending_price') {
+        if (t.status === 'pending_price' || (t.items && t.items.some(i => i.price === null || i.price === undefined || i.price === ''))) {
           desc += ' ⚠️ (Ціна очікується)';
         }
       } else if (t.type === 'payment') {
@@ -1104,6 +1104,7 @@ export default function BuyerDetails() {
                         const isIssue = t.type === 'issue';
                         const isAdj = t.type === 'adjustment';
                         const amt = parseFloat(t.amount) || 0;
+                        const isPendingPrice = t.status === 'pending_price' || (isIssue && t.items && t.items.some(i => i.price === null || i.price === undefined || i.price === ''));
                         
                         let details = (t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '');
                         if (isIssue) {
@@ -1181,7 +1182,7 @@ export default function BuyerDetails() {
                                   {t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Борг без списання' : '📤 Видача товарів')}
                                 </span>
                               ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
-                              {t.status === 'pending_price' && (
+                              {isPendingPrice && (
                                 <span className="text-[10px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-300 dark:border-amber-900/50 px-1.5 py-0.5 rounded-full ml-1.5 whitespace-nowrap animate-pulse">
                                   ⚠️ Очікує ціну
                                 </span>
@@ -1249,6 +1250,7 @@ export default function BuyerDetails() {
                     const isIssue = t.type === 'issue';
                     const isAdj = t.type === 'adjustment';
                     const amt = parseFloat(t.amount) || 0;
+                    const isPendingPrice = t.status === 'pending_price' || (isIssue && t.items && t.items.some(i => i.price === null || i.price === undefined || i.price === ''));
 
                     return (
                       <div 
@@ -1264,7 +1266,7 @@ export default function BuyerDetails() {
                                  {t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Тільки борг' : '📤 Видача')}
                               </span>
                             ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
-                            {t.status === 'pending_price' && (
+                            {isPendingPrice && (
                               <span className="text-[9px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-300 dark:border-amber-900/50 px-1.5 py-0.5 rounded-full ml-1 whitespace-nowrap animate-pulse inline-block">
                                 ⚠️ Очікує ціну
                               </span>
@@ -1350,6 +1352,7 @@ export default function BuyerDetails() {
                         const isIssue = t.type === 'issue';
                         const isAdj = t.type === 'adjustment';
                         const amt = parseFloat(t.amount) || 0;
+                        const isPendingPrice = t.status === 'pending_price' || (isIssue && t.items && t.items.some(i => i.price === null || i.price === undefined || i.price === ''));
                         
                         let details = (t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '');
                         if (isIssue) {
@@ -1407,7 +1410,7 @@ export default function BuyerDetails() {
                             <td className="p-2 align-top whitespace-nowrap">{t.date}</td>
                             <td className="p-2 align-top font-semibold text-[var(--text)]">
                               {isIssue ? (t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Борг без списання' : '📤 Видача товарів')) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
-                              {t.status === 'pending_price' && (
+                              {isPendingPrice && (
                                 <span className="text-[10px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-300 dark:border-amber-900/50 px-1.5 py-0.5 rounded-full ml-1.5 whitespace-nowrap animate-pulse">
                                   ⚠️ Очікує ціну
                                 </span>
@@ -1457,6 +1460,7 @@ export default function BuyerDetails() {
                     const isIssue = t.type === 'issue';
                     const isAdj = t.type === 'adjustment';
                     const amt = parseFloat(t.amount) || 0;
+                    const isPendingPrice = t.status === 'pending_price' || (isIssue && t.items && t.items.some(i => i.price === null || i.price === undefined || i.price === ''));
 
                     return (
                       <div 
@@ -1468,7 +1472,7 @@ export default function BuyerDetails() {
                           <span>📅 {t.date}</span>
                           <span className="font-semibold text-[var(--text)]">
                             {isIssue ? (t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Тільки борг' : '📤 Видача')) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
-                            {t.status === 'pending_price' && (
+                            {isPendingPrice && (
                               <span className="text-[9px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-300 dark:border-amber-900/50 px-1.5 py-0.5 rounded-full ml-1 whitespace-nowrap animate-pulse inline-block">
                                 ⚠️ Очікує ціну
                               </span>
@@ -1689,6 +1693,8 @@ export default function BuyerDetails() {
                       </tr>
                     ) : (
                       filteredReportItems.map((t) => {
+                        const isIssue = t.type === 'issue';
+                        const isPendingPrice = t.status === 'pending_price' || (isIssue && t.items && t.items.some(i => i.price === null || i.price === undefined || i.price === ''));
                         const hasUah = t.uahDeb > 0 || t.uahCred > 0 || t.currency === 'UAH';
                         const hasUsd = t.usdDeb > 0 || t.usdCred > 0 || t.currency === 'USD';
 
@@ -1712,7 +1718,7 @@ export default function BuyerDetails() {
                                         </div>
                                       );
                                     })}
-                                    {t.status === 'pending_price' && (
+                                    {isPendingPrice && (
                                       <div className="text-amber-600 dark:text-amber-400 font-semibold mt-1 animate-pulse">⚠️ (Ціна очікується)</div>
                                     )}
                                   </div>
@@ -1814,6 +1820,7 @@ export default function BuyerDetails() {
                 ) : (
                   filteredReportItems.map((t) => {
                     const isIssue = t.type === 'issue';
+                    const isPendingPrice = t.status === 'pending_price' || (isIssue && t.items && t.items.some(i => i.price === null || i.price === undefined || i.price === ''));
                     return (
                       <div key={t.id} className="p-3 border border-[var(--border)] bg-[var(--bg)] rounded-lg space-y-2 text-xs">
                         <div className="flex justify-between items-start text-[10px] text-[var(--text-secondary)] font-mono">
@@ -1839,7 +1846,7 @@ export default function BuyerDetails() {
                                     </div>
                                   );
                                 })}
-                                {t.status === 'pending_price' && (
+                                {isPendingPrice && (
                                   <div className="text-amber-600 dark:text-amber-400 font-semibold mt-1 animate-pulse">⚠️ (Ціна очікується)</div>
                                 )}
                               </div>

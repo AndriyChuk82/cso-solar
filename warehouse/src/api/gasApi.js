@@ -578,8 +578,16 @@ export async function getBuyersWithBalances() {
   const { data: buyers, error: bErr } = await supabase.from('buyers').select('*').order('name');
   if (bErr) throw bErr;
 
-  const { data: txs, error: tErr } = await supabase.from('buyer_transactions').select('buyer_id, type, amount, currency, status, is_archived');
+  const { data: txs, error: tErr } = await supabase.from('buyer_transactions').select('id, buyer_id, type, amount, currency, status, is_archived');
   if (tErr) throw tErr;
+
+  // Отримуємо список ID транзакцій, де є позиції без вказаної ціни
+  const { data: pendingItems } = await supabase
+    .from('buyer_transaction_items')
+    .select('transaction_id')
+    .is('price', null);
+
+  const pendingTxIds = new Set(pendingItems ? pendingItems.map(item => item.transaction_id) : []);
 
   const balanceMap = {};
   buyers.forEach(b => {
@@ -592,7 +600,7 @@ export async function getBuyersWithBalances() {
       balanceMap[t.buyer_id].reservedCount += 1;
       return; // Ігноруємо незавершені броні для фінансового балансу
     }
-    if (t.status === 'pending_price') {
+    if (t.status === 'pending_price' || pendingTxIds.has(t.id)) {
       balanceMap[t.buyer_id].pendingCount += 1;
     }
     const amt = parseFloat(t.amount) || 0;
