@@ -556,10 +556,14 @@ const GT_TEMPLATES = {
                 page-break-before: always;
                 padding-top: 14mm;
                 box-sizing: border-box;
+                height: 277mm; /* A4 height minus margins */
+                max-height: 277mm;
+                overflow: hidden;
             }
             .p2-photo-full {
                 /* page-break-before: always; — Тепер це у .p2-photo-page */
-                min-height: 240mm;
+                height: 100%;
+                max-height: 260mm;
                 display: flex;
                 flex-direction: column;
                 border: 1.5px solid #000;
@@ -573,6 +577,7 @@ const GT_TEMPLATES = {
                 padding: 4px 10px;
                 background: #f5f5f5;
                 border-bottom: 1px solid #000;
+                flex-shrink: 0;
             }
             .p2-photo-body {
                 flex: 1;
@@ -581,11 +586,14 @@ const GT_TEMPLATES = {
                 justify-content: center;
                 background: #fff;
                 overflow: hidden;
+                min-height: 0; /* Critical for flex child to shrink */
             }
             .p2-photo-body img {
-                height: 100%;
+                max-height: 100%;
+                max-width: 100%;
                 width: auto;
-                object-fit: contain; /* Зберігає пропорції, але пріоритет висоті 100% */
+                height: auto;
+                object-fit: contain;
             }
             .p2-toc-table {
                 width: 100%;
@@ -791,10 +799,9 @@ const GT_TEMPLATES = {
 
         <!-- ══════════ ДОДАТОК 1: Сертифікат VDE — з НОВОГО ЛИСТА ══════════ -->
         <div class="p2-page p2-appendix-page">
-            <div style="text-align:right; font-size:11pt; margin-bottom:10px; position:relative;">
-                {{signature_app1}}
+            <div style="text-align:right; font-size:11pt; margin-bottom:10px;">
                 <p style="font-weight:bold; margin:0;">«ЗАТВЕРДЖУЮ»</p>
-                <p style="margin:16px 0 0;">_________________ Петро ПАСТУШОК</p>
+                <p style="margin:16px 0 0; position:relative;">{{signature_app1}} _________________ Петро ПАСТУШОК</p>
             </div>
 
             <p style="font-size:14pt; font-weight:bold; text-align:center; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 4px;">
