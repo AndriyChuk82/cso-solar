@@ -1715,7 +1715,7 @@ export default function BuyerDetails() {
                               {t.type === 'issue' ? (
                                 <div className="space-y-0.5">
                                   <span className="font-semibold text-[var(--text)] flex items-center gap-1.5 flex-wrap">
-                                    {t.status === 'reserved' ? '⏳ Бронь матеріалів:' : (t.status === 'debt_only' ? '💵 Нарахування боргу (без списання):' : 'Видача матеріалів:')}
+                                    {t.status === 'reserved' ? '⏳ Бронь матеріалів:' : 'Видача матеріалів:'}
                                   </span>
                                   <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 pl-1.5">
                                     {t.items?.map((item, idx) => {
@@ -1843,7 +1843,7 @@ export default function BuyerDetails() {
                           {isIssue ? (
                             <div className="space-y-0.5">
                               <span className="font-semibold text-[var(--text)] flex items-center gap-1.5">
-                                {t.status === 'reserved' ? '⏳ Бронь матеріалів:' : (t.status === 'debt_only' ? '💵 Нарахування боргу (без списання):' : 'Видача матеріалів:')}
+                                {t.status === 'reserved' ? '⏳ Бронь матеріалів:' : 'Видача матеріалів:'}
                               </span>
                               <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 pl-1.5">
                                 {t.items?.map((item, idx) => {
