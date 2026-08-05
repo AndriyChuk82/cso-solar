@@ -61,8 +61,84 @@ const getCleanManagerName = (name, email) => {
     const prefix = raw.split('@')[0];
     return prefix.charAt(0).toUpperCase() + prefix.slice(1);
   }
-  return raw;
 };
+
+function findBestMatch(kpName, products) {
+  if (!kpName) return null;
+  const clean = (str) => {
+    return str.toLowerCase()
+      .replace(/[^a-z0-9а-яєіїґ]/gi, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 1);
+  };
+
+  const kpTokens = clean(kpName);
+  if (kpTokens.length === 0) return null;
+
+  // Stop words that shouldn't contribute to matching if they are the only match
+  const stopWords = new Set([
+    'гібридний', 'інвертор', 'акумуляторна', 'батарея', 'кабель', 'сонячний',
+    'комплект', 'стійка', 'для', 'під', 'акб', 'панель', 'двостороння',
+    'hybrid', 'inverter', 'battery', 'solar', 'cable', 'rack', 'bms', 'deye'
+  ]);
+
+  let bestProd = null;
+  let bestScore = 0;
+
+  for (const p of products) {
+    if (!p.active) continue;
+    const pName = p.name || '';
+    
+    // 1. Exact lowercase check
+    if (pName.toLowerCase().trim() === kpName.toLowerCase().trim()) {
+      return p;
+    }
+
+    // 2. Parentheses match: e.g. "(3U-HRACK)" or "(HVB750V/100A-EU)"
+    const extractParentheses = (str) => {
+      const matches = str.match(/\(([^)]+)\)/g);
+      return matches ? matches.map(m => m.replace(/[()]/g, '').toLowerCase().trim()) : [];
+    };
+    
+    const kpParens = extractParentheses(kpName);
+    const pParens = extractParentheses(pName);
+    const hasParenMatch = kpParens.some(kpP => pParens.some(pP => pP.includes(kpP) || kpP.includes(pP)));
+    
+    const pTokens = clean(pName);
+    let matchCount = 0;
+    let hasUniqueModelMatch = false;
+
+    // Check word by word
+    kpTokens.forEach(kpt => {
+      if (pTokens.includes(kpt)) {
+        // If matched word is a model code (contains numbers and letters, e.g. "sun", "30k", "sg02hp3", "hvb750v")
+        const isModelPart = /[0-9]/.test(kpt) && kpt.length > 2;
+        if (isModelPart) {
+          matchCount += 3; // Give model codes high weight!
+          hasUniqueModelMatch = true;
+        } else if (!stopWords.has(kpt)) {
+          matchCount += 1;
+        }
+      }
+    });
+
+    let score = matchCount;
+    if (hasParenMatch) score += 5; // paren match is very strong
+    if (hasUniqueModelMatch) score += 2;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestProd = p;
+    }
+  }
+
+  // We require a minimum score to prevent false positives
+  if (bestScore >= 3) {
+    return bestProd;
+  }
+  return null;
+}
+
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { getWarehouses, getCatalog, getBuyers, getBalances, addBuyerTransaction, getBuyerTransactionById, deleteBuyerTransaction, toggleArchiveTransaction, updateBuyerTransaction, getActivityLogs, formatUserName } from '../api/gasApi';
@@ -443,10 +519,7 @@ export default function BuyerIssueForm() {
         }
       }
       
-      const itemStr = name.toLowerCase().trim();
-      const matchedProduct = itemStr ? products.find(p => 
-        String(p.name || '').toLowerCase().trim() === itemStr
-      ) : null;
+      const matchedProduct = findBestMatch(name, products);
       
       return {
         productId: matchedProduct ? matchedProduct.id : '',
