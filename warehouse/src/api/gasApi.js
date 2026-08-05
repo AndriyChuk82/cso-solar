@@ -785,8 +785,11 @@ export async function addBuyerTransaction(transaction) {
   // 2. Якщо це видача, створюємо складські списання (operations) та прив'язуємо деталі
   if (transaction.type === 'issue' && transaction.items && transaction.items.length > 0) {
     const isReserved = transaction.status === 'reserved';
+    const isDebtOnly = transaction.status === 'debt_only';
+    const skipWarehouse = isReserved || isDebtOnly;
+
     let opItems = [];
-    if (!isReserved) {
+    if (!skipWarehouse) {
       opItems = transaction.items.map(item => ({
         id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
         date: transaction.date,
@@ -810,7 +813,7 @@ export async function addBuyerTransaction(transaction) {
       quantity: item.quantity,
       price: item.price !== undefined ? item.price : null,
       currency: item.currency || null,
-      operation_id: isReserved ? null : opItems[idx].id
+      operation_id: skipWarehouse ? null : opItems[idx].id
     }));
 
     const { error: itemErr } = await supabase.from('buyer_transaction_items').insert(txItems);
@@ -941,8 +944,11 @@ export async function updateBuyerTransaction(transaction) {
     // Записуємо нові складські операції та нові деталі
     if (transaction.items && transaction.items.length > 0) {
       const isReserved = transaction.status === 'reserved';
+      const isDebtOnly = transaction.status === 'debt_only';
+      const skipWarehouse = isReserved || isDebtOnly;
+
       let opItems = [];
-      if (!isReserved) {
+      if (!skipWarehouse) {
         opItems = transaction.items.map(item => ({
           id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
           date: transaction.date,
@@ -966,7 +972,7 @@ export async function updateBuyerTransaction(transaction) {
         quantity: item.quantity,
         price: item.price !== undefined ? item.price : null,
         currency: item.currency || null,
-        operation_id: isReserved ? null : opItems[idx].id
+        operation_id: skipWarehouse ? null : opItems[idx].id
       }));
 
       const { error: itemErr } = await supabase.from('buyer_transaction_items').insert(txItems);

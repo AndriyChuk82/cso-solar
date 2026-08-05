@@ -520,11 +520,15 @@ export default function BuyerIssueForm() {
       // Визначаємо новий статус для кожної валюти
       const newStatusUah = targetStatusVal === 'reserved'
         ? 'reserved'
-        : (uahItems.some(item => item.price === '' || item.price === null) ? 'pending_price' : 'completed');
+        : targetStatusVal === 'debt_only'
+          ? 'debt_only'
+          : (uahItems.some(item => item.price === '' || item.price === null) ? 'pending_price' : 'completed');
 
       const newStatusUsd = targetStatusVal === 'reserved'
         ? 'reserved'
-        : (usdItems.some(item => item.price === '' || item.price === null) ? 'pending_price' : 'completed');
+        : targetStatusVal === 'debt_only'
+          ? 'debt_only'
+          : (usdItems.some(item => item.price === '' || item.price === null) ? 'pending_price' : 'completed');
 
       // Визначаємо, чи є часткова видача (розщеплення броні)
       const remainderItems = [];
@@ -889,6 +893,7 @@ export default function BuyerIssueForm() {
                 >
                   <option value="completed">✅ Видано (Списати)</option>
                   <option value="reserved">⏳ Бронь / Резерв</option>
+                  <option value="debt_only">💵 Тільки борг (Без списання)</option>
                 </select>
               </div>
             )}
@@ -914,7 +919,7 @@ export default function BuyerIssueForm() {
                   const isLastRows = index >= formData.items.length - 2 && formData.items.length >= 3;
                   const origQty = originalItemsMap[item.productId] || 0;
                   const stock = (balances[item.productId] || 0) + origQty;
-                  const isOver = item.productId && parseFloat(item.quantity) > stock;
+                  const isOver = formData.status !== 'debt_only' && item.productId && parseFloat(item.quantity) > stock;
 
                   return (
                     <tr key={index} className="hover:bg-[var(--border-light)]/40 transition-colors">

@@ -1178,7 +1178,7 @@ export default function BuyerDetails() {
                             <td className="p-2 align-top font-semibold text-[var(--text)]">
                               {isIssue ? (
                                 <span className="flex items-center gap-1.5 flex-wrap font-semibold text-[var(--text)]">
-                                  {t.status === 'reserved' ? '⏳ Бронь' : '📤 Видача товарів'}
+                                  {t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Борг без списання' : '📤 Видача товарів')}
                                 </span>
                               ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                               {t.status === 'pending_price' && (
@@ -1261,7 +1261,7 @@ export default function BuyerDetails() {
                           <span className="font-semibold text-[var(--text)]">
                             {isIssue ? (
                               <span className="flex items-center gap-1.5">
-                                {t.status === 'reserved' ? '⏳ Бронь' : '📤 Видача'}
+                                 {t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Тільки борг' : '📤 Видача')}
                               </span>
                             ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                             {t.status === 'pending_price' && ' (без ціни)'}
@@ -1402,7 +1402,7 @@ export default function BuyerDetails() {
                           >
                             <td className="p-2 align-top whitespace-nowrap">{t.date}</td>
                             <td className="p-2 align-top font-semibold text-[var(--text)]">
-                              {isIssue ? (t.status === 'reserved' ? '⏳ Бронь' : '📤 Видача товарів') : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
+                              {isIssue ? (t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Борг без списання' : '📤 Видача товарів')) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                               {t.status === 'pending_price' && (
                                 <span className="text-[9px] font-bold text-yellow-600 bg-yellow-500/10 px-1 rounded ml-1">
                                   без ціни
@@ -1463,7 +1463,7 @@ export default function BuyerDetails() {
                         <div className="flex justify-between items-start text-[10px] text-[var(--text-secondary)] font-mono">
                           <span>📅 {t.date}</span>
                           <span className="font-semibold text-[var(--text)]">
-                            {isIssue ? (t.status === 'reserved' ? '⏳ Бронь' : '📤 Видача') : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
+                            {isIssue ? (t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Тільки борг' : '📤 Видача')) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
                             {t.status === 'pending_price' && ' (без ціни)'}
                           </span>
                         </div>
@@ -1691,7 +1691,7 @@ export default function BuyerDetails() {
                               {t.type === 'issue' ? (
                                 <div className="space-y-0.5">
                                   <span className="font-semibold text-[var(--text)] flex items-center gap-1.5 flex-wrap">
-                                    {t.status === 'reserved' ? '⏳ Бронь матеріалів:' : 'Видача матеріалів:'}
+                                    {t.status === 'reserved' ? '⏳ Бронь матеріалів:' : (t.status === 'debt_only' ? '💵 Нарахування боргу (без списання):' : 'Видача матеріалів:')}
                                   </span>
                                   <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 pl-1.5">
                                     {t.items?.map((item, idx) => {
@@ -1818,7 +1818,7 @@ export default function BuyerDetails() {
                           {isIssue ? (
                             <div className="space-y-0.5">
                               <span className="font-semibold text-[var(--text)] flex items-center gap-1.5">
-                                {t.status === 'reserved' ? '⏳ Бронь матеріалів:' : 'Видача матеріалів:'}
+                                {t.status === 'reserved' ? '⏳ Бронь матеріалів:' : (t.status === 'debt_only' ? '💵 Нарахування боргу (без списання):' : 'Видача матеріалів:')}
                               </span>
                               <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 pl-1.5">
                                 {t.items?.map((item, idx) => {
