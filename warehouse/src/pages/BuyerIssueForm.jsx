@@ -419,14 +419,14 @@ export default function BuyerIssueForm() {
       const rawPrice = parseFloat(item.price || item.customPrice || 0);
 
       let finalPrice = '';
+      const kpCurrency = kp.currency || 'USD';
+
       if (targetCurrency === 'UAH') {
-        if (item.priceUah !== undefined && item.priceUah !== null && item.priceUah !== '' && parseFloat(item.priceUah) > 0) {
-          finalPrice = parseFloat(item.priceUah);
-        } else if (item.price_uah !== undefined && item.price_uah !== null && item.price_uah !== '' && parseFloat(item.price_uah) > 0) {
-          finalPrice = parseFloat(item.price_uah);
+        const priceUah = parseFloat(item.priceUah || item.price_uah || 0);
+        if (priceUah > 0) {
+          finalPrice = priceUah;
         } else if (rawPrice > 0) {
-          // Якщо базове rawPrice у доларах (наприклад 2.4444 $), множимо на курс usdRate (45) -> 110 грн
-          if (rawPrice < 30) {
+          if (kpCurrency === 'USD') {
             finalPrice = Math.round(rawPrice * usdRate * 100) / 100;
           } else {
             finalPrice = rawPrice;
@@ -434,10 +434,12 @@ export default function BuyerIssueForm() {
         }
       } else {
         // Якщо обрано імпорт у доларах (USD)
-        if (rawPrice > 30) {
-          finalPrice = Math.round((rawPrice / usdRate) * 10000) / 10000;
-        } else {
-          finalPrice = rawPrice;
+        if (rawPrice > 0) {
+          if (kpCurrency === 'UAH') {
+            finalPrice = Math.round((rawPrice / usdRate) * 10000) / 10000;
+          } else {
+            finalPrice = rawPrice;
+          }
         }
       }
       
