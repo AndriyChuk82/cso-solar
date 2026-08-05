@@ -9,6 +9,8 @@ export default function BuyersDashboard() {
   const navigate = useNavigate();
 
   const [buyers, setBuyers] = useState([]);
+  const [rawTransactions, setRawTransactions] = useState([]);
+  const [currencyFilter, setCurrencyFilter] = useState('ALL'); // 'ALL', 'UAH', 'USD'
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -34,6 +36,7 @@ export default function BuyersDashboard() {
       const result = await getBuyersWithBalances();
       if (result?.success) {
         setBuyers(result.buyers || []);
+        setRawTransactions(result.transactions || []);
       } else {
         showToast(result?.error || 'Помилка завантаження даних', 'error');
       }
@@ -138,8 +141,40 @@ export default function BuyersDashboard() {
 
 
 
+  // Обчислення балансів з урахуванням перемикача валюти
+  const processedBuyers = buyers.map(b => {
+    if (currencyFilter === 'ALL') return b;
+
+    let convertedBalance = 0;
+    const buyerTxs = rawTransactions.filter(t => t.buyer_id === b.id && t.status !== 'reserved');
+
+    buyerTxs.forEach(t => {
+      const amt = parseFloat(t.amount) || 0;
+      const rate = parseFloat(t.conversion_rate) || 45.0;
+      const cur = String(t.currency).toUpperCase();
+      let val = 0;
+
+      if (currencyFilter === 'UAH') {
+        val = cur === 'USD' ? amt * rate : amt;
+      } else if (currencyFilter === 'USD') {
+        val = cur === 'UAH' ? amt / rate : amt;
+      }
+
+      if (t.type === 'issue') {
+        convertedBalance -= val;
+      } else if (t.type === 'payment' || t.type === 'adjustment') {
+        convertedBalance += val;
+      }
+    });
+
+    return {
+      ...b,
+      convertedBalance
+    };
+  });
+
   // Фільтрація списку за пошуковим запитом
-  const filteredBuyers = buyers.filter(b => {
+  const filteredBuyers = processedBuyers.filter(b => {
     const term = searchQuery.toLowerCase().trim();
     if (!term) return true;
     return (
@@ -151,15 +186,16 @@ export default function BuyersDashboard() {
 
   // Допоміжні класи кольору для балансу
   function getBalanceClass(val) {
-    if (val < 0) return 'text-red-500 font-bold'; // борг
-    if (val > 0) return 'text-green-500 font-bold'; // переплата
+    if (val < -0.001) return 'text-red-500 font-bold'; // борг
+    if (val > 0.001) return 'text-green-500 font-bold'; // переплата
     return 'text-gray-400';
   }
 
   function formatMoney(val, symbol = '') {
-    if (val === 0) return `0 ${symbol}`;
+    if (Math.abs(val) < 0.001) return `0 ${symbol}`.trim();
     const prefix = val > 0 ? '+' : '';
-    return `${prefix}${val.toLocaleString('uk-UA')} ${symbol}`;
+    const formatted = val.toLocaleString('uk-UA', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    return `${prefix}${formatted} ${symbol}`.trim();
   }
 
   return (
@@ -186,17 +222,24 @@ export default function BuyersDashboard() {
         </div>
       </div>
 
-
-
       {/* Фільтр та пошук */}
-      <div className="mb-4">
+      <div className="mb-4 flex flex-col md:flex-row gap-3">
         <input
           type="text"
-          className="form-input w-full p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] text-sm placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-blue-500"
+          className="form-input flex-1 p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] text-sm placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-blue-500"
           placeholder="🔍 Швидкий пошук клієнта за назвою чи телефоном..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        <select
+          className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] text-sm focus:outline-none focus:border-blue-500 md:w-72 font-semibold"
+          value={currencyFilter}
+          onChange={(e) => setCurrencyFilter(e.target.value)}
+        >
+          <option value="ALL">Всі валюти (UAH та USD)</option>
+          <option value="UAH">Все в UAH (грн) — $→грн</option>
+          <option value="USD">Все в USD ($) — грн→$</option>
+        </select>
       </div>
 
       {/* Головний контент */}
@@ -218,8 +261,14 @@ export default function BuyersDashboard() {
                   <tr className="border-bottom border-[var(--border)] bg-[var(--bg)] text-[var(--text-secondary)] font-semibold">
                     <th className="p-4">Покупець</th>
                     <th className="p-4">Телефон</th>
-                    <th className="p-4 text-right">Баланс UAH</th>
-                    <th className="p-4 text-right">Баланс USD</th>
+                    {currencyFilter === 'ALL' ? (
+                      <>
+                        <th className="p-4 text-right">Баланс UAH</th>
+                        <th className="p-4 text-right">Баланс USD</th>
+                      </>
+                    ) : (
+                      <th className="p-4 text-right">Баланс {currencyFilter === 'UAH' ? 'UAH (грн)' : 'USD ($)'}</th>
+                    )}
                     <th className="p-4 text-center">Статус</th>
                     <th className="p-4 text-right">Дії</th>
                   </tr>
@@ -242,12 +291,20 @@ export default function BuyersDashboard() {
                         {b.notes && <span className="text-xs text-[var(--text-secondary)] block mt-0.5 max-w-xs truncate" title={b.notes}>{b.notes}</span>}
                       </td>
                       <td className="p-4 text-[var(--text-secondary)]">{b.phone || '—'}</td>
-                      <td className={`p-4 text-right ${getBalanceClass(b.balanceUah)}`}>
-                        {formatMoney(b.balanceUah, 'грн')}
-                      </td>
-                      <td className={`p-4 text-right ${getBalanceClass(b.balanceUsd)}`}>
-                        {formatMoney(b.balanceUsd, '$')}
-                      </td>
+                      {currencyFilter === 'ALL' ? (
+                        <>
+                          <td className={`p-4 text-right ${getBalanceClass(b.balanceUah)}`}>
+                            {formatMoney(b.balanceUah, 'грн')}
+                          </td>
+                          <td className={`p-4 text-right ${getBalanceClass(b.balanceUsd)}`}>
+                            {formatMoney(b.balanceUsd, '$')}
+                          </td>
+                        </>
+                      ) : (
+                        <td className={`p-4 text-right ${getBalanceClass(b.convertedBalance)}`}>
+                          {currencyFilter === 'UAH' ? formatMoney(b.convertedBalance, 'грн') : `$${formatMoney(b.convertedBalance)}`}
+                        </td>
+                      )}
                       <td className="p-4 text-center">
                         <div className="flex flex-col gap-1 items-center justify-center">
                           {b.pendingCount > 0 && (
@@ -322,14 +379,25 @@ export default function BuyersDashboard() {
                   </div>
 
                   <div className="flex justify-between items-center text-xs mt-1 border-t border-[var(--border)] pt-2">
-                    <div>
-                      <span className="text-[var(--text-secondary)] mr-1">UAH:</span>
-                      <span className={getBalanceClass(b.balanceUah)}>{formatMoney(b.balanceUah, 'грн')}</span>
-                    </div>
-                    <div>
-                      <span className="text-[var(--text-secondary)] mr-1">USD:</span>
-                      <span className={getBalanceClass(b.balanceUsd)}>{formatMoney(b.balanceUsd, '$')}</span>
-                    </div>
+                    {currencyFilter === 'ALL' ? (
+                      <>
+                        <div>
+                          <span className="text-[var(--text-secondary)] mr-1">UAH:</span>
+                          <span className={getBalanceClass(b.balanceUah)}>{formatMoney(b.balanceUah, 'грн')}</span>
+                        </div>
+                        <div>
+                          <span className="text-[var(--text-secondary)] mr-1">USD:</span>
+                          <span className={getBalanceClass(b.balanceUsd)}>{formatMoney(b.balanceUsd, '$')}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div>
+                        <span className="text-[var(--text-secondary)] mr-1">Загальний баланс ({currencyFilter}):</span>
+                        <span className={getBalanceClass(b.convertedBalance)}>
+                          {currencyFilter === 'UAH' ? formatMoney(b.convertedBalance, 'грн') : `$${formatMoney(b.convertedBalance)}`}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex justify-end gap-3 mt-1 text-[11px] pt-1" onClick={(e) => e.stopPropagation()}>

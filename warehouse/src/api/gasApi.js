@@ -578,7 +578,7 @@ export async function getBuyersWithBalances() {
   const { data: buyers, error: bErr } = await supabase.from('buyers').select('*').order('name');
   if (bErr) throw bErr;
 
-  const { data: txs, error: tErr } = await supabase.from('buyer_transactions').select('id, buyer_id, type, amount, currency, status, is_archived');
+  const { data: txs, error: tErr } = await supabase.from('buyer_transactions').select('id, buyer_id, type, amount, currency, status, is_archived, conversion_rate');
   if (tErr) throw tErr;
 
   // Отримуємо список ID транзакцій, де є позиції без вказаної ціни
@@ -628,7 +628,8 @@ export async function getBuyersWithBalances() {
       balanceUsd: balanceMap[b.id].usd,
       pendingCount: balanceMap[b.id].pendingCount,
       reservedCount: balanceMap[b.id].reservedCount
-    }))
+    })),
+    transactions: txs
   };
 }
 
