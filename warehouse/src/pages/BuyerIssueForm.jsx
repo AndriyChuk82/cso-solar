@@ -335,6 +335,7 @@ export default function BuyerIssueForm() {
     comment: '',
     pickedUpBy: '',
     status: 'completed',
+    conversionRate: '45',
     items: [
       // Починаємо з одного порожнього рядка для швидкості роботи (як в 1С)
       { productId: '', productName: '', productArticle: '', unit: '', quantity: 1, price: '', currency: 'UAH' }
@@ -412,6 +413,7 @@ export default function BuyerIssueForm() {
               comment: tx.comment || '',
               pickedUpBy: tx.pickedUpBy || '',
               status: tx.status || 'completed',
+              conversionRate: tx.conversion_rate !== null && tx.conversion_rate !== undefined ? String(tx.conversion_rate) : '45',
               items: tx.items.map(item => ({
                 productId: item.productId,
                 productName: item.productName,
@@ -666,6 +668,7 @@ export default function BuyerIssueForm() {
       buyerId: matchedBuyerId,
       currency: targetCurrency,
       comment: kp.notes ? `${kp.notes} (Імпортовано з КП №${kp.number || 'б/н'})` : `Імпортовано з КП №${kp.number || 'б/н'}`,
+      conversionRate: String(usdRate),
       items: importedItems
     }));
 
@@ -773,6 +776,7 @@ export default function BuyerIssueForm() {
           comment: finalComment,
           pickedUpBy: formData.pickedUpBy,
           user: user?.name || user?.email, userName: user?.name, userEmail: user?.email,
+          conversionRate: parseFloat(formData.conversionRate) || 45,
           items: uahItems.map(item => ({
             productId: item.productId,
             productName: products.find(p => p.id === item.productId)?.name || item.productId,
@@ -813,6 +817,7 @@ export default function BuyerIssueForm() {
           comment: finalComment,
           pickedUpBy: formData.pickedUpBy,
           user: user?.name || user?.email, userName: user?.name, userEmail: user?.email,
+          conversionRate: parseFloat(formData.conversionRate) || 45,
           items: usdItems.map(item => ({
             productId: item.productId,
             productName: products.find(p => p.id === item.productId)?.name || item.productId,
@@ -857,6 +862,7 @@ export default function BuyerIssueForm() {
           comment: remainderComment,
           pickedUpBy: formData.pickedUpBy,
           user: user?.name || user?.email, userName: user?.name, userEmail: user?.email,
+          conversionRate: parseFloat(formData.conversionRate) || 45,
           items: remainderItems
         };
         submitPromises.push(addBuyerTransaction(remainderPayload));
@@ -994,7 +1000,7 @@ export default function BuyerIssueForm() {
         )}
         {/* Компактні поля шапки (1С стиль) */}
         <div className="card p-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl">
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
+          <div className="grid grid-cols-2 md:grid-cols-7 gap-3 text-xs">
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-[var(--text-secondary)]">Покупець *</label>
               <select
@@ -1089,6 +1095,19 @@ export default function BuyerIssueForm() {
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 required
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold text-[var(--text-secondary)]">Курс USD</label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="45.00"
+                className="h-[32px] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none font-semibold text-emerald-600 dark:text-emerald-400"
+                value={formData.conversionRate || ''}
+                onChange={(e) => setFormData({ ...formData, conversionRate: e.target.value })}
+                disabled={isReleaseMode}
               />
             </div>
 

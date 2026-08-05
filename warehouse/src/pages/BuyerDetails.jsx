@@ -648,20 +648,39 @@ export default function BuyerDetails() {
   let usdPeriodPayment = 0;
   const isSingleDoc = selectedTxFilter !== 'ALL';
 
+  const getConvertedVals = (val, currency, txRate) => {
+    const rate = txRate || 45.0;
+    let uah = 0;
+    let usd = 0;
+    if (currencyFilter === 'ALL') {
+      if (currency === 'UAH') uah = val;
+      if (currency === 'USD') usd = val;
+    } else if (currencyFilter === 'UAH') {
+      if (currency === 'UAH') uah = val;
+      if (currency === 'USD') uah = val * rate;
+    } else if (currencyFilter === 'USD') {
+      if (currency === 'USD') usd = val;
+      if (currency === 'UAH') usd = val / rate;
+    }
+    return { uah, usd };
+  };
+
   processedTransactions.forEach(t => {
-    
     const isReservedIssue = t.type === 'issue' && t.status === 'reserved';
     const amt = isReservedIssue ? 0 : (parseFloat(t.amount) || 0);
     const cur = t.currency;
+    const rate = parseFloat(t.conversion_rate) || 45.0;
+
+    const { uah: convertedUah, usd: convertedUsd } = getConvertedVals(amt, cur, rate);
 
     if (isSingleDoc) {
       if (t.id === selectedTxFilter) {
         if (t.type === 'issue') {
-          if (cur === 'UAH') uahPeriodIssue += amt;
-          if (cur === 'USD') usdPeriodIssue += amt;
+          uahPeriodIssue += convertedUah;
+          usdPeriodIssue += convertedUsd;
         } else {
-          if (cur === 'UAH') uahPeriodPayment += amt;
-          if (cur === 'USD') usdPeriodPayment += amt;
+          uahPeriodPayment += convertedUah;
+          usdPeriodPayment += convertedUsd;
         }
       }
       
@@ -669,8 +688,10 @@ export default function BuyerDetails() {
       if (t.type === 'issue' && t.id === selectedTxFilter && t.linkedPayments) {
         t.linkedPayments.forEach(lp => {
           const lpAmt = parseFloat(lp.amount) || 0;
-          if (lp.currency === 'UAH') uahPeriodPayment += lpAmt;
-          if (lp.currency === 'USD') usdPeriodPayment += lpAmt;
+          const lpRate = parseFloat(lp.conversion_rate) || rate;
+          const { uah: lpUah, usd: lpUsd } = getConvertedVals(lpAmt, lp.currency, lpRate);
+          uahPeriodPayment += lpUah;
+          usdPeriodPayment += lpUsd;
         });
       }
     } else {
@@ -679,49 +700,53 @@ export default function BuyerDetails() {
 
       if (isBeforePeriod) {
         if (t.type === 'issue') {
-          if (cur === 'UAH') uahOpening -= amt;
-          if (cur === 'USD') usdOpening -= amt;
+          uahOpening -= convertedUah;
+          usdOpening -= convertedUsd;
         } else {
-          if (cur === 'UAH') uahOpening += amt;
-          if (cur === 'USD') usdOpening += amt;
+          uahOpening += convertedUah;
+          usdOpening += convertedUsd;
         }
         
         // Враховуємо лінковані платежі до періоду
         if (t.type === 'issue' && t.linkedPayments) {
           t.linkedPayments.forEach(lp => {
             const lpAmt = parseFloat(lp.amount) || 0;
+            const lpRate = parseFloat(lp.conversion_rate) || rate;
             const lpIsBefore = dateFrom && lp.date < dateFrom;
             const lpIsIn = (!dateFrom && !dateTo) || ((!dateFrom || lp.date >= dateFrom) && (!dateTo || lp.date <= dateTo));
+            const { uah: lpUah, usd: lpUsd } = getConvertedVals(lpAmt, lp.currency, lpRate);
             if (lpIsBefore) {
-              if (lp.currency === 'UAH') uahOpening += lpAmt;
-              if (lp.currency === 'USD') usdOpening += lpAmt;
+              uahOpening += lpUah;
+              usdOpening += lpUsd;
             } else if (lpIsIn) {
-              if (lp.currency === 'UAH') uahPeriodPayment += lpAmt;
-              if (lp.currency === 'USD') usdPeriodPayment += lpAmt;
+              uahPeriodPayment += lpUah;
+              usdPeriodPayment += lpUsd;
             }
           });
         }
       } else if (isInPeriod) {
         if (t.type === 'issue') {
-          if (cur === 'UAH') uahPeriodIssue += amt;
-          if (cur === 'USD') usdPeriodIssue += amt;
+          uahPeriodIssue += convertedUah;
+          usdPeriodIssue += convertedUsd;
         } else {
-          if (cur === 'UAH') uahPeriodPayment += amt;
-          if (cur === 'USD') usdPeriodPayment += amt;
+          uahPeriodPayment += convertedUah;
+          usdPeriodPayment += convertedUsd;
         }
         
         // Враховуємо лінковані платежі в період
         if (t.type === 'issue' && t.linkedPayments) {
           t.linkedPayments.forEach(lp => {
             const lpAmt = parseFloat(lp.amount) || 0;
+            const lpRate = parseFloat(lp.conversion_rate) || rate;
             const lpIsBefore = dateFrom && lp.date < dateFrom;
             const lpIsIn = (!dateFrom && !dateTo) || ((!dateFrom || lp.date >= dateFrom) && (!dateTo || lp.date <= dateTo));
+            const { uah: lpUah, usd: lpUsd } = getConvertedVals(lpAmt, lp.currency, lpRate);
             if (lpIsBefore) {
-              if (lp.currency === 'UAH') uahOpening += lpAmt;
-              if (lp.currency === 'USD') usdOpening += lpAmt;
+              uahOpening += lpUah;
+              usdOpening += lpUsd;
             } else if (lpIsIn) {
-              if (lp.currency === 'UAH') uahPeriodPayment += lpAmt;
-              if (lp.currency === 'USD') usdPeriodPayment += lpAmt;
+              uahPeriodPayment += lpUah;
+              usdPeriodPayment += lpUsd;
             }
           });
         }
@@ -747,26 +772,37 @@ export default function BuyerDetails() {
       const isReservedIssue = t.type === 'issue' && t.status === 'reserved';
       const amt = isReservedIssue ? 0 : (parseFloat(t.amount) || 0);
       const cur = t.currency;
+      const rate = parseFloat(t.conversion_rate) || 45.0;
+
+      const { uah: convertedUah, usd: convertedUsd } = getConvertedVals(amt, cur, rate);
       
       let uahDeb = 0, uahCred = 0, usdDeb = 0, usdCred = 0;
 
       if (t.type === 'issue') {
         if (!isReservedIssue) {
-          if (cur === 'UAH') { uahDeb = amt; currentUahRunning -= amt; }
-          if (cur === 'USD') { usdDeb = amt; currentUsdRunning -= amt; }
+          uahDeb = convertedUah;
+          usdDeb = convertedUsd;
+          currentUahRunning -= convertedUah;
+          currentUsdRunning -= convertedUsd;
         }
         
         // Додаємо суми зв'язаних платежів до кредиту накладної
         if (t.linkedPayments) {
           t.linkedPayments.forEach(lp => {
             const lpAmt = parseFloat(lp.amount) || 0;
-            if (lp.currency === 'UAH') { uahCred += lpAmt; currentUahRunning += lpAmt; }
-            if (lp.currency === 'USD') { usdCred += lpAmt; currentUsdRunning += lpAmt; }
+            const lpRate = parseFloat(lp.conversion_rate) || rate;
+            const { uah: lpUah, usd: lpUsd } = getConvertedVals(lpAmt, lp.currency, lpRate);
+            uahCred += lpUah;
+            usdCred += lpUsd;
+            currentUahRunning += lpUah;
+            currentUsdRunning += lpUsd;
           });
         }
       } else {
-        if (cur === 'UAH') { uahCred = amt; currentUahRunning += amt; }
-        if (cur === 'USD') { usdCred = amt; currentUsdRunning += amt; }
+        uahCred = convertedUah;
+        usdCred = convertedUsd;
+        currentUahRunning += convertedUah;
+        currentUsdRunning += convertedUsd;
       }
 
       // Генерація текстового опису опеарції
@@ -801,7 +837,7 @@ export default function BuyerDetails() {
   // Фільтрування за обраною валютою
   const filteredReportItems = reportItems.filter(item => {
     if (isSingleDoc) return true; // для окремої накладної валютний фільтр ігноруємо
-    if (currencyFilter !== 'ALL' && item.currency !== currencyFilter) return false;
+    // При одноволютному перегляді не фільтруємо за валютою, оскільки всі суми вже сконвертовані
     return true;
   });
 
@@ -1582,8 +1618,8 @@ export default function BuyerDetails() {
                     onChange={(e) => setCurrencyFilter(e.target.value)}
                   >
                     <option value="ALL">Всі операції (UAH та USD)</option>
-                    <option value="UAH">Лише UAH (Гривня)</option>
-                    <option value="USD">Лише USD (Долар)</option>
+                    <option value="UAH">Все в UAH (грн) — конвертувати $→грн</option>
+                    <option value="USD">Все в USD ($) — конвертувати грн→$</option>
                   </select>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -1643,27 +1679,43 @@ export default function BuyerDetails() {
               {/* Зведені показники періоду */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-4 border-b border-[var(--border)] pb-4">
                 <div>
-                  <span className="text-[10px] text-[var(--text-secondary)] block">Початковий баланс (UAH / USD):</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] block">
+                    Початковий баланс {currencyFilter === 'ALL' ? '(UAH / USD)' : `(${currencyFilter})`}:
+                  </span>
                   <span className="font-semibold block mt-0.5">
-                    <span className={getBalanceClass(uahOpening)}>{formatMoney(uahOpening, 'грн')}</span> / <span className={getBalanceClass(usdOpening)}>${formatMoney(usdOpening)}</span>
+                    {currencyFilter !== 'USD' && <span className={getBalanceClass(uahOpening)}>{formatMoney(uahOpening, 'грн')}</span>}
+                    {currencyFilter === 'ALL' && <span className="text-[var(--text-secondary)] mx-1">/</span>}
+                    {currencyFilter !== 'UAH' && <span className={getBalanceClass(usdOpening)}>${formatMoney(usdOpening)}</span>}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[var(--text-secondary)] block">Видано товарів за період (UAH / USD):</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] block">
+                    Видано товарів за період {currencyFilter === 'ALL' ? '(UAH / USD)' : `(${currencyFilter})`}:
+                  </span>
                   <span className="font-semibold block mt-0.5">
-                    {formatMoney(uahPeriodIssue, 'грн')} / ${formatMoney(usdPeriodIssue)}
+                    {currencyFilter !== 'USD' && <span>{formatMoney(uahPeriodIssue, 'грн')}</span>}
+                    {currencyFilter === 'ALL' && <span className="text-[var(--text-secondary)] mx-1">/</span>}
+                    {currencyFilter !== 'UAH' && <span>${formatMoney(usdPeriodIssue)}</span>}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[var(--text-secondary)] block">Сплачено за період (UAH / USD):</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] block">
+                    Сплачено за період {currencyFilter === 'ALL' ? '(UAH / USD)' : `(${currencyFilter})`}:
+                  </span>
                   <span className="font-semibold block mt-0.5">
-                    {formatMoney(uahPeriodPayment, 'грн')} / ${formatMoney(usdPeriodPayment)}
+                    {currencyFilter !== 'USD' && <span>{formatMoney(uahPeriodPayment, 'грн')}</span>}
+                    {currencyFilter === 'ALL' && <span className="text-[var(--text-secondary)] mx-1">/</span>}
+                    {currencyFilter !== 'UAH' && <span>${formatMoney(usdPeriodPayment)}</span>}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[var(--text-secondary)] block">Кінцевий баланс (UAH / USD):</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] block">
+                    Кінцевий баланс {currencyFilter === 'ALL' ? '(UAH / USD)' : `(${currencyFilter})`}:
+                  </span>
                   <span className="font-semibold block mt-0.5">
-                    <span className={getBalanceClass(uahClosing)}>{formatMoney(uahClosing, 'грн')}</span> / <span className={getBalanceClass(usdClosing)}>${formatMoney(usdClosing)}</span>
+                    {currencyFilter !== 'USD' && <span className={getBalanceClass(uahClosing)}>{formatMoney(uahClosing, 'грн')}</span>}
+                    {currencyFilter === 'ALL' && <span className="text-[var(--text-secondary)] mx-1">/</span>}
+                    {currencyFilter !== 'UAH' && <span className={getBalanceClass(usdClosing)}>${formatMoney(usdClosing)}</span>}
                   </span>
                 </div>
               </div>
@@ -1690,7 +1742,9 @@ export default function BuyerDetails() {
                       <td className="p-2 text-center">—</td>
                       <td className="p-2 text-center">—</td>
                       <td className="p-2 text-right">
-                        <span className={getBalanceClass(uahOpening)}>{formatMoney(uahOpening, 'грн')}</span> / <span className={getBalanceClass(usdOpening)}>${formatMoney(usdOpening)}</span>
+                        {currencyFilter !== 'USD' && <span className={getBalanceClass(uahOpening)}>{formatMoney(uahOpening, 'грн')}</span>}
+                        {currencyFilter === 'ALL' && <span className="text-[var(--text-secondary)] mx-1">/</span>}
+                        {currencyFilter !== 'UAH' && <span className={getBalanceClass(usdOpening)}>${formatMoney(usdOpening)}</span>}
                       </td>
                       <td className="p-2 text-right no-print">—</td>
                     </tr>
@@ -1779,20 +1833,22 @@ export default function BuyerDetails() {
                                 <span className="text-[9px] text-[var(--text-secondary)] opacity-60 block mt-0.5">Вніс: {t.user_email}</span>
                               )}
                             </td>
-                            <td className="p-2 text-center text-red-500 font-medium align-top">
-                              {t.uahDeb > 0 && `${t.uahDeb.toLocaleString('uk-UA')} грн`}
-                              {t.usdDeb > 0 && `$${t.usdDeb.toLocaleString('uk-UA')}`}
-                              {t.uahDeb === 0 && t.usdDeb === 0 && '—'}
+                            <td className="p-2 text-center text-red-500 font-medium align-top font-mono">
+                              {currencyFilter !== 'USD' && t.uahDeb > 0 && `${t.uahDeb.toLocaleString('uk-UA')} грн`}
+                              {currencyFilter === 'ALL' && t.uahDeb > 0 && t.usdDeb > 0 && <span className="mx-1">/</span>}
+                              {currencyFilter !== 'UAH' && t.usdDeb > 0 && `$${t.usdDeb.toLocaleString('uk-UA')}`}
+                              {((currencyFilter !== 'USD' && t.uahDeb > 0) || (currencyFilter !== 'UAH' && t.usdDeb > 0)) ? '' : '—'}
                             </td>
-                            <td className="p-2 text-center text-green-500 font-medium align-top">
-                              {t.uahCred > 0 && `${t.uahCred.toLocaleString('uk-UA')} грн`}
-                              {t.usdCred > 0 && `$${t.usdCred.toLocaleString('uk-UA')}`}
-                              {t.uahCred === 0 && t.usdCred === 0 && '—'}
+                            <td className="p-2 text-center text-green-500 font-medium align-top font-mono">
+                              {currencyFilter !== 'USD' && t.uahCred > 0 && `${t.uahCred.toLocaleString('uk-UA')} грн`}
+                              {currencyFilter === 'ALL' && t.uahCred > 0 && t.usdCred > 0 && <span className="mx-1">/</span>}
+                              {currencyFilter !== 'UAH' && t.usdCred > 0 && `$${t.usdCred.toLocaleString('uk-UA')}`}
+                              {((currencyFilter !== 'USD' && t.uahCred > 0) || (currencyFilter !== 'UAH' && t.usdCred > 0)) ? '' : '—'}
                             </td>
-                            <td className="p-2 text-right align-top whitespace-nowrap text-xs">
-                              <span className={getBalanceClass(t.uahRunning)}>{formatMoney(t.uahRunning, 'грн')}</span>
-                              <span className="text-[var(--text-secondary)] opacity-60"> / </span>
-                              <span className={getBalanceClass(t.usdRunning)}>${formatMoney(t.usdRunning)}</span>
+                            <td className="p-2 text-right align-top whitespace-nowrap text-xs font-mono">
+                              {currencyFilter !== 'USD' && <span className={getBalanceClass(t.uahRunning)}>{formatMoney(t.uahRunning, 'грн')}</span>}
+                              {currencyFilter === 'ALL' && <span className="text-[var(--text-secondary)] mx-1">/</span>}
+                              {currencyFilter !== 'UAH' && <span className={getBalanceClass(t.usdRunning)}>${formatMoney(t.usdRunning)}</span>}
                             </td>
                             <td className="p-2 text-right align-top no-print">
                               <div className="flex justify-end gap-1.5 items-center">
@@ -1836,7 +1892,9 @@ export default function BuyerDetails() {
                         <div className="flex justify-between items-start text-[10px] text-[var(--text-secondary)] font-mono">
                           <span>📅 {t.date}</span>
                           <span className="font-semibold text-[var(--text)]">
-                            Баланс: <span className={getBalanceClass(t.uahRunning)}>{formatMoney(t.uahRunning, 'грн')}</span> / <span className={getBalanceClass(t.usdRunning)}>${formatMoney(t.usdRunning)}</span>
+                            Баланс: {currencyFilter !== 'USD' && <span className={getBalanceClass(t.uahRunning)}>{formatMoney(t.uahRunning, 'грн')}</span>}
+                            {currencyFilter === 'ALL' && ' / '}
+                            {currencyFilter !== 'UAH' && <span className={getBalanceClass(t.usdRunning)}>${formatMoney(t.usdRunning)}</span>}
                           </span>
                         </div>
                         <div>
