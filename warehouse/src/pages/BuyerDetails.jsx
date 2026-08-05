@@ -731,7 +731,10 @@ export default function BuyerDetails() {
 
   const reportItems = [...processedTransactions]
     .filter(t => {
-      return !isSingleDoc ? (t.date >= dateFrom && t.date <= dateTo) : t.id === selectedTxFilter;
+      if (isSingleDoc) return t.id === selectedTxFilter;
+      if (dateFrom && t.date < dateFrom) return false;
+      if (dateTo && t.date > dateTo) return false;
+      return true;
     })
     .map(t => {
       const isReservedIssue = t.type === 'issue' && t.status === 'reserved';
