@@ -62,10 +62,11 @@ async function gasRequest(action, params = {}, method = 'GET') {
   const url = new URL(CONFIG.GAS_URL);
   if (method === 'GET') {
     url.searchParams.set('action', action);
+    url.searchParams.set('_t', Date.now().toString());
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) url.searchParams.set(key, value);
     });
-    const response = await fetch(url.toString(), { method: 'GET', headers: { 'Content-Type': 'text/plain' } });
+    const response = await fetch(url.toString(), { method: 'GET', headers: { 'Content-Type': 'text/plain' }, cache: 'no-store' });
     return await response.json();
   }
   const response = await fetch(CONFIG.GAS_URL, {

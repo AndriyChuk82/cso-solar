@@ -83,17 +83,16 @@ export default function Users() {
     if (!formData.email.trim() || !formData.name.trim()) return;
     setSaving(true);
     try {
-      if (editItem) {
-        await updateUser(formData);
-      } else {
-        await addUser(formData);
+      const res = editItem ? await updateUser(formData) : await addUser(formData);
+      if (res && res.success === false) {
+        throw new Error(res.error || 'Помилка збереження користувача');
       }
       setShowModal(false);
       showToast(editItem ? 'Користувача оновлено' : 'Користувача додано', 'success');
       loadData();
     } catch (err) {
       console.error('Помилка:', err);
-      showToast('Помилка збереження', 'error');
+      showToast(err.message || 'Помилка збереження', 'error');
     } finally {
       setSaving(false);
     }

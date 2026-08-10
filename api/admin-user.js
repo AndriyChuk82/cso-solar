@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     }
 
     const { action, userData } = req.body;
-    const gasUrl = process.env.GAS_URL || 'https://script.google.com/macros/s/AKfycbxqQEMJ4vKBExxmh5-ft-UGVpU9rms4vPd9z0XgZv3b33sJDvXyZoIntOj61TVg9fLK/exec';
+    const gasUrl = process.env.GAS_URL || 'https://script.google.com/macros/s/AKfycbyvYNoyGINAtWlbExzONJWoReE8OC3_-FhOase5pHkCZ_PdCLXuMQqXqMYBWLzaNX-s/exec';
 
     try {
         if (action === 'addUser' || action === 'updateUser') {
