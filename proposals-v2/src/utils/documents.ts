@@ -37,19 +37,41 @@ export function printInvoiceWithData(proposal: Proposal, data: InvoiceData) {
   printWindow.document.close();
 }
 
+export interface DeliveryNoteData {
+  buyerName: string;
+  dnNumber: string;
+  dnDate: string;
+  showPrices: boolean;
+  includeStamp: boolean;
+}
+
 /**
- * Друк видаткової накладної
+ * Друк видаткової накладної з налаштуваннями
  */
-export function printDeliveryNote(proposal: Proposal) {
+export function printDeliveryNoteWithData(proposal: Proposal, data: DeliveryNoteData) {
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
     alert('Будь ласка, дозвольте спливаючі вікна для друку');
     return;
   }
 
-  const html = generateDeliveryNoteHTML(proposal);
+  const html = generateDeliveryNoteHTML(proposal, data);
   printWindow.document.write(html);
   printWindow.document.close();
+}
+
+/**
+ * Друк видаткової накладної (стандартний)
+ */
+export function printDeliveryNote(proposal: Proposal) {
+  const defaultData: DeliveryNoteData = {
+    buyerName: proposal.clientName || '____________________',
+    dnNumber: (proposal.number || '').replace('КП-', 'ВН-') || `ВН-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-001`,
+    dnDate: proposal.date ? proposal.date.split('T')[0] : new Date().toISOString().split('T')[0],
+    showPrices: true,
+    includeStamp: false,
+  };
+  printDeliveryNoteWithData(proposal, defaultData);
 }
 
 /**
@@ -243,30 +265,63 @@ function generateInvoiceHTML(proposal: Proposal, data?: InvoiceData): string {
   `;
 }
 
-function generateDeliveryNoteHTML(proposal: Proposal): string {
+function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): string {
   const accentColor = '#F59E0B';
-  const dateStr = proposal.date ? new Date(proposal.date).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
-  const dnNumber = (proposal.number || '').replace('КП-', 'ВН-');
+  const showPrices = data ? data.showPrices : true;
+  const includeStamp = data ? data.includeStamp : false;
+
+  const dnNumber = data?.dnNumber || (proposal.number || '').replace('КП-', 'ВН-');
+  const dateRaw = data?.dnDate || proposal.date;
+  const dateStr = dateRaw ? new Date(dateRaw).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
+  const buyerName = data?.buyerName || proposal.clientName || '____________________';
   
   // Robust seller detection
   const sellerId = proposal.seller?.id || (proposal as any).sellerId || 'tov_cso';
   const seller = SELLERS[sellerId as keyof typeof SELLERS] || proposal.seller || SELLERS.tov_cso;
 
+  const currencySymbol = proposal.currency === 'UAH' ? 'грн.' : (proposal.currency === 'EUR' ? 'EUR' : 'USD');
+
+  let totalSum = 0;
+  let totalQty = 0;
+
   const itemsHTML = (proposal.items || []).map((item, i) => {
     const itemName = item.name || item.product?.name || 'Без назви';
     const itemUnit = item.unit || item.product?.unit || 'шт.';
+    const qty = item.quantity || 0;
+    const price = item.price || 0;
+    const sum = price * qty;
+
+    totalSum += sum;
+    totalQty += qty;
     
-    return `
-      <tr>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px;">
-          <strong>${itemName}</strong>
-        </td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${itemUnit}</td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.quantity || 0}</td>
-      </tr>
-    `;
+    if (showPrices) {
+      return `
+        <tr>
+          <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
+          <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px;">
+            <strong>${itemName}</strong>
+          </td>
+          <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${itemUnit}</td>
+          <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${qty}</td>
+          <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; white-space: nowrap;">${price.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 600; white-space: nowrap;">${sum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        </tr>
+      `;
+    } else {
+      return `
+        <tr>
+          <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
+          <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px;">
+            <strong>${itemName}</strong>
+          </td>
+          <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${itemUnit}</td>
+          <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${qty}</td>
+        </tr>
+      `;
+    }
   }).join('');
+
+  const totalSumWords = numberToWords(Math.round(totalSum));
 
   return `
     <html>
@@ -278,7 +333,7 @@ function generateDeliveryNoteHTML(proposal: Proposal): string {
           .header { display: flex; justify-content: space-between; align-items: center; }
           .doc-title { color: ${accentColor}; font-weight: 700; font-size: 18px; text-transform: uppercase; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background: #F9FAFB; padding: 10px; text-align: center; border: 1px solid #E5E7EB; font-size: 9px; text-transform: uppercase; }
+          th { background: #F9FAFB; padding: 10px; text-align: center; border: 1px solid #E5E7EB; font-size: 9px; text-transform: uppercase; color: #4B5563; }
         </style>
       </head>
       <body>
@@ -294,7 +349,7 @@ function generateDeliveryNoteHTML(proposal: Proposal): string {
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px; font-size: 11px;">
           <div><span style="color: #9CA3AF; text-transform: uppercase; font-size: 9px;">Постачальник:</span><br><strong>${seller.fullName}</strong></div>
-          <div><span style="color: #9CA3AF; text-transform: uppercase; font-size: 9px;">Покупець:</span><br><strong>${proposal.clientName || '____________________'}</strong></div>
+          <div><span style="color: #9CA3AF; text-transform: uppercase; font-size: 9px;">Покупець:</span><br><strong>${buyerName}</strong></div>
         </div>
 
         <table>
@@ -304,21 +359,43 @@ function generateDeliveryNoteHTML(proposal: Proposal): string {
               <th style="text-align: left;">Товар</th>
               <th style="width: 60px">Од.</th>
               <th style="width: 60px">К-сть</th>
+              ${showPrices ? `
+                <th style="width: 100px; text-align: right;">Ціна (${currencySymbol})</th>
+                <th style="width: 110px; text-align: right;">Сума (${currencySymbol})</th>
+              ` : ''}
             </tr>
           </thead>
           <tbody>
             ${itemsHTML}
+            ${showPrices ? `
+              <tr>
+                <td colspan="4" style="border: none; padding: 10px 0;"></td>
+                <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 700; background: #F9FAFB;">Разом:</td>
+                <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 700; background: #F9FAFB; white-space: nowrap;">${totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
+              </tr>
+            ` : ''}
           </tbody>
         </table>
 
-        <div style="margin-top: 60px; display: flex; justify-content: space-between;">
-          <div style="text-align: center; font-size: 10px; width: 200px;">
-            <div style="border-bottom: 1px solid #000; height: 35px;"></div>
-            Відпустив
+        <div style="margin-top: 25px; font-size: 11px; color: #374151; line-height: 1.6;">
+          ${showPrices ? `
+            <div>Всього найменувань <strong>${proposal.items?.length || 0}</strong>, на суму <strong>${totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</strong></div>
+            <div style="font-style: italic; color: #4B5563; margin-top: 4px;">Всього на суму: ${totalSumWords}</div>
+          ` : `
+            <div>Всього найменувань <strong>${proposal.items?.length || 0}</strong></div>
+          `}
+        </div>
+
+        <div style="margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div style="font-size: 10px; text-align: center; width: 220px;">
+            <div style="border-bottom: 1px solid #1F2937; height: 35px; position: relative;">
+              ${(includeStamp && seller.stamp) ? `<img src="${seller.stamp}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -45%); width: 135px; height: auto; opacity: 0.95; pointer-events: none; mix-blend-mode: multiply; filter: contrast(1.5) brightness(1.2);">` : ''}
+            </div>
+            <div style="margin-top: 5px;">Відпустив (ПІБ, підпис)</div>
           </div>
-          <div style="text-align: center; font-size: 10px; width: 200px;">
-            <div style="border-bottom: 1px solid #000; height: 35px;"></div>
-            Отримав
+          <div style="font-size: 10px; text-align: center; width: 220px;">
+            <div style="border-bottom: 1px solid #1F2937; height: 35px;"></div>
+            <div style="margin-top: 5px;">Отримав (ПІБ, підпис)</div>
           </div>
         </div>
 

@@ -2920,10 +2920,19 @@ function handleUpdatePrimaryPrices() {
       `Змін цін: ${changesLog.length}`
     ]);
 
-    // Якщо були конкретні зміни цін — записуємо кожну зміну окремо
+    // Якщо були конкретні зміни цін — записуємо кожну зміну окремо з чисельною формулою
     if (changesLog.length > 0) {
       changesLog.forEach(c => {
-        logSheet.appendRow([timestamp, `Рядок ${c.row}`, c.name, c.supplier, c.oldPrice, c.newPrice, c.diff]);
+        const nextLogRow = logSheet.getLastRow() + 1;
+        logSheet.appendRow([
+          timestamp,
+          `Рядок ${c.row}`,
+          c.name,
+          c.supplier,
+          c.oldPrice,
+          c.newPrice,
+          `=F${nextLogRow}-E${nextLogRow}`
+        ]);
       });
     }
 
@@ -3040,7 +3049,7 @@ function extractProductInfoForPrimary(name) {
     if (low.includes('12') || low.includes('13') || low.includes('hrack')) return { type: 'rack', key: 'rack13' };
     return { type: 'rack', key: cleanStrForPrimary(s) };
   }
-  if (low.includes('pdu2') || low.includes('bms')) return { type: 'bms', key: 'bmspdu2' };
+  if (low.includes('pdu2') || (low.includes('deye') && low.includes('bms'))) return { type: 'bms', key: 'deye_bms_pdu2' };
 
   // Deye SE-F5-PRO-C <-> SE-F 5-PRO-C
   let m = low.match(/se[-_\s]*f[-_\s]*5[-_\s]*pro[-_\s]*c/i);

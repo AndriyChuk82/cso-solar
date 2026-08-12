@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { X, FileText, Receipt, Package, Truck, Shield, Download, Printer } from 'lucide-react';
 import { Proposal } from '../types';
-import { printInvoice, printDeliveryNote, printContract, printInvoiceWithData } from '../utils/documents';
+import { printInvoice, printDeliveryNote, printContract, printInvoiceWithData, printDeliveryNoteWithData } from '../utils/documents';
 import { TTNModal } from './TTNModal';
 import { WarrantyModal } from './WarrantyModal';
 import { InvoiceModal } from './InvoiceModal';
+import { DeliveryNoteModal } from './DeliveryNoteModal';
 import { printTTNWithData, printWarrantyWithData } from '../utils/documents';
 
 interface DocumentGeneratorModalProps {
@@ -30,12 +31,18 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, proposal }
   const [showTTNModal, setShowTTNModal] = useState(false);
   const [showWarrantyModal, setShowWarrantyModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showDeliveryNoteModal, setShowDeliveryNoteModal] = useState(false);
   const [includeStamp, setIncludeStamp] = useState(false);
 
   const handleGenerate = async () => {
     try {
       if (selectedDoc === 'invoice') {
         setShowInvoiceModal(true);
+        return;
+      }
+
+      if (selectedDoc === 'expense') {
+        setShowDeliveryNoteModal(true);
         return;
       }
 
@@ -53,9 +60,6 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, proposal }
       switch (selectedDoc) {
         case 'proposal':
           setTimeout(() => window.print(), 100);
-          break;
-        case 'expense':
-          printDeliveryNote(proposal);
           break;
         case 'contract':
           printContract(proposal, includeStamp);
@@ -199,6 +203,20 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, proposal }
           onPrint={(data) => printWarrantyWithData(proposal, data)}
           onComplete={() => {
             setShowWarrantyModal(false);
+            onClose();
+          }}
+        />
+      )}
+
+      {/* Delivery Note (Видаткова накладна) Modal */}
+      {showDeliveryNoteModal && (
+        <DeliveryNoteModal
+          isOpen={showDeliveryNoteModal}
+          onClose={() => setShowDeliveryNoteModal(false)}
+          proposal={proposal}
+          onPrint={(data) => printDeliveryNoteWithData(proposal, data)}
+          onComplete={() => {
+            setShowDeliveryNoteModal(false);
             onClose();
           }}
         />
