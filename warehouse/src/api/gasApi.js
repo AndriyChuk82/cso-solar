@@ -1,39 +1,61 @@
 
-// Кеш імен користувачів за email
+// Кеш імен користувачів за email та логіном
 export const usersMapCache = {
   'andros@cso': 'Андрій Чикайло',
+  'andros': 'Андрій Чикайло',
   'misha@cso': 'Михайло Юркевич',
+  'misha': 'Михайло Юркевич',
   'yura@cso': 'Юра Пастушок',
+  'yura': 'Юра Пастушок',
+  'oleg@cso': 'Олег Пастушок',
+  'oleg': 'Олег Пастушок',
   'andriy@cso': 'Андрій Чикайло',
   'dev@test.com': 'Dev User'
 };
 
+let isFetchingUsersMap = false;
 export async function fetchUsersMap() {
+  if (isFetchingUsersMap) return usersMapCache;
+  isFetchingUsersMap = true;
   try {
     const res = await getUsers();
     if (res && res.users) {
       res.users.forEach(u => {
         if (u.email && u.name) {
-          usersMapCache[u.email.toLowerCase()] = u.name;
+          const emailLower = String(u.email).trim().toLowerCase();
+          const cleanName = String(u.name).trim();
+          usersMapCache[emailLower] = cleanName;
+          const prefix = emailLower.split('@')[0];
+          if (prefix) {
+            usersMapCache[prefix] = cleanName;
+          }
         }
       });
     }
   } catch (e) {
     console.warn("Could not fetch users map", e);
+  } finally {
+    isFetchingUsersMap = false;
   }
   return usersMapCache;
 }
 
+// Запускаємо фонове підтягування користувачів при завантаженні модуля
+fetchUsersMap();
+
 const STATIC_USER_MAP = {
   'misha@cso': 'Михайло Юркевич',
   'misha@cso.solar': 'Михайло Юркевич',
+  'misha': 'Михайло Юркевич',
   'andros@cso': 'Андрій Чикайло',
   'andros@cso.solar': 'Андрій Чикайло',
+  'andros': 'Андрій Чикайло',
   'yura@cso': 'Юра Пастушок',
   'yura@cso.solar': 'Юра Пастушок',
-  'misha': 'Михайло Юркевич',
-  'andros': 'Андрій Чикайло',
-  'yura': 'Юра Пастушок'
+  'yura': 'Юра Пастушок',
+  'oleg@cso': 'Олег Пастушок',
+  'oleg@cso.solar': 'Олег Пастушок',
+  'oleg': 'Олег Пастушок'
 };
 
 export function formatUserName(nameOrEmail) {
@@ -47,8 +69,14 @@ export function formatUserName(nameOrEmail) {
   if (clean.includes('@')) {
     const prefix = clean.split('@')[0].toLowerCase();
     if (STATIC_USER_MAP[prefix]) return STATIC_USER_MAP[prefix];
+    if (usersMapCache[prefix]) return usersMapCache[prefix];
     return prefix.charAt(0).toUpperCase() + prefix.slice(1);
   }
+  
+  // Якщо це просто логін без @ (наприклад 'oleg' або 'Oleg')
+  if (STATIC_USER_MAP[lower]) return STATIC_USER_MAP[lower];
+  if (usersMapCache[lower]) return usersMapCache[lower];
+
   return clean;
 }
 import CONFIG from '../config';
