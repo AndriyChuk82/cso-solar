@@ -1,0 +1,1 @@
+import{l as e}from"./index-8uRiglRP.js";export{e as fetchAllData};
