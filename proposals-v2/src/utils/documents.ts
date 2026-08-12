@@ -297,25 +297,25 @@ function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): 
     if (showPrices) {
       return `
         <tr>
-          <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
-          <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px;">
+          <td style="padding: 8px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
+          <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: left;">
             <strong>${itemName}</strong>
           </td>
-          <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${itemUnit}</td>
-          <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${qty}</td>
-          <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; white-space: nowrap;">${price.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 600; white-space: nowrap;">${sum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="padding: 8px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${itemUnit}</td>
+          <td style="padding: 8px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${qty}</td>
+          <td style="padding: 8px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; white-space: nowrap;">${price.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="padding: 8px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 600; white-space: nowrap;">${sum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
         </tr>
       `;
     } else {
       return `
         <tr>
-          <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
-          <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px;">
+          <td style="padding: 8px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
+          <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: left;">
             <strong>${itemName}</strong>
           </td>
-          <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${itemUnit}</td>
-          <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${qty}</td>
+          <td style="padding: 8px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${itemUnit}</td>
+          <td style="padding: 8px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${qty}</td>
         </tr>
       `;
     }
@@ -333,7 +333,7 @@ function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): 
           .header { display: flex; justify-content: space-between; align-items: center; }
           .doc-title { color: ${accentColor}; font-weight: 700; font-size: 18px; text-transform: uppercase; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background: #F9FAFB; padding: 10px; text-align: center; border: 1px solid #E5E7EB; font-size: 9px; text-transform: uppercase; color: #4B5563; }
+          th { background: #F9FAFB; padding: 8px 4px; text-align: center; border: 1px solid #E5E7EB; font-size: 9px; text-transform: uppercase; color: #4B5563; }
         </style>
       </head>
       <body>
@@ -355,13 +355,13 @@ function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): 
         <table>
           <thead>
             <tr>
-              <th style="width: 35px">№</th>
-              <th style="text-align: left;">Товар</th>
-              <th style="width: 60px">Од.</th>
-              <th style="width: 60px">К-сть</th>
+              <th style="width: 30px;">№</th>
+              <th style="text-align: left; padding-left: 10px;">Товар</th>
+              <th style="width: 45px;">Од.</th>
+              <th style="width: 55px;">К-сть</th>
               ${showPrices ? `
-                <th style="width: 100px; text-align: right;">Ціна (${currencySymbol})</th>
-                <th style="width: 110px; text-align: right;">Сума (${currencySymbol})</th>
+                <th style="width: 90px; text-align: right; padding-right: 8px;">Ціна (${currencySymbol})</th>
+                <th style="width: 100px; text-align: right; padding-right: 8px;">Сума (${currencySymbol})</th>
               ` : ''}
             </tr>
           </thead>
@@ -370,8 +370,8 @@ function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): 
             ${showPrices ? `
               <tr>
                 <td colspan="4" style="border: none; padding: 10px 0;"></td>
-                <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 700; background: #F9FAFB;">Разом:</td>
-                <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 700; background: #F9FAFB; white-space: nowrap;">${totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
+                <td style="padding: 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 700; background: #F9FAFB;">Разом:</td>
+                <td style="padding: 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 700; background: #F9FAFB; white-space: nowrap;">${totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
               </tr>
             ` : ''}
           </tbody>
