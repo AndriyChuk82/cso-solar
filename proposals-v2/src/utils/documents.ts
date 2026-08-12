@@ -303,8 +303,8 @@ function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): 
           </td>
           <td style="padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${itemUnit}</td>
           <td style="padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${qty}</td>
-          <td style="padding: 6px 6px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; white-space: nowrap;">${price.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          <td style="padding: 6px 6px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 600; white-space: nowrap;">${sum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${price.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 600; white-space: nowrap;">${sum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
         </tr>
       `;
     } else {
@@ -360,8 +360,8 @@ function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): 
               <th style="width: 40px;">Од.</th>
               <th style="width: 45px;">К-сть</th>
               ${showPrices ? `
-                <th style="width: 65px; text-align: right; padding-right: 6px;">Ціна (${currencySymbol})</th>
-                <th style="width: 75px; text-align: right; padding-right: 6px;">Сума (${currencySymbol})</th>
+                <th style="width: 65px; text-align: center;">Ціна (${currencySymbol})</th>
+                <th style="width: 75px; text-align: center;">Сума (${currencySymbol})</th>
               ` : ''}
             </tr>
           </thead>
@@ -371,7 +371,7 @@ function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): 
               <tr>
                 <td colspan="4" style="border: none; padding: 8px 0;"></td>
                 <td style="padding: 6px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 700; background: #F9FAFB;">Разом:</td>
-                <td style="padding: 6px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 700; background: #F9FAFB; white-space: nowrap;">${totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
+                <td style="padding: 6px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 700; background: #F9FAFB; white-space: nowrap;">${totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
               </tr>
             ` : ''}
           </tbody>
