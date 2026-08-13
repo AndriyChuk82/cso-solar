@@ -127,10 +127,9 @@ export default function BuyerDetails() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Стан періоду відображення (за замовчуванням — поточний місяць)
-  const defaultMonth = getCurrentMonthRange();
-  const [dateFrom, setDateFrom] = useState(defaultMonth.firstDay);
-  const [dateTo, setDateTo] = useState(defaultMonth.lastDay);
+  // Стан періоду відображення (за замовчуванням — за весь час 'Всі')
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [currencyFilter, setCurrencyFilter] = useState('ALL'); // 'ALL', 'UAH', 'USD'
 
   // Керування вкладками та фільтром окремого документа
