@@ -531,9 +531,11 @@ export default function ShipmentForm() {
                   if (val === 'Самовивіз' || val === 'pickup') {
                     setShippingAddress('Самовивіз зі складу');
                     setTtn('Самовивіз');
+                    setPaymentMethod('cash');
                   } else if (ttn === 'Самовивіз') {
                     setTtn('');
                     if (shippingAddress === 'Самовивіз зі складу') setShippingAddress('');
+                    if (paymentMethod === 'cash') setPaymentMethod('cod');
                   }
                 }}
                 className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-sm font-bold focus:ring-2 focus:ring-primary focus:outline-none"
