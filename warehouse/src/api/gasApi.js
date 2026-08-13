@@ -143,8 +143,6 @@ export async function addCategory(category) {
   // Логування архівування
   try {
     logActivity({
-      userEmail: 'Оператор',
-      userName: 'Оператор',
       actionType: isArchived ? 'ARCHIVE' : 'UNARCHIVE',
       entityType: 'BUYER_TRANSACTION',
       entityId: transactionId,
@@ -758,8 +756,6 @@ export async function deleteBuyer(buyerId) {
   // 4. Фіксуємо аудит-лог
   try {
     logActivity({
-      userEmail: 'Оператор',
-      userName: 'Оператор',
       actionType: 'DELETE',
       entityType: 'BUYER',
       entityId: buyerId,
@@ -1344,13 +1340,15 @@ export async function logActivity({ userEmail, userName, actionType, entityType,
   let cleanEmail = userEmail;
   let cleanName = userName;
 
-  if (!cleanEmail) {
+  const isPlaceholder = (val) => !val || val === 'Оператор' || val === 'Система / Невідомо';
+
+  if (isPlaceholder(cleanEmail) || isPlaceholder(cleanName)) {
     try {
       const cached = localStorage.getItem('cso_user');
       if (cached) {
         const u = JSON.parse(cached);
-        cleanEmail = u.email;
-        cleanName = u.name;
+        if (u.email) cleanEmail = u.email;
+        if (u.name || u.email) cleanName = u.name || u.email;
       }
     } catch (e) {}
   }
@@ -1360,7 +1358,7 @@ export async function logActivity({ userEmail, userName, actionType, entityType,
   const logEntry = {
     id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
     created_at: new Date().toISOString(),
-    user_email: userEmail || 'Система / Невідомо',
+    user_email: cleanEmail || 'Система / Невідомо',
     user_name: displayName,
     action_type: actionType, // 'CREATE', 'UPDATE', 'DELETE', 'ARCHIVE', 'UNARCHIVE'
     entity_type: entityType, // 'BUYER_TRANSACTION', 'PRODUCT', 'WAREHOUSE', 'BUYER'
