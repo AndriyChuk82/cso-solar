@@ -460,8 +460,8 @@ export default function ShipmentsDashboard() {
                               <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-md w-fit">
                                 🚗 Самовивіз
                               </span>
-                              <span className="text-[10px] text-gray-500 dark:text-neutral-400 font-semibold block">
-                                Зі склада
+                              <span className="text-[11px] font-bold text-gray-700 dark:text-neutral-200 block">
+                                Склад: <strong className="text-primary font-black">{ship.primary_warehouse_name || 'Основний склад'}</strong>
                               </span>
                             </>
                           ) : ship.ttn ? (

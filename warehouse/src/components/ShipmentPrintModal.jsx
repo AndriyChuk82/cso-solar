@@ -184,8 +184,8 @@ export default function ShipmentPrintModal({ shipments = [], onClose }) {
                       <div className="font-mono text-xs font-bold mt-1 whitespace-nowrap tracking-tight">
                         {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз' ? 'Спосіб: Самовивіз' : `ТТН: ${ship.ttn || '—'}`}
                       </div>
-                      <div className="text-[10px] text-gray-700 font-bold">
-                        {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' ? '🚗 Самовивіз зі складу' : (ship.carrier || 'Нова Пошта')}
+                      <div className="text-[10px] text-gray-800 font-extrabold">
+                        {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз' ? `🚗 Склад: ${ship.primary_warehouse_name || 'Основний склад'}` : (ship.carrier || 'Нова Пошта')}
                       </div>
                     </td>
                   </tr>

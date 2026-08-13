@@ -1668,14 +1668,20 @@ export async function getShipments(filters = {}) {
     if (shipments.length > 0) {
       const shipIds = shipments.map(s => s.id);
       
-      const [{ data: allItems }, { data: catalog }] = await Promise.all([
+      const [{ data: allItems }, { data: catalog }, { data: whCatalog }] = await Promise.all([
         supabase.from('shipment_items').select('*').in('shipment_id', shipIds),
-        supabase.from('products').select('id, name, article, unit')
+        supabase.from('products').select('id, name, article, unit'),
+        supabase.from('warehouses').select('id, name')
       ]);
 
       const prodMap = {};
       if (catalog) {
         catalog.forEach(p => { prodMap[p.id] = p; });
+      }
+
+      const whMap = {};
+      if (whCatalog) {
+        whCatalog.forEach(w => { whMap[w.id] = w.name; });
       }
 
       const itemsByShipment = {};
@@ -1685,18 +1691,26 @@ export async function getShipments(filters = {}) {
             itemsByShipment[item.shipment_id] = [];
           }
           const prod = prodMap[item.product_id];
+          const whName = whMap[item.warehouse_id] || item.warehouse_id || 'Основний склад';
           itemsByShipment[item.shipment_id].push({
             ...item,
             product_name: prod ? prod.name : (item.product_name || item.product_id),
-            product_article: prod ? prod.article : (item.product_article || '')
+            product_article: prod ? prod.article : (item.product_article || ''),
+            warehouse_name: whName
           });
         });
       }
 
-      shipments = shipments.map(s => ({
-        ...s,
-        shipment_items: itemsByShipment[s.id] || []
-      }));
+      shipments = shipments.map(s => {
+        const items = itemsByShipment[s.id] || [];
+        const whNames = [...new Set(items.map(it => it.warehouse_name).filter(Boolean))];
+        return {
+          ...s,
+          shipment_items: items,
+          warehouse_names: whNames,
+          primary_warehouse_name: whNames.join(', ') || 'Основний склад'
+        };
+      });
     }
 
     const rawShipments = [...shipments];
