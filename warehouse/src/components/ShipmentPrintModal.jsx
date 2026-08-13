@@ -182,10 +182,10 @@ export default function ShipmentPrintModal({ shipments = [], onClose }) {
                         Від: {ship.sender_name || '—'}
                       </div>
                       <div className="font-mono text-xs font-bold mt-1 whitespace-nowrap tracking-tight">
-                        ТТН: {ship.ttn || '—'}
+                        {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз' ? 'Спосіб: Самовивіз' : `ТТН: ${ship.ttn || '—'}`}
                       </div>
-                      <div className="text-[10px] text-gray-500">
-                        {ship.carrier || 'Нова Пошта'}
+                      <div className="text-[10px] text-gray-700 font-bold">
+                        {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' ? '🚗 Самовивіз зі складу' : (ship.carrier || 'Нова Пошта')}
                       </div>
                     </td>
                   </tr>
@@ -199,7 +199,7 @@ export default function ShipmentPrintModal({ shipments = [], onClose }) {
                 Відпустив (Комірник): ________________________
               </div>
               <div>
-                Прийняв (Курьєр / Менеджер): ________________________
+                Прийняв / Отримав (Покупець): ________________________
               </div>
             </div>
           </div>

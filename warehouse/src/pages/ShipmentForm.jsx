@@ -551,15 +551,27 @@ export default function ShipmentForm() {
             {/* Carrier */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
-                Перевізник
+                Перевізник / Доставка
               </label>
-              <input
-                type="text"
+              <select
                 value={carrier}
-                onChange={(e) => setCarrier(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-                placeholder="Нова Пошта, Укрпошта..."
-              />
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCarrier(val);
+                  if (val === 'Самовивіз' || val === 'pickup') {
+                    if (!shippingAddress || shippingAddress.startsWith('м.')) {
+                      setShippingAddress('Самовивіз зі складу');
+                    }
+                    if (!ttn) setTtn('Самовивіз');
+                  } else if (ttn === 'Самовивіз') {
+                    setTtn('');
+                  }
+                }}
+                className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-sm font-semibold focus:ring-2 focus:ring-primary focus:outline-none"
+              >
+                <option value="Нова Пошта">🚚 Нова Пошта</option>
+                <option value="Самовивіз">🚗 Самовивіз зі склада</option>
+              </select>
             </div>
           </div>
         </div>
@@ -833,14 +845,15 @@ export default function ShipmentForm() {
             {/* TTN */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
-                № ТТН (якщо вже відомо)
+                {carrier === 'Самовивіз' || carrier === 'pickup' ? 'Спосіб видачі' : '№ ТТН (якщо вже відомо)'}
               </label>
               <input
                 type="text"
-                value={ttn}
+                value={carrier === 'Самовивіз' || carrier === 'pickup' ? 'Самовивіз зі складу' : ttn}
                 onChange={(e) => setTtn(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:outline-none font-mono"
-                placeholder="204500000000..."
+                disabled={carrier === 'Самовивіз' || carrier === 'pickup'}
+                className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:outline-none font-mono disabled:bg-amber-50 dark:disabled:bg-amber-950/40 disabled:text-amber-800 dark:disabled:text-amber-300 font-bold"
+                placeholder={carrier === 'Самовивіз' ? 'Самовивіз зі складу' : '204500000000...'}
               />
             </div>
           </div>

@@ -454,19 +454,35 @@ export default function ShipmentsDashboard() {
 
                       {/* TTN & Carrier */}
                       <td className="py-3 px-3">
-                        <div className="flex flex-col">
-                          {ship.ttn ? (
-                            <strong className="font-mono text-xs text-gray-900 dark:text-white block">
-                              {ship.ttn}
-                            </strong>
+                        <div className="flex flex-col gap-0.5">
+                          {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз' ? (
+                            <>
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-md w-fit">
+                                🚗 Самовивіз
+                              </span>
+                              <span className="text-[10px] text-gray-500 dark:text-neutral-400 font-semibold block">
+                                Зі склада
+                              </span>
+                            </>
+                          ) : ship.ttn ? (
+                            <>
+                              <strong className="font-mono text-xs font-bold text-gray-900 dark:text-white tracking-tight whitespace-nowrap block">
+                                {ship.ttn}
+                              </strong>
+                              <span className="text-[10px] text-gray-400 dark:text-neutral-500 uppercase block font-semibold">
+                                {ship.carrier || 'Нова Пошта'}
+                              </span>
+                            </>
                           ) : (
-                            <span className="text-xs text-amber-600 dark:text-amber-400 italic block font-medium">
-                              Очікує ТТН
-                            </span>
+                            <>
+                              <span className="text-xs text-amber-600 dark:text-amber-400 italic block font-medium">
+                                Очікує ТТН
+                              </span>
+                              <span className="text-[10px] text-gray-400 dark:text-neutral-500 uppercase block font-semibold">
+                                {ship.carrier || 'Нова Пошта'}
+                              </span>
+                            </>
                           )}
-                          <span className="text-[10px] text-gray-400 dark:text-neutral-500 uppercase block font-semibold">
-                            {ship.carrier || 'Нова Пошта'}
-                          </span>
                         </div>
                       </td>
 
@@ -508,7 +524,7 @@ export default function ShipmentsDashboard() {
                             <button
                               onClick={() => setConfirmModalData({ isOpen: true, shipment: ship, isBatch: false })}
                               className="p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
-                              title="Підтвердити відправку"
+                              title={ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' ? "Підтвердити видачу товару (Самовивіз)" : "Підтвердити відправку"}
                             >
                               <Truck size={16} />
                             </button>
