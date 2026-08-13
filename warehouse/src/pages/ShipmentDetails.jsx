@@ -331,24 +331,38 @@ export default function ShipmentDetails() {
       </div>
 
       {/* Live Nova Poshta Tracking Widget Box */}
-      {shipment.ttn && shipment.ttn !== 'Самовивіз' && (
+      {(shipment.carrier || 'Нова Пошта') === 'Нова Пошта' && shipment.ttn !== 'Самовивіз' && (
         <div className="bg-gradient-to-br from-red-50 to-amber-50 dark:from-neutral-800 dark:to-neutral-900 p-5 rounded-2xl border border-red-200 dark:border-neutral-700 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-extrabold text-red-900 dark:text-red-300 uppercase tracking-wider flex items-center gap-2">
               <Truck size={18} className="text-red-600" />
-              📡 Живий статус Нової Пошти (ТТН: <span className="font-mono">{shipment.ttn}</span>)
+              📡 Живий статус Нової Пошти {shipment.ttn ? `(ТТН: ${shipment.ttn})` : ''}
             </h3>
-            <button
-              onClick={() => fetchLiveTracking(shipment.ttn, shipment.client_phone)}
-              disabled={npLoading}
-              className="text-xs font-semibold text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-neutral-700 px-3 py-1 rounded-lg transition-colors flex items-center gap-1.5 border border-red-200 dark:border-neutral-600"
-            >
-              <RefreshCw size={14} className={npLoading ? 'animate-spin' : ''} />
-              Оновити
-            </button>
+            {shipment.ttn && (
+              <button
+                onClick={() => fetchLiveTracking(shipment.ttn, shipment.client_phone)}
+                disabled={npLoading}
+                className="text-xs font-semibold text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-neutral-700 px-3 py-1 rounded-lg transition-colors flex items-center gap-1.5 border border-red-200 dark:border-neutral-600"
+              >
+                <RefreshCw size={14} className={npLoading ? 'animate-spin' : ''} />
+                Оновити
+              </button>
+            )}
           </div>
 
-          {npLoading ? (
+          {!shipment.ttn ? (
+            <div className="text-xs text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50 p-3.5 rounded-xl border border-amber-200/80 flex items-center justify-between gap-3">
+              <div>
+                <strong>ТТН ще не внесено.</strong> Натисніть кнопку <strong>«Підтвердити відправку & ТТН»</strong> або <strong>«Редагувати»</strong> та вкажіть номер ТТН для автоматичного відстеження.
+              </div>
+              <button
+                onClick={() => setShowConfirmModal(true)}
+                className="px-3 py-1.5 bg-amber-600 text-white font-bold rounded-lg text-xs hover:bg-amber-700 transition-colors whitespace-nowrap shadow-sm"
+              >
+                + Внести ТТН
+              </button>
+            </div>
+          ) : npLoading ? (
             <div className="py-4 text-center text-xs font-semibold text-gray-500 dark:text-neutral-400 animate-pulse">
               Отримання статусу з Нової Пошти...
             </div>
