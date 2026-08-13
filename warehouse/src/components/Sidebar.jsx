@@ -20,6 +20,7 @@ export default function Sidebar({ isOpen, onClose }) {
         { path: '/transfer', label: 'Переміщення', icon: '🔄' },
         { path: '/daily-balance', label: 'Підсумок дня', icon: '📊' },
         { path: '/buyers', label: 'Баланси клієнтів', icon: '⚖️' },
+        { path: '/shipments', label: 'Відправлення', icon: '🚚' },
       ]
     },
     {

@@ -26,6 +26,11 @@ const BuyerPaymentForm = lazy(() => import('./pages/BuyerPaymentForm'));
 const BuyersReport = lazy(() => import('./pages/BuyersReport'));
 const AuditLog = lazy(() => import('./pages/AuditLog'));
 
+// Сторінки для модуля «Відправлення»
+const ShipmentsDashboard = lazy(() => import('./pages/ShipmentsDashboard'));
+const ShipmentForm = lazy(() => import('./pages/ShipmentForm'));
+const ShipmentDetails = lazy(() => import('./pages/ShipmentDetails'));
+
 
 function AppContent() {
   const { user, loading, error, isVerifying } = useAuth();
@@ -107,6 +112,12 @@ function AppContent() {
             <Route path="/buyers/issue" element={<BuyerIssueForm />} />
             <Route path="/buyers/issue/edit/:txId" element={<BuyerIssueForm />} />
             <Route path="/buyers/payment" element={<BuyerPaymentForm />} />
+
+            {/* Відправлення */}
+            <Route path="/shipments" element={<ShipmentsDashboard />} />
+            <Route path="/shipments/new" element={<ShipmentForm />} />
+            <Route path="/shipments/edit/:id" element={<ShipmentForm />} />
+            <Route path="/shipments/:id" element={<ShipmentDetails />} />
 
             {/* Лише адміністратор */}
             {user.isAdmin && (

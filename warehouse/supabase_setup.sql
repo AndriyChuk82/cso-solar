@@ -163,3 +163,115 @@ GRANT ALL ON TABLE public.activity_logs TO anon, authenticated, service_role;
 ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow anon access to activity_logs" ON public.activity_logs;
 CREATE POLICY "Allow anon access to activity_logs" ON public.activity_logs FOR ALL TO anon USING (true) WITH CHECK (true);
+
+--------------------------------------------------------------------------------
+-- 5. ТАБЛИЦІ ТА ПОЛІТИКИ ДЛЯ МОДУЛЯ «ВІДПРАВЛЕННЯ»
+--------------------------------------------------------------------------------
+
+-- Відправники (Від кого відправлено)
+CREATE TABLE IF NOT EXISTS public.shipment_senders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE,
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Клієнти відправлень (одноразові/разові покупці)
+CREATE TABLE IF NOT EXISTS public.shipment_clients (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    phone TEXT,
+    address TEXT,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Відправлення
+CREATE TABLE IF NOT EXISTS public.shipments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID REFERENCES public.shipment_clients(id) ON DELETE SET NULL,
+    client_name TEXT NOT NULL,
+    client_phone TEXT,
+    shipping_address TEXT,
+    sender_id UUID REFERENCES public.shipment_senders(id) ON DELETE SET NULL,
+    sender_name TEXT,
+    carrier TEXT DEFAULT 'Нова Пошта',
+    ttn TEXT,
+    shipment_number TEXT,
+    status TEXT NOT NULL DEFAULT 'reserved', -- 'reserved', 'shipped', 'paid', 'cancelled'
+    payment_method TEXT DEFAULT 'cod', -- 'cod', 'kit_group', 'cash'
+    total_amount NUMERIC NOT NULL DEFAULT 0,
+    currency TEXT DEFAULT 'UAH', -- 'UAH', 'USD'
+    advance_amount NUMERIC DEFAULT 0,
+    paid_amount NUMERIC DEFAULT 0,
+    debt_amount NUMERIC DEFAULT 0,
+    comment TEXT,
+    user_email TEXT,
+    user_name TEXT,
+    shipped_at TIMESTAMPTZ,
+    paid_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Товари відправлення
+CREATE TABLE IF NOT EXISTS public.shipment_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    shipment_id UUID NOT NULL REFERENCES public.shipments(id) ON DELETE CASCADE,
+    product_id TEXT NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+    warehouse_id TEXT NOT NULL REFERENCES public.warehouses(id) ON DELETE CASCADE,
+    quantity NUMERIC NOT NULL,
+    price NUMERIC NOT NULL DEFAULT 0,
+    currency TEXT DEFAULT 'UAH',
+    operation_id TEXT -- зв'язок із таблицею operations після підтвердження відправки
+);
+
+-- Історія оплат по відправленнях
+CREATE TABLE IF NOT EXISTS public.shipment_payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    shipment_id UUID NOT NULL REFERENCES public.shipments(id) ON DELETE CASCADE,
+    type TEXT NOT NULL, -- 'advance', 'final_payment'
+    amount NUMERIC NOT NULL,
+    currency TEXT DEFAULT 'UAH',
+    payment_method TEXT,
+    comment TEXT,
+    user_email TEXT,
+    user_name TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Початкові відправники
+INSERT INTO public.shipment_senders (name) VALUES 
+    ('Пастушок Петро'),
+    ('Мастушок Марія'),
+    ('Пастушок Юра')
+ON CONFLICT (name) DO NOTHING;
+
+-- Права доступу
+GRANT ALL ON TABLE public.shipment_senders TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.shipment_clients TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.shipments TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.shipment_items TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.shipment_payments TO anon, authenticated, service_role;
+
+-- Вмикаємо RLS
+ALTER TABLE public.shipment_senders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shipment_clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shipments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shipment_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shipment_payments ENABLE ROW LEVEL SECURITY;
+
+-- Політики повного доступу для anon
+DROP POLICY IF EXISTS "Allow anon access to shipment_senders" ON public.shipment_senders;
+CREATE POLICY "Allow anon access to shipment_senders" ON public.shipment_senders FOR ALL TO anon USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon access to shipment_clients" ON public.shipment_clients;
+CREATE POLICY "Allow anon access to shipment_clients" ON public.shipment_clients FOR ALL TO anon USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon access to shipments" ON public.shipments;
+CREATE POLICY "Allow anon access to shipments" ON public.shipments FOR ALL TO anon USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon access to shipment_items" ON public.shipment_items;
+CREATE POLICY "Allow anon access to shipment_items" ON public.shipment_items FOR ALL TO anon USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon access to shipment_payments" ON public.shipment_payments;
+CREATE POLICY "Allow anon access to shipment_payments" ON public.shipment_payments FOR ALL TO anon USING (true) WITH CHECK (true);

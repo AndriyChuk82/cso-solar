@@ -396,14 +396,22 @@ export async function addOperation(operation) {
   if (!supabase) throw new Error('База даних не підключена');
   const timestamp = new Date().toISOString();
   let items = [];
+
+  const opItems = (operation.items && Array.isArray(operation.items)) ? operation.items : [{
+    productId: operation.productId,
+    quantity: operation.quantity,
+    type: operation.type,
+    comment: operation.comment
+  }];
+
   if (operation.type === 'transfer') {
     const tid = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
-    operation.items.forEach(item => {
-      items.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random()), date: operation.date, type: 'expense', product_id: item.productId, warehouse_id: operation.warehouseFrom, quantity: item.quantity, comment: operation.comment, user_email: operation.user, transfer_id: tid, created_at: timestamp });
-      items.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random()), date: operation.date, type: 'income', product_id: item.productId, warehouse_id: operation.warehouseTo, quantity: item.quantity, comment: operation.comment, user_email: operation.user, transfer_id: tid, created_at: timestamp });
+    opItems.forEach(item => {
+      items.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random()), date: operation.date, type: 'expense', product_id: item.productId, warehouse_id: operation.warehouseFrom, quantity: item.quantity, comment: item.comment || operation.comment, user_email: operation.userEmail || operation.user, transfer_id: tid, created_at: timestamp });
+      items.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random()), date: operation.date, type: 'income', product_id: item.productId, warehouse_id: operation.warehouseTo, quantity: item.quantity, comment: item.comment || operation.comment, user_email: operation.userEmail || operation.user, transfer_id: tid, created_at: timestamp });
     });
   } else {
-    operation.items.forEach(item => {
+    opItems.forEach(item => {
       const type = item.type || operation.type;
       const quantity = item.type === 'expense' ? Math.abs(item.quantity) : item.quantity;
       
@@ -415,14 +423,15 @@ export async function addOperation(operation) {
         warehouse_id: operation.warehouseId, 
         quantity: quantity, 
         comment: item.comment || operation.comment, 
-        user_email: operation.user, 
+        user_email: operation.userEmail || operation.user, 
         created_at: timestamp 
       });
     });
   }
-  const { error } = await supabase.from('operations').insert(items);
+
+  const { data: insertedData, error } = await supabase.from('operations').insert(items).select();
   if (error) throw error;
-  return { success: true };
+  return { success: true, operation: insertedData?.[0] };
 }
 
 export async function updateOperation(operation) {
@@ -483,6 +492,34 @@ export async function getBalances(warehouseId) {
         reservedMap[item.product_id] = (reservedMap[item.product_id] || 0) + qty;
       }
     });
+  }
+
+  // Отримуємо активні резерви з shipment_items для цього складу
+  try {
+    const { data: resShipments } = await supabase
+      .from('shipments')
+      .select('id')
+      .eq('status', 'reserved');
+
+    if (resShipments && resShipments.length > 0) {
+      const resShipIds = resShipments.map(s => s.id);
+      const { data: shipResItems } = await supabase
+        .from('shipment_items')
+        .select('product_id, quantity')
+        .eq('warehouse_id', warehouseId)
+        .in('shipment_id', resShipIds);
+
+      if (shipResItems) {
+        shipResItems.forEach(item => {
+          if (item.product_id) {
+            const qty = parseFloat(item.quantity) || 0;
+            reservedMap[item.product_id] = (reservedMap[item.product_id] || 0) + qty;
+          }
+        });
+      }
+    }
+  } catch (err) {
+    console.warn("Could not fetch shipment_items reserves:", err);
   }
 
   // Отримуємо каталог товарів для наповнення відсутніх у фізичному залишку
@@ -1433,3 +1470,1016 @@ export async function getActivityLogs(filters = {}) {
 
   return { success: true, data: logs };
 }
+
+/* ==========================================================================
+   МОДУЛЬ «ВІДПРАВЛЕННЯ» (SHIPMENTS)
+   ========================================================================== */
+
+/**
+ * Отримання списку відправників ("Від кого відправлено")
+ */
+export async function getShipmentSenders() {
+  const defaultSenders = [
+    { id: 'def-1', name: 'Пастушок Петро', active: true },
+    { id: 'def-2', name: 'Мастушок Марія', active: true },
+    { id: 'def-3', name: 'Пастушок Юра', active: true }
+  ];
+
+  if (!supabase) return { success: true, senders: defaultSenders };
+
+  try {
+    const { data, error } = await supabase
+      .from('shipment_senders')
+      .select('*')
+      .order('name');
+
+    if (error || !data || data.length === 0) {
+      return { success: true, senders: defaultSenders };
+    }
+    return { success: true, senders: data };
+  } catch (err) {
+    console.warn("Could not fetch shipment_senders from DB:", err);
+    return { success: true, senders: defaultSenders };
+  }
+}
+
+/**
+ * Додавання нового відправника
+ */
+export async function addShipmentSender(name, user = {}) {
+  if (!name || !name.trim()) throw new Error("Вкажіть ПІБ відправника");
+  const cleanName = name.trim();
+
+  if (!supabase) throw new Error("База даних не підключена");
+
+  const { data, error } = await supabase
+    .from('shipment_senders')
+    .insert([{ name: cleanName, active: true }])
+    .select();
+
+  if (error) throw error;
+
+  // Логування в аудит
+  logActivity({
+    userEmail: user.email || 'Оператор',
+    userName: user.name || 'Оператор',
+    actionType: 'CREATE',
+    entityType: 'SHIPMENT_SENDER',
+    entityId: data?.[0]?.id || cleanName,
+    entityTitle: cleanName,
+    details: { name: cleanName }
+  });
+
+  return { success: true, sender: data?.[0] };
+}
+
+/**
+ * Отримання списку клієнтів відправлень
+ */
+export async function getShipmentClients() {
+  if (!supabase) return { success: true, clients: [] };
+  try {
+    const { data, error } = await supabase
+      .from('shipment_clients')
+      .select('*')
+      .order('name');
+    if (error) throw error;
+    return { success: true, clients: data || [] };
+  } catch (err) {
+    console.warn("Could not fetch shipment_clients:", err);
+    return { success: true, clients: [] };
+  }
+}
+
+/**
+ * Створення / пошук клієнта відправлення
+ */
+export async function findOrCreateShipmentClient({ name, phone, address, notes }) {
+  if (!name || !name.trim()) throw new Error("ПІБ клієнта обов'язкове");
+  const cleanName = name.trim();
+  const cleanPhone = (phone || '').trim();
+  const cleanAddress = (address || '').trim();
+
+  if (!supabase) return { id: null, name: cleanName };
+
+  // Шукаємо за телефоном або ім'ям
+  let existing = null;
+  if (cleanPhone) {
+    const { data } = await supabase
+      .from('shipment_clients')
+      .select('*')
+      .eq('phone', cleanPhone)
+      .limit(1);
+    if (data && data.length > 0) existing = data[0];
+  }
+
+  if (!existing) {
+    const { data } = await supabase
+      .from('shipment_clients')
+      .select('*')
+      .ilike('name', cleanName)
+      .limit(1);
+    if (data && data.length > 0) existing = data[0];
+  }
+
+  if (existing) {
+    // Оновлюємо адресу/телефон якщо з'явилися нові дані
+    if ((cleanAddress && !existing.address) || (cleanPhone && !existing.phone)) {
+      await supabase
+        .from('shipment_clients')
+        .update({
+          address: cleanAddress || existing.address,
+          phone: cleanPhone || existing.phone
+        })
+        .eq('id', existing.id);
+    }
+    return existing;
+  }
+
+  const { data, error } = await supabase
+    .from('shipment_clients')
+    .insert([{
+      name: cleanName,
+      phone: cleanPhone,
+      address: cleanAddress,
+      notes: notes || ''
+    }])
+    .select();
+
+  if (error) throw error;
+  return data?.[0];
+}
+
+/**
+ * Отримання реєстру відправлень
+ */
+export async function getShipments(filters = {}) {
+  if (!supabase) return { success: true, shipments: [], stats: {} };
+
+  try {
+    let query = supabase
+      .from('shipments')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (filters.status && filters.status !== 'ALL' && filters.status !== 'ARCHIVED') {
+      query = query.eq('status', filters.status);
+    }
+    if (filters.senderId && filters.senderId !== 'ALL') {
+      query = query.eq('sender_id', filters.senderId);
+    }
+    if (filters.paymentMethod && filters.paymentMethod !== 'ALL') {
+      query = query.eq('payment_method', filters.paymentMethod);
+    }
+    if (filters.dateFrom) {
+      query = query.gte('created_at', `${filters.dateFrom}T00:00:00.000Z`);
+    }
+    if (filters.dateTo) {
+      query = query.lte('created_at', `${filters.dateTo}T23:59:59.999Z`);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      if (error.code === '42P01' || (error.message || '').includes('does not exist')) {
+        return {
+          success: false,
+          shipments: [],
+          stats: {},
+          error: 'Таблиці відправлень ще не створено у Supabase. Будь ласка, виконайте SQL-скрипт з файлу supabase_setup.sql у вашому Supabase SQL Editor.'
+        };
+      }
+      throw error;
+    }
+
+    let shipments = data || [];
+
+    // Приєднуємо товари (shipment_items) та назви з каталогу товарів
+    if (shipments.length > 0) {
+      const shipIds = shipments.map(s => s.id);
+      
+      const [{ data: allItems }, { data: catalog }] = await Promise.all([
+        supabase.from('shipment_items').select('*').in('shipment_id', shipIds),
+        supabase.from('products').select('id, name, article, unit')
+      ]);
+
+      const prodMap = {};
+      if (catalog) {
+        catalog.forEach(p => { prodMap[p.id] = p; });
+      }
+
+      const itemsByShipment = {};
+      if (allItems) {
+        allItems.forEach(item => {
+          if (!itemsByShipment[item.shipment_id]) {
+            itemsByShipment[item.shipment_id] = [];
+          }
+          const prod = prodMap[item.product_id];
+          itemsByShipment[item.shipment_id].push({
+            ...item,
+            product_name: prod ? prod.name : (item.product_name || item.product_id),
+            product_article: prod ? prod.article : (item.product_article || '')
+          });
+        });
+      }
+
+      shipments = shipments.map(s => ({
+        ...s,
+        shipment_items: itemsByShipment[s.id] || []
+      }));
+    }
+
+    const rawShipments = [...shipments];
+
+    // Фільтрація за текстом (пошук за ПІБ, телефоном, ТТН, номером накладної, адресою)
+    if (filters.search && filters.search.trim()) {
+      const s = filters.search.trim().toLowerCase();
+      
+      // Якщо введено пошуковий запит
+      if (filters.status === 'ARCHIVED') {
+        // У вкладці Архів шукаємо серед архівних
+        shipments = rawShipments.filter(ship => 
+          ship.is_archived === true && (
+            (ship.client_name || '').toLowerCase().includes(s) ||
+            (ship.client_phone || '').toLowerCase().includes(s) ||
+            (ship.shipping_address || '').toLowerCase().includes(s) ||
+            (ship.ttn || '').toLowerCase().includes(s) ||
+            (ship.sender_name || '').toLowerCase().includes(s) ||
+            (ship.shipment_number || '').toLowerCase().includes(s)
+          )
+        );
+      } else {
+        // У звичайних вкладках пошук здійснюється по ВСІХ відправленнях (включаючи архівні)
+        shipments = rawShipments.filter(ship => 
+          (ship.client_name || '').toLowerCase().includes(s) ||
+          (ship.client_phone || '').toLowerCase().includes(s) ||
+          (ship.shipping_address || '').toLowerCase().includes(s) ||
+          (ship.ttn || '').toLowerCase().includes(s) ||
+          (ship.sender_name || '').toLowerCase().includes(s) ||
+          (ship.shipment_number || '').toLowerCase().includes(s)
+        );
+
+        if (filters.status && filters.status !== 'ALL') {
+          shipments = shipments.filter(s => s.status === filters.status);
+        }
+      }
+    } else {
+      // Без фільтру пошуку — показуємо відповідно до обраної вкладки
+      if (filters.status === 'ARCHIVED') {
+        shipments = rawShipments.filter(s => s.is_archived === true);
+      } else {
+        shipments = rawShipments.filter(s => !s.is_archived);
+        if (filters.status && filters.status !== 'ALL') {
+          shipments = shipments.filter(s => s.status === filters.status);
+        }
+      }
+    }
+
+    // Підрахунок статистики
+    const stats = {
+      totalCount: rawShipments.filter(s => !s.is_archived).length,
+      reservedCount: rawShipments.filter(s => !s.is_archived && s.status === 'reserved').length,
+      shippedCount: rawShipments.filter(s => !s.is_archived && s.status === 'shipped').length,
+      paidCount: rawShipments.filter(s => !s.is_archived && s.status === 'paid').length,
+      cancelledCount: rawShipments.filter(s => !s.is_archived && s.status === 'cancelled').length,
+      archivedCount: rawShipments.filter(s => s.is_archived === true).length,
+      totalDebtUah: rawShipments.reduce((sum, s) => !s.is_archived && s.currency === 'UAH' && (s.status === 'shipped' || s.status === 'reserved') ? sum + (parseFloat(s.debt_amount) || 0) : sum, 0),
+      totalDebtUsd: rawShipments.reduce((sum, s) => !s.is_archived && s.currency === 'USD' && (s.status === 'shipped' || s.status === 'reserved') ? sum + (parseFloat(s.debt_amount) || 0) : sum, 0)
+    };
+
+    return { success: true, shipments, stats };
+  } catch (err) {
+    console.error("Failed to fetch shipments:", err);
+    return { success: false, shipments: [], stats: {}, error: err.message };
+  }
+}
+
+/**
+ * Отримання деталей 1 відправлення
+ */
+export async function getShipmentById(id) {
+  if (!supabase) throw new Error("База даних не підключена");
+
+  const { data: shipment, error: shipErr } = await supabase
+    .from('shipments')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (shipErr || !shipment) throw new Error("Відправлення не знайдено");
+
+  const { data: items } = await supabase
+    .from('shipment_items')
+    .select('*')
+    .eq('shipment_id', id);
+
+  const { data: whCatalog } = await supabase
+    .from('warehouses')
+    .select('id, name');
+
+  const whMap = {};
+  if (whCatalog) {
+    whCatalog.forEach(w => { whMap[w.id] = w.name; });
+  }
+
+  const { data: catalog } = await supabase
+    .from('products')
+    .select('id, name, article, unit');
+
+  const prodMap = {};
+  if (catalog) {
+    catalog.forEach(p => { prodMap[p.id] = p; });
+  }
+
+  const enrichedItems = (items || []).map(it => {
+    const prod = prodMap[it.product_id];
+    const realProdName = (it.product_name && it.product_name !== it.product_id) ? it.product_name : (prod ? prod.name : it.product_name || it.product_id);
+    const realWhName = whMap[it.warehouse_id] || it.warehouse_id || 'Основний склад';
+    return {
+      ...it,
+      product_name: realProdName,
+      product_article: prod ? prod.article : (it.product_article || ''),
+      warehouse_name: realWhName
+    };
+  });
+
+  const { data: payments } = await supabase
+    .from('shipment_payments')
+    .select('*')
+    .eq('shipment_id', id)
+    .order('created_at', { ascending: true });
+
+  const { data: auditLogs } = await supabase
+    .from('audit_logs')
+    .select('*')
+    .eq('entity_id', id)
+    .order('created_at', { ascending: true });
+
+  return {
+    success: true,
+    shipment,
+    items: enrichedItems,
+    payments: payments || [],
+    auditLogs: auditLogs || []
+  };
+}
+
+function generateUUID() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+/**
+ * Автоматичне збереження товарів з динамічним вилученням відсутніх колонок та обробкою обмежень у Supabase
+ */
+async function insertShipmentItemsWithAutoRecovery(itemsToInsert) {
+  if (!itemsToInsert || itemsToInsert.length === 0) return;
+
+  const OPTIONAL_STRIP_COLUMNS = ['product_name', 'product_article', 'currency', 'operation_id', 'notes'];
+  let currentPayload = [...itemsToInsert];
+  let { error } = await supabase.from('shipment_items').insert(currentPayload);
+
+  if (error) {
+    const msg = error.message || '';
+
+    // 1. Missing column in schema cache (e.g. Could not find the 'product_name' column of 'shipment_items')
+    const missingMatch = msg.match(/Could not find the '([^']+)' column of 'shipment_items'/i);
+    if (missingMatch && missingMatch[1]) {
+      const missingCol = missingMatch[1];
+      if (OPTIONAL_STRIP_COLUMNS.includes(missingCol)) {
+        console.warn(`Optional column '${missingCol}' missing in shipment_items. Retrying insert without it.`);
+        const strippedPayload = currentPayload.map(item => {
+          const copy = { ...item };
+          delete copy[missingCol];
+          return copy;
+        });
+        return insertShipmentItemsWithAutoRecovery(strippedPayload);
+      }
+    }
+
+    // 2. Not-null constraint violation for secondary columns
+    const notNullMatch = msg.match(/null value in column "([^"]+)" of relation "shipment_items" violates not-null constraint/i);
+    if (notNullMatch && notNullMatch[1]) {
+      const notNullCol = notNullMatch[1];
+      if (notNullCol !== 'shipment_id' && notNullCol !== 'product_id' && notNullCol !== 'warehouse_id') {
+        console.warn(`Column '${notNullCol}' has NOT NULL constraint in shipment_items. Supplying fallback.`);
+        const filledPayload = currentPayload.map(item => {
+          const copy = { ...item };
+          copy[notNullCol] = item[notNullCol] || item.product_id || item.shipment_id || 'DEFAULT';
+          return copy;
+        });
+        return insertShipmentItemsWithAutoRecovery(filledPayload);
+      }
+    }
+
+    console.error("Error inserting shipment items:", error);
+    throw new Error(`Помилка збереження товарів відправлення: ${error.message}`);
+  }
+}
+
+/**
+ * Створення нового відправлення (з можливістю авансу)
+ */
+export async function createShipment(data, user = {}) {
+  if (!supabase) throw new Error("База даних не підключена");
+  if (!data.clientName || !data.clientName.trim()) throw new Error("Вкажіть ПІБ клієнта");
+  if (!data.items || data.items.length === 0) throw new Error("Додайте хоча б один товар");
+
+  // 1. Створюємо/знаходимо клієнта
+  const client = await findOrCreateShipmentClient({
+    name: data.clientName,
+    phone: data.clientPhone,
+    address: data.shippingAddress,
+    notes: data.notes
+  });
+
+  // 2. Обчислюємо суми
+  const currency = data.currency || 'UAH';
+  const totalAmount = data.items.reduce((sum, item) => sum + (parseFloat(item.quantity) * parseFloat(item.price || 0)), 0);
+  const advanceAmount = parseFloat(data.advanceAmount) || 0;
+  const initialPaid = advanceAmount;
+  const initialDebt = Math.max(0, totalAmount - initialPaid);
+
+  const initialStatus = data.immediatelyShipped ? 'shipped' : 'reserved';
+
+  // 2b. Генерація номера відправлення: № [порядок за сьогодні] від [ДД.ММ.РРРР]
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayFormatted = new Date().toLocaleDateString('uk-UA');
+  let seqNum = 1;
+
+  try {
+    const { count } = await supabase
+      .from('shipments')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', `${todayStr}T00:00:00.000Z`);
+
+    seqNum = (count || 0) + 1;
+  } catch (err) {
+    console.warn("Could not count today shipments:", err);
+  }
+
+  const shipmentNumber = `№ ${seqNum} від ${todayFormatted}`;
+  const shipmentId = generateUUID();
+
+  // 3. Вставляємо в shipments
+  const insertPayload = {
+    id: shipmentId,
+    client_id: client?.id || null,
+    client_name: data.clientName.trim(),
+    client_phone: (data.clientPhone || '').trim(),
+    shipping_address: (data.shippingAddress || '').trim(),
+    sender_id: data.senderId || null,
+    sender_name: data.senderName || '',
+    carrier: data.carrier || 'Нова Пошта',
+    ttn: (data.ttn || '').trim(),
+    shipment_number: shipmentNumber,
+    status: initialStatus,
+    payment_method: data.paymentMethod || 'cod',
+    total_amount: totalAmount,
+    currency: currency,
+    advance_amount: advanceAmount,
+    paid_amount: initialPaid,
+    debt_amount: initialDebt,
+    comment: data.comment || '',
+    user_email: user.email || 'Оператор',
+    user_name: user.name || 'Оператор',
+    shipped_at: initialStatus === 'shipped' ? new Date().toISOString() : null
+  };
+
+  let { data: shipData, error: shipErr } = await supabase
+    .from('shipments')
+    .insert([insertPayload])
+    .select();
+
+  // Якщо колонка shipment_number ще не додана в базу Supabase, повторюємо без неї
+  if (shipErr && (shipErr.message || '').includes('shipment_number')) {
+    delete insertPayload.shipment_number;
+    const retryRes = await supabase.from('shipments').insert([insertPayload]).select();
+    shipErr = retryRes.error;
+    if (retryRes.data && retryRes.data[0]) shipData = retryRes.data;
+  }
+
+  if (shipErr) throw shipErr;
+
+  // 4. Вставляємо специфікацію товарів
+  const itemsToInsert = [];
+  for (const item of data.items) {
+    let operationId = null;
+
+    // Якщо одразу відправлено, створюємо видаткову операцію видатку
+    if (initialStatus === 'shipped') {
+      const opRes = await addOperation({
+        date: new Date().toISOString().split('T')[0],
+        warehouseId: item.warehouseId,
+        type: 'expense',
+        productId: item.productId,
+        quantity: parseFloat(item.quantity),
+        comment: `Відправлення для ${data.clientName.trim()} (ТТН: ${data.ttn || '—'})`,
+        userEmail: user.email || 'Оператор'
+      });
+      if (opRes && opRes.operation) operationId = opRes.operation.id;
+    }
+
+    const whId = item.warehouseId || data.selectedWarehouseId || data.warehouseId;
+    const pName = (item.productName || item.productId || '').trim();
+    if (!pName) continue;
+    if (!whId) throw new Error(`Оберіть склад для товару ${pName}`);
+
+    itemsToInsert.push({
+      shipment_id: shipmentId,
+      product_id: item.productId || generateUUID(),
+      product_name: pName,
+      product_article: item.productArticle || '',
+      warehouse_id: whId,
+      quantity: parseFloat(item.quantity) || 1,
+      price: parseFloat(item.price || 0),
+      currency: currency,
+      operation_id: operationId
+    });
+  }
+
+  if (itemsToInsert.length > 0) {
+    await insertShipmentItemsWithAutoRecovery(itemsToInsert);
+  }
+
+  // 5. Якщо був аванс, реєструємо платіж
+  if (advanceAmount > 0) {
+    await supabase.from('shipment_payments').insert([{
+      shipment_id: shipmentId,
+      type: 'advance',
+      amount: advanceAmount,
+      currency: currency,
+      payment_method: data.paymentMethod || 'cod',
+      comment: 'Аванс при оформленні',
+      user_email: user.email || 'Оператор',
+      user_name: user.name || 'Оператор'
+    }]);
+  }
+
+  // 6. Запис в Аудит
+  logActivity({
+    userEmail: user.email || 'Оператор',
+    userName: user.name || 'Оператор',
+    actionType: 'CREATE',
+    entityType: 'SHIPMENT',
+    entityId: shipmentId,
+    entityTitle: `Відправлення: ${data.clientName.trim()}`,
+    details: {
+      clientName: data.clientName.trim(),
+      totalAmount,
+      currency,
+      advanceAmount,
+      status: initialStatus,
+      itemsCount: data.items.length
+    }
+  });
+
+  return { success: true, shipment: shipData[0] };
+}
+
+/**
+ * Редагування існуючого відправлення
+ */
+export async function updateShipment(shipmentId, data, user = {}) {
+  if (!supabase) throw new Error("База даних не підключена");
+  if (!data.clientName || !data.clientName.trim()) throw new Error("Вкажіть ПІБ клієнта");
+  if (!data.items || data.items.length === 0) throw new Error("Додайте хоча б один товар");
+
+  const { shipment } = await getShipmentById(shipmentId);
+  if (!shipment) throw new Error("Відправлення не знайдено");
+
+  const client = await findOrCreateShipmentClient({
+    name: data.clientName,
+    phone: data.clientPhone,
+    address: data.shippingAddress,
+    notes: data.notes
+  });
+
+  const currency = data.currency || shipment.currency || 'UAH';
+  const totalAmount = data.items.reduce((sum, item) => sum + (parseFloat(item.quantity) * parseFloat(item.price || 0)), 0);
+  const advanceAmount = data.advanceAmount !== undefined ? parseFloat(data.advanceAmount) : (parseFloat(shipment.advance_amount) || 0);
+  const paidAmount = parseFloat(shipment.paid_amount) || advanceAmount;
+  const debtAmount = Math.max(0, totalAmount - paidAmount);
+
+  // Оновлюємо основний запис
+  const { data: updated, error: shipErr } = await supabase
+    .from('shipments')
+    .update({
+      client_id: client?.id || null,
+      client_name: data.clientName.trim(),
+      client_phone: (data.clientPhone || '').trim(),
+      shipping_address: (data.shippingAddress || '').trim(),
+      sender_id: data.senderId || shipment.sender_id,
+      sender_name: data.senderName || shipment.sender_name,
+      carrier: data.carrier || shipment.carrier,
+      ttn: (data.ttn !== undefined ? data.ttn : shipment.ttn || '').trim(),
+      payment_method: data.paymentMethod || shipment.payment_method,
+      total_amount: totalAmount,
+      currency: currency,
+      advance_amount: advanceAmount,
+      debt_amount: debtAmount,
+      comment: data.comment !== undefined ? data.comment : shipment.comment
+    })
+    .eq('id', shipmentId)
+    .select();
+
+  if (shipErr) throw shipErr;
+
+  // Оновлюємо позиції товарів
+  await supabase.from('shipment_items').delete().eq('shipment_id', shipmentId);
+
+  const itemsToInsert = [];
+  for (const item of data.items) {
+    const whId = item.warehouseId || data.selectedWarehouseId || data.warehouseId;
+    const pName = (item.productName || item.productId || '').trim();
+    if (!pName) continue;
+    if (!whId) throw new Error(`Оберіть склад для товару ${pName}`);
+
+    itemsToInsert.push({
+      shipment_id: shipmentId,
+      product_id: item.productId || generateUUID(),
+      product_name: pName,
+      product_article: item.productArticle || '',
+      warehouse_id: whId,
+      quantity: parseFloat(item.quantity) || 1,
+      price: parseFloat(item.price || 0),
+      currency: currency
+    });
+  }
+
+  if (itemsToInsert.length > 0) {
+    await insertShipmentItemsWithAutoRecovery(itemsToInsert);
+  }
+
+  // Запис в аудит
+  logActivity({
+    userEmail: user.email || 'Оператор',
+    userName: user.name || 'Оператор',
+    actionType: 'UPDATE',
+    entityType: 'SHIPMENT',
+    entityId: shipmentId,
+    entityTitle: `Редагування відправлення: ${data.clientName.trim()}`,
+    details: { action: 'UPDATE_SHIPMENT', totalAmount, currency }
+  });
+
+  return { success: true, shipment: updated?.[0] };
+}
+
+/**
+ * Підтвердження відправки (внесення ТТН та остаточне списання зі складу)
+ */
+export async function confirmShipmentDispatch(shipmentId, { ttn, carrier }, user = {}) {
+  if (!supabase) throw new Error("База даних не підключена");
+
+  const { shipment, items } = await getShipmentById(shipmentId);
+  if (!shipment) throw new Error("Відправлення не знайдено");
+  if (shipment.status === 'shipped' || shipment.status === 'paid') {
+    throw new Error("Відправлення вже підтверджено");
+  }
+
+  const cleanTtn = (ttn || shipment.ttn || '').trim();
+  const cleanCarrier = carrier || shipment.carrier || 'Нова Пошта';
+
+  // 1. Проводимо складські списання для кожного товару
+  for (const item of items) {
+    if (!item.operation_id) {
+      const opRes = await addOperation({
+        date: new Date().toISOString().split('T')[0],
+        warehouseId: item.warehouse_id,
+        type: 'expense',
+        productId: item.product_id,
+        quantity: parseFloat(item.quantity),
+        comment: `Відправлення ТТН: ${cleanTtn || 'без ТТН'} (${shipment.client_name})`,
+        userEmail: user.email || 'Оператор'
+      });
+      if (opRes && opRes.operation) {
+        await supabase
+          .from('shipment_items')
+          .update({ operation_id: opRes.operation.id })
+          .eq('id', item.id);
+      }
+    }
+  }
+
+  // 2. Оновлюємо статус відправлення
+  const newStatus = shipment.debt_amount <= 0 ? 'paid' : 'shipped';
+  const { data: updated, error } = await supabase
+    .from('shipments')
+    .update({
+      status: newStatus,
+      ttn: cleanTtn,
+      carrier: cleanCarrier,
+      shipped_at: new Date().toISOString()
+    })
+    .eq('id', shipmentId)
+    .select();
+
+  if (error) throw error;
+
+  // 3. Запис в аудит
+  logActivity({
+    userEmail: user.email || 'Оператор',
+    userName: user.name || 'Оператор',
+    actionType: 'UPDATE',
+    entityType: 'SHIPMENT',
+    entityId: shipmentId,
+    entityTitle: `Відправлення: ${shipment.client_name}`,
+    details: {
+      action: 'CONFIRM_DISPATCH',
+      ttn: cleanTtn,
+      carrier: cleanCarrier,
+      status: newStatus
+    }
+  });
+
+  return { success: true, shipment: updated?.[0] };
+}
+
+/**
+ * Масове підтвердження відправки кількох накладних одночасно (мультивибір)
+ */
+export async function batchConfirmShipments(shipmentIds = [], { carrier }, user = {}) {
+  if (!shipmentIds || shipmentIds.length === 0) return { success: true, count: 0 };
+  let confirmedCount = 0;
+  const errors = [];
+
+  for (const id of shipmentIds) {
+    try {
+      await confirmShipmentDispatch(id, { carrier }, user);
+      confirmedCount++;
+    } catch (err) {
+      console.error(`Failed to confirm shipment ${id}:`, err);
+      errors.push({ id, message: err.message });
+    }
+  }
+
+  return { success: true, count: confirmedCount, errors };
+}
+
+/**
+ * Підтвердження оплати відправлення (внесення фактично отриманої суми)
+ */
+export async function addShipmentPayment(shipmentId, { amount, paymentMethod, comment }, user = {}) {
+  if (!supabase) throw new Error("База даних не підключена");
+
+  const { shipment } = await getShipmentById(shipmentId);
+  if (!shipment) throw new Error("Відправлення не знайдено");
+
+  const payAmount = parseFloat(amount) || 0;
+  if (payAmount <= 0) throw new Error("Сума оплати повинна бути більше 0");
+
+  const newPaidAmount = (parseFloat(shipment.paid_amount) || 0) + payAmount;
+  const newDebtAmount = Math.max(0, (parseFloat(shipment.total_amount) || 0) - (parseFloat(shipment.advance_amount) || 0) - newPaidAmount);
+
+  const isFullyPaid = newDebtAmount <= 0;
+  const newStatus = isFullyPaid ? 'paid' : shipment.status;
+
+  // 1. Вставляємо запис про платіж
+  const { error: payErr } = await supabase
+    .from('shipment_payments')
+    .insert([{
+      shipment_id: shipmentId,
+      type: 'final_payment',
+      amount: payAmount,
+      currency: shipment.currency || 'UAH',
+      payment_method: paymentMethod || shipment.payment_method || 'cod',
+      comment: comment || 'Оплата відправлення',
+      user_email: user.email || 'Оператор',
+      user_name: user.name || 'Оператор'
+    }]);
+
+  if (payErr) throw payErr;
+
+  // 2. Оновлюємо відправлення (з авто-відновленням якщо колонка is_archived ще не створена)
+  const updatePayload = {
+    paid_amount: newPaidAmount,
+    debt_amount: newDebtAmount,
+    status: newStatus,
+    paid_at: isFullyPaid ? new Date().toISOString() : shipment.paid_at
+  };
+  if (isFullyPaid) {
+    updatePayload.is_archived = true;
+  }
+
+  let { data: updated, error: shipErr } = await supabase
+    .from('shipments')
+    .update(updatePayload)
+    .eq('id', shipmentId)
+    .select();
+
+  if (shipErr && (shipErr.message || '').includes('is_archived')) {
+    console.warn("Column 'is_archived' missing in shipments table. Retrying update without it.");
+    delete updatePayload.is_archived;
+    const retryRes = await supabase
+      .from('shipments')
+      .update(updatePayload)
+      .eq('id', shipmentId)
+      .select();
+    updated = retryRes.data;
+    shipErr = retryRes.error;
+  }
+
+  if (shipErr) throw shipErr;
+
+  // 3. Запис в аудит
+  logActivity({
+    userEmail: user.email || 'Оператор',
+    userName: user.name || 'Оператор',
+    actionType: 'UPDATE',
+    entityType: 'SHIPMENT',
+    entityId: shipmentId,
+    entityTitle: `Оплата відправлення: ${shipment.client_name}`,
+    details: {
+      action: 'ADD_PAYMENT',
+      paymentAmount: payAmount,
+      newDebtAmount,
+      isFullyPaid,
+      status: newStatus
+    }
+  });
+
+  return { success: true, shipment: updated?.[0] };
+}
+
+/**
+ * Ручне архівування / розархівування відправлення
+ */
+export async function toggleShipmentArchive(shipmentId, isArchived, user = {}) {
+  if (!supabase) throw new Error("База даних не підключена");
+
+  let { data: updated, error } = await supabase
+    .from('shipments')
+    .update({ is_archived: isArchived })
+    .eq('id', shipmentId)
+    .select();
+
+  if (error) {
+    if ((error.message || '').includes('is_archived') || error.code === 'PGRST204') {
+      throw new Error("Необхідно додати колонку 'is_archived' у Supabase. Виконайте наданий SQL-скрипт у SQL Editor.");
+    }
+    throw error;
+  }
+
+  logActivity({
+    userEmail: user.email || 'Оператор',
+    userName: user.name || 'Оператор',
+    actionType: 'UPDATE',
+    entityType: 'SHIPMENT',
+    entityId: shipmentId,
+    entityTitle: `${isArchived ? 'Перенесення в архів' : 'Повернення з архіву'} відправлення`,
+    details: { action: isArchived ? 'ARCHIVE' : 'UNARCHIVE' }
+  });
+
+  return { success: true, shipment: updated?.[0] };
+}
+
+/**
+ * Масове підтвердження повної оплати вибраних відправлень
+ */
+export async function batchAddShipmentPayments(shipmentIds = [], { paymentMethod, comment }, user = {}) {
+  if (!shipmentIds || shipmentIds.length === 0) return { success: true, count: 0 };
+  let count = 0;
+  const errors = [];
+
+  for (const id of shipmentIds) {
+    try {
+      const { shipment } = await getShipmentById(id);
+      if (shipment && shipment.debt_amount > 0) {
+        await addShipmentPayment(id, {
+          amount: shipment.debt_amount,
+          paymentMethod: paymentMethod || shipment.payment_method,
+          comment: comment || 'Масове підтвердження оплати'
+        }, user);
+        count++;
+      }
+    } catch (err) {
+      console.error(`Failed to pay shipment ${id}:`, err);
+      errors.push({ id, message: err.message });
+    }
+  }
+
+  return { success: true, count, errors };
+}
+
+/**
+ * Скасування / Повернення відправлення
+ */
+export async function cancelShipment(shipmentId, comment = '', user = {}) {
+  if (!supabase) throw new Error("База даних не підключена");
+
+  const { shipment, items } = await getShipmentById(shipmentId);
+  if (!shipment) throw new Error("Відправлення не знайдено");
+
+  // Якщо були складські списання, створюємо прихід або видаляємо списання
+  for (const item of items) {
+    if (item.operation_id) {
+      try {
+        await supabase
+          .from('operations')
+          .delete()
+          .eq('id', item.operation_id);
+      } catch (err) {
+        console.warn(`Could not delete operation ${item.operation_id}:`, err);
+      }
+    }
+  }
+
+  // Оновлюємо статус на cancelled
+  const { data: updated, error } = await supabase
+    .from('shipments')
+    .update({
+      status: 'cancelled',
+      comment: (shipment.comment || '') + (comment ? ` [Повернення: ${comment}]` : ' [Повернено]')
+    })
+    .eq('id', shipmentId)
+    .select();
+
+  if (error) throw error;
+
+  // Логування в аудит
+  logActivity({
+    userEmail: user.email || 'Оператор',
+    userName: user.name || 'Оператор',
+    actionType: 'DELETE',
+    entityType: 'SHIPMENT',
+    entityId: shipmentId,
+    entityTitle: `Скасування відправлення: ${shipment.client_name}`,
+    details: {
+      action: 'CANCEL_SHIPMENT',
+      comment
+    }
+  });
+
+  return { success: true, shipment: updated?.[0] };
+}
+
+/**
+ * Повне видалення відправлення (з очищенням товарів, платежів та складських списань)
+ */
+export async function deleteShipment(shipmentId, user = {}) {
+  if (!supabase) throw new Error("База даних не підключена");
+
+  const { shipment, items } = await getShipmentById(shipmentId);
+  if (!shipment) throw new Error("Відправлення не знайдено");
+
+  // 1. Видаляємо складські списання, якщо вони були створені
+  for (const item of (items || [])) {
+    if (item.operation_id) {
+      try {
+        await supabase.from('operations').delete().eq('id', item.operation_id);
+      } catch (err) {
+        console.warn(`Could not delete associated operation ${item.operation_id}:`, err);
+      }
+    }
+  }
+
+  // 2. Видаляємо товари відправлення
+  await supabase.from('shipment_items').delete().eq('shipment_id', shipmentId);
+
+  // 3. Видаляємо платежі відправлення
+  await supabase.from('shipment_payments').delete().eq('shipment_id', shipmentId);
+
+  // 4. Видаляємо саме відправлення
+  const { error } = await supabase.from('shipments').delete().eq('id', shipmentId);
+  if (error) throw error;
+
+  // 5. Логування в аудит
+  logActivity({
+    userEmail: user.email || 'Оператор',
+    userName: user.name || 'Оператор',
+    actionType: 'DELETE',
+    entityType: 'SHIPMENT',
+    entityId: shipmentId,
+    entityTitle: `Видалення відправлення: ${shipment.client_name}`,
+    details: { action: 'DELETE_SHIPMENT', shipmentNumber: shipment.shipment_number }
+  });
+
+  return { success: true };
+}
+
+/**
+ * Масове видалення вибраних відправлень
+ */
+export async function batchDeleteShipments(shipmentIds = [], user = {}) {
+  if (!shipmentIds || shipmentIds.length === 0) return { success: true, count: 0 };
+  let count = 0;
+  const errors = [];
+
+  for (const id of shipmentIds) {
+    try {
+      await deleteShipment(id, user);
+      count++;
+    } catch (err) {
+      console.error(`Failed to delete shipment ${id}:`, err);
+      errors.push({ id, message: err.message });
+    }
+  }
+
+  return { success: true, count, errors };
+}
+
