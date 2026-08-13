@@ -516,42 +516,12 @@ export default function ShipmentForm() {
             </div>
           </div>
 
-          {/* Shipping Address */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
-              Адреса відправки (довільний текст: Місто, № Нової пошти / адреса)
-            </label>
-            <input
-              type="text"
-              value={shippingAddress}
-              onChange={(e) => setShippingAddress(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-              placeholder="м. Львів, Відділення Нової Пошти №10..."
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            {/* Sender Dropdown */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
-                Від кого відправлено
-              </label>
-              <select
-                value={senderId}
-                onChange={handleSenderChange}
-                className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-              >
-                {senders.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-                <option value="ADD_NEW">➕ + Додати нового відправника...</option>
-              </select>
-            </div>
-
+          {/* Shipping Carrier & Sender */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Carrier */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
-                Перевізник / Доставка
+                Перевізник / Спосіб доставки *
               </label>
               <select
                 value={carrier}
@@ -559,21 +529,55 @@ export default function ShipmentForm() {
                   const val = e.target.value;
                   setCarrier(val);
                   if (val === 'Самовивіз' || val === 'pickup') {
-                    if (!shippingAddress || shippingAddress.startsWith('м.')) {
-                      setShippingAddress('Самовивіз зі складу');
-                    }
-                    if (!ttn) setTtn('Самовивіз');
+                    setShippingAddress('Самовивіз зі складу');
+                    setTtn('Самовивіз');
                   } else if (ttn === 'Самовивіз') {
                     setTtn('');
+                    if (shippingAddress === 'Самовивіз зі складу') setShippingAddress('');
                   }
                 }}
-                className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-sm font-semibold focus:ring-2 focus:ring-primary focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-sm font-bold focus:ring-2 focus:ring-primary focus:outline-none"
               >
                 <option value="Нова Пошта">🚚 Нова Пошта</option>
                 <option value="Самовивіз">🚗 Самовивіз зі склада</option>
               </select>
             </div>
+
+            {/* Sender Dropdown (Visible ONLY for Delivery, NOT Pickup) */}
+            {carrier !== 'Самовивіз' && carrier !== 'pickup' && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
+                  Від кого відправлено
+                </label>
+                <select
+                  value={senderId}
+                  onChange={handleSenderChange}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:outline-none"
+                >
+                  {senders.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                  <option value="ADD_NEW">➕ + Додати нового відправника...</option>
+                </select>
+              </div>
+            )}
           </div>
+
+          {/* Shipping Address (Visible ONLY for Delivery, NOT Pickup) */}
+          {carrier !== 'Самовивіз' && carrier !== 'pickup' && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
+                Адреса відправки (довільний текст: Місто, № Нової пошти / адреса)
+              </label>
+              <input
+                type="text"
+                value={shippingAddress}
+                onChange={(e) => setShippingAddress(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:outline-none"
+                placeholder="м. Львів, Відділення Нової Пошти №10..."
+              />
+            </div>
+          )}
         </div>
 
         {/* Step 2: Items Specification Table (1С/Баланси Клієнтів Style) */}
@@ -809,7 +813,7 @@ export default function ShipmentForm() {
             💳 3. Фінанси та Спосіб Оплати
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`grid grid-cols-1 ${carrier === 'Самовивіз' || carrier === 'pickup' ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4`}>
             {/* Payment Method */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
@@ -842,20 +846,21 @@ export default function ShipmentForm() {
               />
             </div>
 
-            {/* TTN */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
-                {carrier === 'Самовивіз' || carrier === 'pickup' ? 'Спосіб видачі' : '№ ТТН (якщо вже відомо)'}
-              </label>
-              <input
-                type="text"
-                value={carrier === 'Самовивіз' || carrier === 'pickup' ? 'Самовивіз зі складу' : ttn}
-                onChange={(e) => setTtn(e.target.value)}
-                disabled={carrier === 'Самовивіз' || carrier === 'pickup'}
-                className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:outline-none font-mono disabled:bg-amber-50 dark:disabled:bg-amber-950/40 disabled:text-amber-800 dark:disabled:text-amber-300 font-bold"
-                placeholder={carrier === 'Самовивіз' ? 'Самовивіз зі складу' : '204500000000...'}
-              />
-            </div>
+            {/* TTN (Visible ONLY for Delivery, NOT Pickup) */}
+            {carrier !== 'Самовивіз' && carrier !== 'pickup' && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
+                  № ТТН (якщо вже відомо)
+                </label>
+                <input
+                  type="text"
+                  value={ttn}
+                  onChange={(e) => setTtn(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:outline-none font-mono"
+                  placeholder="204500000000..."
+                />
+              </div>
+            )}
           </div>
 
           {/* Comment */}

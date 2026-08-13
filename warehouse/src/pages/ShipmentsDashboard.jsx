@@ -449,7 +449,7 @@ export default function ShipmentsDashboard() {
 
                       {/* Address */}
                       <td className="py-3 px-3 max-w-[200px] truncate text-xs text-gray-600 dark:text-neutral-300" title={ship.shipping_address}>
-                        {ship.shipping_address || '—'}
+                        {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз' ? '— (Самовивіз)' : (ship.shipping_address || '—')}
                       </td>
 
                       {/* TTN & Carrier */}
@@ -488,7 +488,7 @@ export default function ShipmentsDashboard() {
 
                       {/* Sender */}
                       <td className="py-3 px-3 text-xs text-gray-700 dark:text-neutral-300">
-                        {ship.sender_name || '—'}
+                        {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз' ? '—' : (ship.sender_name || '—')}
                       </td>
 
                       {/* Amount / Debt */}
