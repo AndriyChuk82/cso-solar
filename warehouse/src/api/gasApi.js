@@ -1486,9 +1486,11 @@ export async function getShipmentSenders() {
   if (!supabase) return { success: true, senders: defaultSenders };
 
   try {
-    // Авто-корекція друкарської помилки в базі даних Supabase
+    // Авто-корекція друкарських помилок та регістру в базі даних Supabase
     supabase.from('shipment_senders').update({ name: 'Пастушок Марія' }).eq('name', 'Мастушок Марія').then(() => {}).catch(() => {});
     supabase.from('shipments').update({ sender_name: 'Пастушок Марія' }).eq('sender_name', 'Мастушок Марія').then(() => {}).catch(() => {});
+    supabase.from('shipment_senders').update({ name: 'Пастушок Олег' }).ilike('name', 'пастушок олег').then(() => {}).catch(() => {});
+    supabase.from('shipments').update({ sender_name: 'Пастушок Олег' }).ilike('sender_name', 'пастушок олег').then(() => {}).catch(() => {});
 
     const { data, error } = await supabase
       .from('shipment_senders')
@@ -1499,11 +1501,13 @@ export async function getShipmentSenders() {
       return { success: true, senders: defaultSenders };
     }
     
-    // Заміна в існуючому масиві результатів якщо є
-    const sanitizedSenders = data.map(s => ({
-      ...s,
-      name: s.name === 'Мастушок Марія' ? 'Пастушок Марія' : s.name
-    }));
+    // Нормалізація імен відправників (наприклад, "пастушок олег" -> "Пастушок Олег")
+    const sanitizedSenders = data.map(s => {
+      let name = s.name ? s.name.trim() : '';
+      if (name === 'Мастушок Марія') name = 'Пастушок Марія';
+      if (name.toLowerCase() === 'пастушок олег') name = 'Пастушок Олег';
+      return { ...s, name };
+    });
 
     return { success: true, senders: sanitizedSenders };
   } catch (err) {
@@ -1517,7 +1521,13 @@ export async function getShipmentSenders() {
  */
 export async function addShipmentSender(name, user = {}) {
   if (!name || !name.trim()) throw new Error("Вкажіть ПІБ відправника");
-  const cleanName = name.trim();
+  
+  // Капіталізуємо кожне слово (напр. "пастушок олег" -> "Пастушок Олег")
+  const cleanName = name
+    .trim()
+    .split(/\s+/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 
   if (!supabase) throw new Error("База даних не підключена");
 
