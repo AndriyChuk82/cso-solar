@@ -1481,13 +1481,17 @@ export async function getActivityLogs(filters = {}) {
 export async function getShipmentSenders() {
   const defaultSenders = [
     { id: 'def-1', name: 'Пастушок Петро', active: true },
-    { id: 'def-2', name: 'Мастушок Марія', active: true },
+    { id: 'def-2', name: 'Пастушок Марія', active: true },
     { id: 'def-3', name: 'Пастушок Юра', active: true }
   ];
 
   if (!supabase) return { success: true, senders: defaultSenders };
 
   try {
+    // Авто-корекція друкарської помилки в базі даних Supabase
+    supabase.from('shipment_senders').update({ name: 'Пастушок Марія' }).eq('name', 'Мастушок Марія').then(() => {}).catch(() => {});
+    supabase.from('shipments').update({ sender_name: 'Пастушок Марія' }).eq('sender_name', 'Мастушок Марія').then(() => {}).catch(() => {});
+
     const { data, error } = await supabase
       .from('shipment_senders')
       .select('*')
@@ -1496,7 +1500,14 @@ export async function getShipmentSenders() {
     if (error || !data || data.length === 0) {
       return { success: true, senders: defaultSenders };
     }
-    return { success: true, senders: data };
+    
+    // Заміна в існуючому масиві результатів якщо є
+    const sanitizedSenders = data.map(s => ({
+      ...s,
+      name: s.name === 'Мастушок Марія' ? 'Пастушок Марія' : s.name
+    }));
+
+    return { success: true, senders: sanitizedSenders };
   } catch (err) {
     console.warn("Could not fetch shipment_senders from DB:", err);
     return { success: true, senders: defaultSenders };
