@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { getShipments, getShipmentSenders, deleteShipment, batchDeleteShipments, toggleShipmentArchive } from '../api/gasApi';
+import { batchTrackTtns } from '../api/novaPoshtaApi';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import ShipmentConfirmModal from '../components/ShipmentConfirmModal';
@@ -17,6 +18,10 @@ export default function ShipmentsDashboard() {
   const [shipments, setShipments] = useState([]);
   const [stats, setStats] = useState({});
   const [senders, setSenders] = useState([]);
+
+  // NP Live Tracking State
+  const [npTracking, setNpTracking] = useState({});
+  const [isTrackingLoading, setIsTrackingLoading] = useState(false);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -139,6 +144,25 @@ export default function ShipmentsDashboard() {
     }
   }
 
+  async function handleCheckNpStatuses() {
+    setIsTrackingLoading(true);
+    try {
+      const trackItems = shipments.map(s => ({ ttn: s.ttn, phone: s.client_phone, id: s.id }));
+      const res = await batchTrackTtns(trackItems);
+      if (res.success && res.results) {
+        setNpTracking(res.results);
+        const count = Object.keys(res.results).length;
+        showToast(`Живі статуси НП успішно оновлено (${count} ТТН)!`, 'success');
+      } else {
+        showToast(res.error || 'Не вдалося оновити статуси НП', 'error');
+      }
+    } catch (err) {
+      showToast(err.message || 'Помилка запиту до API НП', 'error');
+    } finally {
+      setIsTrackingLoading(false);
+    }
+  }
+
   const selectedShipments = shipments.filter(s => selectedIds.includes(s.id));
 
   const statusBadges = {
@@ -167,13 +191,25 @@ export default function ShipmentsDashboard() {
           </p>
         </div>
 
-        <button
-          onClick={() => navigate('/shipments/new')}
-          className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2"
-        >
-          <Plus size={18} />
-          Нове Відправлення
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleCheckNpStatuses}
+            disabled={isTrackingLoading}
+            className="px-3.5 py-2 bg-red-50 hover:bg-red-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-red-700 dark:text-red-300 border border-red-200 dark:border-neutral-600 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-2"
+            title="Перевірити живий стан відправлень безпосередньо у системі Нової Пошти"
+          >
+            <RefreshCw size={15} className={isTrackingLoading ? 'animate-spin' : ''} />
+            {isTrackingLoading ? 'Перевіряємо НП...' : '📡 Статуси з НП'}
+          </button>
+
+          <button
+            onClick={() => navigate('/shipments/new')}
+            className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2"
+          >
+            <Plus size={18} />
+            Нове Відправлення
+          </button>
+        </div>
       </div>
 
       {/* Summary KPI Cards */}
@@ -469,9 +505,32 @@ export default function ShipmentsDashboard() {
                               <strong className="font-mono text-xs font-bold text-gray-900 dark:text-white tracking-tight whitespace-nowrap block">
                                 {ship.ttn}
                               </strong>
-                              <span className="text-[10px] text-gray-400 dark:text-neutral-500 uppercase block font-semibold">
-                                {ship.carrier || 'Нова Пошта'}
-                              </span>
+                              {npTracking[ship.ttn] ? (
+                                <span
+                                  className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded border w-fit block mt-0.5 ${
+                                    npTracking[ship.ttn].statusGroup === 'DELIVERED'
+                                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
+                                      : npTracking[ship.ttn].statusGroup === 'ARRIVED'
+                                      ? 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950 dark:text-purple-300'
+                                      : npTracking[ship.ttn].statusGroup === 'REFUSED'
+                                      ? 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-300'
+                                      : 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
+                                  }`}
+                                  title={npTracking[ship.ttn].statusText}
+                                >
+                                  {npTracking[ship.ttn].statusGroup === 'DELIVERED'
+                                    ? '🟢 Отримано'
+                                    : npTracking[ship.ttn].statusGroup === 'ARRIVED'
+                                    ? '📍 Прибув у НП'
+                                    : npTracking[ship.ttn].statusGroup === 'REFUSED'
+                                    ? '🔴 Відмова'
+                                    : '🚚 В дорозі'}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-gray-400 dark:text-neutral-500 uppercase block font-semibold">
+                                  {ship.carrier || 'Нова Пошта'}
+                                </span>
+                              )}
                             </>
                           ) : (
                             <>

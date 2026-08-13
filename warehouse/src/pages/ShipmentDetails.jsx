@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getShipmentById, cancelShipment, deleteShipment } from '../api/gasApi';
+import { trackTtn } from '../api/novaPoshtaApi';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import ShipmentConfirmModal from '../components/ShipmentConfirmModal';
 import ShipmentPaymentModal from '../components/ShipmentPaymentModal';
 import ShipmentPrintModal from '../components/ShipmentPrintModal';
-import { ArrowLeft, Truck, DollarSign, RotateCcw, Calendar, User, MapPin, Package, Pencil, Printer, Trash2 } from 'lucide-react';
+import { ArrowLeft, Truck, DollarSign, RotateCcw, Calendar, User, MapPin, Package, Pencil, Printer, Trash2, RefreshCw } from 'lucide-react';
 
 export default function ShipmentDetails() {
   const { id } = useParams();
@@ -16,6 +17,11 @@ export default function ShipmentDetails() {
 
   const [loading, setLoading] = useState(true);
   const [shipmentData, setShipmentData] = useState(null);
+
+  // Live Nova Poshta Tracking State
+  const [npLiveStatus, setNpLiveStatus] = useState(null);
+  const [npLoading, setNpLoading] = useState(false);
+  const [npError, setNpError] = useState(null);
 
   // Modals
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -33,6 +39,9 @@ export default function ShipmentDetails() {
       const res = await getShipmentById(id);
       if (res.success) {
         setShipmentData(res);
+        if (res.shipment?.ttn && res.shipment.ttn !== 'Самовивіз') {
+          fetchLiveTracking(res.shipment.ttn, res.shipment.client_phone);
+        }
       } else {
         showToast("Не вдалося завантажити деталі відправлення", "error");
       }
@@ -41,6 +50,22 @@ export default function ShipmentDetails() {
       showToast("Помилка завантаження даних", "error");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchLiveTracking(ttn, phone) {
+    if (!ttn || ttn === 'Самовивіз' || ttn.length < 10) return;
+    setNpLoading(true);
+    setNpError(null);
+    try {
+      const res = await trackTtn(ttn, phone);
+      if (res.success) {
+        setNpLiveStatus(res);
+      }
+    } catch (err) {
+      setNpError(err.message || 'Не вдалося завантажити статус з НП');
+    } finally {
+      setNpLoading(false);
     }
   }
 
@@ -304,6 +329,86 @@ export default function ShipmentDetails() {
           </div>
         </div>
       </div>
+
+      {/* Live Nova Poshta Tracking Widget Box */}
+      {shipment.ttn && shipment.ttn !== 'Самовивіз' && (
+        <div className="bg-gradient-to-br from-red-50 to-amber-50 dark:from-neutral-800 dark:to-neutral-900 p-5 rounded-2xl border border-red-200 dark:border-neutral-700 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-extrabold text-red-900 dark:text-red-300 uppercase tracking-wider flex items-center gap-2">
+              <Truck size={18} className="text-red-600" />
+              📡 Живий статус Нової Пошти (ТТН: <span className="font-mono">{shipment.ttn}</span>)
+            </h3>
+            <button
+              onClick={() => fetchLiveTracking(shipment.ttn, shipment.client_phone)}
+              disabled={npLoading}
+              className="text-xs font-semibold text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-neutral-700 px-3 py-1 rounded-lg transition-colors flex items-center gap-1.5 border border-red-200 dark:border-neutral-600"
+            >
+              <RefreshCw size={14} className={npLoading ? 'animate-spin' : ''} />
+              Оновити
+            </button>
+          </div>
+
+          {npLoading ? (
+            <div className="py-4 text-center text-xs font-semibold text-gray-500 dark:text-neutral-400 animate-pulse">
+              Отримання статусу з Нової Пошти...
+            </div>
+          ) : npError ? (
+            <div className="text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 p-3 rounded-xl border border-rose-200">
+              ⚠️ {npError}
+            </div>
+          ) : npLiveStatus ? (
+            <div className="space-y-3 text-xs">
+              <div className="p-3 bg-white dark:bg-neutral-800 rounded-xl border border-red-100 dark:border-neutral-700 shadow-sm">
+                <div className="font-extrabold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                  <span className="text-base">
+                    {npLiveStatus.statusGroup === 'DELIVERED' ? '🟢' : npLiveStatus.statusGroup === 'ARRIVED' ? '📍' : npLiveStatus.statusGroup === 'REFUSED' ? '🔴' : '🚚'}
+                  </span>
+                  {npLiveStatus.statusText}
+                </div>
+                {npLiveStatus.warehouseRecipient && (
+                  <div className="text-gray-600 dark:text-neutral-300 mt-1 font-medium">
+                    📍 {npLiveStatus.warehouseRecipient}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
+                {npLiveStatus.scheduledDeliveryDate && (
+                  <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <span className="text-gray-400 block font-semibold">Очікується доставка:</span>
+                    <strong className="text-gray-900 dark:text-white font-bold">{npLiveStatus.scheduledDeliveryDate}</strong>
+                  </div>
+                )}
+
+                {npLiveStatus.actualDeliveryDate && (
+                  <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <span className="text-gray-400 block font-semibold">Дата вручення:</span>
+                    <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{npLiveStatus.actualDeliveryDate}</strong>
+                  </div>
+                )}
+
+                {npLiveStatus.redeliverySum && parseFloat(npLiveStatus.redeliverySum) > 0 && (
+                  <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <span className="text-gray-400 block font-semibold">Післяплата (накладений):</span>
+                    <strong className="text-amber-600 dark:text-amber-400 font-bold">{npLiveStatus.redeliverySum} ₴</strong>
+                  </div>
+                )}
+
+                {npLiveStatus.documentWeight && (
+                  <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <span className="text-gray-400 block font-semibold">Вага вантажу:</span>
+                    <strong className="text-gray-800 dark:text-neutral-200 font-bold">{npLiveStatus.documentWeight} кг</strong>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-gray-500 italic">
+              Натисніть кнопку «Оновити», щоб завантажити стан ТТН з Нової Пошти.
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Items Table */}
       <div className="bg-white dark:bg-neutral-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-700 space-y-4">
