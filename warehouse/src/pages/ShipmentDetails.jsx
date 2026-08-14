@@ -7,7 +7,8 @@ import { useAuth } from '../context/AuthContext';
 import ShipmentConfirmModal from '../components/ShipmentConfirmModal';
 import ShipmentPaymentModal from '../components/ShipmentPaymentModal';
 import ShipmentPrintModal from '../components/ShipmentPrintModal';
-import { ArrowLeft, Truck, DollarSign, RotateCcw, Calendar, User, MapPin, Package, Pencil, Printer, Trash2, RefreshCw } from 'lucide-react';
+import { DocumentGeneratorModal } from '../components/DocumentGeneratorModal';
+import { ArrowLeft, Truck, DollarSign, RotateCcw, Calendar, User, MapPin, Package, Pencil, Printer, Trash2, RefreshCw, FileText, Shield } from 'lucide-react';
 
 export default function ShipmentDetails() {
   const { id } = useParams();
@@ -27,6 +28,8 @@ export default function ShipmentDetails() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showDocGenerator, setShowDocGenerator] = useState(false);
+  const [docModalType, setDocModalType] = useState('warranty');
   const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
@@ -458,6 +461,49 @@ export default function ShipmentDetails() {
             </tbody>
           </table>
         </div>
+
+        {/* Document Printing Bar */}
+        <div className="pt-4 border-t border-gray-100 dark:border-neutral-700 flex flex-wrap items-center justify-between gap-3">
+          <div className="text-xs font-semibold text-gray-500 dark:text-neutral-400 flex items-center gap-1.5">
+            <FileText size={16} className="text-primary" />
+            Формування офіційних складських документів:
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => {
+                setDocModalType('warranty');
+                setShowDocGenerator(true);
+              }}
+              className="px-3.5 py-2 text-xs font-bold text-amber-900 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200/80 dark:border-amber-800 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              <Shield size={15} className="text-amber-600" />
+              🛡️ Друк Гарантії
+            </button>
+
+            <button
+              onClick={() => {
+                setDocModalType('expense');
+                setShowDocGenerator(true);
+              }}
+              className="px-3.5 py-2 text-xs font-bold text-blue-900 dark:text-blue-200 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200/80 dark:border-blue-800 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              <Package size={15} className="text-blue-600" />
+              📋 Видаткова накладна
+            </button>
+
+            <button
+              onClick={() => {
+                setDocModalType('all');
+                setShowDocGenerator(true);
+              }}
+              className="px-3.5 py-2 text-xs font-bold text-gray-700 dark:text-neutral-200 bg-gray-100 dark:bg-neutral-700 hover:bg-gray-200 dark:hover:bg-neutral-600 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              <Printer size={15} />
+              📄 Всі документи / Друк...
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Financial Summary & Payments */}
@@ -584,6 +630,33 @@ export default function ShipmentDetails() {
         <ShipmentPrintModal
           shipments={[{ ...shipment, shipment_items: items }]}
           onClose={() => setShowPrintModal(false)}
+        />
+      )}
+
+      {showDocGenerator && (
+        <DocumentGeneratorModal
+          isOpen={showDocGenerator}
+          onClose={() => setShowDocGenerator(false)}
+          initialDocType={docModalType === 'all' ? 'warranty' : docModalType}
+          issueData={{
+            buyerName: shipment.client_name || '',
+            buyerPhone: shipment.client_phone || '',
+            buyerAddress: shipment.shipping_address || '',
+            senderName: shipment.sender_name || '',
+            ttn: shipment.ttn || '',
+            number: shipment.shipment_number || `ВН-${shipment.id.slice(0, 8)}`,
+            issueNumber: shipment.shipment_number || `ВН-${shipment.id.slice(0, 8)}`,
+            date: shipment.created_at ? new Date(shipment.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            items: items.map(it => ({
+              name: it.product_name || it.product_id,
+              productName: it.product_name || it.product_id,
+              quantity: parseFloat(it.quantity) || 1,
+              unit: it.unit || 'шт',
+              price: parseFloat(it.price) || 0,
+              warrantyMonths: 12,
+              serialNumbers: ''
+            }))
+          }}
         />
       )}
     </div>

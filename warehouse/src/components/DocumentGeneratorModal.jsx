@@ -12,8 +12,8 @@ const documentTypes = [
   { type: 'invoice', label: 'Рахунок', icon: Receipt, description: 'Рахунок на оплату' },
 ];
 
-export function DocumentGeneratorModal({ isOpen, onClose, onComplete, issueData }) {
-  const [selectedDoc, setSelectedDoc] = useState('warranty');
+export function DocumentGeneratorModal({ isOpen, onClose, onComplete, issueData, initialDocType = 'warranty' }) {
+  const [selectedDoc, setSelectedDoc] = useState(initialDocType);
   const [sealType, setSealType] = useState('none');
   const [docNumber, setDocNumber] = useState('');
   const [showTTNModal, setShowTTNModal] = useState(false);
@@ -21,10 +21,13 @@ export function DocumentGeneratorModal({ isOpen, onClose, onComplete, issueData 
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   React.useEffect(() => {
-    if (isOpen && issueData) {
-      setDocNumber(issueData.number || issueData.issueNumber || `ВН-${new Date().toLocaleDateString('uk-UA').replace(/\./g, '')}-01`);
+    if (isOpen) {
+      if (initialDocType) setSelectedDoc(initialDocType);
+      if (issueData) {
+        setDocNumber(issueData.number || issueData.issueNumber || `ВН-${new Date().toLocaleDateString('uk-UA').replace(/\./g, '')}-01`);
+      }
     }
-  }, [isOpen, issueData]);
+  }, [isOpen, issueData, initialDocType]);
 
   if (!isOpen) return null;
 
