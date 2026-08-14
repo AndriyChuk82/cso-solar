@@ -368,16 +368,20 @@ export default function ShipmentDetails() {
             </div>
           ) : npLiveStatus ? (
             <div className="space-y-3 text-xs">
-              <div className="p-3 bg-white dark:bg-neutral-800 rounded-xl border border-red-100 dark:border-neutral-700 shadow-sm">
+              <div className="p-3 bg-white dark:bg-neutral-800 rounded-xl border border-red-100 dark:border-neutral-700 shadow-sm space-y-1">
                 <div className="font-extrabold text-sm text-gray-900 dark:text-white flex items-center gap-2">
                   <span className="text-base">
                     {npLiveStatus.statusGroup === 'DELIVERED' ? '🟢' : npLiveStatus.statusGroup === 'ARRIVED' ? '📍' : npLiveStatus.statusGroup === 'REFUSED' ? '🔴' : '🚚'}
                   </span>
                   {npLiveStatus.statusText}
                 </div>
-                {npLiveStatus.warehouseRecipient && (
-                  <div className="text-gray-600 dark:text-neutral-300 mt-1 font-medium">
-                    📍 {npLiveStatus.warehouseRecipient}
+                {(npLiveStatus.cityRecipient || npLiveStatus.warehouseRecipient) && (
+                  <div className="text-gray-700 dark:text-neutral-200 text-xs font-semibold flex items-center gap-1.5 pt-0.5">
+                    <span>📍</span>
+                    <span>
+                      <strong>Пункт призначення:</strong> {npLiveStatus.cityRecipient ? `${npLiveStatus.cityRecipient}` : ''}
+                      {npLiveStatus.warehouseRecipient ? ` (${npLiveStatus.warehouseRecipient})` : ''}
+                    </span>
                   </div>
                 )}
               </div>
@@ -397,10 +401,10 @@ export default function ShipmentDetails() {
                   </div>
                 )}
 
-                {npLiveStatus.redeliverySum && parseFloat(npLiveStatus.redeliverySum) > 0 && (
+                {npLiveStatus.documentCost && (
                   <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700">
-                    <span className="text-gray-400 block font-semibold">Післяплата (накладений):</span>
-                    <strong className="text-amber-600 dark:text-amber-400 font-bold">{npLiveStatus.redeliverySum} ₴</strong>
+                    <span className="text-gray-400 block font-semibold">Вартість доставки:</span>
+                    <strong className="text-blue-600 dark:text-blue-400 font-bold">{npLiveStatus.documentCost} ₴</strong>
                   </div>
                 )}
 
@@ -408,6 +412,22 @@ export default function ShipmentDetails() {
                   <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700">
                     <span className="text-gray-400 block font-semibold">Вага вантажу:</span>
                     <strong className="text-gray-800 dark:text-neutral-200 font-bold">{npLiveStatus.documentWeight} кг</strong>
+                  </div>
+                )}
+
+                {npLiveStatus.redeliverySum && parseFloat(npLiveStatus.redeliverySum) > 0 && (
+                  <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <span className="text-gray-400 block font-semibold">Післяплата (накладений):</span>
+                    <strong className="text-amber-600 dark:text-amber-400 font-bold">{npLiveStatus.redeliverySum} ₴</strong>
+                  </div>
+                )}
+
+                {(npLiveStatus.cityRecipient || npLiveStatus.warehouseRecipient) && (
+                  <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 col-span-2">
+                    <span className="text-gray-400 block font-semibold">📍 Кінцевий пункт призначення:</span>
+                    <strong className="text-gray-900 dark:text-white font-bold block truncate" title={`${npLiveStatus.cityRecipient || ''} ${npLiveStatus.warehouseRecipient || ''}`}>
+                      {npLiveStatus.cityRecipient ? `${npLiveStatus.cityRecipient}, ` : ''}{npLiveStatus.warehouseRecipient || ''}
+                    </strong>
                   </div>
                 )}
               </div>
