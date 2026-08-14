@@ -386,47 +386,52 @@ export default function ShipmentDetails() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
-                {npLiveStatus.scheduledDeliveryDate && (
-                  <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700">
-                    <span className="text-gray-400 block font-semibold">Очікується доставка:</span>
-                    <strong className="text-gray-900 dark:text-white font-bold">{npLiveStatus.scheduledDeliveryDate}</strong>
+              <div className="flex flex-wrap md:flex-nowrap gap-2 text-[11px]">
+                {npLiveStatus.actualDeliveryDate ? (
+                  <div className="flex-1 min-w-[130px] bg-white dark:bg-neutral-800 p-2 rounded-xl border border-emerald-200 dark:border-emerald-900/50">
+                    <span className="text-emerald-600 dark:text-emerald-400 block font-semibold">🟢 Вручено:</span>
+                    <strong className="text-emerald-700 dark:text-emerald-300 font-bold">
+                      {npLiveStatus.actualDeliveryDate.replace(/\s*\d{2}:\d{2}:\d{2}$/, '')}
+                    </strong>
                   </div>
-                )}
-
-                {npLiveStatus.actualDeliveryDate && (
-                  <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700">
-                    <span className="text-gray-400 block font-semibold">Дата вручення:</span>
-                    <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{npLiveStatus.actualDeliveryDate}</strong>
+                ) : npLiveStatus.scheduledDeliveryDate ? (
+                  <div className="flex-1 min-w-[130px] bg-white dark:bg-neutral-800 p-2 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <span className="text-gray-400 block font-semibold">📅 Доставка:</span>
+                    <strong className="text-gray-900 dark:text-white font-bold">
+                      {npLiveStatus.scheduledDeliveryDate.replace(/\s*\d{2}:\d{2}:\d{2}$/, '')}
+                    </strong>
                   </div>
-                )}
+                ) : null}
 
                 {npLiveStatus.documentCost && (
-                  <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700">
-                    <span className="text-gray-400 block font-semibold">Вартість доставки:</span>
+                  <div className="flex-1 min-w-[110px] bg-white dark:bg-neutral-800 p-2 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <span className="text-gray-400 block font-semibold">💰 Вартість:</span>
                     <strong className="text-blue-600 dark:text-blue-400 font-bold">{npLiveStatus.documentCost} ₴</strong>
                   </div>
                 )}
 
                 {npLiveStatus.documentWeight && (
-                  <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700">
-                    <span className="text-gray-400 block font-semibold">Вага вантажу:</span>
+                  <div className="flex-1 min-w-[90px] bg-white dark:bg-neutral-800 p-2 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <span className="text-gray-400 block font-semibold">⚖️ Вага:</span>
                     <strong className="text-gray-800 dark:text-neutral-200 font-bold">{npLiveStatus.documentWeight} кг</strong>
                   </div>
                 )}
 
                 {npLiveStatus.redeliverySum && parseFloat(npLiveStatus.redeliverySum) > 0 && (
-                  <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700">
-                    <span className="text-gray-400 block font-semibold">Післяплата (накладений):</span>
+                  <div className="flex-1 min-w-[110px] bg-white dark:bg-neutral-800 p-2 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <span className="text-gray-400 block font-semibold">💵 Післяплата:</span>
                     <strong className="text-amber-600 dark:text-amber-400 font-bold">{npLiveStatus.redeliverySum} ₴</strong>
                   </div>
                 )}
 
                 {(npLiveStatus.cityRecipient || npLiveStatus.warehouseRecipient) && (
-                  <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 col-span-2">
-                    <span className="text-gray-400 block font-semibold">📍 Кінцевий пункт призначення:</span>
-                    <strong className="text-gray-900 dark:text-white font-bold block truncate" title={`${npLiveStatus.cityRecipient || ''} ${npLiveStatus.warehouseRecipient || ''}`}>
-                      {npLiveStatus.cityRecipient ? `${npLiveStatus.cityRecipient}, ` : ''}{npLiveStatus.warehouseRecipient || ''}
+                  <div className="flex-[1.5] min-w-[150px] bg-white dark:bg-neutral-800 p-2 rounded-xl border border-gray-200 dark:border-neutral-700">
+                    <span className="text-gray-400 block font-semibold">📍 Пункт:</span>
+                    <strong
+                      className="text-gray-900 dark:text-white font-bold block truncate"
+                      title={`${npLiveStatus.cityRecipient || ''} ${npLiveStatus.warehouseRecipient ? `(${npLiveStatus.warehouseRecipient})` : ''}`}
+                    >
+                      {npLiveStatus.cityRecipient || ''}{npLiveStatus.warehouseRecipient ? `, ${npLiveStatus.warehouseRecipient}` : ''}
                     </strong>
                   </div>
                 )}
