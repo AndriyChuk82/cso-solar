@@ -433,7 +433,7 @@ export default function ShipmentsDashboard() {
                   <th className="py-3 px-3">Адреса відправки</th>
                   <th className="py-3 px-3">ТТН & Перевізник</th>
                   <th className="py-3 px-3">Від кого</th>
-                  <th className="py-3 px-3 text-right">Сума / Борг</th>
+                  <th className="py-3 px-4 text-right min-w-[170px]">Сума / Борг</th>
                   <th className="py-3 px-3">Оплата</th>
                   <th className="py-3 px-3 text-center">Дії</th>
                 </tr>
@@ -558,21 +558,21 @@ export default function ShipmentsDashboard() {
                       </td>
 
                       {/* Amount / Debt */}
-                      <td className="py-3 px-3 text-right">
-                        <div className="font-bold text-gray-900 dark:text-white text-xs">
-                          {ship.total_amount} {ship.currency}
+                      <td className="py-3 px-4 text-right min-w-[170px]">
+                        <div className="font-black text-gray-900 dark:text-white text-sm whitespace-nowrap">
+                          {parseFloat(ship.total_amount || 0).toLocaleString('uk-UA')} {ship.currency}
                         </div>
                         {parseFloat(ship.debt_amount) > 0 ? (
-                          <div className={`text-xs font-black flex items-center justify-end gap-1 mt-0.5 ${
+                          <div className={`text-xs font-black flex items-center justify-end gap-1 mt-0.5 whitespace-nowrap ${
                             ship.status === 'shipped' 
                               ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded-md border border-red-200 dark:border-red-800' 
                               : 'text-amber-600 dark:text-amber-400'
                           }`}>
                             {ship.status === 'shipped' && <span className="animate-pulse">🔴</span>}
-                            Борг: {ship.debt_amount} {ship.currency}
+                            Борг: {parseFloat(ship.debt_amount || 0).toLocaleString('uk-UA')} {ship.currency}
                           </div>
                         ) : (
-                          <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                          <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 whitespace-nowrap">
                             ✓ Оплачено
                           </div>
                         )}
@@ -585,14 +585,14 @@ export default function ShipmentsDashboard() {
 
                       {/* Actions */}
                       <td className="py-3 px-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
+                        <div className="flex items-center justify-center gap-1.5">
                           {ship.status === 'reserved' && (
                             <button
                               onClick={() => setConfirmModalData({ isOpen: true, shipment: ship, isBatch: false })}
                               className="p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
                               title={ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' ? "Підтвердити видачу товару (Самовивіз)" : "Підтвердити відправку"}
                             >
-                              <Truck size={16} />
+                              <Truck size={17} />
                             </button>
                           )}
 
@@ -602,7 +602,7 @@ export default function ShipmentsDashboard() {
                               className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
                               title="Підтвердити оплату"
                             >
-                              <DollarSign size={16} />
+                              <DollarSign size={17} />
                             </button>
                           )}
 
@@ -611,50 +611,8 @@ export default function ShipmentsDashboard() {
                             className="p-1.5 text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
                             title="Редагувати накладну"
                           >
-                            <Pencil size={16} />
+                            <Pencil size={17} />
                           </Link>
-
-                          <button
-                            onClick={() => setPrintModalData({ isOpen: true, shipments: [ship] })}
-                            className="p-1.5 text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
-                            title="Друк накладної"
-                          >
-                            <Printer size={16} />
-                          </button>
-
-                          <Link
-                            to={`/shipments/${ship.id}`}
-                            className="p-1.5 text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
-                            title="Деталі відправлення"
-                          >
-                            <Eye size={16} />
-                          </Link>
-
-                          {ship.is_archived ? (
-                            <button
-                              onClick={() => handleToggleArchive(ship, false)}
-                              className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                              title="Розархівувати (повернути з архіву)"
-                            >
-                              <ArchiveRestore size={16} />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleToggleArchive(ship, true)}
-                              className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-neutral-200 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
-                              title="Перенести в архів"
-                            >
-                              <Archive size={16} />
-                            </button>
-                          )}
-
-                          <button
-                            onClick={() => handleDeleteSingle(ship)}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            title="Видалити відправлення"
-                          >
-                            <Trash2 size={16} />
-                          </button>
                         </div>
                       </td>
                     </tr>
