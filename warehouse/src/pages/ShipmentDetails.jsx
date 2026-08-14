@@ -423,18 +423,6 @@ export default function ShipmentDetails() {
                     <strong className="text-amber-600 dark:text-amber-400 font-bold">{npLiveStatus.redeliverySum} ₴</strong>
                   </div>
                 )}
-
-                {(npLiveStatus.cityRecipient || npLiveStatus.warehouseRecipient) && (
-                  <div className="flex-[1.5] min-w-[150px] bg-white dark:bg-neutral-800 p-2 rounded-xl border border-gray-200 dark:border-neutral-700">
-                    <span className="text-gray-400 block font-semibold">📍 Пункт:</span>
-                    <strong
-                      className="text-gray-900 dark:text-white font-bold block truncate"
-                      title={`${npLiveStatus.cityRecipient || ''} ${npLiveStatus.warehouseRecipient ? `(${npLiveStatus.warehouseRecipient})` : ''}`}
-                    >
-                      {npLiveStatus.cityRecipient || ''}{npLiveStatus.warehouseRecipient ? `, ${npLiveStatus.warehouseRecipient}` : ''}
-                    </strong>
-                  </div>
-                )}
               </div>
             </div>
           ) : (
