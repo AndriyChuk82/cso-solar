@@ -523,15 +523,15 @@ export default function ShipmentsDashboard() {
                                       ? 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-300'
                                       : 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
                                   }`}
-                                  title={npTracking[ship.ttn].statusText}
+                                  title={`${npTracking[ship.ttn].statusText}${npTracking[ship.ttn].actualDeliveryDate ? ` (Дата вручення: ${npTracking[ship.ttn].actualDeliveryDate})` : ''}`}
                                 >
                                   {npTracking[ship.ttn].statusGroup === 'DELIVERED'
-                                    ? '🟢 Отримано'
+                                    ? `🟢 Отримано ${npTracking[ship.ttn].actualDeliveryDate ? npTracking[ship.ttn].actualDeliveryDate.split(' ')[0].split('.').slice(0,2).join('.') : ''}`
                                     : npTracking[ship.ttn].statusGroup === 'ARRIVED'
                                     ? '📍 Прибув у НП'
                                     : npTracking[ship.ttn].statusGroup === 'REFUSED'
                                     ? '🔴 Відмова'
-                                    : '🚚 В дорозі'}
+                                    : `🚚 В дорозі ${npTracking[ship.ttn].scheduledDeliveryDate ? `(${npTracking[ship.ttn].scheduledDeliveryDate.split(' ')[0].split('.').slice(0,2).join('.')})` : ''}`}
                                 </span>
                               ) : (
                                 <span className="text-[10px] text-gray-400 dark:text-neutral-500 uppercase block font-semibold">
