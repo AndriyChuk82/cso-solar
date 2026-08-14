@@ -56,8 +56,10 @@ export default function ShipmentsDashboard() {
       });
 
       if (res.success) {
-        setShipments(res.shipments || []);
+        const list = res.shipments || [];
+        setShipments(list);
         setStats(res.stats || {});
+        autoTrackTtns(list);
       } else {
         setLoadError(res.error);
         showToast(res.error || "Помилка завантаження відправлень", "error");
@@ -67,6 +69,23 @@ export default function ShipmentsDashboard() {
       showToast("Помилка підключення до сервера", "error");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function autoTrackTtns(list) {
+    if (!list || list.length === 0) return;
+    const ttnsToTrack = list
+      .filter(s => s.ttn && s.ttn !== 'Самовивіз' && s.ttn.length >= 10)
+      .map(s => ({ ttn: s.ttn, phone: s.client_phone, id: s.id }));
+    if (ttnsToTrack.length === 0) return;
+    
+    try {
+      const res = await batchTrackTtns(ttnsToTrack);
+      if (res.success && res.results) {
+        setNpTracking(prev => ({ ...prev, ...res.results }));
+      }
+    } catch (err) {
+      console.warn("Auto NP tracking error:", err);
     }
   }
 
@@ -191,25 +210,13 @@ export default function ShipmentsDashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleCheckNpStatuses}
-            disabled={isTrackingLoading}
-            className="px-3.5 py-2 bg-red-50 hover:bg-red-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-red-700 dark:text-red-300 border border-red-200 dark:border-neutral-600 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-2"
-            title="Перевірити живий стан відправлень безпосередньо у системі Нової Пошти"
-          >
-            <RefreshCw size={15} className={isTrackingLoading ? 'animate-spin' : ''} />
-            {isTrackingLoading ? 'Перевіряємо НП...' : '📡 Статуси з НП'}
-          </button>
-
-          <button
-            onClick={() => navigate('/shipments/new')}
-            className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2"
-          >
-            <Plus size={18} />
-            Нове Відправлення
-          </button>
-        </div>
+        <button
+          onClick={() => navigate('/shipments/new')}
+          className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2"
+        >
+          <Plus size={18} />
+          Нове Відправлення
+        </button>
       </div>
 
       {/* Summary KPI Cards */}
