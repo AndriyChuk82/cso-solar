@@ -386,17 +386,17 @@ export default function ShipmentDetails() {
                 )}
               </div>
 
-              <div className="flex flex-wrap md:flex-nowrap gap-2 text-[11px]">
+              <div className="flex flex-wrap items-center gap-2.5 text-xs">
                 {npLiveStatus.actualDeliveryDate ? (
-                  <div className="flex-1 min-w-[130px] bg-white dark:bg-neutral-800 p-2 rounded-xl border border-emerald-200 dark:border-emerald-900/50">
-                    <span className="text-emerald-600 dark:text-emerald-400 block font-semibold">🟢 Вручено:</span>
+                  <div className="bg-white dark:bg-neutral-800 px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-900/50 flex items-center gap-1.5 whitespace-nowrap shadow-sm">
+                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">🟢 Вручено:</span>
                     <strong className="text-emerald-700 dark:text-emerald-300 font-bold">
                       {npLiveStatus.actualDeliveryDate.replace(/\s*\d{2}:\d{2}:\d{2}$/, '')}
                     </strong>
                   </div>
                 ) : npLiveStatus.scheduledDeliveryDate ? (
-                  <div className="flex-1 min-w-[130px] bg-white dark:bg-neutral-800 p-2 rounded-xl border border-gray-200 dark:border-neutral-700">
-                    <span className="text-gray-400 block font-semibold">📅 Доставка:</span>
+                  <div className="bg-white dark:bg-neutral-800 px-3 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 flex items-center gap-1.5 whitespace-nowrap shadow-sm">
+                    <span className="text-gray-500 dark:text-neutral-400 font-semibold">📅 Доставка:</span>
                     <strong className="text-gray-900 dark:text-white font-bold">
                       {npLiveStatus.scheduledDeliveryDate.replace(/\s*\d{2}:\d{2}:\d{2}$/, '')}
                     </strong>
@@ -404,22 +404,22 @@ export default function ShipmentDetails() {
                 ) : null}
 
                 {npLiveStatus.documentCost && (
-                  <div className="flex-1 min-w-[110px] bg-white dark:bg-neutral-800 p-2 rounded-xl border border-gray-200 dark:border-neutral-700">
-                    <span className="text-gray-400 block font-semibold">💰 Вартість:</span>
+                  <div className="bg-white dark:bg-neutral-800 px-3 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 flex items-center gap-1.5 whitespace-nowrap shadow-sm">
+                    <span className="text-gray-500 dark:text-neutral-400 font-semibold">💰 Вартість:</span>
                     <strong className="text-blue-600 dark:text-blue-400 font-bold">{npLiveStatus.documentCost} ₴</strong>
                   </div>
                 )}
 
                 {npLiveStatus.documentWeight && (
-                  <div className="flex-1 min-w-[90px] bg-white dark:bg-neutral-800 p-2 rounded-xl border border-gray-200 dark:border-neutral-700">
-                    <span className="text-gray-400 block font-semibold">⚖️ Вага:</span>
+                  <div className="bg-white dark:bg-neutral-800 px-3 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 flex items-center gap-1.5 whitespace-nowrap shadow-sm">
+                    <span className="text-gray-500 dark:text-neutral-400 font-semibold">⚖️ Вага:</span>
                     <strong className="text-gray-800 dark:text-neutral-200 font-bold">{npLiveStatus.documentWeight} кг</strong>
                   </div>
                 )}
 
                 {npLiveStatus.redeliverySum && parseFloat(npLiveStatus.redeliverySum) > 0 && (
-                  <div className="flex-1 min-w-[110px] bg-white dark:bg-neutral-800 p-2 rounded-xl border border-gray-200 dark:border-neutral-700">
-                    <span className="text-gray-400 block font-semibold">💵 Післяплата:</span>
+                  <div className="bg-white dark:bg-neutral-800 px-3 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 flex items-center gap-1.5 whitespace-nowrap shadow-sm">
+                    <span className="text-gray-500 dark:text-neutral-400 font-semibold">💵 Післяплата:</span>
                     <strong className="text-amber-600 dark:text-amber-400 font-bold">{npLiveStatus.redeliverySum} ₴</strong>
                   </div>
                 )}
