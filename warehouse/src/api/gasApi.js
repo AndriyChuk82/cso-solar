@@ -2157,7 +2157,12 @@ export async function updateShipment(shipmentId, data, user = {}) {
     entityType: 'SHIPMENT',
     entityId: shipmentId,
     entityTitle: `Редагування відправлення: ${data.clientName.trim()}`,
-    details: { action: 'UPDATE_SHIPMENT', totalAmount, currency }
+    details: {
+      action: 'UPDATE_SHIPMENT',
+      totalAmount,
+      currency,
+      changesSummary: `Оновлено відправлення: Сума ${totalAmount.toLocaleString('uk-UA')} ${currency}`
+    }
   });
 
   return { success: true, shipment: updated?.[0] };

@@ -103,6 +103,47 @@ export default function AuditLog() {
   };
 
 
+const ACTION_LABELS = {
+  UPDATE_SHIPMENT: '✏️ Оновлено накладну',
+  CREATE_SHIPMENT: '🚚 Створено нове відправлення',
+  CONFIRM_DISPATCH: '🚀 Підтверджено відправку & списано товари',
+  ADD_PAYMENT: '💳 Отримано оплату за відправлення',
+  CANCEL_SHIPMENT: '❌ Скасовано відправлення',
+  DELETE_SHIPMENT: '🗑️ Видалено відправлення'
+};
+
+const FIELD_LABELS = {
+  action: 'Дія',
+  totalAmount: 'Загальна сума',
+  amount: 'Сума',
+  currency: 'Валюта',
+  ttn: '№ ТТН',
+  carrier: 'Перевізник',
+  paymentMethod: 'Спосіб оплати',
+  senderName: 'Відправник',
+  clientName: 'Отримувач',
+  itemsCount: 'Кількість позицій',
+  paidAmount: 'Всього сплачено',
+  debtAmount: 'Залишок боргу',
+  status: 'Статус'
+};
+
+const VALUE_TRANSLATIONS = {
+  UPDATE_SHIPMENT: 'Редагування накладної',
+  CREATE_SHIPMENT: 'Створення накладної',
+  CONFIRM_DISPATCH: 'Підтвердження відправки',
+  ADD_PAYMENT: 'Внесення оплати',
+  CANCEL_SHIPMENT: 'Скасування відправлення',
+  DELETE_SHIPMENT: 'Видалення з бази',
+  reserved: 'Бронь',
+  shipped: 'Відправлено',
+  paid: 'Оплачено',
+  cancelled: 'Скасовано',
+  cod: 'Оплата при отриманні',
+  cash: 'Готівка',
+  kit_group: 'КИТ Group'
+};
+
 const formatDetails = (log) => {
   if (!log) return '—';
   const details = log.details || {};
@@ -111,6 +152,37 @@ const formatDetails = (log) => {
   
   if (details.changesSummary) {
     return details.changesSummary;
+  }
+
+  // Спеціальний мапер для дій над відправленнями
+  if (details.action && ACTION_LABELS[details.action]) {
+    const actionTitle = ACTION_LABELS[details.action];
+    const parts = [];
+
+    const amt = details.totalAmount ?? details.amount;
+    if (amt !== undefined && amt !== null) {
+      parts.push(`Сума: ${parseFloat(amt).toLocaleString('uk-UA')} ${details.currency || ''}`);
+    }
+    if (details.ttn) {
+      parts.push(`№ ТТН: ${details.ttn}`);
+    }
+    if (details.carrier) {
+      parts.push(`Перевізник: ${VALUE_TRANSLATIONS[details.carrier] || details.carrier}`);
+    }
+    if (details.paymentMethod) {
+      parts.push(`Спосіб оплати: ${VALUE_TRANSLATIONS[details.paymentMethod] || details.paymentMethod}`);
+    }
+    if (details.debtAmount !== undefined && details.debtAmount !== null) {
+      parts.push(`Залишок боргу: ${parseFloat(details.debtAmount).toLocaleString('uk-UA')} ${details.currency || ''}`);
+    }
+    if (details.itemsCount) {
+      parts.push(`Товарів: ${details.itemsCount} поз.`);
+    }
+
+    if (parts.length > 0) {
+      return `${actionTitle}\n• ${parts.join('\n• ')}`;
+    }
+    return actionTitle;
   }
 
   if (log.action_type === 'CREATE' || details.type) {
@@ -149,10 +221,20 @@ const formatDetails = (log) => {
   if (log.action_type === 'ARCHIVE') return '🗄️ Переміщено документ в архів';
   if (log.action_type === 'UNARCHIVE') return '🔄 Відновлено документ з архіву';
 
+  // Зрозумілий генеральний переклад технічних ключів
   try {
     const cleanKeys = Object.entries(details)
       .filter(([k, v]) => v !== undefined && v !== null && k !== 'buyerId' && k !== 'transactionId')
-      .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`);
+      .map(([k, v]) => {
+        const label = FIELD_LABELS[k] || k;
+        let valStr = v;
+        if (VALUE_TRANSLATIONS[v]) valStr = VALUE_TRANSLATIONS[v];
+        else if (typeof v === 'object') valStr = JSON.stringify(v);
+        else if (typeof v === 'number' && (k.toLowerCase().includes('amount') || k === 'totalAmount')) {
+          valStr = parseFloat(v).toLocaleString('uk-UA');
+        }
+        return `${label}: ${valStr}`;
+      });
     return cleanKeys.join('\n') || 'Операція виконана';
   } catch {
     return 'Деталі операції зафіксовано';
