@@ -9,6 +9,16 @@ import ShipmentPaymentModal from '../components/ShipmentPaymentModal';
 import ShipmentPrintModal from '../components/ShipmentPrintModal';
 import { Plus, Search, Filter, Truck, DollarSign, Eye, CheckSquare, Square, RefreshCw, Pencil, Printer, Trash2, Archive, ArchiveRestore } from 'lucide-react';
 
+function formatShortNpDate(dateStr) {
+  if (!dateStr) return '';
+  const clean = dateStr.trim().split(' ')[0];
+  const parts = clean.includes('-') ? clean.split('-') : clean.split('.');
+  if (parts.length >= 2) {
+    return `${parts[0]}.${parts[1]}`;
+  }
+  return clean;
+}
+
 export default function ShipmentsDashboard() {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -514,7 +524,7 @@ export default function ShipmentsDashboard() {
                               </strong>
                               {npTracking[ship.ttn] ? (
                                 <span
-                                  className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded border w-fit block mt-0.5 ${
+                                  className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded border w-fit block mt-0.5 whitespace-nowrap ${
                                     npTracking[ship.ttn].statusGroup === 'DELIVERED'
                                       ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
                                       : npTracking[ship.ttn].statusGroup === 'ARRIVED'
@@ -523,15 +533,15 @@ export default function ShipmentsDashboard() {
                                       ? 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-300'
                                       : 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
                                   }`}
-                                  title={`${npTracking[ship.ttn].statusText}${npTracking[ship.ttn].actualDeliveryDate ? ` (Дата вручення: ${npTracking[ship.ttn].actualDeliveryDate})` : ''}`}
+                                  title={`${npTracking[ship.ttn].statusText}${npTracking[ship.ttn].actualDeliveryDate ? ` (Дата вручення: ${npTracking[ship.ttn].actualDeliveryDate})` : npTracking[ship.ttn].scheduledDeliveryDate ? ` (Доставка: ${npTracking[ship.ttn].scheduledDeliveryDate})` : ''}`}
                                 >
                                   {npTracking[ship.ttn].statusGroup === 'DELIVERED'
-                                    ? `🟢 Отримано ${npTracking[ship.ttn].actualDeliveryDate ? npTracking[ship.ttn].actualDeliveryDate.split(' ')[0].split('.').slice(0,2).join('.') : ''}`
+                                    ? `🟢 Отримано ${formatShortNpDate(npTracking[ship.ttn].actualDeliveryDate)}`
                                     : npTracking[ship.ttn].statusGroup === 'ARRIVED'
                                     ? '📍 Прибув у НП'
                                     : npTracking[ship.ttn].statusGroup === 'REFUSED'
                                     ? '🔴 Відмова'
-                                    : `🚚 В дорозі ${npTracking[ship.ttn].scheduledDeliveryDate ? `(${npTracking[ship.ttn].scheduledDeliveryDate.split(' ')[0].split('.').slice(0,2).join('.')})` : ''}`}
+                                    : `🚚 В дорозі ${npTracking[ship.ttn].scheduledDeliveryDate ? `(${formatShortNpDate(npTracking[ship.ttn].scheduledDeliveryDate)})` : ''}`}
                                 </span>
                               ) : (
                                 <span className="text-[10px] text-gray-400 dark:text-neutral-500 uppercase block font-semibold">
