@@ -14,7 +14,8 @@ import {
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { matchesSearch } from '../utils/searchUtils';
-import { Plus, Trash2, ArrowLeft, UserPlus } from 'lucide-react';
+import { DocumentGeneratorModal } from '../components/DocumentGeneratorModal';
+import { Plus, Trash2, ArrowLeft, UserPlus, FileText, Shield, Package, Printer } from 'lucide-react';
 
 export default function ShipmentForm() {
   const { id } = useParams();
@@ -51,6 +52,10 @@ export default function ShipmentForm() {
   const [comment, setComment] = useState('');
   const [notes, setNotes] = useState('');
   const [immediatelyShipped, setImmediatelyShipped] = useState(false);
+
+  // Document generation modal state
+  const [showDocGenerator, setShowDocGenerator] = useState(false);
+  const [docModalType, setDocModalType] = useState('warranty');
 
   // Selected default warehouse for items
   const [selectedWarehouseId, setSelectedWarehouseId] = useState('');
@@ -807,6 +812,52 @@ export default function ShipmentForm() {
               </span>
             </div>
           </div>
+
+          {/* Document Printing Bar */}
+          <div className="pt-3 mt-3 border-t border-dashed border-gray-200 dark:border-neutral-700 flex flex-wrap items-center justify-between gap-3">
+            <div className="text-xs font-semibold text-gray-500 dark:text-neutral-400 flex items-center gap-1.5">
+              <FileText size={16} className="text-primary" />
+              Друк складських документів (Гарантія / Видаткова):
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDocModalType('warranty');
+                  setShowDocGenerator(true);
+                }}
+                className="px-3.5 py-2 text-xs font-bold text-amber-900 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200/80 dark:border-amber-800 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+              >
+                <Shield size={15} className="text-amber-600" />
+                🛡️ Друк Гарантії
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setDocModalType('expense');
+                  setShowDocGenerator(true);
+                }}
+                className="px-3.5 py-2 text-xs font-bold text-blue-900 dark:text-blue-200 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200/80 dark:border-blue-800 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+              >
+                <Package size={15} className="text-blue-600" />
+                📋 Видаткова накладна
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setDocModalType('all');
+                  setShowDocGenerator(true);
+                }}
+                className="px-3.5 py-2 text-xs font-bold text-gray-700 dark:text-neutral-200 bg-gray-100 dark:bg-neutral-700 hover:bg-gray-200 dark:hover:bg-neutral-600 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+              >
+                <Printer size={15} />
+                📄 Всі документи / Друк...
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Step 3: Payment & Dispatch Details */}
@@ -978,6 +1029,33 @@ export default function ShipmentForm() {
             </form>
           </div>
         </div>
+      )}
+
+      {showDocGenerator && (
+        <DocumentGeneratorModal
+          isOpen={showDocGenerator}
+          onClose={() => setShowDocGenerator(false)}
+          initialDocType={docModalType === 'all' ? 'warranty' : docModalType}
+          issueData={{
+            buyerName: clientName || '',
+            buyerPhone: clientPhone || '',
+            buyerAddress: shippingAddress || '',
+            senderName: senders.find(s => String(s.id) === String(senderId))?.name || '',
+            ttn: ttn || '',
+            number: `ВН-${new Date().toLocaleDateString('uk-UA').replace(/\./g, '')}-01`,
+            issueNumber: `ВН-${new Date().toLocaleDateString('uk-UA').replace(/\./g, '')}-01`,
+            date: new Date().toISOString().split('T')[0],
+            items: items.map(it => ({
+              name: it.productName || 'Товар',
+              productName: it.productName || 'Товар',
+              quantity: parseFloat(it.quantity) || 1,
+              unit: it.unit || 'шт',
+              price: parseFloat(it.price) || 0,
+              warrantyMonths: 12,
+              serialNumbers: ''
+            }))
+          }}
+        />
       )}
     </div>
   );
