@@ -2175,7 +2175,7 @@ export async function confirmShipmentDispatch(shipmentId, { ttn, carrier }, user
     throw new Error("Відправлення вже підтверджено");
   }
 
-  const cleanTtn = (ttn || shipment.ttn || '').trim();
+  const cleanTtn = (ttn !== undefined ? ttn : (shipment.ttn || '')).trim();
   const cleanCarrier = carrier || shipment.carrier || 'Нова Пошта';
 
   // 1. Проводимо складські списання для кожного товару
@@ -2236,14 +2236,18 @@ export async function confirmShipmentDispatch(shipmentId, { ttn, carrier }, user
 /**
  * Масове підтвердження відправки кількох накладних одночасно (мультивибір)
  */
-export async function batchConfirmShipments(shipmentIds = [], { carrier }, user = {}) {
-  if (!shipmentIds || shipmentIds.length === 0) return { success: true, count: 0 };
+export async function batchConfirmShipments(shipments = [], { carrier }, user = {}) {
+  if (!shipments || shipments.length === 0) return { success: true, count: 0 };
   let confirmedCount = 0;
   const errors = [];
 
-  for (const id of shipmentIds) {
+  for (const item of shipments) {
+    const id = typeof item === 'object' ? item.id : item;
+    const ttn = typeof item === 'object' ? item.ttn : undefined;
+    const itemCarrier = typeof item === 'object' && item.carrier ? item.carrier : carrier;
+
     try {
-      await confirmShipmentDispatch(id, { carrier }, user);
+      await confirmShipmentDispatch(id, { ttn, carrier: itemCarrier }, user);
       confirmedCount++;
     } catch (err) {
       console.error(`Failed to confirm shipment ${id}:`, err);
