@@ -116,12 +116,27 @@ export function printContract(proposal: Proposal, withStamp: boolean = true) {
   printWindow.document.close();
 }
 
+function formatDateForDisplay(dateInput?: string): string {
+  if (!dateInput) return new Date().toLocaleDateString('uk-UA');
+  const trimmed = dateInput.trim();
+
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const [y, m, d] = trimmed.split('-');
+    return `${d}.${m}.${y}`;
+  }
+
+  const parsed = new Date(trimmed);
+  return !isNaN(parsed.getTime()) ? parsed.toLocaleDateString('uk-UA') : trimmed;
+}
+
 function generateInvoiceHTML(proposal: Proposal, data?: InvoiceData): string {
   const accentColor = '#F59E0B';
   const currencySymbol = proposal.currency === 'UAH' ? '₴' : (proposal.currency === 'EUR' ? '€' : '$');
-  const dateStr = data?.invoiceDate 
-    ? new Date(data.invoiceDate).toLocaleDateString('uk-UA') 
-    : (proposal.date ? new Date(proposal.date).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA'));
+  const dateStr = formatDateForDisplay(data?.invoiceDate || proposal.date);
   const invoiceNumber = data?.invoiceNumber || (proposal.number || '').replace('КП-', '');
   const withStamp = data?.includeStamp !== undefined ? data.includeStamp : true;
   
@@ -156,14 +171,14 @@ function generateInvoiceHTML(proposal: Proposal, data?: InvoiceData): string {
     
     return `
       <tr>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px;">
+        <td style="padding: 8px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
+        <td style="padding: 8px 10px; border: 1px solid #E5E7EB; font-size: 11px;">
           <strong>${itemName}</strong>
         </td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${itemUnit}</td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${item.quantity || 0}</td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${item.displayPrice.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-        <td style="padding: 10px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap; font-weight: 600;">${item.displaySum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td style="padding: 8px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${itemUnit}</td>
+        <td style="padding: 8px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${item.quantity || 0}</td>
+        <td style="padding: 8px 6px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${item.displayPrice.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td style="padding: 8px 6px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap; font-weight: 600;">${item.displaySum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       </tr>
     `;
   }).join('');
@@ -176,6 +191,8 @@ function generateInvoiceHTML(proposal: Proposal, data?: InvoiceData): string {
   const buyerEmail = data?.buyerEmail || proposal.clientEmail;
   const buyerAddress = data?.buyerAddress || proposal.clientAddress;
 
+  const totalSumWords = numberToWords(Math.round(totalConverted));
+
   return `
     <html>
       <head>
@@ -186,7 +203,7 @@ function generateInvoiceHTML(proposal: Proposal, data?: InvoiceData): string {
           .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
           .doc-title { color: ${accentColor}; font-weight: 700; font-size: 18px; letter-spacing: 1px; text-transform: uppercase; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background: #F9FAFB; padding: 10px; text-align: center; border: 1px solid #E5E7EB; font-size: 9px; color: #4B5563; text-transform: uppercase; }
+          th { background: #F9FAFB; padding: 8px 4px; text-align: center; border: 1px solid #E5E7EB; font-size: 9px; color: #4B5563; text-transform: uppercase; }
           .total-row td { background-color: #FFFDF2; font-weight: 700; color: ${accentColor}; border: 1px solid #E5E7EB; }
         </style>
       </head>
@@ -225,25 +242,30 @@ function generateInvoiceHTML(proposal: Proposal, data?: InvoiceData): string {
         <table>
           <thead>
             <tr>
-              <th style="width: 30px">№</th>
-              <th style="text-align: left;">Найменування</th>
-              <th style="width: 40px">Од.</th>
-              <th style="width: 40px">К-сть</th>
-              <th style="width: 85px">Ціна (${currencySymbol})</th>
-              <th style="width: 85px">Сума (${currencySymbol})</th>
+              <th style="width: 25px;">№</th>
+              <th style="text-align: left; padding-left: 10px;">Найменування</th>
+              <th style="width: 40px;">Од.</th>
+              <th style="width: 45px;">К-сть</th>
+              <th style="width: 70px; text-align: center;">Ціна (${currencySymbol})</th>
+              <th style="width: 80px; text-align: center;">Сума (${currencySymbol})</th>
             </tr>
           </thead>
           <tbody>
             ${itemsHTML}
             <tr class="total-row">
               <td colspan="4" style="border: none; background: none;"></td>
-              <td style="padding: 10px; text-align: right; text-transform: uppercase; font-size: 11px;">Разом:</td>
-              <td style="padding: 10px; text-align: center; font-size: 11px; white-space: nowrap;">${totalConverted.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
+              <td style="padding: 8px; text-align: right; text-transform: uppercase; font-size: 11px;">Разом:</td>
+              <td style="padding: 8px; text-align: center; font-size: 11px; white-space: nowrap;">${totalConverted.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
             </tr>
           </tbody>
         </table>
 
-        <div style="margin-top: 70px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div style="margin-top: 25px; font-size: 11px; color: #374151; line-height: 1.6;">
+          <div>Всього найменувань <strong>${convertedItems.length}</strong>, на суму <strong>${totalConverted.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</strong></div>
+          <div style="font-style: italic; color: #4B5563; margin-top: 4px;">Всього на суму: ${totalSumWords}</div>
+        </div>
+
+        <div style="margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end;">
           <div style="font-size: 10px; text-align: center; width: 220px;">
             <div style="border-bottom: 1px solid #1F2937; height: 30px; position: relative;">
               ${(withStamp && seller.stamp) ? `<img src="${seller.stamp}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -45%); width: 135px; height: auto; opacity: 0.95; pointer-events: none; mix-blend-mode: multiply; filter: contrast(1.5) brightness(1.2);">` : ''}
@@ -257,8 +279,23 @@ function generateInvoiceHTML(proposal: Proposal, data?: InvoiceData): string {
         </div>
 
         <script>
-          window.onload = () => setTimeout(() => window.print(), 800);
-          window.onafterprint = () => window.close();
+          function triggerPrint() {
+            setTimeout(function() {
+              try {
+                window.focus();
+                window.print();
+              } catch (e) {}
+            }, 300);
+          }
+          if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            triggerPrint();
+          } else {
+            window.addEventListener('DOMContentLoaded', triggerPrint);
+            window.addEventListener('load', triggerPrint);
+          }
+          window.onafterprint = function() {
+            try { window.close(); } catch(e) {}
+          };
         </script>
       </body>
     </html>

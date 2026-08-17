@@ -58,15 +58,6 @@ export function InvoiceModal({ isOpen, onClose, proposal, onPrint, onComplete }:
   if (!isOpen) return null;
 
   const handlePrint = () => {
-    // Зберігаємо внесені реквізити в активну КП
-    if (buyerName !== proposal.clientName) updateProposalField('clientName', buyerName);
-    if (buyerPhone !== proposal.clientPhone) updateProposalField('clientPhone', buyerPhone);
-    if (buyerEmail !== proposal.clientEmail) updateProposalField('clientEmail', buyerEmail);
-    if (buyerAddress !== proposal.clientAddress) updateProposalField('clientAddress', buyerAddress);
-    updateProposalField('clientTaxId' as any, buyerTaxId);
-    updateProposalField('clientIban' as any, buyerIban);
-    updateProposalField('clientBank' as any, buyerBank);
-
     const data: InvoiceData = {
       buyerName: buyerName.trim() || '____________________',
       buyerTaxId: buyerTaxId.trim(),
@@ -80,7 +71,20 @@ export function InvoiceModal({ isOpen, onClose, proposal, onPrint, onComplete }:
       includeStamp,
     };
 
+    // ⚡ Здійснюємо друк негайно у контексті кліку користувача для захисту від блокировки Pop-up браузером
     onPrint(data);
+
+    // Зберігаємо внесені реквізити у фоні
+    setTimeout(() => {
+      if (buyerName !== proposal.clientName) updateProposalField('clientName', buyerName);
+      if (buyerPhone !== proposal.clientPhone) updateProposalField('clientPhone', buyerPhone);
+      if (buyerEmail !== proposal.clientEmail) updateProposalField('clientEmail', buyerEmail);
+      if (buyerAddress !== proposal.clientAddress) updateProposalField('clientAddress', buyerAddress);
+      updateProposalField('clientTaxId' as any, buyerTaxId);
+      updateProposalField('clientIban' as any, buyerIban);
+      updateProposalField('clientBank' as any, buyerBank);
+    }, 50);
+
     if (onComplete) {
       onComplete();
     } else {
