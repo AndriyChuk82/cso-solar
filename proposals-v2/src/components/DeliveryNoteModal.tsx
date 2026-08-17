@@ -36,13 +36,17 @@ export function DeliveryNoteModal({ isOpen, onClose, proposal, onPrint, onComple
   if (!isOpen) return null;
 
   const handlePrint = () => {
-    if (buyerName !== proposal.clientName) {
-      updateProposalField('clientName', buyerName);
+    const safeTrim = (val: any) => String(val || '').trim();
+    const nameStr = safeTrim(buyerName);
+    const numStr = safeTrim(dnNumber);
+
+    if (nameStr !== proposal.clientName) {
+      updateProposalField('clientName', nameStr);
     }
 
     const data: DeliveryNoteData = {
-      buyerName: buyerName.trim() || '____________________',
-      dnNumber: dnNumber.trim() || defaultDnNum,
+      buyerName: nameStr || '____________________',
+      dnNumber: numStr || defaultDnNum,
       dnDate: dnDate || new Date().toISOString().split('T')[0],
       showPrices,
       includeStamp,

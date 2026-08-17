@@ -42,14 +42,14 @@ export function InvoiceModal({ isOpen, onClose, proposal, onPrint, onComplete }:
 
   useEffect(() => {
     if (isOpen) {
-      setBuyerName(proposal.clientName || '');
-      setBuyerTaxId((proposal as any).clientTaxId || '');
-      setBuyerIban((proposal as any).clientIban || '');
-      setBuyerBank((proposal as any).clientBank || '');
-      setBuyerAddress(proposal.clientAddress || '');
-      setBuyerPhone(proposal.clientPhone || '');
-      setBuyerEmail(proposal.clientEmail || '');
-      setInvoiceNumber(defaultInvoiceNum);
+      setBuyerName(String(proposal.clientName || ''));
+      setBuyerTaxId(String((proposal as any).clientTaxId || ''));
+      setBuyerIban(String((proposal as any).clientIban || ''));
+      setBuyerBank(String((proposal as any).clientBank || ''));
+      setBuyerAddress(String(proposal.clientAddress || ''));
+      setBuyerPhone(String(proposal.clientPhone || ''));
+      setBuyerEmail(String(proposal.clientEmail || ''));
+      setInvoiceNumber(String(defaultInvoiceNum));
       setInvoiceDate(proposal.date ? proposal.date.split('T')[0] : new Date().toISOString().split('T')[0]);
       setIncludeStamp(false);
     }
@@ -58,15 +58,26 @@ export function InvoiceModal({ isOpen, onClose, proposal, onPrint, onComplete }:
   if (!isOpen) return null;
 
   const handlePrint = () => {
+    const safeTrim = (val: any) => String(val || '').trim();
+
+    const nameStr = safeTrim(buyerName);
+    const taxIdStr = safeTrim(buyerTaxId);
+    const ibanStr = safeTrim(buyerIban);
+    const bankStr = safeTrim(buyerBank);
+    const addressStr = safeTrim(buyerAddress);
+    const phoneStr = safeTrim(buyerPhone);
+    const emailStr = safeTrim(buyerEmail);
+    const invNumStr = safeTrim(invoiceNumber);
+
     const data: InvoiceData = {
-      buyerName: buyerName.trim() || '____________________',
-      buyerTaxId: buyerTaxId.trim(),
-      buyerIban: buyerIban.trim(),
-      buyerBank: buyerBank.trim(),
-      buyerAddress: buyerAddress.trim(),
-      buyerPhone: buyerPhone.trim(),
-      buyerEmail: buyerEmail.trim(),
-      invoiceNumber: invoiceNumber.trim() || defaultInvoiceNum,
+      buyerName: nameStr || '____________________',
+      buyerTaxId: taxIdStr,
+      buyerIban: ibanStr,
+      buyerBank: bankStr,
+      buyerAddress: addressStr,
+      buyerPhone: phoneStr,
+      buyerEmail: emailStr,
+      invoiceNumber: invNumStr || defaultInvoiceNum,
       invoiceDate: invoiceDate || new Date().toISOString().split('T')[0],
       includeStamp,
     };
@@ -76,13 +87,13 @@ export function InvoiceModal({ isOpen, onClose, proposal, onPrint, onComplete }:
 
     // Зберігаємо внесені реквізити у фоні
     setTimeout(() => {
-      if (buyerName !== proposal.clientName) updateProposalField('clientName', buyerName);
-      if (buyerPhone !== proposal.clientPhone) updateProposalField('clientPhone', buyerPhone);
-      if (buyerEmail !== proposal.clientEmail) updateProposalField('clientEmail', buyerEmail);
-      if (buyerAddress !== proposal.clientAddress) updateProposalField('clientAddress', buyerAddress);
-      updateProposalField('clientTaxId' as any, buyerTaxId);
-      updateProposalField('clientIban' as any, buyerIban);
-      updateProposalField('clientBank' as any, buyerBank);
+      if (nameStr !== proposal.clientName) updateProposalField('clientName', nameStr);
+      if (phoneStr !== proposal.clientPhone) updateProposalField('clientPhone', phoneStr);
+      if (emailStr !== proposal.clientEmail) updateProposalField('clientEmail', emailStr);
+      if (addressStr !== proposal.clientAddress) updateProposalField('clientAddress', addressStr);
+      updateProposalField('clientTaxId' as any, taxIdStr);
+      updateProposalField('clientIban' as any, ibanStr);
+      updateProposalField('clientBank' as any, bankStr);
     }, 50);
 
     if (onComplete) {
