@@ -8,33 +8,76 @@ import { SELLERS } from '../config';
 import { numberToWords } from './numberToWords';
 
 /**
- * Друк рахунку-фактури
+ * Універсальна функція друку HTML-документів.
+ * Спершу намагається відкрити нове вікно, а у разі блокування Pop-up браузером —
+ * автоматично виконує друк через прихований iframe.
  */
-export function printInvoice(proposal: Proposal) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Будь ласка, дозвольте спливаючі вікна для друку');
+export function printHTMLContent(html: string) {
+  try {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.focus();
+      return;
+    }
+  } catch (e) {
+    console.warn('Pop-up window blocked or restricted, falling back to hidden iframe print:', e);
+  }
+
+  // ⚡ Фолбек для браузерів із суворим блокувальником спливаючих вікон (Chrome / Safari / Mobile)
+  const oldIframe = document.getElementById('print-doc-iframe');
+  if (oldIframe) {
+    oldIframe.remove();
+  }
+
+  const iframe = document.createElement('iframe');
+  iframe.id = 'print-doc-iframe';
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  iframe.style.visibility = 'hidden';
+
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow?.document || iframe.contentDocument;
+  if (!doc) {
+    alert('Не вдалося сформувати вікно друку');
     return;
   }
 
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  setTimeout(() => {
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } catch (err) {
+      console.error('Iframe print error:', err);
+    }
+  }, 400);
+}
+
+/**
+ * Друк рахунку-фактури
+ */
+export function printInvoice(proposal: Proposal) {
   const html = generateInvoiceHTML(proposal);
-  printWindow.document.write(html);
-  printWindow.document.close();
+  printHTMLContent(html);
 }
 
 /**
  * Друк рахунку-фактури з даними контрагента з модального вікна
  */
 export function printInvoiceWithData(proposal: Proposal, data: InvoiceData) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Будь ласка, дозвольте спливаючі вікна для друку');
-    return;
-  }
-
   const html = generateInvoiceHTML(proposal, data);
-  printWindow.document.write(html);
-  printWindow.document.close();
+  printHTMLContent(html);
 }
 
 export interface DeliveryNoteData {
@@ -49,15 +92,8 @@ export interface DeliveryNoteData {
  * Друк видаткової накладної з налаштуваннями
  */
 export function printDeliveryNoteWithData(proposal: Proposal, data: DeliveryNoteData) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Будь ласка, дозвольте спливаючі вікна для друку');
-    return;
-  }
-
   const html = generateDeliveryNoteHTML(proposal, data);
-  printWindow.document.write(html);
-  printWindow.document.close();
+  printHTMLContent(html);
 }
 
 /**
@@ -78,42 +114,21 @@ export function printDeliveryNote(proposal: Proposal) {
  * Друк ТТН з даними з модального вікна
  */
 export function printTTNWithData(proposal: Proposal, data: TTNData) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Будь ласка, дозвольте спливаючі вікна для друку');
-    return;
-  }
-
   const html = generateTTNHTMLWithData(proposal, data);
-  printWindow.document.write(html);
-  printWindow.document.close();
+  printHTMLContent(html);
 }
 
 /**
  * Друк гарантійного талону з даними з модального вікна
  */
 export function printWarrantyWithData(proposal: Proposal, data: WarrantyData) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Будь ласка, дозвольте спливаючі вікна для друку');
-    return;
-  }
-
   const html = generateWarrantyHTMLWithData(proposal, data);
-  printWindow.document.write(html);
-  printWindow.document.close();
+  printHTMLContent(html);
 }
 
 export function printContract(proposal: Proposal, withStamp: boolean = true) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Будь ласка, дозвольте спливаючі вікна для друку');
-    return;
-  }
-
   const html = generateContractHTML(proposal, withStamp);
-  printWindow.document.write(html);
-  printWindow.document.close();
+  printHTMLContent(html);
 }
 
 function formatDateForDisplay(dateInput?: string): string {
