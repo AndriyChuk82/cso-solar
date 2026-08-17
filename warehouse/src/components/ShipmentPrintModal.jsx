@@ -115,81 +115,86 @@ export default function ShipmentPrintModal({ shipments = [], onClose }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-300">
-                {printList.map((ship, idx) => (
-                  <tr key={ship.id || idx} className="align-top">
-                    {/* № */}
-                    <td className="p-2 border-r border-gray-400 font-bold text-center">
-                      {idx + 1}
-                    </td>
+                {printList.map((ship, idx) => {
+                  const isPickup = ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз';
+                  return (
+                    <tr key={ship.id || idx} className="align-top">
+                      {/* № */}
+                      <td className="p-2 border-r border-gray-400 font-bold text-center">
+                        {idx + 1}
+                      </td>
 
-                    {/* Customer */}
-                    <td className="p-2 border-r border-gray-400">
-                      <div className="font-bold text-sm text-black break-words">{ship.client_name}</div>
-                      {ship.client_phone && (
-                        <div className="text-xs font-semibold text-gray-800">
-                          📞 {ship.client_phone}
+                      {/* Customer */}
+                      <td className="p-2 border-r border-gray-400">
+                        <div className="font-bold text-sm text-black break-words">{ship.client_name}</div>
+                        {ship.client_phone && (
+                          <div className="text-xs font-semibold text-gray-800">
+                            📞 {ship.client_phone}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Address */}
+                      <td className="p-2 border-r border-gray-400 font-medium break-words">
+                        {ship.shipping_address || '—'}
+                      </td>
+
+                      {/* Goods */}
+                      <td className="p-2 border-r border-gray-400">
+                        {ship.shipment_items && ship.shipment_items.length > 0 ? (
+                          <ul className="space-y-1.5">
+                            {ship.shipment_items.map((item, itemIdx) => (
+                              <li key={item.id || itemIdx} className="border-b border-gray-200 last:border-0 pb-1">
+                                <div className="font-bold text-xs text-black leading-snug break-words hyphens-none">
+                                  {item.product_name || item.product_id}
+                                </div>
+                                <div className="text-[11px] text-gray-700 font-semibold mt-0.5 whitespace-nowrap">
+                                  Кількість: <strong className="text-black font-extrabold">{item.quantity} шт</strong>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span className="text-gray-500 italic">Специфікація товарів</span>
+                        )}
+                      </td>
+
+                      {/* Financials */}
+                      <td className="p-2 border-r border-gray-400 text-right">
+                        <div className="font-extrabold text-sm text-black">
+                          {ship.total_amount} {ship.currency}
                         </div>
-                      )}
-                    </td>
-
-                    {/* Address */}
-                    <td className="p-2 border-r border-gray-400 font-medium break-words">
-                      {ship.shipping_address || '—'}
-                    </td>
-
-                    {/* Goods */}
-                    <td className="p-2 border-r border-gray-400">
-                      {ship.shipment_items && ship.shipment_items.length > 0 ? (
-                        <ul className="space-y-1.5">
-                          {ship.shipment_items.map((item, itemIdx) => (
-                            <li key={item.id || itemIdx} className="border-b border-gray-200 last:border-0 pb-1">
-                              <div className="font-bold text-xs text-black leading-snug break-words hyphens-none">
-                                {item.product_name || item.product_id}
-                              </div>
-                              <div className="text-[11px] text-gray-700 font-semibold mt-0.5 whitespace-nowrap">
-                                Кількість: <strong className="text-black font-extrabold">{item.quantity} шт</strong>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span className="text-gray-500 italic">Специфікація товарів</span>
-                      )}
-                    </td>
-
-                    {/* Financials */}
-                    <td className="p-2 border-r border-gray-400 text-right">
-                      <div className="font-extrabold text-sm text-black">
-                        {ship.total_amount} {ship.currency}
-                      </div>
-                      {parseFloat(ship.debt_amount) > 0 ? (
-                        <div className="text-xs font-bold text-red-700">
-                          Борг: {ship.debt_amount} {ship.currency}
+                        {parseFloat(ship.debt_amount) > 0 ? (
+                          <div className="text-xs font-bold text-red-700">
+                            Борг: {ship.debt_amount} {ship.currency}
+                          </div>
+                        ) : (
+                          <div className="text-xs font-bold text-green-700">
+                            Оплачено
+                          </div>
+                        )}
+                        <div className="text-[10px] text-gray-600 mt-1 font-semibold">
+                          {paymentMethodLabels[ship.payment_method] || ship.payment_method}
                         </div>
-                      ) : (
-                        <div className="text-xs font-bold text-green-700">
-                          Оплачено
-                        </div>
-                      )}
-                      <div className="text-[10px] text-gray-600 mt-1 font-semibold">
-                        {paymentMethodLabels[ship.payment_method] || ship.payment_method}
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Sender & TTN */}
-                    <td className="p-2">
-                      <div className="font-bold text-xs text-black break-words">
-                        Від: {ship.sender_name || '—'}
-                      </div>
-                      <div className="font-mono text-xs font-bold mt-1 whitespace-nowrap tracking-tight">
-                        {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз' ? 'Спосіб: Самовивіз' : `ТТН: ${ship.ttn || '—'}`}
-                      </div>
-                      <div className="text-[10px] text-gray-800 font-extrabold">
-                        {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз' ? `🚗 Склад: ${ship.primary_warehouse_name || 'Основний склад'}` : (ship.carrier || 'Нова Пошта')}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      {/* Sender & TTN */}
+                      <td className="p-2">
+                        {!isPickup && (
+                          <div className="font-bold text-xs text-black break-words">
+                            Від: {ship.sender_name || '—'}
+                          </div>
+                        )}
+                        <div className="font-mono text-xs font-bold mt-1 whitespace-nowrap tracking-tight">
+                          {isPickup ? 'Спосіб: Самовивіз' : `ТТН: ${ship.ttn || '—'}`}
+                        </div>
+                        <div className="text-[10px] text-gray-800 font-extrabold">
+                          {isPickup ? `🚗 Склад: ${ship.primary_warehouse_name || 'Основний склад'}` : (ship.carrier || 'Нова Пошта')}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
 

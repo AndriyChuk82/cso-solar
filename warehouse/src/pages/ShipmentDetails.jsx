@@ -309,10 +309,12 @@ export default function ShipmentDetails() {
             Деталі відправки
           </h3>
           <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-neutral-400">Від кого відправлено:</span>
-              <strong className="text-gray-900 dark:text-white">{shipment.sender_name || '—'}</strong>
-            </div>
+            {shipment.carrier !== 'Самовивіз' && shipment.carrier !== 'pickup' && shipment.ttn !== 'Самовивіз' && (
+              <div className="flex justify-between">
+                <span className="text-gray-500 dark:text-neutral-400">Від кого відправлено:</span>
+                <strong className="text-gray-900 dark:text-white">{shipment.sender_name || '—'}</strong>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-neutral-400">Перевізник:</span>
               <span>{shipment.carrier || 'Нова Пошта'}</span>
