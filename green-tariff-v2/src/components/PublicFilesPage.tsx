@@ -61,11 +61,12 @@ export function PublicFilesPage({ onBackToApp }: PublicFilesPageProps) {
       const nameLower = f.name.toLowerCase();
 
       // Category filtering
+      // Category filtering
       if (activeCategory === 'inverter') {
-        const isInverter = nameLower.includes('inverter') || nameLower.includes('інвертор') || nameLower.includes('deye') || nameLower.includes('solis') || nameLower.includes('fronius') || nameLower.includes('huawei') || nameLower.includes('kstar') || nameLower.includes('luxpower') || nameLower.includes('growatt');
+        const isInverter = nameLower.includes('inverter') || nameLower.includes('інвертор') || nameLower.includes('deye') || nameLower.includes('solis') || nameLower.includes('fronius') || nameLower.includes('huawei') || nameLower.includes('kstar') || nameLower.includes('luxpower') || nameLower.includes('growatt') || nameLower.includes('sg') || nameLower.includes('sun');
         if (!isInverter) return false;
       } else if (activeCategory === 'panel') {
-        const isPanel = nameLower.includes('panel') || nameLower.includes('панель') || nameLower.includes('longi') || nameLower.includes('ja_solar') || nameLower.includes('jinko') || nameLower.includes('trina') || nameLower.includes('canadian') || nameLower.includes('risen');
+        const isPanel = nameLower.includes('panel') || nameLower.includes('панель') || nameLower.includes('longi') || nameLower.includes('ja_solar') || nameLower.includes('jinko') || nameLower.includes('trina') || nameLower.includes('canadian') || nameLower.includes('risen') || nameLower.includes('lr');
         if (!isPanel) return false;
       } else if (activeCategory === 'battery') {
         const isBattery = nameLower.includes('battery') || nameLower.includes('акб') || nameLower.includes('акумулятор') || nameLower.includes('pylontech') || nameLower.includes('dyness') || nameLower.includes('bms');
@@ -75,10 +76,13 @@ export function PublicFilesPage({ onBackToApp }: PublicFilesPageProps) {
         if (!isDoc) return false;
       }
 
-      // Search filtering
+      // Smart multi-term search filtering
       if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase().trim();
-        return nameLower.includes(query) || cleanFileName(f.name).toLowerCase().includes(query);
+        const searchTerms = searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
+        const normalizedName = `${nameLower} ${nameLower.replace(/[_.\-\/\\]+/g, ' ')}`;
+        
+        const matchesAllTerms = searchTerms.every(term => normalizedName.includes(term));
+        if (!matchesAllTerms) return false;
       }
 
       return true;
