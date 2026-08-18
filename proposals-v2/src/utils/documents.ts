@@ -324,7 +324,7 @@ function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): 
 
   const dnNumber = data?.dnNumber || (proposal.number || '').replace('КП-', 'ВН-');
   const dateRaw = data?.dnDate || proposal.date;
-  const dateStr = dateRaw ? new Date(dateRaw).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
+  const dateStr = formatDateForDisplay(dateRaw);
   const buyerName = data?.buyerName || proposal.clientName || '____________________';
   
   // Robust seller detection
@@ -333,18 +333,38 @@ function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): 
 
   const currencySymbol = proposal.currency === 'UAH' ? 'грн.' : (proposal.currency === 'EUR' ? 'EUR' : 'USD');
 
-  let totalSum = 0;
+  const rates = {
+    USD: proposal.rates?.usdToUah || 45.0,
+    EUR: proposal.rates?.eurToUah || 51.5,
+    UAH: 1
+  };
+
   let totalQty = 0;
 
-  const itemsHTML = (proposal.items || []).map((item, i) => {
+  const convertedItems = (proposal.items || []).map(item => {
+    const rawPrice = convertCurrency(item.price || 0, 'USD', proposal.currency, rates);
+    const price = Math.round(rawPrice * 100) / 100;
+    const qty = item.quantity || 0;
+    const sum = Math.round(price * qty * 100) / 100;
+    totalQty += qty;
+    return { ...item, displayPrice: price, displaySum: sum, qty };
+  });
+
+  const displaySubtotal = convertedItems.reduce((acc, item) => acc + item.displaySum, 0);
+
+  let vatAmount = 0;
+  let totalSum = displaySubtotal;
+  if (proposal.vatMode === 'add') {
+    vatAmount = Math.round(displaySubtotal * 0.2 * 100) / 100;
+    totalSum = displaySubtotal + vatAmount;
+  } else if (proposal.vatMode === 'extract') {
+    vatAmount = Math.round((displaySubtotal - (displaySubtotal / 1.2)) * 100) / 100;
+    totalSum = displaySubtotal;
+  }
+
+  const itemsHTML = convertedItems.map((item, i) => {
     const itemName = item.name || item.product?.name || 'Без назви';
     const itemUnit = item.unit || item.product?.unit || 'шт.';
-    const qty = item.quantity || 0;
-    const price = item.price || 0;
-    const sum = price * qty;
-
-    totalSum += sum;
-    totalQty += qty;
     
     if (showPrices) {
       return `
@@ -354,9 +374,9 @@ function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): 
             <strong>${itemName}</strong>
           </td>
           <td style="padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${itemUnit}</td>
-          <td style="padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${qty}</td>
-          <td style="padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${price.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          <td style="padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 600; white-space: nowrap;">${sum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${item.qty}</td>
+          <td style="padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${item.displayPrice.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 600; white-space: nowrap;">${item.displaySum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
         </tr>
       `;
     } else {
@@ -367,7 +387,7 @@ function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): 
             <strong>${itemName}</strong>
           </td>
           <td style="padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${itemUnit}</td>
-          <td style="padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${qty}</td>
+          <td style="padding: 6px 4px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${item.qty}</td>
         </tr>
       `;
     }
@@ -420,8 +440,26 @@ function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): 
           <tbody>
             ${itemsHTML}
             ${showPrices ? `
+              ${proposal.vatMode === 'add' ? `
+                <tr>
+                  <td colspan="4" style="border: none; padding: 4px 0;"></td>
+                  <td style="padding: 6px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 600; background: #F9FAFB;">Без ПДВ:</td>
+                  <td style="padding: 6px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 600; background: #F9FAFB; white-space: nowrap;">${displaySubtotal.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
+                </tr>
+                <tr>
+                  <td colspan="4" style="border: none; padding: 4px 0;"></td>
+                  <td style="padding: 6px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 600; background: #F9FAFB;">ПДВ (20%):</td>
+                  <td style="padding: 6px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 600; background: #F9FAFB; white-space: nowrap;">${vatAmount.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
+                </tr>
+              ` : (proposal.vatMode === 'extract' ? `
+                <tr>
+                  <td colspan="4" style="border: none; padding: 4px 0;"></td>
+                  <td style="padding: 6px; border: 1px solid #E5E7EB; font-size: 10px; text-align: right; color: #6B7280; background: #F9FAFB;">в т.ч. ПДВ (20%):</td>
+                  <td style="padding: 6px; border: 1px solid #E5E7EB; font-size: 10px; text-align: center; color: #6B7280; background: #F9FAFB; white-space: nowrap;">${vatAmount.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
+                </tr>
+              ` : '')}
               <tr>
-                <td colspan="4" style="border: none; padding: 8px 0;"></td>
+                <td colspan="4" style="border: none; padding: 4px 0;"></td>
                 <td style="padding: 6px; border: 1px solid #E5E7EB; font-size: 11px; text-align: right; font-weight: 700; background: #F9FAFB;">Разом:</td>
                 <td style="padding: 6px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 700; background: #F9FAFB; white-space: nowrap;">${totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
               </tr>
@@ -431,10 +469,10 @@ function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): 
 
         <div style="margin-top: 25px; font-size: 11px; color: #374151; line-height: 1.6;">
           ${showPrices ? `
-            <div>Всього найменувань <strong>${proposal.items?.length || 0}</strong>, на суму <strong>${totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</strong></div>
+            <div>Всього найменувань <strong>${convertedItems.length}</strong>, на суму <strong>${totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</strong></div>
             <div style="font-style: italic; color: #4B5563; margin-top: 4px;">Всього на суму: ${totalSumWords}</div>
           ` : `
-            <div>Всього найменувань <strong>${proposal.items?.length || 0}</strong></div>
+            <div>Всього найменувань <strong>${convertedItems.length}</strong>, загальною кількістю <strong>${totalQty}</strong></div>
           `}
         </div>
 
