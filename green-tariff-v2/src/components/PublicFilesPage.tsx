@@ -34,6 +34,32 @@ const CATEGORY_FILTERS = [
   { id: 'doc', label: '📑 Паспорти та сертифікати', icon: FileText },
 ];
 
+function matchTermWithRanges(term: string, fileName: string, normalizedName: string): boolean {
+  if (normalizedName.includes(term) || fileName.toLowerCase().includes(term)) {
+    return true;
+  }
+
+  const termNumMatch = term.match(/^(\d+)(?:[a-z]*)$/i);
+  if (termNumMatch) {
+    const targetNum = parseInt(termNumMatch[1], 10);
+    if (!isNaN(targetNum)) {
+      const rangeRegex = /(\d{1,5})\s*[-–_]\s*(\d{1,5})/g;
+      let match: RegExpExecArray | null;
+      while ((match = rangeRegex.exec(fileName)) !== null) {
+        const minVal = parseInt(match[1], 10);
+        const maxVal = parseInt(match[2], 10);
+        if (!isNaN(minVal) && !isNaN(maxVal) && minVal <= maxVal) {
+          if (targetNum >= minVal && targetNum <= maxVal) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 interface PublicFilesPageProps {
   onBackToApp?: () => void;
 }
@@ -61,7 +87,6 @@ export function PublicFilesPage({ onBackToApp }: PublicFilesPageProps) {
       const nameLower = f.name.toLowerCase();
 
       // Category filtering
-      // Category filtering
       if (activeCategory === 'inverter') {
         const isInverter = nameLower.includes('inverter') || nameLower.includes('інвертор') || nameLower.includes('deye') || nameLower.includes('solis') || nameLower.includes('fronius') || nameLower.includes('huawei') || nameLower.includes('kstar') || nameLower.includes('luxpower') || nameLower.includes('growatt') || nameLower.includes('sg') || nameLower.includes('sun');
         if (!isInverter) return false;
@@ -76,12 +101,12 @@ export function PublicFilesPage({ onBackToApp }: PublicFilesPageProps) {
         if (!isDoc) return false;
       }
 
-      // Smart multi-term search filtering
+      // Smart multi-term search filtering with range support (e.g. 650 in 640-670)
       if (searchQuery.trim()) {
         const searchTerms = searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
         const normalizedName = `${nameLower} ${nameLower.replace(/[_.\-\/\\]+/g, ' ')}`;
         
-        const matchesAllTerms = searchTerms.every(term => normalizedName.includes(term));
+        const matchesAllTerms = searchTerms.every(term => matchTermWithRanges(term, f.name, normalizedName));
         if (!matchesAllTerms) return false;
       }
 
