@@ -1,0 +1,1 @@
+import{l as e}from"./index-ClcCsEeT.js";export{e as fetchAllData};

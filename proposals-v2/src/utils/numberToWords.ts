@@ -32,10 +32,11 @@ export function numberToWords(amount: number): string {
     return forms[2];
   }
 
-  if (amount === 0) return 'нуль гривень 00 копійок';
+  if (!amount || isNaN(amount) || amount === 0) return 'нуль гривень 00 копійок';
 
-  const integerPart = Math.floor(amount);
-  const fractionPart = Math.round((amount - integerPart) * 100);
+  const normalized = Math.round(amount * 100) / 100;
+  const integerPart = Math.floor(normalized);
+  const fractionPart = Math.round((normalized - integerPart) * 100);
 
   const billions = Math.floor(integerPart / 1000000000);
   const millions = Math.floor((integerPart % 1000000000) / 1000000);

@@ -206,7 +206,7 @@ function generateInvoiceHTML(proposal: Proposal, data?: InvoiceData): string {
   const buyerEmail = data?.buyerEmail || proposal.clientEmail;
   const buyerAddress = data?.buyerAddress || proposal.clientAddress;
 
-  const totalSumWords = numberToWords(Math.round(totalConverted));
+  const totalSumWords = numberToWords(totalConverted);
 
   return `
     <html>
@@ -393,7 +393,7 @@ function generateDeliveryNoteHTML(proposal: Proposal, data?: DeliveryNoteData): 
     }
   }).join('');
 
-  const totalSumWords = numberToWords(Math.round(totalSum));
+  const totalSumWords = numberToWords(totalSum);
 
   return `
     <html>
