@@ -1,0 +1,478 @@
+<!-- Побудовано CSO Solar -->
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Зелений тариф — Друк документів</title>
+    <link rel="icon" type="image/png" href="https://i.ibb.co/32JD4dc/logo.png">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 0;
+            /* Вимикаємо поля браузера, щоб контролювати їх лише через CSS */
+        }
+
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 11pt;
+            line-height: 1.35;
+            color: #000;
+            background: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .no-print {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-print {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 16px;
+        }
+
+        .btn-print:hover {
+            background: #1d4ed8;
+        }
+
+        .print-container {
+            width: 210mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .doc-wrapper {
+            background: white;
+            padding: 15mm 15mm;
+            /* Стандартні поля документів */
+            box-sizing: border-box;
+            page-break-after: always;
+            position: relative;
+            width: 210mm;
+            min-height: 297mm;
+        }
+
+        .doc-wrapper:last-child {
+            page-break-after: avoid;
+        }
+
+        .error-state {
+            padding: 40px;
+            text-align: center;
+            color: #ef4444;
+            font-size: 16px;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .print-container {
+                width: 210mm;
+                box-shadow: none;
+                margin: 0;
+            }
+
+            .doc-wrapper {
+                padding: 15mm 15mm;
+                margin: 0;
+                width: 210mm;
+                min-height: 297mm;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="no-print">
+        <button class="btn-print" onclick="window.print()">🖨️ ДРУКУВАТИ / ЗБЕРЕГТИ PDF</button>
+        <button class="btn-print" style="background: #ef4444;" onclick="window.close()">✕ Закрити</button>
+    </div>
+
+    <div class="print-container" id="printContainer">
+        <div class="error-state" id="loadingState">Завантаження документів...</div>
+    </div>
+
+    <script>
+        document.write('<script src="green-tariff-templates.js?v=' + Date.now() + '"><\/script>');
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // Читаємо унікальний ключ з URL (?key=gt_print_1234567890)
+            const printKey = new URLSearchParams(location.search).get('key');
+
+            if (!printKey) {
+                showError('Ключ даних не знайдено в URL. Закрийте цю вкладку і спробуйте ще раз.');
+                return;
+            }
+
+            const dataStr = localStorage.getItem(printKey);
+
+            // Одразу видаляємо дані з localStorage — вони більше не потрібні.
+            // Це важливо: фото в base64 можуть займати 2-4MB,
+            // і якщо не прибирати — localStorage швидко заповниться.
+            localStorage.removeItem(printKey);
+
+            if (!dataStr) {
+                showError('Дані для друку не знайдені або вже були використані. Закрийте цю вкладку і сформуйте документи ще раз.');
+                return;
+            }
+
+            let printData;
+            try {
+                printData = JSON.parse(dataStr);
+            } catch (e) {
+                showError('Помилка читання даних: ' + e.message);
+                return;
+            }
+
+            const { selected, formData, photos } = printData;
+            const container = document.getElementById('printContainer');
+
+            // Очищаємо повідомлення про завантаження
+            container.innerHTML = '';
+
+            // Ін'єктуємо стилі з GT_TEMPLATES в <head>.
+            // <style> всередині div ігнорується браузером — тому в head.
+            if (typeof GT_TEMPLATES !== 'undefined' && GT_TEMPLATES.styles) {
+                const styleTag = document.createElement('style');
+                styleTag.textContent = GT_TEMPLATES.styles.replace(/<\/?style[^>]*>/gi, '').trim();
+                document.head.appendChild(styleTag);
+            }
+
+            // 0. ФУНКЦІЇ ДЛЯ СУМ ТА ДАТ
+            function numberToWordsUA(num) {
+                const ones = ['', 'одна', 'дві', 'три', 'чотири', "п'ять", 'шість', 'сім', 'вісім', "дев'ять"];
+                const teens = ['десять', 'одинадцять', 'дванадцять', 'тринадцять', 'чотирнадцять', "п'ятнадцять", 'шістнадцять', 'сімнадцять', 'вісімнадцять', "дев'ятнадцять"];
+                const tens = ['', '', 'двадцять', 'тридцять', 'сорок', "п'ятдесят", 'шістдесят', 'сімдесят', 'вісімдесят', "дев'яносто"];
+                const hundreds = ['', 'сто', 'двісті', 'триста', 'чотириста', "п'ятсот", 'шістсот', 'сімсот', 'вісімсот', "дев'ятсот"];
+                const intPart = Math.floor(num);
+                if (intPart === 0) return 'нуль гривень';
+
+                function convertGroup(n, gender = 0) {
+                    if (n === 0) return '';
+                    let res = '';
+                    if (n >= 100) { res += hundreds[Math.floor(n / 100)] + ' '; n %= 100; }
+                    if (n >= 10 && n <= 19) { res += teens[n - 10] + ' '; }
+                    else {
+                        if (n >= 20) { res += tens[Math.floor(n / 10)] + ' '; n %= 10; }
+                        if (n > 0) {
+                            if (gender === 1) {
+                                if (n === 1) res += 'одна ';
+                                else if (n === 2) res += 'дві ';
+                                else res += ones[n] + ' ';
+                            } else { res += ones[n] + ' '; }
+                        }
+                    }
+                    return res;
+                }
+
+                let result = '', n = intPart;
+                const millions = Math.floor(n / 1000000);
+                if (millions > 0) {
+                    result += convertGroup(millions, 0);
+                    const m = millions % 10;
+                    if (m === 1 && millions % 100 !== 11) result += 'мільйон ';
+                    else if (m >= 2 && m <= 4 && (millions % 100 < 10 || millions % 100 > 20)) result += 'мільйони ';
+                    else result += 'мільйонів ';
+                    n %= 1000000;
+                }
+                const thousands = Math.floor(n / 1000);
+                if (thousands > 0) {
+                    result += convertGroup(thousands, 1);
+                    const t = thousands % 10;
+                    if (t === 1 && thousands % 100 !== 11) result += 'тисяча ';
+                    else if (t >= 2 && t <= 4 && (thousands % 100 < 10 || thousands % 100 > 20)) result += 'тисячі ';
+                    else result += 'тисяч ';
+                    n %= 1000;
+                }
+                result += convertGroup(n, 0);
+                return result.trim() + ' гривень';
+            }
+
+            const ukrMonths = ['', 'січня', 'лютого', 'березня', 'квітня', 'травня', 'червня', 'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];
+
+            function parseDateParts(dateStr) {
+                let day = '___', month = '___', year = '20___', monthName = '____________';
+                if (!dateStr) return { day, month, year, monthName };
+                
+                const str = String(dateStr).trim();
+                if (str.includes('-')) {
+                    const parts = str.split('T')[0].split('-');
+                    if (parts.length === 3) {
+                        year = parts[0];
+                        month = parts[1];
+                        day = parts[2];
+                    }
+                } else if (str.includes('.')) {
+                    const parts = str.split('.');
+                    if (parts.length === 3) {
+                        day = parts[0];
+                        month = parts[1];
+                        year = parts[2];
+                    }
+                }
+                
+                if (day.length === 2 && day.startsWith('0')) day = day.substring(1);
+                
+                const mInt = parseInt(month, 10);
+                if (mInt >= 1 && mInt <= 12) {
+                    monthName = ukrMonths[mInt];
+                }
+                
+                return { day, month, year, monthName };
+            }
+
+            // 1. ПІДГОТОВКА ДОДАТКОВИХ ПОЛІВ (дати, суми прописом тощо)
+            const d10 = parseDateParts(formData.field10);
+            formData.field10_day = d10.day;
+            formData.field10_month = d10.month;
+            formData.field10_year = d10.year;
+            formData.field10_month_name = d10.monthName;
+
+            const d11 = parseDateParts(formData.field11);
+            formData.field11_day = d11.day;
+            formData.field11_month = d11.month;
+            formData.field11_year = d11.year;
+            formData.field11_month_name = d11.monthName;
+
+            const dService = parseDateParts(formData.serviceContractDate || formData.field45);
+            formData.serviceContractDate_day = dService.day;
+            formData.serviceContractDate_month = dService.month;
+            formData.serviceContractDate_year = dService.year;
+            formData.serviceContractDate_month_name = dService.monthName;
+
+            formData.field45_day = dService.day;
+            formData.field45_month = dService.month;
+            formData.field45_year = dService.year;
+            formData.field45_month_name = dService.monthName;
+
+            formData.field38_int = '_________';
+            formData.field38_words = '____________________________________________________________';
+            if (formData.field38) {
+                const val = parseFloat(formData.field38);
+                if (!isNaN(val)) {
+                    formData.field38_int = Math.floor(val).toString();
+                    formData.field38_words = numberToWordsUA(val);
+                }
+            }
+
+            if (!formData.field39 || formData.field39.trim() === '') {
+                formData.field39 = formData.field38_words !== '____________________________________________________________'
+                    ? formData.field38_words
+                    : '';
+            }
+
+            // Розрахунок мінімальної потужності для Форми №6 (міню між дозволеною та інвертором)
+            let pPermitted = parseFloat((formData.permittedPower || formData.field13 || '').toString().replace(',', '.'));
+            let pInverter = parseFloat((formData.inverterPower || formData.field28 || '').toString().replace(',', '.'));
+
+            let minPowerVal = '';
+            if (!isNaN(pPermitted) && !isNaN(pInverter)) {
+                minPowerVal = Math.min(pPermitted, pInverter).toString();
+            } else if (!isNaN(pPermitted)) {
+                minPowerVal = pPermitted.toString();
+            } else if (!isNaN(pInverter)) {
+                minPowerVal = pInverter.toString();
+            } else {
+                minPowerVal = formData.permittedPower || formData.field13 || formData.inverterPower || formData.field28 || '';
+            }
+            formData.doc6_power = minPowerVal;
+
+            // 2. Рендеримо документи
+            let renderedCount = 0;
+
+            selected.forEach((docId) => {
+                if (typeof GT_TEMPLATES === 'undefined') return;
+
+                const templateKey = `doc${docId}`;
+                let template = GT_TEMPLATES[templateKey];
+                if (!template) {
+                    console.warn(`⚠️ Шаблон "${templateKey}" не знайдено`);
+                    return;
+                }
+
+                // Видаляємо плейсхолдер стилів — вони вже в <head>
+                template = template.replace(/{{styles}}/g, '');
+
+                // Підставляємо значення полів форми
+                for (const [key, value] of Object.entries(formData)) {
+                    const ph = `{{${key}}}`;
+                    if (template.includes(ph)) {
+                        template = template.split(ph).join(value || '__________');
+                    }
+                }
+
+                // Логіка підпису та печатки (Окремо для кожної сторінки)
+                const signBase = 'position:absolute; width:180px; z-index:10; pointer-events:none; mix-blend-mode: multiply; opacity: 0.94;';
+
+                // === НАЛАШТУВАННЯ ПІДПИСІВ ===
+                let signImg = '';
+
+                // 1. Відступи для режиму "Печатка + підпис"
+                let stampTitleTop = '-65px';
+                let stampApp1Top = '-50px';
+
+                // 2. Відступи для режиму "Лише підпис" (РЕДАГУЙТЕ ТУТ)
+                let onlyTitleTop = '-10px';   // Титульна сторінка
+                let onlyApp1Top = '30px';    // Протокол (Додаток 1)
+
+                // =============================
+
+                let titleTop = '0px';
+                let app1Top = '0px';
+
+                if (formData.signMode === 'stamp' || (formData.useSign && !formData.signMode)) {
+                    signImg = 'doc/sign_cso.png';
+                    titleTop = stampTitleTop;
+                    app1Top = stampApp1Top;
+                } else if (formData.signMode === 'only') {
+                    signImg = 'doc/only_sign_cso.png';
+                    titleTop = onlyTitleTop;
+                    app1Top = onlyApp1Top;
+                }
+
+                const signatureTitleHtml = signImg
+                    ? `<img src="${signImg}" style="${signBase} left:-10px; top:${titleTop};">`
+                    : '';
+                const signatureApp1Html = signImg
+                    ? `<img src="${signImg}" style="${signBase} right:70px; top:${app1Top};">`
+                    : '';
+
+                template = template.split('{{signature_title}}').join(signatureTitleHtml);
+                template = template.split('{{signature_app1}}').join(signatureApp1Html);
+
+                // Специфічна логіка для Однолінійної схеми (doc3)
+                if (docId === '3') {
+                    const hasBattery = formData.stationType && formData.stationType.toLowerCase().includes('гібрид');
+                    template = template
+                        .split("{{field43 === 'Гібридна станція' ? 'none' : 'block'}}").join(hasBattery ? 'none' : 'block')
+                        .split("{{field43 === 'Гібридна станція' ? 'block' : 'none'}}").join(hasBattery ? 'block' : 'none');
+                }
+
+                // ─── Додавання документа в контейнер ───
+
+                // Специфічна логіка для Акту (doc4)
+                if (docId === '4') {
+                    const batteryInfo = formData.field36
+                        ? `<li>Акумуляторна батарея: ${formData.field36} (${formData.field37} кВт*год)</li>`
+                        : '';
+                    template = template.split('{{batteryListItem}}').join(batteryInfo);
+                }
+
+                // Специфічна логіка для Акту тех. вимог (doc6)
+                if (docId === '6') {
+                    // Форматуємо інвертор: Модель (с/н Номер)
+                    const inverterFull = formData.field27 + (formData.field29 ? ` (с/н ${formData.field29})` : '');
+                    template = template.split('{{field27_with_sn}}').join(inverterFull);
+
+                    // Умовне відображення пристрою контролю (ZUBR)
+                    if (formData.field20 && formData.field20.trim() !== '') {
+                        template = template.split('{{zubrListItem}}').join(`<li style="margin-bottom:3px;">Пристрою контролю якості напруги: <strong>${formData.field20}</strong></li>`);
+                        template = template.split('{{zubrParagraph}}').join(`
+                            <p style="text-align:justify; text-indent:1.5cm; margin:0 0 8px 0; font-size:12pt;">
+                                Улаштовано технічний засіб <strong>${formData.field20}</strong> для недопущення відпуску в електричну мережу ОСП, ОСР, та їх користувачів, ОМСР електричної енергії, параметри напруги якої не відповідають визначеним державними стандартами.
+                            </p>
+                        `);
+                    } else {
+                        template = template.split('{{zubrListItem}}').join('');
+                        template = template.split('{{zubrParagraph}}').join('');
+                    }
+                }
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'doc-wrapper';
+
+                // Специфічна логіка для фото (Додаток 1 та 2)
+                if (docId === '2') {
+                    template = template.split('{{photo1}}').join(
+                        photos.photo1
+                            ? `<img src="${photos.photo1}" style="height:100%; width:auto; max-width:100%; object-fit:contain;">`
+                            : '<span style="display:block; text-align:center; padding:20px; border:1px dashed #ccc;">(Фото 1: Інвертор)</span>'
+                    );
+                    template = template.split('{{photo2}}').join(
+                        photos.photo2
+                            ? `<img src="${photos.photo2}" style="height:100%; width:auto; max-width:100%; object-fit:contain;">`
+                            : '<span style="display:block; text-align:center; padding:20px; border:1px dashed #ccc;">(Фото 2: С/н інвертора)</span>'
+                    );
+                }
+
+                // Додаток №2: Скріншот налаштувань інвертора
+                if (template.includes('{{photo_inverter_settings}}')) {
+                    template = template.split('{{photo_inverter_settings}}').join(
+                        photos.photo3
+                            ? `<img src="${photos.photo3}" style="max-width:100%; max-height:280px; object-fit:contain;">`
+                            : `<img src="doc/foto_1_nastrojka.png" style="max-width:100%; max-height:280px; object-fit:contain;">`
+                    );
+                }
+
+
+
+                // Специфічна логіка для Технічних паспортів (doc7)
+                if (docId === '7') {
+                    let inverterQrHtml = '';
+                    if (formData.inverterCertUrl) {
+                        inverterQrHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(formData.inverterCertUrl)}" style="width:100px; height:100px;" />`;
+                    } else {
+                        inverterQrHtml = '<span style="font-size:9pt; color:#999; text-align:center; display:block; padding:10px;">Не знайдено в сховищі</span>';
+                    }
+                    template = template.split('{{inverterCertQr}}').join(inverterQrHtml);
+
+                    let panelQrHtml = '';
+                    if (formData.panelCertUrl) {
+                        panelQrHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(formData.panelCertUrl)}" style="width:100px; height:100px;" />`;
+                    } else {
+                        panelQrHtml = '<span style="font-size:9pt; color:#999; text-align:center; display:block; padding:10px;">Не знайдено в сховищі</span>';
+                    }
+                    template = template.split('{{panelCertQr}}').join(panelQrHtml);
+                    
+                    // Заміна імен файлів
+                    template = template.split('{{inverterCertName}}').join(formData.inverterCertName || 'Не підібрано');
+                    template = template.split('{{panelCertName}}').join(formData.panelCertName || 'Не підібрано');
+                }
+
+                wrapper.innerHTML = template;
+                container.appendChild(wrapper);
+                renderedCount++;
+            });
+
+            if (renderedCount === 0) {
+                showError('Жодного документа не вдалося відрендерити. Перевірте шаблони.');
+            } else {
+                console.log(`✅ Відрендеровано ${renderedCount} документів`);
+            }
+        });
+
+        function showError(msg) {
+            const container = document.getElementById('printContainer');
+            container.innerHTML = `<div class="error-state">❌ ${msg}</div>`;
+        }
+    </script>
+</body>
+
+</html>

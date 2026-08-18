@@ -13,7 +13,7 @@
     "land-lease"
   ],
   "scripts": {
-    "build": "npm run build --workspace=packages/design-system && npm run build --workspace=dashboard && npm run build --workspace=warehouse && npm run build --workspace=proposals-v2 && npm run build --workspace=projects && npm run build --workspace=green-tariff-v2 && npm run build --workspace=land-lease",
+    "build": "npm run build --workspace=packages/design-system && npm run build --workspace=dashboard && npm run build --workspace=warehouse && npm run build --workspace=proposals-v2 && npm run build --workspace=projects && npm run build --workspace=green-tariff-v2 && npm run build --workspace=land-lease && node -e \"fs.cpSync('public/green-tariff', 'public/files', {recursive: true})\"",
     "dev:dashboard": "npm run dev --workspace=dashboard",
     "dev:warehouse": "npm run dev --workspace=warehouse",
     "dev:proposals-v2": "npm run dev --workspace=proposals-v2",
