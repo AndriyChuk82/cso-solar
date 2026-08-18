@@ -7,7 +7,8 @@ import {
   Landmark,
   LogOut,
   User,
-  ArrowRight
+  ArrowRight,
+  FolderOpen
 } from 'lucide-react';
 import { useTheme } from '@cso/design-system';
 import { clsx, type ClassValue } from 'clsx';
