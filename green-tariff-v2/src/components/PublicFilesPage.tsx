@@ -49,7 +49,7 @@ function matchTermWithRanges(term: string, fileName: string, normalizedName: str
         const minVal = parseInt(match[1], 10);
         const maxVal = parseInt(match[2], 10);
         if (!isNaN(minVal) && !isNaN(maxVal) && minVal <= maxVal) {
-          if (targetNum >= minVal && targetNum <= maxVal) {
+          if ((maxVal - minVal) <= 200 && targetNum >= minVal && targetNum <= maxVal) {
             return true;
           }
         }
