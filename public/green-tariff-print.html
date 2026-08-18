@@ -288,6 +288,22 @@
                     : '';
             }
 
+            // Розрахунок мінімальної потужності для Форми №6 (міню між дозволеною та інвертором)
+            let pPermitted = parseFloat((formData.permittedPower || formData.field13 || '').toString().replace(',', '.'));
+            let pInverter = parseFloat((formData.inverterPower || formData.field28 || '').toString().replace(',', '.'));
+
+            let minPowerVal = '';
+            if (!isNaN(pPermitted) && !isNaN(pInverter)) {
+                minPowerVal = Math.min(pPermitted, pInverter).toString();
+            } else if (!isNaN(pPermitted)) {
+                minPowerVal = pPermitted.toString();
+            } else if (!isNaN(pInverter)) {
+                minPowerVal = pInverter.toString();
+            } else {
+                minPowerVal = formData.permittedPower || formData.field13 || formData.inverterPower || formData.field28 || '';
+            }
+            formData.doc6_power = minPowerVal;
+
             // 2. Рендеримо документи
             let renderedCount = 0;
 
