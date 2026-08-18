@@ -72,6 +72,15 @@ const MODULES: ModuleInfo[] = [
     icon: Landmark,
     permKey: 'land-lease',
     color: 'text-primary'
+  },
+  {
+    id: 'files',
+    name: 'База файлів',
+    description: 'Публічний каталог технічних паспортів та сертифікатів',
+    path: '/files',
+    icon: FolderOpen,
+    permKey: 'files',
+    color: 'text-amber-500'
   }
 ];
 
@@ -118,15 +127,17 @@ export default function App() {
           'warehouse': ['warehouse', 'склад'],
           'projects': ['projects', 'проєкти', 'проекти'],
           'gt': ['gt', 'зелений тариф', 'зт'],
-          'land-lease': ['land-lease', 'оренда', 'оренда землі', 'земля']
+          'land-lease': ['land-lease', 'оренда', 'оренда землі', 'земля'],
+          'files': ['files', 'файли', 'база', 'паспорти']
         };
 
         const isAdmin = role === 'admin' || role === 'адмін' || role === 'адміністратор';
 
-        // Покращена перевірка: якщо не адмін і нема рядка доступу — доступу 0
+        // Покращена перевірка: публічний модуль files завжди дозволений
         const allowedModules = isAdmin
           ? MODULES.map(m => m.id)
           : MODULES.filter(m => {
+            if (m.id === 'files') return true;
             if (!accessStr) return false;
             const keywords = moduleMapping[m.permKey] || [m.permKey];
             return keywords.some(k => accessStr.includes(k));

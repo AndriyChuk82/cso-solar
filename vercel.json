@@ -16,6 +16,8 @@
     { "source": "/proposals", "destination": "/proposals/index.html" },
     { "source": "/proposals/assets/(.*)", "destination": "/proposals/assets/$1" },
     { "source": "/proposals/((?!assets/).*)", "destination": "/proposals/index.html" },
+    { "source": "/files", "destination": "/green-tariff/index.html" },
+    { "source": "/files/(.*)", "destination": "/green-tariff/index.html" },
     { "source": "/green-tariff", "destination": "/green-tariff/index.html" },
     { "source": "/green-tariff/assets/(.*)", "destination": "/green-tariff/assets/$1" },
     { "source": "/green-tariff/((?!assets/).*)", "destination": "/green-tariff/index.html" },
