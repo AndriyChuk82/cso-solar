@@ -158,6 +158,13 @@ export async function fetchEquipment(): Promise<GASResponse> {
   return gasGTRequest('getEquipment');
 }
 
+export interface SpecFileItem {
+  name: string;
+  size?: number;
+  publicUrl: string;
+  updatedAt?: string;
+}
+
 export async function fetchSpecsFileList(): Promise<string[]> {
   if (!supabase) return [];
   try {
@@ -174,6 +181,34 @@ export async function fetchSpecsFileList(): Promise<string[]> {
   }
 }
 
+export async function fetchSpecsFileListDetails(): Promise<SpecFileItem[]> {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .storage
+      .from('equipment-specs')
+      .list('', { limit: 1000, sortBy: { column: 'name', order: 'asc' } });
+
+    if (error) throw error;
+    
+    const client = supabase;
+    return (data || [])
+      .filter(f => f.name && f.name !== '.emptyFolderPlaceholder')
+      .map(f => {
+        const { data: pubData } = client.storage.from('equipment-specs').getPublicUrl(f.name);
+        return {
+          name: f.name,
+          size: f.metadata?.size,
+          publicUrl: pubData.publicUrl,
+          updatedAt: f.updated_at || f.created_at || undefined,
+        };
+      });
+  } catch (e) {
+    console.error('Error listing specs files with details:', e);
+    return [];
+  }
+}
+
 export const gtApi = {
   fetchProjects,
   saveProject,
@@ -181,4 +216,5 @@ export const gtApi = {
   fetchEquipment,
   deleteProject,
   fetchSpecsFileList,
+  fetchSpecsFileListDetails,
 };

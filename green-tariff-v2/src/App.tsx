@@ -1,16 +1,47 @@
 // ===== CSO Solar — Green Tariff v2 App Entry Point =====
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGTStore } from './store/useGTStore';
 import { Layout } from './components/Layout';
 import { ProjectList } from './components/ProjectList';
 import { ProjectWizard } from './components/ProjectWizard';
+import { PublicFilesPage } from './components/PublicFilesPage';
 import { 
   X, CheckCircle, AlertCircle, Info, AlertTriangle, RefreshCw 
 } from 'lucide-react';
 
 export default function App() {
   const { toasts, removeToast, unsavedChanges, retrySync } = useGTStore();
+
+  const [currentView, setCurrentView] = useState<'app' | 'files'>(() => {
+    const search = window.location.search;
+    const hash = window.location.hash;
+    const path = window.location.pathname;
+    if (search.includes('view=files') || hash === '#files' || path.endsWith('/files')) {
+      return 'files';
+    }
+    return 'app';
+  });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const search = window.location.search;
+      const hash = window.location.hash;
+      const path = window.location.pathname;
+      if (search.includes('view=files') || hash === '#files' || path.endsWith('/files')) {
+        setCurrentView('files');
+      } else {
+        setCurrentView('app');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
+  }, []);
 
   // Browser reload/close dirty form guard
   useEffect(() => {
@@ -46,6 +77,21 @@ export default function App() {
       icon: Info,
     },
   };
+
+  if (currentView === 'files') {
+    return (
+      <PublicFilesPage 
+        onBackToApp={() => {
+          window.location.hash = '';
+          if (window.history.pushState) {
+            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.pushState({ path: cleanUrl }, '', cleanUrl);
+          }
+          setCurrentView('app');
+        }}
+      />
+    );
+  }
 
   return (
     <Layout>

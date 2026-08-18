@@ -96,6 +96,20 @@ export function Layout({ children }: LayoutProps) {
                   </a>
                 )}
 
+                <a
+                  href="?view=files#files"
+                  onClick={(e) => {
+                    if (window.location.pathname.includes('/green-tariff')) {
+                      e.preventDefault();
+                      window.location.hash = '#files';
+                      window.dispatchEvent(new Event('hashchange'));
+                    }
+                  }}
+                  className="px-3 py-2 text-sm font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded-md transition flex items-center gap-1"
+                >
+                  📁 База файлів
+                </a>
+
                 {hasAccess(['land-lease', 'оренда', 'оренда землі', 'земля']) && (
                   <a
                     href="/land-lease/"
