@@ -1,5 +1,24 @@
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://lqsyweounwbbhcyzkrdj.supabase.co';
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxxc3l3ZW91bndiYmhjeXprcmRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNTc3MDcsImV4cCI6MjA5MTgzMzcwN30.w_xlhKZkcd5QcNfp2xMmfyg2BcotMF5osF4MGF4T3_I';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+async function recordAuthLog({ username, status, ip, userAgent, failureReason }) {
+    try {
+        await supabase.from('auth_logs').insert({
+            username: username || 'Невідомий',
+            status: status,
+            ip_address: ip,
+            user_agent: userAgent || 'Невідомий пристрій',
+            failure_reason: failureReason || null,
+        });
+    } catch (err) {
+        console.warn('Could not record auth log:', err);
+    }
+}
 
 // Rate limiting: track failed attempts per IP
 const failedAttempts = new Map();
@@ -23,13 +42,21 @@ export default async function handler(req, res) {
 
     cleanOldEntries();
 
-    // Get client IP for rate limiting
+    // Get client IP and User Agent for logging & rate limiting
     const ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
     const attempts = failedAttempts.get(ip);
 
     // Check lockout
     if (attempts && attempts.count >= MAX_ATTEMPTS) {
         const timeLeft = Math.ceil((LOCKOUT_MS - (Date.now() - attempts.lastAttempt)) / 1000 / 60);
+        recordAuthLog({
+            username: req.body?.username || 'Невідомий',
+            status: 'BLOCKED',
+            ip,
+            userAgent,
+            failureReason: `Заблоковано через перевищення ліміту (15 хв)`
+        });
         return res.status(429).json({ 
             error: `Забагато спроб. Спробуйте через ${timeLeft} хв.`
         });
@@ -99,6 +126,15 @@ export default async function handler(req, res) {
         }
 
         if (!passwordMatch) {
+            // Record failed login log
+            recordAuthLog({
+                username,
+                status: 'FAILED',
+                ip,
+                userAgent,
+                failureReason: 'Невірний логін або пароль'
+            });
+
             // Track failed attempt
             const current = failedAttempts.get(ip) || { count: 0, lastAttempt: 0 };
             failedAttempts.set(ip, { 
@@ -116,6 +152,15 @@ export default async function handler(req, res) {
 
         // Success — clear failed attempts
         failedAttempts.delete(ip);
+
+        // Record successful login log
+        recordAuthLog({
+            username,
+            status: 'SUCCESS',
+            ip,
+            userAgent,
+            failureReason: null
+        });
 
         // Створення токена
         userRole = userRole.trim().toLowerCase();
