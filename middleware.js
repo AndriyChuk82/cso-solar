@@ -1,7 +1,7 @@
 import { jwtVerify } from 'jose';
 
 // Список шляхів, які доступні без авторизації
-const PUBLIC_PATHS = ['/login.html', '/login.css', '/api/login', '/favicon.ico', '/assets/', '/api/verify', '/api/proxy', '/dashboard/assets/', '/files'];
+const PUBLIC_PATHS = ['/login.html', '/login.css', '/api/login', '/favicon.ico', '/assets/', '/api/verify', '/api/proxy', '/dashboard/assets/', '/green-tariff/assets/', '/files'];
 
 export const config = {
     // Запускаємо middleware для всіх шляхів, крім внутрішніх верифікацій Vercel
