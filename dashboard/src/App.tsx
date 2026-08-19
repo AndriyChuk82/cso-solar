@@ -8,8 +8,10 @@ import {
   LogOut,
   User,
   ArrowRight,
-  FolderOpen
+  FolderOpen,
+  ShieldAlert
 } from 'lucide-react';
+import { AuthLogsModal } from './components/AuthLogsModal';
 import { useTheme } from '@cso/design-system';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -89,6 +91,7 @@ export default function App() {
   const { theme, toggleTheme, fontScale, setFontScale } = useTheme();
   const [user, setUser] = useState<{ name: string; role: string; access: string[] } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -223,6 +226,17 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-2">
+              {(user?.role === 'admin' || user?.role === 'адмін' || user?.role === 'адміністратор') && (
+                <button
+                  onClick={() => setIsLogsModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-xl transition-all cursor-pointer mr-1"
+                  title="Переглянути журнал авторизацій (Тільки для адміністратора)"
+                >
+                  {(() => { const Icon = ShieldAlert as any; return <Icon className="w-4 h-4 text-amber-500" />; })()}
+                  <span className="hidden sm:inline">Логи входу</span>
+                </button>
+              )}
+
               <button
                 onClick={handleLogout}
                 className="p-2 text-slate-400 hover:text-red-500 transition-colors"
@@ -273,6 +287,12 @@ export default function App() {
       <footer className="py-8 px-6 text-center text-slate-400 text-xs border-t border-slate-200 bg-white">
         © {new Date().getFullYear()} CSO Solar. Всі права захищено.
       </footer>
+
+      {/* Admin Auth Audit Logs Modal */}
+      <AuthLogsModal
+        isOpen={isLogsModalOpen}
+        onClose={() => setIsLogsModalOpen(false)}
+      />
     </div>
   );
 }
