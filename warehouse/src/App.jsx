@@ -31,6 +31,11 @@ const ShipmentsDashboard = lazy(() => import('./pages/ShipmentsDashboard'));
 const ShipmentForm = lazy(() => import('./pages/ShipmentForm'));
 const ShipmentDetails = lazy(() => import('./pages/ShipmentDetails'));
 
+// Сторінки для модуля «Об'єкти будівництва»
+const ConstructionObjectsDashboard = lazy(() => import('./pages/ConstructionObjectsDashboard'));
+const ConstructionObjectDetails = lazy(() => import('./pages/ConstructionObjectDetails'));
+
+
 
 function AppContent() {
   const { user, loading, error, isVerifying } = useAuth();
@@ -118,6 +123,10 @@ function AppContent() {
             <Route path="/shipments/new" element={<ShipmentForm />} />
             <Route path="/shipments/edit/:id" element={<ShipmentForm />} />
             <Route path="/shipments/:id" element={<ShipmentDetails />} />
+
+            {/* Об'єкти будівництва */}
+            <Route path="/construction-objects" element={<ConstructionObjectsDashboard />} />
+            <Route path="/construction-objects/:id" element={<ConstructionObjectDetails />} />
 
             {/* Лише адміністратор */}
             {user.isAdmin && (

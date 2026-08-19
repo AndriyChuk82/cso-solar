@@ -185,7 +185,7 @@ export function ProposalBuilderTable() {
     <div className="space-y-4" id="proposal-container">
       
       {/* 1. Інтерактивний редактор комерційної пропозиції (ховається при друці) */}
-      <div id="proposal-editor-container" className="no-print space-y-4 pb-24">
+      <div id="proposal-editor-container" className="no-print space-y-4 pb-32">
         <TabBar />
         <ClientInfoForm
           clientName={proposal.clientName}

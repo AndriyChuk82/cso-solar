@@ -83,10 +83,10 @@ async function sendTelegramPhoto(proposal: Proposal, botToken?: string, chatId?:
 
   if (!mainEl && !printTemplate) throw new Error('Елемент пропозиції не знайдено');
 
-  const targetEl = (!showCost && printTemplate) ? printTemplate : mainEl!;
+  const targetEl = printTemplate || mainEl!;
 
   let restoreStyle: (() => void) | null = null;
-  if (!showCost && printTemplate) {
+  if (printTemplate) {
     const origDisplay = printTemplate.style.display;
     const origWidth = printTemplate.style.width;
     const origMaxWidth = printTemplate.style.maxWidth;
@@ -114,7 +114,7 @@ async function sendTelegramPhoto(proposal: Proposal, botToken?: string, chatId?:
   }
 
   try {
-    const captureWidth = (!showCost && printTemplate) ? 850 : (targetEl.scrollWidth || 1200);
+    const captureWidth = printTemplate ? 850 : (targetEl.scrollWidth || 1200);
 
     const dataUrl = await toPng(targetEl, {
       quality: 0.95,
@@ -131,8 +131,10 @@ async function sendTelegramPhoto(proposal: Proposal, botToken?: string, chatId?:
       },
       cacheBust: false,
       filter: (node: Node) => {
-        if (node instanceof HTMLElement && (node.tagName === 'SCRIPT' || node.tagName === 'IFRAME')) {
-          return false;
+        if (node instanceof HTMLElement) {
+          if (node.tagName === 'SCRIPT' || node.tagName === 'IFRAME') return false;
+          if (node.getAttribute('data-no-capture') === 'true') return false;
+          if (node.classList.contains('fixed') && targetEl !== node && !targetEl.contains(node)) return false;
         }
         return true;
       }
@@ -295,11 +297,11 @@ export async function takeProposalScreenshot(): Promise<void> {
       return;
     }
 
-    const targetEl = (!showCost && printTemplate) ? printTemplate : mainEl!;
+    const targetEl = printTemplate || mainEl!;
 
     // Тимчасово робимо друкований шаблон видимим з шириною 850px та відступами
     let restoreStyle: (() => void) | null = null;
-    if (!showCost && printTemplate) {
+    if (printTemplate) {
       const origDisplay = printTemplate.style.display;
       const origWidth = printTemplate.style.width;
       const origMaxWidth = printTemplate.style.maxWidth;
@@ -326,7 +328,7 @@ export async function takeProposalScreenshot(): Promise<void> {
       };
     }
 
-    const captureWidth = (!showCost && printTemplate) ? 850 : (targetEl.scrollWidth || 1200);
+    const captureWidth = printTemplate ? 850 : (targetEl.scrollWidth || 1200);
 
     // ⚡ html-to-image з чіткими габаритами width: 850 та margin: 0 для 100% повнорозмірного відмалювання
     const dataUrl = await toPng(targetEl, {
@@ -344,8 +346,10 @@ export async function takeProposalScreenshot(): Promise<void> {
       },
       cacheBust: false,
       filter: (node: Node) => {
-        if (node instanceof HTMLElement && (node.tagName === 'SCRIPT' || node.tagName === 'IFRAME')) {
-          return false;
+        if (node instanceof HTMLElement) {
+          if (node.tagName === 'SCRIPT' || node.tagName === 'IFRAME') return false;
+          if (node.getAttribute('data-no-capture') === 'true') return false;
+          if (node.classList.contains('fixed') && targetEl !== node && !targetEl.contains(node)) return false;
         }
         return true;
       }

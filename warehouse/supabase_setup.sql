@@ -275,3 +275,51 @@ CREATE POLICY "Allow anon access to shipment_items" ON public.shipment_items FOR
 
 DROP POLICY IF EXISTS "Allow anon access to shipment_payments" ON public.shipment_payments;
 CREATE POLICY "Allow anon access to shipment_payments" ON public.shipment_payments FOR ALL TO anon USING (true) WITH CHECK (true);
+
+--------------------------------------------------------------------------------
+-- 6. ТАБЛИЦІ ТА ПОЛІТИКИ ДЛЯ МОДУЛЯ «ОБ'ЄКТИ БУДІВНИЦТВА» (СОНЯЧНІ СТАНЦІЇ)
+--------------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS public.construction_objects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_name TEXT NOT NULL,
+    phone TEXT,
+    address TEXT,
+    proposal_id TEXT,
+    proposal_number TEXT,
+    currency TEXT DEFAULT 'USD', -- 'UAH' або 'USD'
+    exchange_rate NUMERIC,
+    status TEXT NOT NULL DEFAULT 'kp_sent', -- 'kp_sent', 'inspected', 'in_progress', 'completed', 'paid'
+    payment_type TEXT DEFAULT 'cash_end', -- 'bank_loan', 'cash_end', 'cash_deposit', 'other'
+    payment_notes TEXT,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.construction_object_materials (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    object_id UUID NOT NULL REFERENCES public.construction_objects(id) ON DELETE CASCADE,
+    product_id TEXT,
+    product_name TEXT NOT NULL,
+    unit TEXT DEFAULT 'шт.',
+    planned_qty NUMERIC DEFAULT 0,
+    actual_qty NUMERIC DEFAULT 0,
+    is_custom BOOLEAN DEFAULT false,
+    notes TEXT,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+GRANT ALL ON TABLE public.construction_objects TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.construction_object_materials TO anon, authenticated, service_role;
+
+ALTER TABLE public.construction_objects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.construction_object_materials ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow anon access to construction_objects" ON public.construction_objects;
+CREATE POLICY "Allow anon access to construction_objects" ON public.construction_objects FOR ALL TO anon USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon access to construction_object_materials" ON public.construction_object_materials;
+CREATE POLICY "Allow anon access to construction_object_materials" ON public.construction_object_materials FOR ALL TO anon USING (true) WITH CHECK (true);
+
