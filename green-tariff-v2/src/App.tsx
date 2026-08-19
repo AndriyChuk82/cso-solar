@@ -82,12 +82,7 @@ export default function App() {
     return (
       <PublicFilesPage 
         onBackToApp={() => {
-          window.location.hash = '';
-          if (window.history.pushState) {
-            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-            window.history.pushState({ path: cleanUrl }, '', cleanUrl);
-          }
-          setCurrentView('app');
+          window.location.href = '/dashboard/';
         }}
       />
     );

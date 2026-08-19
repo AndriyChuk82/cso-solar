@@ -160,7 +160,7 @@ export function PublicFilesPage({ onBackToApp }: PublicFilesPageProps) {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 rounded-xl transition-all shadow-sm cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4 text-[#f59e0b]" />
-                <span className="hidden sm:inline">Повернутися в систему</span>
+                <span className="hidden sm:inline">Вхід для співробітників</span>
               </button>
             )}
 
