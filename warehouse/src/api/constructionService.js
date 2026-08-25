@@ -288,19 +288,23 @@ export const constructionService = {
 
       const advanceAmount = parseFloat(proposal.advance || proposal.deposit || proposal.advanceAmount || 0);
 
-      // Оновлюємо об'єкт (клієнт, телефон, адреса, валюта, суми)
+      // Отримуємо поточні дані об'єкта, щоб НЕ затирати телефон та адресу, якщо їх немає в КП
+      const existingRes = await constructionService.getObjectDetails(objectId);
+      const existingObj = existingRes?.object || {};
+
       const updateData = {
+        ...existingObj,
         id: objectId,
-        client_name: proposal.clientName || 'Клієнт з КП',
-        phone: proposal.clientPhone || proposal.phone || '',
-        address: proposal.clientAddress || proposal.address || '',
+        client_name: (proposal.clientName && proposal.clientName.trim()) ? proposal.clientName.trim() : (existingObj.client_name || 'Клієнт з КП'),
+        phone: (proposal.clientPhone || proposal.phone || existingObj.phone || '').toString().trim(),
+        address: (proposal.clientAddress || proposal.address || existingObj.address || '').toString().trim(),
         proposal_id: String(proposalId),
         proposal_number: String(proposal.number || proposalId),
         currency: currency,
         exchange_rate: exchangeRate,
-        total_price: calcTotal,
-        advance_amount: advanceAmount,
-        paid_amount: parseFloat(proposal.paidAmount || 0)
+        total_price: calcTotal || existingObj.total_price || 0,
+        advance_amount: advanceAmount || existingObj.advance_amount || 0,
+        paid_amount: parseFloat(proposal.paidAmount || existingObj.paid_amount || 0)
       };
 
       await constructionService.saveObject(updateData);
