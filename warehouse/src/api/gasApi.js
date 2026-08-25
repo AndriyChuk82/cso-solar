@@ -1877,11 +1877,41 @@ export async function getShipmentById(id) {
     };
   });
 
-  const { data: payments } = await supabase
+  const { data: rawPayments } = await supabase
     .from('shipment_payments')
     .select('*')
     .eq('shipment_id', id)
     .order('created_at', { ascending: true });
+
+  let paymentsList = rawPayments || [];
+  let isPaymentsDirty = false;
+
+  // Автоматичне виправлення похибок округлення (наприклад, 19999.96 замість 20000.00)
+  if (parseFloat(shipment.advance_amount) > 0 && paymentsList.length > 0) {
+    const advPayment = paymentsList.find(p => p.type === 'advance');
+    if (advPayment && Math.abs(parseFloat(advPayment.amount) - parseFloat(shipment.advance_amount)) < 1) {
+      if (parseFloat(advPayment.amount) !== parseFloat(shipment.advance_amount)) {
+        advPayment.amount = parseFloat(shipment.advance_amount);
+        isPaymentsDirty = true;
+        await supabase
+          .from('shipment_payments')
+          .update({ amount: shipment.advance_amount })
+          .eq('id', advPayment.id);
+      }
+    }
+  }
+
+  const actualPaid = Math.round((paymentsList.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)) * 100) / 100;
+  const actualDebt = Math.max(0, Math.round(((parseFloat(shipment.total_amount) || 0) - actualPaid) * 100) / 100);
+
+  if (isPaymentsDirty || parseFloat(shipment.paid_amount) !== actualPaid || parseFloat(shipment.debt_amount) !== actualDebt) {
+    shipment.paid_amount = actualPaid;
+    shipment.debt_amount = actualDebt;
+    await supabase
+      .from('shipments')
+      .update({ paid_amount: actualPaid, debt_amount: actualDebt })
+      .eq('id', id);
+  }
 
   const { data: auditLogs } = await supabase
     .from('audit_logs')
@@ -1893,7 +1923,7 @@ export async function getShipmentById(id) {
     success: true,
     shipment,
     items: enrichedItems,
-    payments: payments || [],
+    payments: paymentsList,
     auditLogs: auditLogs || []
   };
 }
