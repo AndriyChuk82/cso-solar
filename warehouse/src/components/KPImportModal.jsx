@@ -39,9 +39,9 @@ export default function KPImportModal({ isOpen, onClose, onSelect }) {
   const filtered = proposals.filter(p => {
     const q = searchQuery.toLowerCase();
     return (
-      (p.clientName || '').toLowerCase().includes(q) ||
-      (p.number || '').toString().toLowerCase().includes(q) ||
-      (p.clientPhone || p.phone || '').toLowerCase().includes(q)
+      String(p.clientName || '').toLowerCase().includes(q) ||
+      String(p.number || p.id || '').toLowerCase().includes(q) ||
+      String(p.clientPhone || p.phone || '').toLowerCase().includes(q)
     );
   });
 

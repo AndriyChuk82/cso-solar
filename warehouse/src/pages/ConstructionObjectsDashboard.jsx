@@ -85,10 +85,10 @@ export default function ConstructionObjectsDashboard() {
     const matchesStatus = statusFilter === 'all' || obj.status === statusFilter;
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch = !q || (
-      (obj.client_name || '').toLowerCase().includes(q) ||
-      (obj.phone || '').toLowerCase().includes(q) ||
-      (obj.address || '').toLowerCase().includes(q) ||
-      (obj.proposal_number || '').toLowerCase().includes(q)
+      String(obj.client_name || '').toLowerCase().includes(q) ||
+      String(obj.phone || '').toLowerCase().includes(q) ||
+      String(obj.address || '').toLowerCase().includes(q) ||
+      String(obj.proposal_number || '').toLowerCase().includes(q)
     );
     return matchesStatus && matchesSearch;
   });
