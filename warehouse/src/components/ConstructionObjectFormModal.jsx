@@ -33,13 +33,13 @@ export default function ConstructionObjectFormModal({ isOpen, onClose, onSave, i
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        setClientName(initialData.client_name || '');
-        setPhone(initialData.phone || '');
-        setAddress(initialData.address || '');
+        setClientName(initialData.client_name ? String(initialData.client_name) : '');
+        setPhone(initialData.phone ? String(initialData.phone) : '');
+        setAddress(initialData.address ? String(initialData.address) : '');
         setStatus(initialData.status || 'kp_sent');
         setPaymentType(initialData.payment_type || 'cash_end');
-        setPaymentNotes(initialData.payment_notes || '');
-        setNotes(initialData.notes || '');
+        setPaymentNotes(initialData.payment_notes ? String(initialData.payment_notes) : '');
+        setNotes(initialData.notes ? String(initialData.notes) : '');
         setCurrency(initialData.currency || 'USD');
         setTotalPrice(initialData.total_price !== undefined && initialData.total_price !== null ? String(initialData.total_price) : '');
         setAdvanceAmount(initialData.advance_amount !== undefined && initialData.advance_amount !== null ? String(initialData.advance_amount) : '');
@@ -72,19 +72,20 @@ export default function ConstructionObjectFormModal({ isOpen, onClose, onSave, i
 
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    if (!clientName.trim() || isSubmitting) return;
+    const cleanClientName = String(clientName || '').trim();
+    if (!cleanClientName || isSubmitting) return;
 
     try {
       setIsSubmitting(true);
       await onSave({
         ...(initialData || {}),
-        client_name: clientName.trim(),
-        phone: phone.trim(),
-        address: address.trim(),
+        client_name: cleanClientName,
+        phone: String(phone || '').trim(),
+        address: String(address || '').trim(),
         status,
         payment_type: paymentType,
-        payment_notes: paymentNotes.trim(),
-        notes: notes.trim(),
+        payment_notes: String(paymentNotes || '').trim(),
+        notes: String(notes || '').trim(),
         currency,
         total_price: parseNum(totalPrice),
         advance_amount: parseNum(advanceAmount),
