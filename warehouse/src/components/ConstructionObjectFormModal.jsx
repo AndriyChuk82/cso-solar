@@ -15,6 +15,7 @@ export default function ConstructionObjectFormModal({ isOpen, onClose, onSave, i
   const [totalPrice, setTotalPrice] = useState('');
   const [advanceAmount, setAdvanceAmount] = useState('');
   const [paidAmount, setPaidAmount] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const mouseDownOnOverlay = useRef(false);
 
@@ -40,9 +41,9 @@ export default function ConstructionObjectFormModal({ isOpen, onClose, onSave, i
         setPaymentNotes(initialData.payment_notes || '');
         setNotes(initialData.notes || '');
         setCurrency(initialData.currency || 'USD');
-        setTotalPrice(initialData.total_price || '');
-        setAdvanceAmount(initialData.advance_amount || '');
-        setPaidAmount(initialData.paid_amount || '');
+        setTotalPrice(initialData.total_price !== undefined && initialData.total_price !== null ? String(initialData.total_price) : '');
+        setAdvanceAmount(initialData.advance_amount !== undefined && initialData.advance_amount !== null ? String(initialData.advance_amount) : '');
+        setPaidAmount(initialData.paid_amount !== undefined && initialData.paid_amount !== null ? String(initialData.paid_amount) : '');
       } else {
         setClientName('');
         setPhone('');
@@ -56,31 +57,46 @@ export default function ConstructionObjectFormModal({ isOpen, onClose, onSave, i
         setAdvanceAmount('');
         setPaidAmount('');
       }
+      setIsSubmitting(false);
     }
   }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!clientName.trim()) return;
+  const parseNum = (val) => {
+    if (!val) return 0;
+    const clean = String(val).replace(/,/g, '.').replace(/[^\d.]/g, '');
+    const num = parseFloat(clean);
+    return isNaN(num) ? 0 : num;
+  };
 
-    onSave({
-      ...(initialData || {}),
-      client_name: clientName.trim(),
-      phone: phone.trim(),
-      address: address.trim(),
-      status,
-      payment_type: paymentType,
-      payment_notes: paymentNotes.trim(),
-      notes: notes.trim(),
-      currency,
-      total_price: parseFloat(totalPrice || 0),
-      advance_amount: parseFloat(advanceAmount || 0),
-      paid_amount: parseFloat(paidAmount || 0)
-    });
+  const handleSubmit = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!clientName.trim() || isSubmitting) return;
 
-    onClose();
+    try {
+      setIsSubmitting(true);
+      await onSave({
+        ...(initialData || {}),
+        client_name: clientName.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        status,
+        payment_type: paymentType,
+        payment_notes: paymentNotes.trim(),
+        notes: notes.trim(),
+        currency,
+        total_price: parseNum(totalPrice),
+        advance_amount: parseNum(advanceAmount),
+        paid_amount: parseNum(paidAmount)
+      });
+
+      onClose();
+    } catch (err) {
+      console.error('Save failed:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return createPortal(
@@ -190,9 +206,8 @@ export default function ConstructionObjectFormModal({ isOpen, onClose, onSave, i
                 Сума КП ({currency === 'UAH' ? '₴' : '$'})
               </label>
               <input
-                type="number"
-                step="any"
-                min="0"
+                type="text"
+                inputMode="decimal"
                 placeholder="0"
                 className="form-input w-full text-sm font-bold text-gray-900 dark:text-white"
                 value={totalPrice}
@@ -205,9 +220,8 @@ export default function ConstructionObjectFormModal({ isOpen, onClose, onSave, i
                 Аванс / Завдаток ({currency === 'UAH' ? '₴' : '$'})
               </label>
               <input
-                type="number"
-                step="any"
-                min="0"
+                type="text"
+                inputMode="decimal"
                 placeholder="0"
                 className="form-input w-full text-sm font-bold text-emerald-600 dark:text-emerald-400"
                 value={advanceAmount}
@@ -220,9 +234,8 @@ export default function ConstructionObjectFormModal({ isOpen, onClose, onSave, i
                 Сплачено ({currency === 'UAH' ? '₴' : '$'})
               </label>
               <input
-                type="number"
-                step="any"
-                min="0"
+                type="text"
+                inputMode="decimal"
                 placeholder="0"
                 className="form-input w-full text-sm font-bold text-blue-600 dark:text-blue-400"
                 value={paidAmount}
@@ -256,11 +269,17 @@ export default function ConstructionObjectFormModal({ isOpen, onClose, onSave, i
           </div>
 
           <div className="pt-2 flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="btn btn-secondary text-sm">
+            <button type="button" onClick={onClose} disabled={isSubmitting} className="btn btn-secondary text-sm">
               Скасувати
             </button>
-            <button type="submit" className="btn btn-primary text-sm flex items-center gap-1.5">
-              <Save size={16} /> {initialData ? 'Зберегти зміни' : 'Створити об\'єкт'}
+            <button 
+              type="submit" 
+              onClick={handleSubmit} 
+              disabled={isSubmitting} 
+              className="btn btn-primary text-sm flex items-center gap-1.5 cursor-pointer"
+            >
+              <Save size={16} /> 
+              {isSubmitting ? 'Збереження...' : (initialData ? 'Зберегти зміни' : 'Створити об\'єкт')}
             </button>
           </div>
         </form>
