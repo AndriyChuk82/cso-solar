@@ -1630,41 +1630,59 @@ export async function findOrCreateShipmentClient({ name, phone, address, notes }
 }
 
 /**
- * Автоматичний перенос всіх повністю оплачених відправлень у статус архіву
+ * Автоматична синхронізація архіву: в архів попадають ТІЛЬКИ ВІДПРАВЛЕНІ та ОПЛАЧЕНІ накладні
  */
 export async function syncPaidShipmentsToArchive() {
   if (!supabase) return { success: true, count: 0 };
   try {
-    const { data: unarchivedPaid, error } = await supabase
+    // 1. Неархівовані накладні, які повністю оплачені
+    const { data: unarchivedPaid } = await supabase
       .from('shipments')
-      .select('id, debt_amount, status')
+      .select('id, debt_amount, status, shipped_at, ttn')
       .or('is_archived.is.null,is_archived.eq.false')
       .or('status.eq.paid,debt_amount.lte.0');
 
-    if (error || !unarchivedPaid || unarchivedPaid.length === 0) {
-      return { success: true, count: 0 };
+    if (unarchivedPaid && unarchivedPaid.length > 0) {
+      // В архів ідуть тільки ті, які І ОПЛАЧЕНІ, І ВІДПРАВЛЕНІ (є shipped_at, status='shipped' або вказано ТТН)
+      const idsToArchive = unarchivedPaid
+        .filter(s => {
+          const isPaid = s.status === 'paid' || (s.debt_amount !== undefined && parseFloat(s.debt_amount) <= 0);
+          const isShipped = !!s.shipped_at || s.status === 'shipped' || (s.ttn && s.ttn.trim() !== '');
+          return isPaid && isShipped;
+        })
+        .map(s => s.id);
+
+      if (idsToArchive.length > 0) {
+        await supabase
+          .from('shipments')
+          .update({ is_archived: true })
+          .in('id', idsToArchive);
+      }
     }
 
-    const idsToArchive = unarchivedPaid
-      .filter(s => s.status === 'paid' || (s.debt_amount !== undefined && parseFloat(s.debt_amount) <= 0))
-      .map(s => s.id);
-
-    if (idsToArchive.length === 0) return { success: true, count: 0 };
-
-    const { error: updateErr } = await supabase
+    // 2. Якщо накладна була оплачена, але ЩЕ НЕ ВІДПРАВЛЕНА — повертаємо її з архіву в активні
+    const { data: archivedNotShipped } = await supabase
       .from('shipments')
-      .update({ is_archived: true })
-      .in('id', idsToArchive);
+      .select('id, status, shipped_at, ttn')
+      .eq('is_archived', true);
 
-    if (updateErr) {
-      console.warn("Failed to auto-archive paid shipments:", updateErr);
-      return { success: false, count: 0 };
+    if (archivedNotShipped && archivedNotShipped.length > 0) {
+      const idsToUnarchive = archivedNotShipped
+        .filter(s => !s.shipped_at && s.status !== 'shipped' && (!s.ttn || s.ttn.trim() === ''))
+        .map(s => s.id);
+
+      if (idsToUnarchive.length > 0) {
+        await supabase
+          .from('shipments')
+          .update({ is_archived: false })
+          .in('id', idsToUnarchive);
+      }
     }
 
-    return { success: true, count: idsToArchive.length };
+    return { success: true };
   } catch (err) {
     console.warn("syncPaidShipmentsToArchive failed:", err);
-    return { success: false, count: 0 };
+    return { success: false };
   }
 }
 
