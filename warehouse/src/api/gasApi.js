@@ -1630,12 +1630,54 @@ export async function findOrCreateShipmentClient({ name, phone, address, notes }
 }
 
 /**
+ * Автоматичний перенос всіх повністю оплачених відправлень у статус архіву
+ */
+export async function syncPaidShipmentsToArchive() {
+  if (!supabase) return { success: true, count: 0 };
+  try {
+    const { data: unarchivedPaid, error } = await supabase
+      .from('shipments')
+      .select('id, debt_amount, status')
+      .or('is_archived.is.null,is_archived.eq.false')
+      .or('status.eq.paid,debt_amount.lte.0');
+
+    if (error || !unarchivedPaid || unarchivedPaid.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    const idsToArchive = unarchivedPaid
+      .filter(s => s.status === 'paid' || (s.debt_amount !== undefined && parseFloat(s.debt_amount) <= 0))
+      .map(s => s.id);
+
+    if (idsToArchive.length === 0) return { success: true, count: 0 };
+
+    const { error: updateErr } = await supabase
+      .from('shipments')
+      .update({ is_archived: true })
+      .in('id', idsToArchive);
+
+    if (updateErr) {
+      console.warn("Failed to auto-archive paid shipments:", updateErr);
+      return { success: false, count: 0 };
+    }
+
+    return { success: true, count: idsToArchive.length };
+  } catch (err) {
+    console.warn("syncPaidShipmentsToArchive failed:", err);
+    return { success: false, count: 0 };
+  }
+}
+
+/**
  * Отримання реєстру відправлень
  */
 export async function getShipments(filters = {}) {
   if (!supabase) return { success: true, shipments: [], stats: {} };
 
   try {
+    // Автоматично синонімізуємо / відправляємо в архів всі повністю оплачені відправлення
+    await syncPaidShipmentsToArchive();
+
     let query = supabase
       .from('shipments')
       .select('*')
@@ -2205,14 +2247,16 @@ export async function confirmShipmentDispatch(shipmentId, { ttn, carrier }, user
   }
 
   // 2. Оновлюємо статус відправлення
-  const newStatus = shipment.debt_amount <= 0 ? 'paid' : 'shipped';
+  const isPaid = (parseFloat(shipment.debt_amount) || 0) <= 0;
+  const newStatus = isPaid ? 'paid' : 'shipped';
   const { data: updated, error } = await supabase
     .from('shipments')
     .update({
       status: newStatus,
       ttn: cleanTtn,
       carrier: cleanCarrier,
-      shipped_at: new Date().toISOString()
+      shipped_at: new Date().toISOString(),
+      ...(isPaid ? { is_archived: true } : {})
     })
     .eq('id', shipmentId)
     .select();
