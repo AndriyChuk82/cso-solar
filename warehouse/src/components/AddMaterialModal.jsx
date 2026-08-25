@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Plus, Package } from 'lucide-react';
 import { fetchCPCatalog } from '../api/externalApi';
@@ -15,6 +15,19 @@ export default function AddMaterialModal({ isOpen, onClose, onAdd }) {
   const [catalog, setCatalog] = useState([]);
   const [catalogSearch, setCatalogSearch] = useState('');
   const [showCatalogList, setShowCatalogList] = useState(false);
+
+  const mouseDownOnOverlay = useRef(false);
+
+  const handleOverlayMouseDown = (e) => {
+    mouseDownOnOverlay.current = (e.target === e.currentTarget);
+  };
+
+  const handleOverlayClick = (e) => {
+    if (mouseDownOnOverlay.current && e.target === e.currentTarget) {
+      onClose();
+    }
+    mouseDownOnOverlay.current = false;
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -68,7 +81,11 @@ export default function AddMaterialModal({ isOpen, onClose, onAdd }) {
   };
 
   return createPortal(
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div 
+      className="modal-overlay" 
+      onMouseDown={handleOverlayMouseDown} 
+      onClick={handleOverlayClick}
+    >
       <div className="modal" style={{ maxWidth: '520px' }}>
         <div className="sheet-handle" />
         

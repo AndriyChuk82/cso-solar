@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Save, SunMedium } from 'lucide-react';
 import { CONSTRUCTION_STATUSES, PAYMENT_TYPES } from '../api/constructionService';
@@ -15,6 +15,19 @@ export default function ConstructionObjectFormModal({ isOpen, onClose, onSave, i
   const [totalPrice, setTotalPrice] = useState('');
   const [advanceAmount, setAdvanceAmount] = useState('');
   const [paidAmount, setPaidAmount] = useState('');
+
+  const mouseDownOnOverlay = useRef(false);
+
+  const handleOverlayMouseDown = (e) => {
+    mouseDownOnOverlay.current = (e.target === e.currentTarget);
+  };
+
+  const handleOverlayClick = (e) => {
+    if (mouseDownOnOverlay.current && e.target === e.currentTarget) {
+      onClose();
+    }
+    mouseDownOnOverlay.current = false;
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -71,7 +84,11 @@ export default function ConstructionObjectFormModal({ isOpen, onClose, onSave, i
   };
 
   return createPortal(
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div 
+      className="modal-overlay" 
+      onMouseDown={handleOverlayMouseDown} 
+      onClick={handleOverlayClick}
+    >
       <div className="modal" style={{ maxWidth: '580px' }}>
         <div className="sheet-handle" />
         

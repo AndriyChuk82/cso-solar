@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Search, FileText, ChevronRight } from 'lucide-react';
 import { getProposals } from '../api/gasApi';
@@ -7,6 +7,19 @@ export default function KPImportModal({ isOpen, onClose, onSelect }) {
   const [proposals, setProposals] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const mouseDownOnOverlay = useRef(false);
+
+  const handleOverlayMouseDown = (e) => {
+    mouseDownOnOverlay.current = (e.target === e.currentTarget);
+  };
+
+  const handleOverlayClick = (e) => {
+    if (mouseDownOnOverlay.current && e.target === e.currentTarget) {
+      onClose();
+    }
+    mouseDownOnOverlay.current = false;
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -46,7 +59,11 @@ export default function KPImportModal({ isOpen, onClose, onSelect }) {
   });
 
   return createPortal(
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div 
+      className="modal-overlay" 
+      onMouseDown={handleOverlayMouseDown} 
+      onClick={handleOverlayClick}
+    >
       <div className="modal" style={{ maxWidth: '650px', height: '80vh', display: 'flex', flexDirection: 'column' }}>
         <div className="sheet-handle" />
         
