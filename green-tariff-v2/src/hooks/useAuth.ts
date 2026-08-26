@@ -18,8 +18,9 @@ interface AuthState {
 export function useAuth(): AuthState {
   const getInitialUser = () => {
     try {
+      const token = localStorage.getItem('cso_auth_token');
       const cached = localStorage.getItem('cso_user');
-      if (cached) {
+      if (token && cached) {
         const userData = JSON.parse(cached);
         return { user: userData, loading: false, authenticated: true };
       }

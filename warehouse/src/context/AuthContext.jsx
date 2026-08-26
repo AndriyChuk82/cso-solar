@@ -5,11 +5,15 @@ import { verifySession, getUser } from '../api/gasApi';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // Миттєва ініціалізація з кешу
+  // Миттєва ініціалізація з кешу (тільки якщо є збережений токен)
   const getInitialUser = () => {
     try {
+      const token = localStorage.getItem('cso_auth_token');
       const cached = localStorage.getItem('cso_user');
-      return cached ? JSON.parse(cached) : null;
+      if (token && cached) {
+        return JSON.parse(cached);
+      }
+      return null;
     } catch (e) { return null; }
   };
 
@@ -21,9 +25,10 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     async function checkAuth() {
       try {
-        // 1. ПЕРЕВІРЯЄМО КЕШ (LocalStorage) - для миттєвого входу при перемиканні модулів
+        // 1. ПЕРЕВІРЯЄМО КЕШ (тільки якщо є токен)
+        const cachedToken = localStorage.getItem('cso_auth_token');
         const cachedUser = localStorage.getItem('cso_user');
-        if (cachedUser) {
+        if (cachedToken && cachedUser) {
           try {
             const parsedUser = JSON.parse(cachedUser);
             setUser(parsedUser);
