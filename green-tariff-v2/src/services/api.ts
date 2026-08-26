@@ -209,6 +209,41 @@ export async function fetchSpecsFileListDetails(): Promise<SpecFileItem[]> {
   }
 }
 
+export async function uploadSpecFile(file: File): Promise<{ success: boolean; error?: string }> {
+  if (!supabase) return { success: false, error: 'Supabase client not initialized' };
+  try {
+    const { error } = await supabase
+      .storage
+      .from('equipment-specs')
+      .upload(file.name, file, {
+        cacheControl: '3600',
+        upsert: true,
+      });
+
+    if (error) throw error;
+    return { success: true };
+  } catch (e: any) {
+    console.error('Error uploading spec file to Supabase:', e);
+    return { success: false, error: e.message || 'Помилка завантаження файлу' };
+  }
+}
+
+export async function deleteSpecFile(fileName: string): Promise<{ success: boolean; error?: string }> {
+  if (!supabase) return { success: false, error: 'Supabase client not initialized' };
+  try {
+    const { error } = await supabase
+      .storage
+      .from('equipment-specs')
+      .remove([fileName]);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (e: any) {
+    console.error('Error deleting spec file from Supabase:', e);
+    return { success: false, error: e.message || 'Помилка видалення файлу' };
+  }
+}
+
 export const gtApi = {
   fetchProjects,
   saveProject,
@@ -217,4 +252,7 @@ export const gtApi = {
   deleteProject,
   fetchSpecsFileList,
   fetchSpecsFileListDetails,
+  uploadSpecFile,
+  deleteSpecFile,
 };
+
