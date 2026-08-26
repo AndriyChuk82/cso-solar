@@ -498,8 +498,20 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
 
     // 5. Cable
     if (panelCount > 0) {
-      // Пріоритет на "Власні матеріали" (Кабель солярний 6 мм)
+      // Пріоритет на "Кабель сонячний KBE DB+ 6mm2 чорний (Німеччина)"
       const cable = customMaterials.find(p => {
+        const title = p.name.toLowerCase();
+        return title.includes('kbe') && title.includes('6mm2') && title.includes('чорний');
+      }) || allAvailableProducts.find(p => {
+        const title = p.name.toLowerCase();
+        return title.includes('kbe') && title.includes('6mm2') && title.includes('чорний');
+      }) || customMaterials.find(p => {
+        const title = p.name.toLowerCase();
+        return title.includes('kbe') && title.includes('6mm2');
+      }) || allAvailableProducts.find(p => {
+        const title = p.name.toLowerCase();
+        return title.includes('kbe') && title.includes('6mm2');
+      }) || customMaterials.find(p => {
         const title = p.name.toLowerCase();
         return title.includes('солярн') && title.includes('6');
       }) || allAvailableProducts.find(p => p.name.toLowerCase().includes('кабель солярн'));
@@ -508,10 +520,10 @@ export function SolarWizard({ isOpen, onClose }: SolarWizardProps) {
         items.push(createItem(cable, panelCount * 4));
       } else {
         items.push(createCustomItem(
-          'Солярний кабель DC (6 мм2)',
-          'Чорний та червоний',
+          'Кабель сонячний KBE DB+ 6mm2 чорний (Німеччина)',
+          '730600015060QUSW',
           'м',
-          0.85, // Fallback ціна
+          1.10, // Fallback ціна KBE 6mm2 ($1.10)
           panelCount * 4
         ));
       }
