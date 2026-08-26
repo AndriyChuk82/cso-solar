@@ -1,7 +1,16 @@
 import { jwtVerify } from 'jose';
 
-// Список шляхів, які доступні без авторизації
-const PUBLIC_PATHS = ['/login.html', '/login.css', '/api/login', '/favicon.ico', '/assets/', '/api/verify', '/api/proxy', '/dashboard/assets/', '/green-tariff/assets/', '/files'];
+// Список публічних шляхів, які доступні без входу
+const PUBLIC_PATHS = [
+    '/login.html',
+    '/login.css',
+    '/api/login',
+    '/favicon.ico',
+    '/assets/',
+    '/api/verify',
+    '/api/fetch-rates',
+    '/files'
+];
 
 export const config = {
     // Запускаємо middleware для всіх шляхів, крім внутрішніх верифікацій Vercel
@@ -22,8 +31,12 @@ export default async function middleware(request) {
     try {
         const { pathname } = new URL(request.url);
 
-        // 1. Дозволяємо доступ до публічних файлів
-        if (PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p))) {
+        // 1. Дозволяємо доступ до публічних файлів та асетів
+        if (
+            PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p)) ||
+            pathname.includes('/assets/') ||
+            /\.(png|jpg|jpeg|svg|gif|ico|css|js|woff|woff2)$/i.test(pathname)
+        ) {
             return undefined; // Пропускаємо далі
         }
 
@@ -38,8 +51,6 @@ export default async function middleware(request) {
         const secretText = process.env.JWT_SECRET;
         if (!secretText) {
             console.error('CRITICAL: JWT_SECRET is not defined in environment variables');
-            // Якщо секрет не налаштований, ми не можемо пустити користувача,
-            // але й не хочемо викликати 500 помилку. Перенаправляємо на логін.
             return Response.redirect(new URL('/login.html', request.url), 302);
         }
 
@@ -54,51 +65,68 @@ export default async function middleware(request) {
             const role = (payload.role || 'user').trim().toLowerCase();
             const isAdmin = ['admin', 'адмін', 'адміністратор', 'administrator'].includes(role);
             const moduleAccess = (payload.module_access || '').trim().toLowerCase();
+
             const hasAccess = (mod) => {
                 if (isAdmin) return true;
                 const mapping = {
                     'proposals': ['proposals', 'кп', 'комперційні'],
                     'warehouse': ['warehouse', 'склад'],
                     'projects': ['projects', 'проєкти', 'проекти'],
-                    'gt': ['gt', 'зелений тариф', 'зт']
+                    'gt': ['gt', 'зелений тариф', 'зт'],
+                    'land-lease': ['land-lease', 'оренда', 'оренда землі', 'земля'],
+                    'files': ['files', 'файли', 'база', 'паспорти']
                 };
                 const allowed = mapping[mod] || [mod];
                 return allowed.some(a => moduleAccess.includes(a));
             };
 
-            // Перевірка доступу до КП (/)
-            if (pathname === '/' || pathname === '/index.html') {
+            // Функція для пошуку першого дозволеного розділу
+            const getSafeRedirectUrl = () => {
+                if (hasAccess('proposals')) return new URL('/proposals/', request.url);
+                if (hasAccess('warehouse')) return new URL('/warehouse/', request.url);
+                if (hasAccess('projects')) return new URL('/projects/', request.url);
+                if (hasAccess('gt')) return new URL('/green-tariff/', request.url);
+                if (hasAccess('land-lease')) return new URL('/land-lease/', request.url);
+                return new URL('/dashboard/', request.url);
+            };
+
+            // Перевірка доступу до КП (/proposals або головна сторінка з КП)
+            if (pathname.startsWith('/proposals')) {
                 if (!hasAccess('proposals')) {
-                    if (hasAccess('warehouse')) return Response.redirect(new URL('/warehouse/', request.url), 302);
-                    if (hasAccess('projects')) return Response.redirect(new URL('/projects/', request.url), 302);
-                    if (hasAccess('gt')) return Response.redirect(new URL('/green-tariff/', request.url), 302);
+                    return Response.redirect(getSafeRedirectUrl(), 302);
                 }
             }
 
             // Перевірка доступу до /warehouse
             if (pathname.startsWith('/warehouse')) {
                 if (!hasAccess('warehouse')) {
-                    return Response.redirect(new URL('/', request.url), 302);
+                    return Response.redirect(getSafeRedirectUrl(), 302);
                 }
             }
 
-            // Перевірка доступу до /green-tariff
-            if (pathname.startsWith('/green-tariff')) {
+            // Перевірка доступу до /green-tariff та /green-tariff-v2
+            if (pathname.startsWith('/green-tariff') || pathname.startsWith('/green-tariff-v2')) {
                 if (!hasAccess('gt')) {
-                    return Response.redirect(new URL('/', request.url), 302);
+                    return Response.redirect(getSafeRedirectUrl(), 302);
                 }
             }
 
             // Перевірка доступу до /projects
             if (pathname.startsWith('/projects')) {
                 if (!hasAccess('projects')) {
-                    return Response.redirect(new URL('/', request.url), 302);
+                    return Response.redirect(getSafeRedirectUrl(), 302);
+                }
+            }
+
+            // Перевірка доступу до /land-lease (Оренда землі)
+            if (pathname.startsWith('/land-lease')) {
+                if (!hasAccess('land-lease')) {
+                    return Response.redirect(getSafeRedirectUrl(), 302);
                 }
             }
 
             return undefined; // Все добре, пропускаємо
         } catch (jwtErr) {
-            // Токен невалідний або прострочений
             console.warn('JWT verification failed:', jwtErr.message);
             const response = Response.redirect(new URL('/login.html', request.url), 302);
             response.headers.set('Set-Cookie', 'cso_auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure; SameSite=Strict');
@@ -106,7 +134,7 @@ export default async function middleware(request) {
         }
     } catch (err) {
         console.error('Middleware crash:', err);
-        // В крайньому випадку теж редірект на логін
         return Response.redirect(new URL('/login.html', request.url), 302);
     }
 }
+
