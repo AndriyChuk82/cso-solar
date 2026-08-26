@@ -63,33 +63,20 @@ export function AuthProvider({ children }) {
         const verifyData = await response.json();
         if (!verifyData.authenticated) {
           localStorage.removeItem('cso_user');
+          localStorage.removeItem('cso_auth_token');
           setUser(null);
           setLoading(false);
           return;
         }
 
+        if (verifyData.token) {
+          localStorage.setItem('cso_auth_token', verifyData.token);
+        }
+
         const { user: email, name, role: tokenRole, module_access: tokenModuleAccess } = verifyData;
 
-        // 3. Отримуємо розширені дані з Google Sheets (також у фоні)
-        const gasResult = await getUser(email);
-
-        let warehouseId = null;
         let finalRole = (tokenRole || 'user').trim().toLowerCase();
         let finalModuleAccess = (tokenModuleAccess || '').trim().toLowerCase();
-
-        if (gasResult?.success && gasResult.user) {
-          const u = gasResult.user;
-          warehouseId = u.warehouse_id || null;
-          
-          // Тільки якщо в токені 'user', ми беремо роль з таблиці (щоб не понизити Адміна)
-          if (u.role && (finalRole === 'user' || finalRole === '')) {
-            finalRole = u.role.trim().toLowerCase();
-          }
-          
-          if (!finalModuleAccess && u.module_access) {
-            finalModuleAccess = u.module_access.trim().toLowerCase();
-          }
-        }
 
         // Розширений список адмінських ролей
         const adminRoles = ['admin', 'адмін', 'адміністратор', 'administrator'];
@@ -97,14 +84,14 @@ export function AuthProvider({ children }) {
 
         // Якщо Адмін — даємо повний доступ автоматично
         if (isAdmin && !finalModuleAccess) {
-          finalModuleAccess = 'warehouse,gt,projects,proposals';
+          finalModuleAccess = 'warehouse,gt,projects,proposals,land-lease';
         }
 
         const updatedUser = {
           email,
           name: name || email,
           role: finalRole,
-          warehouseId,
+          warehouseId: null,
           module_access: finalModuleAccess,
           isAdmin,
           isStorekeeper: finalRole === 'storekeeper' || finalRole === 'комірник',

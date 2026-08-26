@@ -4,9 +4,15 @@ import CONFIG from '../config';
 const supabaseUrl = CONFIG.SUPABASE_URL;
 const supabaseAnonKey = CONFIG.SUPABASE_ANON_KEY;
 
-// Додаємо перевірку, щоб не ламати додаток при порожніх ключах
 export const supabase = (supabaseUrl && supabaseAnonKey) 
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      accessToken: async () => {
+        if (typeof window !== 'undefined') {
+          return localStorage.getItem('cso_auth_token') || sessionStorage.getItem('cso_auth_token') || '';
+        }
+        return '';
+      }
+    })
   : null;
 
 if (!supabase) {

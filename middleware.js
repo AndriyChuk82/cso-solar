@@ -62,7 +62,7 @@ export default async function middleware(request) {
             });
 
             // 4. Перевірка прав доступу до модулів
-            const role = (payload.role || 'user').trim().toLowerCase();
+            const role = (payload.user_role || payload.role || 'user').trim().toLowerCase();
             const isAdmin = ['admin', 'адмін', 'адміністратор', 'administrator'].includes(role);
             const moduleAccess = (payload.module_access || '').trim().toLowerCase();
 
