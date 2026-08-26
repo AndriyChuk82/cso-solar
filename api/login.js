@@ -77,12 +77,8 @@ export default async function handler(req, res) {
 
         const usernames = (process.env.AUTH_USERNAME || '').split(',').map(u => u.trim());
         const hashes = (process.env.AUTH_PASSWORD_HASH || '').split(',').map(h => h.trim());
-        const jwtSecret = process.env.JWT_SECRET;
+        const jwtSecretKey = process.env.SUPABASE_JWT_SECRET || 'aaM/+UccX5iYKq7AL47TRxgB00iRY37rAr7rM2DvxrHZ5Y8t4MawIHq2qezmGlrirQYnNyA6mvkojrlape38gw==';
 
-        if (!jwtSecret) {
-            console.error('Missing JWT_SECRET environment variable');
-            return res.status(500).json({ error: 'Сервер не налаштований' });
-        }
 
         let passwordMatch = false;
         let displayName = username;
@@ -164,7 +160,7 @@ export default async function handler(req, res) {
 
         // Створення токена, сумісного з Supabase RLS та нашою системою
         userRole = userRole.trim().toLowerCase();
-        const jwtSecretKey = process.env.JWT_SECRET || 'aaM/+UccX5iYKq7AL47TRxgB00iRY37rAr7rM2DvxrHZ5Y8t4MawIHq2qezmGlrirQYnNyA6mvkojrlape38gw==';
+        const jwtSecretKey = process.env.SUPABASE_JWT_SECRET || 'aaM/+UccX5iYKq7AL47TRxgB00iRY37rAr7rM2DvxrHZ5Y8t4MawIHq2qezmGlrirQYnNyA6mvkojrlape38gw==';
         const secret = new TextEncoder().encode(jwtSecretKey);
         const token = await new SignJWT({
             sub: username,

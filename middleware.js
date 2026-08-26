@@ -48,12 +48,7 @@ export default async function middleware(request) {
         }
 
         // 3. Перевірка секрету JWT
-        const secretText = process.env.JWT_SECRET;
-        if (!secretText) {
-            console.error('CRITICAL: JWT_SECRET is not defined in environment variables');
-            return Response.redirect(new URL('/login.html', request.url), 302);
-        }
-
+        const secretText = process.env.SUPABASE_JWT_SECRET || 'aaM/+UccX5iYKq7AL47TRxgB00iRY37rAr7rM2DvxrHZ5Y8t4MawIHq2qezmGlrirQYnNyA6mvkojrlape38gw==';
         const secret = new TextEncoder().encode(secretText);
         
         try {

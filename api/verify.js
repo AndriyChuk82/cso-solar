@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const jwtSecretKey = process.env.JWT_SECRET || 'aaM/+UccX5iYKq7AL47TRxgB00iRY37rAr7rM2DvxrHZ5Y8t4MawIHq2qezmGlrirQYnNyA6mvkojrlape38gw==';
+        const jwtSecretKey = process.env.SUPABASE_JWT_SECRET || 'aaM/+UccX5iYKq7AL47TRxgB00iRY37rAr7rM2DvxrHZ5Y8t4MawIHq2qezmGlrirQYnNyA6mvkojrlape38gw==';
         const secret = new TextEncoder().encode(jwtSecretKey);
         const { payload } = await jwtVerify(token, secret, {
             algorithms: ['HS256']

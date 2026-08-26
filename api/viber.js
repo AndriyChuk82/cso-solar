@@ -12,7 +12,8 @@ async function verifyAuth(req) {
     const token = req.cookies?.cso_auth_token;
     if (!token) return false;
     try {
-        const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+        const secretKey = process.env.SUPABASE_JWT_SECRET || 'aaM/+UccX5iYKq7AL47TRxgB00iRY37rAr7rM2DvxrHZ5Y8t4MawIHq2qezmGlrirQYnNyA6mvkojrlape38gw==';
+        const secret = new TextEncoder().encode(secretKey);
         await jwtVerify(token, secret, { algorithms: ['HS256'] });
         return true;
     } catch { return false; }
