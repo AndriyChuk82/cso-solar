@@ -3,7 +3,7 @@ import { SignJWT } from 'jose';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://lqsyweounwbbhcyzkrdj.supabase.co';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxxc3l3ZW91bndiYmhjeXprcmRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNTc3MDcsImV4cCI6MjA5MTgzMzcwN30.w_xlhKZkcd5QcNfp2xMmfyg2BcotMF5osF4MGF4T3_I';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxxc3l3ZW91bndiYmhjeXprcmRqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjI1NzcwNywiZXhwIjoyMDkxODMzNzA3fQ.n63gcYyDa-C02oOu3fhz0BBeDwIRZKX6qUS44PkqGJs';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function recordAuthLog({ username, status, ip, userAgent, failureReason }) {
@@ -77,9 +77,6 @@ export default async function handler(req, res) {
 
         const usernames = (process.env.AUTH_USERNAME || '').split(',').map(u => u.trim());
         const hashes = (process.env.AUTH_PASSWORD_HASH || '').split(',').map(h => h.trim());
-        const jwtSecretKey = process.env.SUPABASE_JWT_SECRET || 'aaM/+UccX5iYKq7AL47TRxgB00iRY37rAr7rM2DvxrHZ5Y8t4MawIHq2qezmGlrirQYnNyA6mvkojrlape38gw==';
-
-
         let passwordMatch = false;
         let displayName = username;
         let userRole = 'user'; // Default role
