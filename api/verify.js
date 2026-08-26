@@ -8,16 +8,18 @@ export default async function handler(req, res) {
     }
 
     try {
-        const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+        const jwtSecretKey = process.env.JWT_SECRET || 'aaM/+UccX5iYKq7AL47TRxgB00iRY37rAr7rM2DvxrHZ5Y8t4MawIHq2qezmGlrirQYnNyA6mvkojrlape38gw==';
+        const secret = new TextEncoder().encode(jwtSecretKey);
         const { payload } = await jwtVerify(token, secret, {
             algorithms: ['HS256']
         });
 
         return res.status(200).json({ 
             authenticated: true,
-            user: payload.sub,
-            name: payload.name || payload.sub,
-            role: payload.role || 'user',
+            token: token,
+            user: payload.email || payload.sub,
+            name: payload.name || payload.email || payload.sub,
+            role: payload.user_role || payload.role || 'user',
             module_access: payload.module_access || ''
         });
     } catch (err) {

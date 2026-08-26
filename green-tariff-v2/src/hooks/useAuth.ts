@@ -54,6 +54,9 @@ export function useAuth(): AuthState {
           return;
         }
         const data = await res.json();
+        if (data.token) {
+          localStorage.setItem('cso_auth_token', data.token);
+        }
 
         if (data.authenticated) {
           const newUser = {

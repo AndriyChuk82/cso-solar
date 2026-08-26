@@ -24,6 +24,9 @@ export function Layout({ children }: LayoutProps) {
         const response = await fetch('/api/verify');
         if (response.ok) {
           const data = await response.json();
+          if (data.token) {
+            localStorage.setItem('cso_auth_token', data.token);
+          }
           const role = (data.role || 'user').toLowerCase();
           const accessStr = (data.module_access || '').toLowerCase();
           const isAdmin = role === 'admin' || role === 'адмін' || role === 'адміністратор';

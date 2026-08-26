@@ -162,18 +162,24 @@ export default async function handler(req, res) {
             failureReason: null
         });
 
-        // Створення токена
+        // Створення токена, сумісного з Supabase RLS та нашою системою
         userRole = userRole.trim().toLowerCase();
-        const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+        const jwtSecretKey = process.env.JWT_SECRET || 'aaM/+UccX5iYKq7AL47TRxgB00iRY37rAr7rM2DvxrHZ5Y8t4MawIHq2qezmGlrirQYnNyA6mvkojrlape38gw==';
+        const secret = new TextEncoder().encode(jwtSecretKey);
         const token = await new SignJWT({
             sub: username,
+            email: username,
             name: displayName,
-            role: userRole,
+            role: 'authenticated', // Необхідно для Supabase PostgREST RLS
+            user_role: userRole,   // Наша внутрішня роль (admin, user)
+            aud: 'authenticated',  // Необхідно для Supabase PostgREST
+            app_metadata: { provider: 'email', providers: ['email'] },
+            user_metadata: { name: displayName, role: userRole },
             module_access: moduleAccess // Додаємо доступ до модулів у токен
         })
-            .setProtectedHeader({ alg: 'HS256' })
+            .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
             .setIssuedAt()
-            .setExpirationTime('12h')
+            .setExpirationTime('7d')
             .sign(secret);
 
         // Set HTTP-only secure cookie
@@ -215,6 +221,7 @@ export default async function handler(req, res) {
         res.setHeader('Set-Cookie', cookieOptions);
         return res.status(200).json({ 
             success: true, 
+            token: token,
             redirect: redirectUrl,
             user: {
                 email: username,

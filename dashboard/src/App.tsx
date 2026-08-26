@@ -113,6 +113,9 @@ export default function App() {
         }
 
         const data = await response.json();
+        if (data.token) {
+          localStorage.setItem('cso_auth_token', data.token);
+        }
         if (!data.authenticated) {
           if (import.meta.env.DEV) {
             setUser({ name: 'Адмін (Dev)', role: 'admin', access: MODULES.map(m => m.id) });

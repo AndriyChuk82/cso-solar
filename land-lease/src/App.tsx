@@ -45,6 +45,9 @@ function AppContent() {
           return
         }
         const data = await res.json()
+        if (data.token) {
+          localStorage.setItem('cso_auth_token', data.token)
+        }
         if (!data.authenticated) {
           if (import.meta.env.DEV) {
             console.log('Dev mode: unauthenticated, setting mock user')
