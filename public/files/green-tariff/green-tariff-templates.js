@@ -978,7 +978,7 @@ const GT_TEMPLATES = {
         {{styles}}
         <div class="p2-page p2-appendix-page" style="padding: 5mm 15mm; min-height: 250mm; display: flex; flex-direction: column;">
             <p style="text-align:center; font-weight:bold; font-size:12pt; margin-bottom:10px; line-height:1.4;">
-                Улаштування вузла обліку генеруючої установки приватного домогосподарства<br>за адресою: {{field21}}
+                Улаштування вузла обліку генеруючої установки приватного домогосподарства за адресою:<br>{{field21}}
             </p>
             <p style="font-size:14pt; font-weight:bold; text-align:center; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 5px;">
                 Схема електрична однолінійна
@@ -1008,7 +1008,7 @@ const GT_TEMPLATES = {
                     <!-- Вхідний автомат -->
                     <div class="gt-overlay-label" style="top: 8%; left: 60%;">
                         Вхідний автомат<br>
-                        Напруга: 0.4 кВ<br>
+                        Напруга: {{field18}}<br>
                         Струм: {{field19}}
                     </div>
                     
@@ -1029,16 +1029,13 @@ const GT_TEMPLATES = {
                         Модель: {{field27}}<br>
                         Верхній рівень напруги: 253 В<br>
                         Нижній рівень напруги: 207 В<br>
-                        Номінальна потужність:<br>
-                        {{field28}} кВт
+                        Номінальна потужність: {{field28}} кВт
                     </div>
                     
                     <!-- Панелі -->
                     <div class="gt-overlay-label" style="top: 88%; left: 101%;">
-                        Номінальна потужність:<br>
-                        {{field22}} кВт<br>
-                        Модель:<br>
-                        {{field34}}
+                        Номінальна потужність: {{field22}} кВт<br>
+                        Модель: {{field34}}
                     </div>
                 </div>
 
@@ -1064,7 +1061,7 @@ const GT_TEMPLATES = {
                     <!-- Вхідний автомат -->
                     <div class="gt-overlay-label" style="top: 9%; left: 60%;">
                         Вхідний автомат<br>
-                        Напруга: 0.4 кВ<br>
+                        Напруга: {{field18}}<br>
                         Струм: {{field19}}
                     </div>
                     
@@ -1095,7 +1092,7 @@ const GT_TEMPLATES = {
                     <!-- Панелі -->
                     <div class="gt-overlay-label" style="top: 88%; left: 101%;">
                         Номінальна потужність: {{field22}} кВт<br>
-                        {{field34}}
+                        Модель: {{field34}}
                     </div>
                 </div>
 
