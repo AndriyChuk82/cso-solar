@@ -10,8 +10,6 @@ import {
   Laptop, 
   Globe 
 } from 'lucide-react';
-import { supabase } from '../services/supabaseClient';
-
 export interface AuthLogItem {
   id: string;
   username: string;
@@ -54,16 +52,13 @@ export function AuthLogsModal({ isOpen, onClose }: AuthLogsModalProps) {
   const fetchLogs = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('auth_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (error) {
-        console.error('Error fetching auth logs:', error);
+      const res = await fetch('/api/auth-logs');
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.logs)) {
+        setLogs(data.logs);
       } else {
-        setLogs(data || []);
+        setLogs([]);
       }
     } catch (err) {
       console.error('Failed to fetch auth logs:', err);
