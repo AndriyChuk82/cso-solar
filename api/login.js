@@ -3,7 +3,7 @@ import { SignJWT } from 'jose';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://lqsyweounwbbhcyzkrdj.supabase.co';
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxxc3l3ZW91bndiYmhjeXprcmRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNTc3MDcsImV4cCI6MjA5MTgzMzcwN30.w_xlhKZkcd5QcNfp2xMmfyg2BcotMF5osF4MGF4T3_I';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxxc3l3ZW91bndiYmhjeXprcmRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNTc3MDcsImV4cCI6MjA5MTgzMzcwN30.w_xlhKZkcd5QcNfp2xMmfyg2BcotMF5osF4MGF4T3_I';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function recordAuthLog({ username, status, ip, userAgent, failureReason }) {
@@ -78,7 +78,6 @@ export default async function handler(req, res) {
         const usernames = (process.env.AUTH_USERNAME || '').split(',').map(u => u.trim());
         const hashes = (process.env.AUTH_PASSWORD_HASH || '').split(',').map(h => h.trim());
         const jwtSecret = process.env.JWT_SECRET;
-        const gasUrl = process.env.GAS_URL || 'https://script.google.com/macros/s/AKfycbyvYNoyGINAtWlbExzONJWoReE8OC3_-FhOase5pHkCZ_PdCLXuMQqXqMYBWLzaNX-s/exec';
 
         if (!jwtSecret) {
             console.error('Missing JWT_SECRET environment variable');
@@ -101,27 +100,28 @@ export default async function handler(req, res) {
             }
         }
 
-        // 2. Якщо не знайдено — шукаємо в Google Sheets
+        // 2. Якщо не знайдено в ENV — шукаємо в таблиці users у Supabase
         if (!passwordMatch) {
             try {
-                const gasRes = await fetch(`${gasUrl}?action=getUsersForLogin`);
-                const data = await gasRes.json();
-                if (data.success && data.users) {
-                    const sheetUser = data.users.find(u => 
-                        (u.email || '').toLowerCase() === username.toLowerCase() && 
-                        u.active
-                    );
-                    if (sheetUser && sheetUser.password) {
-                        passwordMatch = await bcrypt.compare(password, sheetUser.password);
-                        if (passwordMatch) {
-                            displayName = sheetUser.name || username;
-                            userRole = (sheetUser.role || 'user').toLowerCase();
-                            moduleAccess = sheetUser.module_access || '';
-                        }
+                const { data: dbUser, error: dbErr } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('email', username.trim().toLowerCase())
+                    .eq('active', true)
+                    .maybeSingle();
+
+                if (dbErr) {
+                    console.error('Supabase query error:', dbErr);
+                } else if (dbUser && dbUser.password) {
+                    passwordMatch = await bcrypt.compare(password, dbUser.password);
+                    if (passwordMatch) {
+                        displayName = dbUser.name || username;
+                        userRole = (dbUser.role || 'user').toLowerCase();
+                        moduleAccess = dbUser.module_access || '';
                     }
                 }
             } catch (err) {
-                console.error('GAS fetch error:', err);
+                console.error('Supabase fetch error:', err);
             }
         }
 
