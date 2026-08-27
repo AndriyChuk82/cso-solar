@@ -197,97 +197,162 @@ export default function ConstructionObjectsDashboard() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-neutral-700 bg-gray-50/80 dark:bg-neutral-900/40 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Статус</th>
-                  <th className="py-3.5 px-4">ПІБ Клієнта</th>
-                  <th className="py-3.5 px-4">Телефон</th>
-                  <th className="py-3.5 px-4">Адреса</th>
-                  <th className="py-3.5 px-4 text-right">Дії</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-neutral-700/60">
-                {filteredObjects.map(obj => {
-                  const statusInfo = CONSTRUCTION_STATUSES[obj.status] || CONSTRUCTION_STATUSES.kp_sent;
+          <div>
+            {/* Mobile Card List View */}
+            <div className="block md:hidden divide-y divide-gray-100 dark:divide-neutral-700/60">
+              {filteredObjects.map(obj => {
+                const statusInfo = CONSTRUCTION_STATUSES[obj.status] || CONSTRUCTION_STATUSES.kp_sent;
 
-                  return (
-                    <tr
-                      key={obj.id}
-                      onClick={() => navigate(`/construction-objects/${obj.id}`)}
-                      className="hover:bg-gray-50/80 dark:hover:bg-neutral-700/40 cursor-pointer transition group"
-                    >
-                      {/* Status */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span 
-                          className="px-2.5 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1.5"
-                          style={{ color: statusInfo.color, backgroundColor: statusInfo.bg }}
+                return (
+                  <div 
+                    key={obj.id}
+                    onClick={() => navigate(`/construction-objects/${obj.id}`)}
+                    className="p-3.5 space-y-2 hover:bg-gray-50/80 dark:hover:bg-neutral-700/40 cursor-pointer active:bg-gray-100 transition"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span 
+                        className="px-2 py-0.5 rounded-md text-[11px] font-bold"
+                        style={{ color: statusInfo.color, backgroundColor: statusInfo.bg }}
+                      >
+                        {statusInfo.label}
+                      </span>
+
+                      <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={e => handleEdit(e, obj)}
+                          title="Редагувати"
+                          className="p-1.5 text-gray-400 hover:text-primary rounded-md hover:bg-gray-100"
                         >
-                          {statusInfo.label}
-                        </span>
-                      </td>
+                          <Edit3 size={15} />
+                        </button>
+                        <button
+                          onClick={e => handleDelete(e, obj.id, obj.client_name)}
+                          title="Видалити"
+                          className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                        <ChevronRight size={16} className="text-gray-400 ml-1" />
+                      </div>
+                    </div>
 
-                      {/* Client Name */}
-                      <td className="py-3.5 px-4 font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+                    <div>
+                      <h3 className="font-bold text-sm text-gray-900 dark:text-white leading-tight">
                         {obj.client_name || 'Без імені'}
-                      </td>
-
-                      {/* Phone */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        {obj.phone ? (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-700 dark:text-neutral-300 font-semibold">
-                            <Phone size={13} className="text-gray-400" />
-                            <span>{obj.phone}</span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-400">—</span>
+                      </h3>
+                      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-neutral-400 mt-1 flex-wrap">
+                        {obj.phone && (
+                          <span className="flex items-center gap-1 font-medium text-gray-700 dark:text-neutral-300">
+                            <Phone size={12} className="text-gray-400" />
+                            {obj.phone}
+                          </span>
                         )}
-                      </td>
-
-                      {/* Address */}
-                      <td className="py-3.5 px-4">
-                        {obj.address ? (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-neutral-300">
-                            <MapPin size={14} className="text-amber-500 flex-shrink-0" />
-                            <span>{obj.address}</span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-400">—</span>
+                        {obj.address && (
+                          <span className="flex items-center gap-1">
+                            <MapPin size={12} className="text-amber-500 flex-shrink-0" />
+                            <span className="line-clamp-1">{obj.address}</span>
+                          </span>
                         )}
-                      </td>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
-                      {/* Actions */}
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
-                          <button
-                            onClick={e => handleEdit(e, obj)}
-                            title="Редагувати об'єкт"
-                            className="p-1.5 rounded-lg text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 transition"
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-sm border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-neutral-700 bg-gray-50/80 dark:bg-neutral-900/40 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="py-3.5 px-4">Статус</th>
+                    <th className="py-3.5 px-4">ПІБ Клієнта</th>
+                    <th className="py-3.5 px-4">Телефон</th>
+                    <th className="py-3.5 px-4">Адреса</th>
+                    <th className="py-3.5 px-4 text-right">Дії</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-neutral-700/60">
+                  {filteredObjects.map(obj => {
+                    const statusInfo = CONSTRUCTION_STATUSES[obj.status] || CONSTRUCTION_STATUSES.kp_sent;
+
+                    return (
+                      <tr
+                        key={obj.id}
+                        onClick={() => navigate(`/construction-objects/${obj.id}`)}
+                        className="hover:bg-gray-50/80 dark:hover:bg-neutral-700/40 cursor-pointer transition group"
+                      >
+                        {/* Status */}
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <span 
+                            className="px-2.5 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1.5"
+                            style={{ color: statusInfo.color, backgroundColor: statusInfo.bg }}
                           >
-                            <Edit3 size={16} />
-                          </button>
-                          <button
-                            onClick={e => handleDelete(e, obj.id, obj.client_name)}
-                            title="Видалити"
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => navigate(`/construction-objects/${obj.id}`)}
-                            title="Відкрити картку"
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition"
-                          >
-                            <ChevronRight size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                            {statusInfo.label}
+                          </span>
+                        </td>
+
+                        {/* Client Name */}
+                        <td className="py-3.5 px-4 font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+                          {obj.client_name || 'Без імені'}
+                        </td>
+
+                        {/* Phone */}
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          {obj.phone ? (
+                            <div className="flex items-center gap-1.5 text-xs text-gray-700 dark:text-neutral-300 font-semibold">
+                              <Phone size={13} className="text-gray-400" />
+                              <span>{obj.phone}</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">—</span>
+                          )}
+                        </td>
+
+                        {/* Address */}
+                        <td className="py-3.5 px-4">
+                          {obj.address ? (
+                            <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-neutral-300">
+                              <MapPin size={14} className="text-amber-500 flex-shrink-0" />
+                              <span>{obj.address}</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">—</span>
+                          )}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
+                            <button
+                              onClick={e => handleEdit(e, obj)}
+                              title="Редагувати об'єкт"
+                              className="p-1.5 rounded-lg text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 transition"
+                            >
+                              <Edit3 size={16} />
+                            </button>
+                            <button
+                              onClick={e => handleDelete(e, obj.id, obj.client_name)}
+                              title="Видалити"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => navigate(`/construction-objects/${obj.id}`)}
+                              title="Відкрити картку"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition"
+                            >
+                              <ChevronRight size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
