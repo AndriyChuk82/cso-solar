@@ -59,6 +59,26 @@ export const constructionService = {
           .order('created_at', { ascending: false });
 
         if (!error && data) {
+          // Міграція об'єктів з LocalStorage у Supabase (якщо вони були створені раніше локально)
+          const localList = getLocalObjects();
+          if (localList.length > 0) {
+            const remoteIds = new Set(data.map(d => d.id));
+            const toMigrate = localList.filter(l => !remoteIds.has(l.id));
+            if (toMigrate.length > 0) {
+              for (const item of toMigrate) {
+                await constructionService.saveObject(item);
+                const allLocalMats = getLocalMaterials();
+                const objMats = allLocalMats.filter(m => String(m.object_id) === String(item.id));
+                if (objMats.length > 0) {
+                  await constructionService.saveMaterials(item.id, objMats);
+                }
+              }
+              const updatedRes = await supabase.from('construction_objects').select('*').order('created_at', { ascending: false });
+              if (!updatedRes.error && updatedRes.data) {
+                return { success: true, data: updatedRes.data };
+              }
+            }
+          }
           return { success: true, data };
         }
       } catch (err) {
