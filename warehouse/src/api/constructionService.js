@@ -99,35 +99,32 @@ export const constructionService = {
       }
     }
 
-    // 3. Авто-міграція локальних об'єктів у хмару (якщо вони були створені раніше офлайн)
-    if (localList.length > 0) {
-      const remoteIds = new Set((remoteData || []).map(r => String(r.id)));
-      const toMigrate = localList.filter(l => l && l.id && !remoteIds.has(String(l.id)));
+    // 3. БЕЗПЕЧНЕ ОБ'ЄДНАННЯ ТА АВТО-МІГРАЦІЯ:
+    const remoteMap = new Map((remoteData || []).map(r => [String(r.id), r]));
 
-      if (toMigrate.length > 0) {
-        for (const item of toMigrate) {
-          const saved = await constructionService.saveObject(item);
+    if (localList.length > 0) {
+      for (const localItem of localList) {
+        if (localItem && localItem.id && !remoteMap.has(String(localItem.id))) {
+          const saved = await constructionService.saveObject(localItem);
           if (saved.success && saved.data) {
-            if (!remoteData) remoteData = [];
-            remoteData.unshift(saved.data);
+            remoteMap.set(String(saved.data.id), saved.data);
+          } else {
+            remoteMap.set(String(localItem.id), localItem);
           }
           const allLocalMats = getLocalMaterials();
-          const objMats = allLocalMats.filter(m => String(m.object_id) === String(item.id));
+          const objMats = allLocalMats.filter(m => String(m.object_id) === String(localItem.id));
           if (objMats.length > 0) {
-            await constructionService.saveMaterials(item.id, objMats);
+            await constructionService.saveMaterials(localItem.id, objMats);
           }
         }
       }
     }
 
-    if (remoteData) {
-      saveLocalObjects(remoteData);
-      return { success: true, data: remoteData };
-    }
+    const mergedList = Array.from(remoteMap.values());
+    mergedList.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
-    // 4. Fallback LocalStorage
-    localList.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-    return { success: true, data: localList };
+    saveLocalObjects(mergedList);
+    return { success: true, data: mergedList };
   },
 
   // Отримати один об'єкт з матеріалами
