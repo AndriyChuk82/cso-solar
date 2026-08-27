@@ -202,58 +202,88 @@ export default function ConstructionObjectsDashboard() {
             <div className="block md:hidden divide-y divide-gray-100 dark:divide-neutral-700/60">
               {filteredObjects.map(obj => {
                 const statusInfo = CONSTRUCTION_STATUSES[obj.status] || CONSTRUCTION_STATUSES.kp_sent;
+                const paymentLabel = PAYMENT_TYPES[obj.payment_type] || obj.payment_type || 'Не вказано';
 
                 return (
                   <div 
                     key={obj.id}
-                    onClick={() => navigate(`/construction-objects/${obj.id}`)}
-                    className="p-3.5 space-y-2 hover:bg-gray-50/80 dark:hover:bg-neutral-700/40 cursor-pointer active:bg-gray-100 transition"
+                    className="p-4 space-y-3 hover:bg-gray-50/80 dark:hover:bg-neutral-700/40 transition bg-white dark:bg-neutral-800"
                   >
+                    {/* Хедер картки: Статус + Номер КП */}
                     <div className="flex items-center justify-between gap-2">
                       <span 
-                        className="px-2 py-0.5 rounded-md text-[11px] font-bold"
+                        className="px-2.5 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1"
                         style={{ color: statusInfo.color, backgroundColor: statusInfo.bg }}
                       >
                         {statusInfo.label}
                       </span>
 
-                      <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                        <button
-                          onClick={e => handleEdit(e, obj)}
-                          title="Редагувати"
-                          className="p-1.5 text-gray-400 hover:text-primary rounded-md hover:bg-gray-100"
-                        >
-                          <Edit3 size={15} />
-                        </button>
-                        <button
-                          onClick={e => handleDelete(e, obj.id, obj.client_name)}
-                          title="Видалити"
-                          className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                        <ChevronRight size={16} className="text-gray-400 ml-1" />
+                      {obj.proposal_number && (
+                        <span className="font-semibold text-primary bg-primary/10 dark:bg-primary/20 px-2 py-0.5 rounded-md text-[11px]">
+                          КП #{obj.proposal_number}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Назва клієнта та Телефон */}
+                    <div>
+                      <h3 
+                        onClick={() => navigate(`/construction-objects/${obj.id}`)}
+                        className="font-bold text-base text-gray-900 dark:text-white leading-tight cursor-pointer hover:text-primary transition-colors"
+                      >
+                        {obj.client_name || 'Без імені'}
+                      </h3>
+
+                      <div className="flex items-center gap-2 text-xs mt-1.5 flex-wrap">
+                        {obj.phone && (
+                          <a
+                            href={`tel:${obj.phone.replace(/\s+/g, '')}`}
+                            className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 font-semibold py-1 px-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 hover:underline"
+                          >
+                            <Phone size={13} />
+                            <span>{obj.phone}</span>
+                          </a>
+                        )}
+                        <span className="text-[11px] text-gray-600 dark:text-neutral-400 bg-gray-100 dark:bg-neutral-700/60 px-2 py-1 rounded-lg font-medium">
+                          💰 {paymentLabel}
+                        </span>
                       </div>
                     </div>
 
-                    <div>
-                      <h3 className="font-bold text-sm text-gray-900 dark:text-white leading-tight">
-                        {obj.client_name || 'Без імені'}
-                      </h3>
-                      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-neutral-400 mt-1 flex-wrap">
-                        {obj.phone && (
-                          <span className="flex items-center gap-1 font-medium text-gray-700 dark:text-neutral-300">
-                            <Phone size={12} className="text-gray-400" />
-                            {obj.phone}
-                          </span>
-                        )}
-                        {obj.address && (
-                          <span className="flex items-center gap-1">
-                            <MapPin size={12} className="text-amber-500 flex-shrink-0" />
-                            <span className="line-clamp-1">{obj.address}</span>
-                          </span>
-                        )}
+                    {/* Адреса */}
+                    {obj.address && (
+                      <div className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-neutral-300 p-2 rounded-lg bg-gray-50 dark:bg-neutral-900/40 border border-gray-100 dark:border-neutral-800">
+                        <MapPin size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                        <span className="break-words leading-relaxed">{obj.address}</span>
                       </div>
+                    )}
+
+                    {/* Рядок дій (великі тач-кнопки) */}
+                    <div className="grid grid-cols-3 gap-2 pt-1 border-t border-gray-100 dark:border-neutral-700">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/construction-objects/${obj.id}`)}
+                        className="py-2.5 px-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs flex items-center justify-center gap-1 transition-colors active:scale-95 text-center"
+                      >
+                        <SunMedium size={15} />
+                        Матеріали
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => handleEdit(e, obj)}
+                        className="py-2.5 px-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold text-xs flex items-center justify-center gap-1 transition-colors active:scale-95"
+                      >
+                        <Edit3 size={15} />
+                        Профіль
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDelete(e, obj.id, obj.client_name)}
+                        className="py-2.5 px-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-bold text-xs flex items-center justify-center gap-1 transition-colors active:scale-95"
+                      >
+                        <Trash2 size={15} />
+                        Видалити
+                      </button>
                     </div>
                   </div>
                 );

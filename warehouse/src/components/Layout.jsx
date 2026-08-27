@@ -6,6 +6,8 @@ import Sidebar from './Sidebar';
 import CONFIG from '../config';
 import { ThemeToggle } from './ThemeToggle';
 
+import MobileQuickActionFAB from './MobileQuickActionFAB';
+
 /**
  * Основний макет додатку: хедер + сайдбар + контент.
  * Дизайн уніфіковано відповідно до модуля КП.
@@ -117,10 +119,13 @@ export default function Layout() {
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
-        <main className="app-main">
+        <main className="app-main pb-20 md:pb-6">
           <Outlet />
         </main>
       </div>
+
+      {/* Floating Action Button для швидких дій на смартфонах */}
+      <MobileQuickActionFAB />
     </>
   );
 }

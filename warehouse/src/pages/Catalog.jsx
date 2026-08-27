@@ -263,55 +263,128 @@ export default function Catalog() {
               <p>Товарів не знайдено</p>
             </div>
           ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Назва</th>
-                  <th>Од. виміру</th>
-                  <th>Категорія</th>
-                  <th>Статус</th>
-                  {user?.isAdmin && <th></th>}
-                </tr>
-              </thead>
-              <tbody>
+            <>
+              {/* Десктопна таблиця (без змін) */}
+              <table className="data-table hidden md:table">
+                <thead>
+                  <tr>
+                    <th>Назва</th>
+                    <th>Од. виміру</th>
+                    <th>Категорія</th>
+                    <th>Статус</th>
+                    {user?.isAdmin && <th></th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((p) => (
+                    <tr key={p.id} style={{ opacity: p.active ? 1 : 0.5 }}>
+                      <td style={{ fontWeight: 600 }}>{p.name}</td>
+                      <td>{p.unit}</td>
+                      <td>{p.category || '—'}</td>
+                      <td>
+                        <span className={`badge ${p.active ? 'badge-income' : 'badge-expense'}`}>
+                          {p.active ? 'Активний' : 'Архів'}
+                        </span>
+                      </td>
+                      {user?.isAdmin && (
+                        <td>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <Button variant="ghost" size="sm" onClick={() => openEditModal(p)}>✏️</Button>
+                            {p.active ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleArchive(p.id)}
+                                style={{ color: 'var(--danger)' }}
+                                title="В архів"
+                              >🗄️</Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRestore(p.id)}
+                                style={{ color: 'var(--success)' }}
+                                title="Відновити з архіву"
+                              >♻️</Button>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Мобільні адаптивні картки товарів */}
+              <div className="block md:hidden divide-y divide-[var(--border)]">
                 {filtered.map((p) => (
-                  <tr key={p.id} style={{ opacity: p.active ? 1 : 0.5 }}>
-                    <td style={{ fontWeight: 600 }}>{p.name}</td>
-                    <td>{p.unit}</td>
-                    <td>{p.category || '—'}</td>
-                    <td>
-                      <span className={`badge ${p.active ? 'badge-income' : 'badge-expense'}`}>
+                  <div
+                    key={p.id}
+                    className={`p-3.5 flex flex-col gap-2.5 transition-colors bg-[var(--bg-card)] ${
+                      !p.active ? 'opacity-60 bg-gray-50/50 dark:bg-neutral-800/30' : ''
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-sm text-[var(--text)] leading-snug break-words">
+                          {p.name}
+                        </div>
+                        {p.article && (
+                          <div className="text-[11px] text-[var(--text-muted)] font-mono mt-0.5">
+                            Арт: {p.article}
+                          </div>
+                        )}
+                      </div>
+                      <span className={`badge ${p.active ? 'badge-income' : 'badge-expense'} shrink-0 text-[10px] font-semibold`}>
                         {p.active ? 'Активний' : 'Архів'}
                       </span>
-                    </td>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      {p.category && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium text-[11px]">
+                          🏷️ {p.category}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[var(--border-light)] text-[var(--text-secondary)] font-medium text-[11px]">
+                        Од: {p.unit}
+                      </span>
+                    </div>
+
                     {user?.isAdmin && (
-                      <td>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          <Button variant="ghost" size="sm" onClick={() => openEditModal(p)}>✏️</Button>
-                          {p.active ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleArchive(p.id)}
-                              style={{ color: 'var(--danger)' }}
-                              title="В архів"
-                            >🗄️</Button>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRestore(p.id)}
-                              style={{ color: 'var(--success)' }}
-                              title="Відновити з архіву"
-                            >♻️</Button>
-                          )}
-                        </div>
-                      </td>
+                      <div className="flex items-center gap-2 pt-1 border-t border-[var(--border)]/40 mt-1">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(p)}
+                          className="flex-1 py-2 px-3 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                        >
+                          ✏️ Редагувати
+                        </button>
+                        {p.active ? (
+                          <button
+                            type="button"
+                            onClick={() => handleArchive(p.id)}
+                            className="py-2 px-3 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                            title="Перемістити в архів"
+                          >
+                            🗄️ В архів
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleRestore(p.id)}
+                            className="py-2 px-3 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                            title="Відновити з архіву"
+                          >
+                            ♻️ Відновити
+                          </button>
+                        )}
+                      </div>
                     )}
-                  </tr>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </>
           )}
         </div>
       </div>

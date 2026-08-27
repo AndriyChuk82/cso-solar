@@ -359,93 +359,174 @@ export default function ConstructionObjectDetails() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto -mx-1">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-neutral-700 bg-gray-50/90 dark:bg-neutral-900/60 font-bold text-gray-500 uppercase tracking-wider">
-                  <th className="py-2 px-2.5 w-8 text-center">№</th>
-                  <th className="py-2 px-3">Найменування матеріалу</th>
-                  <th className="py-2 px-2 text-center w-20">Од. вим.</th>
-                  <th className="py-2 px-3 text-center w-36">Заплановано (по КП)</th>
-                  <th className="py-2 px-3 text-center w-36">Фактично використано</th>
-                  <th className="py-2 px-3 text-center w-24">Різниця</th>
-                  <th className="py-2 px-2 text-right w-12">Дії</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-neutral-700/50">
-                {materials.map((m, idx) => {
-                  const planned = parseFloat(m.planned_qty || 0);
-                  const actual = parseFloat(m.actual_qty || 0);
-                  const diff = actual - planned;
+          <>
+            {/* Desktop Table View (без змін) */}
+            <div className="overflow-x-auto -mx-1 hidden md:block">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-neutral-700 bg-gray-50/90 dark:bg-neutral-900/60 font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="py-2 px-2.5 w-8 text-center">№</th>
+                    <th className="py-2 px-3">Найменування матеріалу</th>
+                    <th className="py-2 px-2 text-center w-20">Од. вим.</th>
+                    <th className="py-2 px-3 text-center w-36">Заплановано (по КП)</th>
+                    <th className="py-2 px-3 text-center w-36">Фактично використано</th>
+                    <th className="py-2 px-3 text-center w-24">Різниця</th>
+                    <th className="py-2 px-2 text-right w-12">Дії</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-neutral-700/50">
+                  {materials.map((m, idx) => {
+                    const planned = parseFloat(m.planned_qty || 0);
+                    const actual = parseFloat(m.actual_qty || 0);
+                    const diff = actual - planned;
 
-                  return (
-                    <tr key={m.id || idx} className="hover:bg-gray-50/80 dark:hover:bg-neutral-700/30 transition">
-                      {/* Index */}
-                      <td className="py-1.5 px-2.5 text-center text-xs font-semibold text-gray-400">
-                        {idx + 1}
-                      </td>
+                    return (
+                      <tr key={m.id || idx} className="hover:bg-gray-50/80 dark:hover:bg-neutral-700/30 transition">
+                        {/* Index */}
+                        <td className="py-1.5 px-2.5 text-center text-xs font-semibold text-gray-400">
+                          {idx + 1}
+                        </td>
 
-                      {/* Material Name */}
-                      <td className="py-1.5 px-3 font-semibold text-gray-900 dark:text-white leading-snug">
+                        {/* Material Name */}
+                        <td className="py-1.5 px-3 font-semibold text-gray-900 dark:text-white leading-snug">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span>{m.product_name}</span>
+                            {m.is_custom && (
+                              <span className="text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-1 py-0.1 rounded">
+                                Вручну
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Unit */}
+                        <td className="py-1.5 px-2 text-center text-xs text-gray-500 font-medium">
+                          {m.unit || 'шт.'}
+                        </td>
+
+                        {/* Planned Qty */}
+                        <td className="py-1.5 px-3 text-center font-bold text-gray-800 dark:text-neutral-200">
+                          {planned}
+                        </td>
+
+                        {/* Actual Qty (Editable input) */}
+                        <td className="py-1 px-3 text-center">
+                          <input
+                            type="number"
+                            step="any"
+                            min="0"
+                            value={m.actual_qty}
+                            onChange={e => handleActualQtyChange(m.id, e.target.value)}
+                            className="form-input text-center font-extrabold text-xs py-0.5 px-1.5 h-7 rounded-lg border-emerald-300 dark:border-emerald-700/60 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 w-20 mx-auto focus:ring-1 focus:ring-emerald-500"
+                          />
+                        </td>
+
+                        {/* Difference */}
+                        <td className="py-1.5 px-3 text-center text-xs font-bold">
+                          {diff === 0 ? (
+                            <span className="text-gray-400">0</span>
+                          ) : diff > 0 ? (
+                            <span className="text-amber-600 dark:text-amber-400 font-extrabold">+ {diff}</span>
+                          ) : (
+                            <span className="text-blue-600 dark:text-blue-400 font-extrabold">{diff}</span>
+                          )}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-1.5 px-2 text-right">
+                          <button
+                            onClick={() => handleDeleteMaterial(m.id)}
+                            className="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition"
+                            title="Видалити позицію"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Material Cards (Адаптивний список матеріалів) */}
+            <div className="block md:hidden divide-y divide-gray-100 dark:divide-neutral-700/60 -mx-1">
+              {materials.map((m, idx) => {
+                const planned = parseFloat(m.planned_qty || 0);
+                const actual = parseFloat(m.actual_qty || 0);
+                const diff = actual - planned;
+
+                return (
+                  <div key={m.id || idx} className="p-3.5 space-y-2.5 bg-white dark:bg-neutral-800">
+                    {/* Назва матеріалу + Теги */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span>{m.product_name}</span>
+                          <span className="text-[11px] font-bold text-gray-400 font-mono">#{idx + 1}</span>
+                          <span className="font-bold text-sm text-gray-900 dark:text-white leading-snug break-words">
+                            {m.product_name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs mt-1">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 dark:bg-neutral-700 text-gray-600 dark:text-neutral-300 font-medium text-[11px]">
+                            Од: {m.unit || 'шт.'}
+                          </span>
                           {m.is_custom && (
-                            <span className="text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-1 py-0.1 rounded">
+                            <span className="text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-1.5 py-0.5 rounded">
                               Вручну
                             </span>
                           )}
                         </div>
-                      </td>
+                      </div>
 
-                      {/* Unit */}
-                      <td className="py-1.5 px-2 text-center text-xs text-gray-500 font-medium">
-                        {m.unit || 'шт.'}
-                      </td>
+                      <button
+                        onClick={() => handleDeleteMaterial(m.id)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition shrink-0 active:scale-95"
+                        title="Видалити"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
 
-                      {/* Planned Qty */}
-                      <td className="py-1.5 px-3 text-center font-bold text-gray-800 dark:text-neutral-200">
-                        {planned}
-                      </td>
+                    {/* Порівняння: План vs Факт + Різниця */}
+                    <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-900/40 border border-gray-100 dark:border-neutral-800 items-center text-center">
+                      <div>
+                        <span className="text-[10px] uppercase font-semibold text-gray-400 block">По КП</span>
+                        <span className="font-bold text-xs text-gray-800 dark:text-neutral-200 mt-0.5 block">
+                          {planned} {m.unit || 'шт.'}
+                        </span>
+                      </div>
 
-                      {/* Actual Qty (Editable input) */}
-                      <td className="py-1 px-3 text-center">
+                      <div>
+                        <span className="text-[10px] uppercase font-semibold text-emerald-600 dark:text-emerald-400 block">Факт</span>
                         <input
                           type="number"
                           step="any"
                           min="0"
                           value={m.actual_qty}
                           onChange={e => handleActualQtyChange(m.id, e.target.value)}
-                          className="form-input text-center font-extrabold text-xs py-0.5 px-1.5 h-7 rounded-lg border-emerald-300 dark:border-emerald-700/60 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 w-20 mx-auto focus:ring-1 focus:ring-emerald-500"
+                          className="form-input text-center font-black text-sm h-8 w-full rounded-lg border-emerald-300 dark:border-emerald-700/60 bg-white dark:bg-neutral-800 text-emerald-700 dark:text-emerald-300 focus:ring-2 focus:ring-emerald-500 mt-0.5"
                         />
-                      </td>
+                      </div>
 
-                      {/* Difference */}
-                      <td className="py-1.5 px-3 text-center text-xs font-bold">
-                        {diff === 0 ? (
-                          <span className="text-gray-400">0</span>
-                        ) : diff > 0 ? (
-                          <span className="text-amber-600 dark:text-amber-400 font-extrabold">+ {diff}</span>
-                        ) : (
-                          <span className="text-blue-600 dark:text-blue-400 font-extrabold">{diff}</span>
-                        )}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="py-1.5 px-2 text-right">
-                        <button
-                          onClick={() => handleDeleteMaterial(m.id)}
-                          className="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition"
-                          title="Видалити позицію"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      <div>
+                        <span className="text-[10px] uppercase font-semibold text-gray-400 block">Різниця</span>
+                        <span className={`text-xs font-black mt-0.5 block ${
+                          diff === 0 
+                            ? 'text-gray-400' 
+                            : diff > 0 
+                              ? 'text-amber-600 dark:text-amber-400' 
+                              : 'text-blue-600 dark:text-blue-400'
+                        }`}>
+                          {diff === 0 ? '0' : diff > 0 ? `+${diff}` : diff}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 

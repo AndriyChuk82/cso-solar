@@ -1300,62 +1300,101 @@ export default function BuyerDetails() {
                     return (
                       <div 
                         key={t.id} 
-                        className="p-3 border border-[var(--border)] bg-[var(--bg)] rounded-lg space-y-2 text-xs cursor-pointer hover:border-[var(--border-light)] transition-colors"
+                        className="p-3.5 border border-[var(--border)] bg-[var(--bg-card)] rounded-xl space-y-2.5 text-xs transition-shadow shadow-sm"
                         onClick={() => startEdit(t)}
                       >
-                        <div className="flex justify-between items-start text-[10px] text-[var(--text-secondary)] font-mono">
-                          <span>📅 {t.date}</span>
-                          <span className="font-semibold text-[var(--text)]">
+                        <div className="flex justify-between items-center text-[11px] font-mono">
+                          <span className="text-[var(--text-secondary)] font-semibold">📅 {t.date}</span>
+                          <span className="font-bold text-[var(--text)]">
                             {isIssue ? (
-                              <span className="flex items-center gap-1.5">
-                                 {t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Тільки борг' : '📤 Видача')}
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                {t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Тільки борг' : '📤 Видача')}
                               </span>
-                            ) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
+                            ) : t.type === 'payment' ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                📥 Оплата
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                🔧 Коригування
+                              </span>
+                            )}
                             {isPendingPrice && (
-                              <span className="text-[9px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-300 dark:border-amber-900/50 px-1.5 py-0.5 rounded-full ml-1 whitespace-nowrap animate-pulse inline-block">
+                              <span className="text-[9px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-300 dark:border-amber-900/50 px-1.5 py-0.5 rounded-full ml-1.5 whitespace-nowrap animate-pulse inline-block">
                                 ⚠️ Очікує ціну
                               </span>
                             )}
                           </span>
                         </div>
+
                         <div>
                           {t.picked_up_by && (
-                            <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium mb-1">
+                            <div className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mb-1">
                               👤 Отримав: {t.picked_up_by}
                             </div>
                           )}
                           {isIssue ? (
-                            <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 mt-1">
+                            <div className="text-[11px] text-[var(--text-secondary)] space-y-1 mt-1 bg-[var(--bg)] p-2 rounded-lg border border-[var(--border)]/60">
                               {t.items.map((i, idx) => (
-                                <div key={idx} className="leading-tight">
-                                  • {i.product_name} — <span className="font-semibold text-[var(--text)]">{i.quantity} {i.unit}</span>
+                                <div key={idx} className="leading-snug">
+                                  • {i.product_name} — <span className="font-bold text-[var(--text)]">{i.quantity} {i.unit}</span>
                                 </div>
                               ))}
-                              {t.comment && <div className="mt-1 italic">{t.comment}</div>}
+                              {t.comment && <div className="mt-1 italic text-[10px] text-[var(--text)]">{(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}</div>}
                             </div>
                           ) : (
-                            <span className="block text-[var(--text-secondary)]">{t.comment || '—'}</span>
+                            <div className="text-[11px] text-[var(--text)] p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)]/60">
+                              {(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '') || '—'}
+                            </div>
                           )}
                         </div>
-                        <div className="flex justify-between items-center pt-2 border-t border-[var(--border)]">
+
+                        {/* Фінанси та Кнопки дій */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[var(--border)]/50">
                           <div>
                             {isIssue || (isAdj && amt < 0) ? (
-                              <span className="text-red-500 font-semibold">
-                                Сума: {t.status === 'reserved' ? (
-                                  <span className="text-gray-400 font-normal italic">
-                                    ({amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'})
+                              <span className="text-red-500 font-extrabold text-sm">
+                                {t.status === 'reserved' ? (
+                                  <span className="text-gray-400 font-normal italic text-xs">
+                                    ({formatMoneyAmount(amt)} {t.currency === 'UAH' ? 'грн' : '$'})
                                   </span>
                                 ) : (
-                                  `${amt.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}`
+                                  `-${formatMoneyAmount(amt)} ${t.currency === 'UAH' ? 'грн' : '$'}`
                                 )}
                               </span>
                             ) : (
-                              <span className="text-green-600 font-semibold">
-                                Сума: ${amt.toLocaleString('uk-UA')} ${t.currency === 'UAH' ? 'грн' : '$'}
+                              <span className="text-emerald-600 font-extrabold text-sm">
+                                +{formatMoneyAmount(amt)} {t.currency === 'UAH' ? 'грн' : '$'}
                               </span>
                             )}
                           </div>
 
+                          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                            {isIssue && (
+                              <button
+                                type="button"
+                                onClick={() => handlePrintIssue(t)}
+                                className="px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 font-bold text-[11px] flex items-center gap-1 active:scale-95 transition-transform"
+                                title="Друк документів"
+                              >
+                                🖨️ Друк
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => startEdit(t)}
+                              className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold text-[11px] flex items-center gap-1 active:scale-95 transition-transform"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTransaction(t.id)}
+                              className="px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 font-bold text-[11px] flex items-center gap-1 active:scale-95 transition-transform"
+                            >
+                              🗑️
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1510,13 +1549,25 @@ export default function BuyerDetails() {
                     return (
                       <div 
                         key={t.id} 
-                        className="p-3 border border-[var(--border)] bg-[var(--bg)] rounded-lg space-y-2 text-xs opacity-75 cursor-pointer hover:border-[var(--border-light)] transition-colors"
+                        className="p-3.5 border border-[var(--border)] bg-[var(--bg-card)] rounded-xl space-y-2.5 text-xs opacity-80 cursor-pointer shadow-sm"
                         onClick={() => startEdit(t)}
                       >
-                        <div className="flex justify-between items-start text-[10px] text-[var(--text-secondary)] font-mono">
-                          <span>📅 {t.date}</span>
-                          <span className="font-semibold text-[var(--text)]">
-                            {isIssue ? (t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Тільки борг' : '📤 Видача')) : t.type === 'payment' ? '📥 Оплата' : '🔧 Коригування'}
+                        <div className="flex justify-between items-center text-[11px] font-mono">
+                          <span className="text-[var(--text-secondary)] font-semibold">📅 {t.date}</span>
+                          <span className="font-bold text-[var(--text)]">
+                            {isIssue ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-500/10 text-gray-600 dark:text-gray-400 border border-gray-500/20">
+                                {t.status === 'reserved' ? '⏳ Бронь' : (t.status === 'debt_only' ? '💵 Тільки борг' : '📤 Видача')}
+                              </span>
+                            ) : t.type === 'payment' ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                📥 Оплата
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                🔧 Коригування
+                              </span>
+                            )}
                             {isPendingPrice && (
                               <span className="text-[9px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-300 dark:border-amber-900/50 px-1.5 py-0.5 rounded-full ml-1 whitespace-nowrap animate-pulse inline-block">
                                 ⚠️ Очікує ціну
@@ -1524,35 +1575,50 @@ export default function BuyerDetails() {
                             )}
                           </span>
                         </div>
+
                         <div>
                           {t.picked_up_by && (
-                            <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium mb-1">
+                            <div className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mb-1">
                               👤 Отримав: {t.picked_up_by}
                             </div>
                           )}
                           {isIssue ? (
-                            <div className="text-[10px] text-[var(--text-secondary)] space-y-0.5 mt-1">
+                            <div className="text-[11px] text-[var(--text-secondary)] space-y-1 mt-1 bg-[var(--bg)] p-2 rounded-lg border border-[var(--border)]/60">
                               {t.items.map((i, idx) => (
-                                <div key={idx} className="leading-tight">
-                                  • {i.product_name} — <span className="font-semibold text-[var(--text)]">{i.quantity} {i.unit}</span>
+                                <div key={idx} className="leading-snug">
+                                  • {i.product_name} — <span className="font-bold text-[var(--text)]">{i.quantity} {i.unit}</span>
                                 </div>
                               ))}
+                              {t.comment && <div className="mt-1 italic text-[10px] text-[var(--text)]">{(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}</div>}
                             </div>
                           ) : (
-                            <span className="block text-[var(--text-secondary)]">{t.comment || '—'}</span>
+                            <div className="text-[11px] text-[var(--text)] p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)]/60">
+                              {(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '') || '—'}
+                            </div>
                           )}
                         </div>
-                        <div className="flex justify-between items-center pt-2 border-t border-[var(--border)]">
+
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[var(--border)]/50">
                           <div>
                             {isIssue || (isAdj && amt < 0) ? (
-                              <span className="text-red-500 font-semibold">
-                                Сума: {amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}
+                              <span className="text-red-500 font-extrabold text-sm">
+                                -{formatMoneyAmount(amt)} {t.currency === 'UAH' ? 'грн' : '$'}
                               </span>
                             ) : (
-                              <span className="text-green-600 font-semibold">
-                                Сума: {amt.toLocaleString('uk-UA')} {t.currency === 'UAH' ? 'грн' : '$'}
+                              <span className="text-emerald-600 font-extrabold text-sm">
+                                +{formatMoneyAmount(amt)} {t.currency === 'UAH' ? 'грн' : '$'}
                               </span>
                             )}
+                          </div>
+
+                          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => startEdit(t)}
+                              className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold text-[11px] flex items-center gap-1 active:scale-95 transition-transform"
+                            >
+                              ✏️ Редагувати
+                            </button>
                           </div>
                         </div>
                       </div>

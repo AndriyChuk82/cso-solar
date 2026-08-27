@@ -353,66 +353,145 @@ export default function BuyersDashboard() {
 
             {/* Мобільна версія: Адаптивний список карток (показується на телефонах) */}
             <div className="block md:hidden divide-y divide-[var(--border)]">
-              {filteredBuyers.map((b) => (
-                <div 
-                  key={b.id} 
-                  className={`p-4 flex flex-col gap-2 hover:bg-[var(--border-light)] transition-colors ${!b.active ? 'opacity-50' : ''}`}
-                  onClick={() => navigate(`/buyers/${b.id}`)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="font-bold text-sm text-blue-500 block">{b.name}</span>
-                      {b.phone && <span className="text-xs text-[var(--text-secondary)] block mt-0.5">{b.phone}</span>}
-                    </div>
-                    <div className="flex flex-col gap-1 items-end">
-                      {b.pendingCount > 0 && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 animate-pulse whitespace-nowrap">
-                          ⚠️ Очікує ціну: {b.pendingCount}
-                        </span>
-                      )}
-                      {b.reservedCount > 0 && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 animate-pulse">
-                          ⏳ Бронь: {b.reservedCount}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+              {filteredBuyers.map((b) => {
+                const isUahDebt = (b.balanceUah || 0) < -0.01;
+                const isUahAdvance = (b.balanceUah || 0) > 0.01;
+                const isUsdDebt = (b.balanceUsd || 0) < -0.01;
+                const isUsdAdvance = (b.balanceUsd || 0) > 0.01;
 
-                  <div className="flex justify-between items-center text-xs mt-1 border-t border-[var(--border)] pt-2">
-                    {currencyFilter === 'ALL' ? (
-                      <>
-                        <div>
-                          <span className="text-[var(--text-secondary)] mr-1">UAH:</span>
-                          <span className={getBalanceClass(b.balanceUah)}>{formatMoney(b.balanceUah, 'грн')}</span>
-                        </div>
-                        <div>
-                          <span className="text-[var(--text-secondary)] mr-1">USD:</span>
-                          <span className={getBalanceClass(b.balanceUsd)}>{formatMoney(b.balanceUsd, '$')}</span>
-                        </div>
-                      </>
-                    ) : (
-                      <div>
-                        <span className="text-[var(--text-secondary)] mr-1">Загальний баланс ({currencyFilter}):</span>
-                        <span className={getBalanceClass(b.convertedBalance)}>
-                          {currencyFilter === 'UAH' ? formatMoney(b.convertedBalance, 'грн') : `$${formatMoney(b.convertedBalance)}`}
-                        </span>
+                return (
+                  <div 
+                    key={b.id} 
+                    className={`p-4 flex flex-col gap-3 transition-colors bg-[var(--bg-card)] ${!b.active ? 'opacity-60 bg-gray-50/50 dark:bg-neutral-800/30' : ''}`}
+                  >
+                    {/* Заголовок картки: Назва + Телефон + Бейджі статусів */}
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <Link
+                          to={`/buyers/${b.id}`}
+                          className="font-bold text-base text-blue-600 dark:text-blue-400 block leading-snug hover:underline break-words"
+                        >
+                          {b.name}
+                        </Link>
+                        {b.phone && (
+                          <a
+                            href={`tel:${b.phone.replace(/\s+/g, '')}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1.5 text-xs text-[var(--text-secondary)] font-medium mt-1 hover:text-primary transition-colors py-0.5 px-2 rounded-md bg-[var(--border-light)]"
+                          >
+                            📞 {b.phone}
+                          </a>
+                        )}
                       </div>
-                    )}
-                  </div>
 
-                  <div className="flex justify-end gap-3 mt-1 text-[11px] pt-1" onClick={(e) => e.stopPropagation()}>
-                    <Link to={`/buyers/${b.id}`} className="text-blue-500 font-semibold hover:underline">
-                      👁️ Деталі
-                    </Link>
-                    <button onClick={(e) => openEdit(b, e)} className="text-amber-500 font-semibold hover:underline">
-                      ✏️ Профіль
-                    </button>
-                    <button onClick={(e) => handlePromptDelete(b, e)} className="text-red-500 font-semibold hover:underline">
-                      🗑️ Видалити
-                    </button>
+                      <div className="flex flex-col gap-1 items-end shrink-0">
+                        {b.pendingCount > 0 && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 animate-pulse whitespace-nowrap">
+                            ⚠️ Ціна: {b.pendingCount}
+                          </span>
+                        )}
+                        {b.reservedCount > 0 && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 animate-pulse whitespace-nowrap">
+                            ⏳ Бронь: {b.reservedCount}
+                          </span>
+                        )}
+                        {b.pendingCount === 0 && b.reservedCount === 0 && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
+                            ✓ ок
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Баланси клієнта (UAH та USD) */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      {currencyFilter === 'ALL' ? (
+                        <>
+                          <div className={`p-2.5 rounded-xl border flex flex-col justify-between ${
+                            isUahDebt
+                              ? 'bg-red-500/10 border-red-500/30 dark:bg-red-950/20'
+                              : isUahAdvance
+                                ? 'bg-emerald-500/10 border-emerald-500/30 dark:bg-emerald-950/20'
+                                : 'bg-[var(--border-light)] border-[var(--border)]'
+                          }`}>
+                            <span className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                              🇺🇦 Гривня (UAH)
+                            </span>
+                            <div className={`font-bold text-sm mt-1 ${getBalanceClass(b.balanceUah)}`}>
+                              {formatMoney(b.balanceUah, 'грн')}
+                            </div>
+                            <span className="text-[9px] text-[var(--text-muted)] mt-0.5">
+                              {isUahDebt ? '🔴 Борг' : isUahAdvance ? '🟢 Аванс' : '⚪ Баланс 0'}
+                            </span>
+                          </div>
+
+                          <div className={`p-2.5 rounded-xl border flex flex-col justify-between ${
+                            isUsdDebt
+                              ? 'bg-red-500/10 border-red-500/30 dark:bg-red-950/20'
+                              : isUsdAdvance
+                                ? 'bg-emerald-500/10 border-emerald-500/30 dark:bg-emerald-950/20'
+                                : 'bg-[var(--border-light)] border-[var(--border)]'
+                          }`}>
+                            <span className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                              💵 Долар (USD)
+                            </span>
+                            <div className={`font-bold text-sm mt-1 ${getBalanceClass(b.balanceUsd)}`}>
+                              {formatMoney(b.balanceUsd, '$')}
+                            </div>
+                            <span className="text-[9px] text-[var(--text-muted)] mt-0.5">
+                              {isUsdDebt ? '🔴 Борг' : isUsdAdvance ? '🟢 Аванс' : '⚪ Баланс 0'}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className={`col-span-2 p-3 rounded-xl border flex items-center justify-between ${
+                          b.convertedBalance < -0.01
+                            ? 'bg-red-500/10 border-red-500/30 dark:bg-red-950/20'
+                            : b.convertedBalance > 0.01
+                              ? 'bg-emerald-500/10 border-emerald-500/30 dark:bg-emerald-950/20'
+                              : 'bg-[var(--border-light)] border-[var(--border)]'
+                        }`}>
+                          <div>
+                            <span className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider block">
+                              Зведений баланс ({currencyFilter})
+                            </span>
+                            <span className="text-[10px] text-[var(--text-muted)]">
+                              {b.convertedBalance < -0.01 ? '🔴 Заборгованість' : b.convertedBalance > 0.01 ? '🟢 Переплата' : '⚪ Розраховано'}
+                            </span>
+                          </div>
+                          <div className={`font-bold text-base ${getBalanceClass(b.convertedBalance)}`}>
+                            {currencyFilter === 'UAH' ? formatMoney(b.convertedBalance, 'грн') : `$${formatMoney(b.convertedBalance)}`}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Рядок дій картки (великі тач-кнопки) */}
+                    <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[var(--border)]/40" onClick={(e) => e.stopPropagation()}>
+                      <Link 
+                        to={`/buyers/${b.id}`} 
+                        className="py-2.5 px-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center gap-1 transition-colors active:scale-95 text-center"
+                      >
+                        👁️ Деталі
+                      </Link>
+                      <button 
+                        type="button"
+                        onClick={(e) => openEdit(b, e)} 
+                        className="py-2.5 px-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold text-xs flex items-center justify-center gap-1 transition-colors active:scale-95"
+                      >
+                        ✏️ Профіль
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={(e) => handlePromptDelete(b, e)} 
+                        className="py-2.5 px-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-bold text-xs flex items-center justify-center gap-1 transition-colors active:scale-95"
+                      >
+                        🗑️ Видалити
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}

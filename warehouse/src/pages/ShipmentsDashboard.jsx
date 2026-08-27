@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import ShipmentConfirmModal from '../components/ShipmentConfirmModal';
 import ShipmentPaymentModal from '../components/ShipmentPaymentModal';
 import ShipmentPrintModal from '../components/ShipmentPrintModal';
-import { Plus, Search, Filter, Truck, DollarSign, Eye, CheckSquare, Square, RefreshCw, Pencil, Printer, Trash2, Archive, ArchiveRestore } from 'lucide-react';
+import { Plus, Search, Filter, Truck, DollarSign, Eye, CheckSquare, Square, RefreshCw, Pencil, Printer, Trash2, Archive, ArchiveRestore, Copy, Check, Phone, MapPin } from 'lucide-react';
 
 function formatShortNpDate(dateStr) {
   if (!dateStr) return '';
@@ -28,6 +28,7 @@ export default function ShipmentsDashboard() {
   const [shipments, setShipments] = useState([]);
   const [stats, setStats] = useState({});
   const [senders, setSenders] = useState([]);
+  const [copiedTtn, setCopiedTtn] = useState(null);
 
   // NP Live Tracking State
   const [npTracking, setNpTracking] = useState({});
@@ -106,6 +107,18 @@ export default function ShipmentsDashboard() {
     } catch (err) {
       console.warn("Failed to load senders:", err);
     }
+  }
+
+  function handleCopyTtn(ttn, e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!ttn) return;
+    navigator.clipboard.writeText(ttn);
+    setCopiedTtn(ttn);
+    showToast(`ТТН ${ttn} скопійовано`, 'success');
+    setTimeout(() => setCopiedTtn(null), 2000);
   }
 
   function handleSearchSubmit(e) {
@@ -421,216 +434,438 @@ export default function ShipmentsDashboard() {
             <p className="text-xs">Створіть перше відправлення клієнту за допомогою кнопки вище</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 dark:bg-neutral-700/50 border-b border-gray-200 dark:border-neutral-700 text-xs font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider">
-                <tr>
-                  <th className="py-3 px-3 w-10 text-center">
-                    <button
-                      type="button"
-                      onClick={toggleSelectAll}
-                      className="text-gray-400 hover:text-primary"
-                    >
-                      {selectedIds.length === shipments.length ? (
-                        <CheckSquare size={18} className="text-primary" />
-                      ) : (
-                        <Square size={18} />
-                      )}
-                    </button>
-                  </th>
-                  <th className="py-3 px-3">Статус</th>
-                  <th className="py-3 px-3">Клієнт / Телефон</th>
-                  <th className="py-3 px-3">Адреса відправки</th>
-                  <th className="py-3 px-3">ТТН & Перевізник</th>
-                  <th className="py-3 px-3">Від кого</th>
-                  <th className="py-3 px-4 text-right min-w-[170px]">Сума / Борг</th>
-                  <th className="py-3 px-3">Оплата</th>
-                  <th className="py-3 px-3 text-center">Дії</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-neutral-700">
-                {shipments.map(ship => {
-                  const badge = statusBadges[ship.status] || statusBadges.reserved;
-                  const isSelected = selectedIds.includes(ship.id);
-
-                  return (
-                    <tr
-                      key={ship.id}
-                      className={`hover:bg-gray-50/80 dark:hover:bg-neutral-700/40 transition-colors ${
-                        isSelected ? 'bg-primary/5 dark:bg-primary/10' : ''
-                      }`}
-                    >
-                      {/* Checkbox */}
-                      <td className="py-3 px-3 text-center">
-                        <button
-                          type="button"
-                          onClick={() => toggleSelectOne(ship.id)}
-                          className="text-gray-400 hover:text-primary"
-                        >
-                          {isSelected ? (
-                            <CheckSquare size={18} className="text-primary" />
-                          ) : (
-                            <Square size={18} />
-                          )}
-                        </button>
-                      </td>
-
-                      {/* Status */}
-                      <td className="py-3 px-3">
-                        <span className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-bold border ${badge.bg}`}>
-                          {badge.label}
-                        </span>
-                      </td>
-
-                      {/* Client */}
-                      <td className="py-3 px-3">
-                        <div className="text-[10px] text-gray-500 font-mono font-bold uppercase">
-                          {ship.shipment_number || `№ ${ship.id.slice(0, 8)}`}
-                        </div>
-                        <Link
-                          to={`/shipments/${ship.id}`}
-                          className="font-bold text-gray-900 dark:text-white hover:text-primary transition-colors block"
-                        >
-                          {ship.client_name}
-                        </Link>
-                        {ship.client_phone && (
-                          <div className="text-xs text-gray-500 dark:text-neutral-400">
-                            {ship.client_phone}
-                          </div>
+          <>
+            {/* Десктопна версія: Таблиця (без змін) */}
+            <div className="overflow-x-auto hidden md:block">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50 dark:bg-neutral-700/50 border-b border-gray-200 dark:border-neutral-700 text-xs font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider">
+                  <tr>
+                    <th className="py-3 px-3 w-10 text-center">
+                      <button
+                        type="button"
+                        onClick={toggleSelectAll}
+                        className="text-gray-400 hover:text-primary"
+                      >
+                        {selectedIds.length === shipments.length ? (
+                          <CheckSquare size={18} className="text-primary" />
+                        ) : (
+                          <Square size={18} />
                         )}
-                      </td>
+                      </button>
+                    </th>
+                    <th className="py-3 px-3">Статус</th>
+                    <th className="py-3 px-3">Клієнт / Телефон</th>
+                    <th className="py-3 px-3">Адреса відправки</th>
+                    <th className="py-3 px-3">ТТН & Перевізник</th>
+                    <th className="py-3 px-3">Від кого</th>
+                    <th className="py-3 px-4 text-right min-w-[170px]">Сума / Борг</th>
+                    <th className="py-3 px-3">Оплата</th>
+                    <th className="py-3 px-3 text-center">Дії</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-neutral-700">
+                  {shipments.map(ship => {
+                    const badge = statusBadges[ship.status] || statusBadges.reserved;
+                    const isSelected = selectedIds.includes(ship.id);
 
-                      {/* Address */}
-                      <td className="py-3 px-3 max-w-[200px] truncate text-xs text-gray-600 dark:text-neutral-300" title={ship.shipping_address}>
-                        {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз' ? '— (Самовивіз)' : (ship.shipping_address || '—')}
-                      </td>
+                    return (
+                      <tr
+                        key={ship.id}
+                        className={`hover:bg-gray-50/80 dark:hover:bg-neutral-700/40 transition-colors ${
+                          isSelected ? 'bg-primary/5 dark:bg-primary/10' : ''
+                        }`}
+                      >
+                        {/* Checkbox */}
+                        <td className="py-3 px-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => toggleSelectOne(ship.id)}
+                            className="text-gray-400 hover:text-primary"
+                          >
+                            {isSelected ? (
+                              <CheckSquare size={18} className="text-primary" />
+                            ) : (
+                              <Square size={18} />
+                            )}
+                          </button>
+                        </td>
 
-                      {/* TTN & Carrier */}
-                      <td className="py-3 px-3">
-                        <div className="flex flex-col gap-0.5">
-                          {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз' ? (
-                            <>
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-md w-fit">
-                                🚗 Самовивіз
-                              </span>
-                              <span className="text-[11px] font-bold text-gray-700 dark:text-neutral-200 block">
-                                Склад: <strong className="text-primary font-black">{ship.primary_warehouse_name || 'Основний склад'}</strong>
-                              </span>
-                            </>
-                          ) : ship.ttn ? (
-                            <>
-                              <strong className="font-mono text-xs font-bold text-gray-900 dark:text-white tracking-tight whitespace-nowrap block">
-                                {ship.ttn}
-                              </strong>
-                              {npTracking[ship.ttn] ? (
-                                <span
-                                  className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded border w-fit block mt-0.5 whitespace-nowrap ${
-                                    npTracking[ship.ttn].statusGroup === 'DELIVERED'
-                                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
-                                      : npTracking[ship.ttn].statusGroup === 'ARRIVED'
-                                      ? 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950 dark:text-purple-300'
-                                      : npTracking[ship.ttn].statusGroup === 'REFUSED'
-                                      ? 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-300'
-                                      : 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
-                                  }`}
-                                  title={`${npTracking[ship.ttn].statusText}${npTracking[ship.ttn].actualDeliveryDate ? ` (Дата вручення: ${npTracking[ship.ttn].actualDeliveryDate})` : npTracking[ship.ttn].scheduledDeliveryDate ? ` (Доставка: ${npTracking[ship.ttn].scheduledDeliveryDate})` : ''}`}
-                                >
-                                  {npTracking[ship.ttn].statusGroup === 'DELIVERED'
-                                    ? `🟢 Отримано ${formatShortNpDate(npTracking[ship.ttn].actualDeliveryDate)}`
-                                    : npTracking[ship.ttn].statusGroup === 'ARRIVED'
-                                    ? '📍 Прибув у НП'
-                                    : npTracking[ship.ttn].statusGroup === 'REFUSED'
-                                    ? '🔴 Відмова'
-                                    : `🚚 В дорозі ${npTracking[ship.ttn].scheduledDeliveryDate ? `(${formatShortNpDate(npTracking[ship.ttn].scheduledDeliveryDate)})` : ''}`}
+                        {/* Status */}
+                        <td className="py-3 px-3">
+                          <span className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-bold border ${badge.bg}`}>
+                            {badge.label}
+                          </span>
+                        </td>
+
+                        {/* Client */}
+                        <td className="py-3 px-3">
+                          <div className="text-[10px] text-gray-500 font-mono font-bold uppercase">
+                            {ship.shipment_number || `№ ${ship.id.slice(0, 8)}`}
+                          </div>
+                          <Link
+                            to={`/shipments/${ship.id}`}
+                            className="font-bold text-gray-900 dark:text-white hover:text-primary transition-colors block"
+                          >
+                            {ship.client_name}
+                          </Link>
+                          {ship.client_phone && (
+                            <div className="text-xs text-gray-500 dark:text-neutral-400">
+                              {ship.client_phone}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Address */}
+                        <td className="py-3 px-3 max-w-[200px] truncate text-xs text-gray-600 dark:text-neutral-300" title={ship.shipping_address}>
+                          {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз' ? '— (Самовивіз)' : (ship.shipping_address || '—')}
+                        </td>
+
+                        {/* TTN & Carrier */}
+                        <td className="py-3 px-3">
+                          <div className="flex flex-col gap-0.5">
+                            {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз' ? (
+                              <>
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-md w-fit">
+                                  🚗 Самовивіз
                                 </span>
-                              ) : (
+                                <span className="text-[11px] font-bold text-gray-700 dark:text-neutral-200 block">
+                                  Склад: <strong className="text-primary font-black">{ship.primary_warehouse_name || 'Основний склад'}</strong>
+                                </span>
+                              </>
+                            ) : ship.ttn ? (
+                              <>
+                                <strong className="font-mono text-xs font-bold text-gray-900 dark:text-white tracking-tight whitespace-nowrap block">
+                                  {ship.ttn}
+                                </strong>
+                                {npTracking[ship.ttn] ? (
+                                  <span
+                                    className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded border w-fit block mt-0.5 whitespace-nowrap ${
+                                      npTracking[ship.ttn].statusGroup === 'DELIVERED'
+                                        ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
+                                        : npTracking[ship.ttn].statusGroup === 'ARRIVED'
+                                        ? 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950 dark:text-purple-300'
+                                        : npTracking[ship.ttn].statusGroup === 'REFUSED'
+                                        ? 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-300'
+                                        : 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
+                                    }`}
+                                    title={`${npTracking[ship.ttn].statusText}${npTracking[ship.ttn].actualDeliveryDate ? ` (Дата вручення: ${npTracking[ship.ttn].actualDeliveryDate})` : npTracking[ship.ttn].scheduledDeliveryDate ? ` (Доставка: ${npTracking[ship.ttn].scheduledDeliveryDate})` : ''}`}
+                                  >
+                                    {npTracking[ship.ttn].statusGroup === 'DELIVERED'
+                                      ? `🟢 Отримано ${formatShortNpDate(npTracking[ship.ttn].actualDeliveryDate)}`
+                                      : npTracking[ship.ttn].statusGroup === 'ARRIVED'
+                                      ? '📍 Прибув у НП'
+                                      : npTracking[ship.ttn].statusGroup === 'REFUSED'
+                                      ? '🔴 Відмова'
+                                      : `🚚 В дорозі ${npTracking[ship.ttn].scheduledDeliveryDate ? `(${formatShortNpDate(npTracking[ship.ttn].scheduledDeliveryDate)})` : ''}`}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-gray-400 dark:text-neutral-500 uppercase block font-semibold">
+                                    {ship.carrier || 'Нова Пошта'}
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-xs text-amber-600 dark:text-amber-400 italic block font-medium">
+                                  Очікує ТТН
+                                </span>
                                 <span className="text-[10px] text-gray-400 dark:text-neutral-500 uppercase block font-semibold">
                                   {ship.carrier || 'Нова Пошта'}
                                 </span>
-                              )}
-                            </>
+                              </>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Sender */}
+                        <td className="py-3 px-3 text-xs text-gray-700 dark:text-neutral-300">
+                          {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз' ? '—' : (ship.sender_name || '—')}
+                        </td>
+
+                        {/* Amount / Debt */}
+                        <td className="py-3 px-4 text-right min-w-[170px]">
+                          <div className="font-black text-gray-900 dark:text-white text-sm whitespace-nowrap">
+                            {parseFloat(ship.total_amount || 0).toLocaleString('uk-UA')} {ship.currency}
+                          </div>
+                          {parseFloat(ship.debt_amount) > 0 ? (
+                            <div className={`text-xs font-black flex items-center justify-end gap-1 mt-0.5 whitespace-nowrap ${
+                              ship.status === 'shipped' 
+                                ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded-md border border-red-200 dark:border-red-800' 
+                                : 'text-amber-600 dark:text-amber-400'
+                            }`}>
+                              {ship.status === 'shipped' && <span className="animate-pulse">🔴</span>}
+                              Борг: {parseFloat(ship.debt_amount || 0).toLocaleString('uk-UA')} {ship.currency}
+                            </div>
                           ) : (
-                            <>
-                              <span className="text-xs text-amber-600 dark:text-amber-400 italic block font-medium">
+                            <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 whitespace-nowrap">
+                              ✓ Оплачено
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Payment Method */}
+                        <td className="py-3 px-3 text-xs text-gray-600 dark:text-neutral-300">
+                          {paymentMethodLabels[ship.payment_method] || ship.payment_method}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3 px-3 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {ship.status === 'reserved' && (
+                              <button
+                                onClick={() => setConfirmModalData({ isOpen: true, shipment: ship, isBatch: false })}
+                                className="p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+                                title={ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' ? "Підтвердити видачу товару (Самовивіз)" : "Підтвердити відправку"}
+                              >
+                                <Truck size={17} />
+                              </button>
+                            )}
+
+                            {parseFloat(ship.debt_amount) > 0 && ship.status !== 'cancelled' && (
+                              <button
+                                onClick={() => setPaymentModalData({ isOpen: true, shipment: ship, isBatch: false })}
+                                className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                                title="Підтвердити оплату"
+                              >
+                                <DollarSign size={17} />
+                              </button>
+                            )}
+
+                            <Link
+                              to={`/shipments/edit/${ship.id}`}
+                              className="p-1.5 text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
+                              title="Редагувати накладну"
+                            >
+                              <Pencil size={17} />
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Мобільна версія: Адаптивні картки відправлень */}
+            <div className="block md:hidden divide-y divide-gray-100 dark:divide-neutral-700">
+              {shipments.map(ship => {
+                const badge = statusBadges[ship.status] || statusBadges.reserved;
+                const isSelected = selectedIds.includes(ship.id);
+                const isPickup = ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз';
+                const hasDebt = parseFloat(ship.debt_amount) > 0;
+                const npInfo = ship.ttn ? npTracking[ship.ttn] : null;
+
+                return (
+                  <div
+                    key={ship.id}
+                    className={`p-4 flex flex-col gap-3 transition-colors bg-white dark:bg-neutral-800 ${
+                      isSelected ? 'bg-primary/5 dark:bg-primary/10' : ''
+                    }`}
+                  >
+                    {/* Хедер картки: Чекбокс, Номер, Статус */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => toggleSelectOne(ship.id)}
+                          className="text-gray-400 hover:text-primary p-0.5"
+                        >
+                          {isSelected ? (
+                            <CheckSquare size={20} className="text-primary" />
+                          ) : (
+                            <Square size={20} />
+                          )}
+                        </button>
+                        <span className="font-mono text-xs font-bold text-gray-500 dark:text-neutral-400 uppercase">
+                          {ship.shipment_number || `№ ${ship.id.slice(0, 8)}`}
+                        </span>
+                      </div>
+
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${badge.bg}`}>
+                        {badge.label}
+                      </span>
+                    </div>
+
+                    {/* Клієнт та Телефон */}
+                    <div>
+                      <Link
+                        to={`/shipments/${ship.id}`}
+                        className="font-bold text-base text-gray-900 dark:text-white hover:text-primary transition-colors block leading-tight"
+                      >
+                        {ship.client_name}
+                      </Link>
+                      {ship.client_phone && (
+                        <a
+                          href={`tel:${ship.client_phone.replace(/\s+/g, '')}`}
+                          className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 font-semibold mt-1 py-0.5 px-2 rounded-md bg-blue-50 dark:bg-blue-950/40 hover:underline"
+                        >
+                          <Phone size={12} />
+                          {ship.client_phone}
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Логістика / ТТН */}
+                    <div className="p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-700/40 border border-gray-100 dark:border-neutral-700 flex flex-col gap-1.5 text-xs">
+                      {isPickup ? (
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                            🚗 Самовивіз
+                          </span>
+                          <span className="text-[11px] text-gray-600 dark:text-neutral-300">
+                            Склад: <strong className="text-primary">{ship.primary_warehouse_name || 'Основний склад'}</strong>
+                          </span>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-semibold text-gray-500 dark:text-neutral-400 text-[11px] uppercase">
+                              {ship.carrier || 'Нова Пошта'}
+                            </span>
+                            {ship.ttn ? (
+                              <button
+                                type="button"
+                                onClick={(e) => handleCopyTtn(ship.ttn, e)}
+                                className="inline-flex items-center gap-1 font-mono font-bold text-xs bg-white dark:bg-neutral-800 px-2 py-1 rounded-lg border border-gray-200 dark:border-neutral-600 text-gray-800 dark:text-gray-200 active:scale-95 transition-transform"
+                                title="Натисніть щоб скопіювати ТТН"
+                              >
+                                {copiedTtn === ship.ttn ? (
+                                  <>
+                                    <Check size={13} className="text-emerald-500" />
+                                    <span className="text-emerald-600 text-[11px]">Скопійовано!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy size={13} className="text-gray-400" />
+                                    <span>{ship.ttn}</span>
+                                  </>
+                                )}
+                              </button>
+                            ) : (
+                              <span className="text-amber-600 dark:text-amber-400 italic text-[11px]">
                                 Очікує ТТН
                               </span>
-                              <span className="text-[10px] text-gray-400 dark:text-neutral-500 uppercase block font-semibold">
-                                {ship.carrier || 'Нова Пошта'}
+                            )}
+                          </div>
+
+                          {npInfo && (
+                            <div className="mt-0.5">
+                              <span
+                                className={`text-[10px] font-extrabold px-2 py-0.5 rounded border inline-block ${
+                                  npInfo.statusGroup === 'DELIVERED'
+                                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300'
+                                    : npInfo.statusGroup === 'ARRIVED'
+                                    ? 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950 dark:text-purple-300'
+                                    : npInfo.statusGroup === 'REFUSED'
+                                    ? 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-300'
+                                    : 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
+                                }`}
+                              >
+                                {npInfo.statusGroup === 'DELIVERED'
+                                  ? `🟢 Отримано ${formatShortNpDate(npInfo.actualDeliveryDate)}`
+                                  : npInfo.statusGroup === 'ARRIVED'
+                                  ? '📍 Прибув у відділення'
+                                  : npInfo.statusGroup === 'REFUSED'
+                                  ? '🔴 Відмова'
+                                  : `🚚 В дорозі ${npInfo.scheduledDeliveryDate ? `(${formatShortNpDate(npInfo.scheduledDeliveryDate)})` : ''}`}
                               </span>
-                            </>
+                            </div>
                           )}
-                        </div>
-                      </td>
 
-                      {/* Sender */}
-                      <td className="py-3 px-3 text-xs text-gray-700 dark:text-neutral-300">
-                        {ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' || ship.ttn === 'Самовивіз' ? '—' : (ship.sender_name || '—')}
-                      </td>
+                          {ship.shipping_address && (
+                            <div className="text-[11px] text-gray-600 dark:text-neutral-300 flex items-start gap-1 mt-0.5">
+                              <MapPin size={13} className="text-gray-400 shrink-0 mt-0.5" />
+                              <span className="break-words">{ship.shipping_address}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
 
-                      {/* Amount / Debt */}
-                      <td className="py-3 px-4 text-right min-w-[170px]">
-                        <div className="font-black text-gray-900 dark:text-white text-sm whitespace-nowrap">
+                    {/* Фінанси: Сума + Борг + Метод оплати */}
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50/80 dark:bg-neutral-700/20 border border-gray-100 dark:border-neutral-700/60">
+                      <div>
+                        <div className="text-[10px] text-gray-500 uppercase font-semibold">Сума відправлення</div>
+                        <div className="font-black text-sm text-gray-900 dark:text-white">
                           {parseFloat(ship.total_amount || 0).toLocaleString('uk-UA')} {ship.currency}
                         </div>
-                        {parseFloat(ship.debt_amount) > 0 ? (
-                          <div className={`text-xs font-black flex items-center justify-end gap-1 mt-0.5 whitespace-nowrap ${
-                            ship.status === 'shipped' 
-                              ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded-md border border-red-200 dark:border-red-800' 
-                              : 'text-amber-600 dark:text-amber-400'
+                        <div className="text-[10px] text-gray-500 mt-0.5">
+                          {paymentMethodLabels[ship.payment_method] || ship.payment_method}
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        {hasDebt ? (
+                          <div className={`text-xs font-black px-2 py-1 rounded-lg border ${
+                            ship.status === 'shipped'
+                              ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800'
+                              : 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800'
                           }`}>
-                            {ship.status === 'shipped' && <span className="animate-pulse">🔴</span>}
-                            Борг: {parseFloat(ship.debt_amount || 0).toLocaleString('uk-UA')} {ship.currency}
+                            🔴 Борг: {parseFloat(ship.debt_amount || 0).toLocaleString('uk-UA')} {ship.currency}
                           </div>
                         ) : (
-                          <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 whitespace-nowrap">
+                          <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
                             ✓ Оплачено
                           </div>
                         )}
-                      </td>
+                      </div>
+                    </div>
 
-                      {/* Payment Method */}
-                      <td className="py-3 px-3 text-xs text-gray-600 dark:text-neutral-300">
-                        {paymentMethodLabels[ship.payment_method] || ship.payment_method}
-                      </td>
+                    {/* Рядок дій (великі тач-кнопки) */}
+                    <div className="flex items-center gap-2 pt-1 border-t border-gray-100 dark:border-neutral-700">
+                      <Link
+                        to={`/shipments/${ship.id}`}
+                        className="flex-1 py-2 px-3 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center gap-1 transition-colors active:scale-95"
+                      >
+                        <Eye size={15} />
+                        Деталі
+                      </Link>
 
-                      {/* Actions */}
-                      <td className="py-3 px-3 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          {ship.status === 'reserved' && (
-                            <button
-                              onClick={() => setConfirmModalData({ isOpen: true, shipment: ship, isBatch: false })}
-                              className="p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
-                              title={ship.carrier === 'Самовивіз' || ship.carrier === 'pickup' ? "Підтвердити видачу товару (Самовивіз)" : "Підтвердити відправку"}
-                            >
-                              <Truck size={17} />
-                            </button>
-                          )}
+                      {ship.status === 'reserved' && (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmModalData({ isOpen: true, shipment: ship, isBatch: false })}
+                          className="py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors shadow-sm active:scale-95"
+                        >
+                          <Truck size={15} />
+                          Відправити
+                        </button>
+                      )}
 
-                          {parseFloat(ship.debt_amount) > 0 && ship.status !== 'cancelled' && (
-                            <button
-                              onClick={() => setPaymentModalData({ isOpen: true, shipment: ship, isBatch: false })}
-                              className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
-                              title="Підтвердити оплату"
-                            >
-                              <DollarSign size={17} />
-                            </button>
-                          )}
+                      {hasDebt && ship.status !== 'cancelled' && (
+                        <button
+                          type="button"
+                          onClick={() => setPaymentModalData({ isOpen: true, shipment: ship, isBatch: false })}
+                          className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors shadow-sm active:scale-95"
+                        >
+                          <DollarSign size={15} />
+                          Оплата
+                        </button>
+                      )}
 
-                          <Link
-                            to={`/shipments/edit/${ship.id}`}
-                            className="p-1.5 text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
-                            title="Редагувати накладну"
-                          >
-                            <Pencil size={17} />
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      <button
+                        type="button"
+                        onClick={() => setPrintModalData({ isOpen: true, shipments: [ship] })}
+                        className="p-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 active:scale-95 transition-transform"
+                        title="Друк стікера ТТН"
+                      >
+                        <Printer size={16} />
+                      </button>
+
+                      <Link
+                        to={`/shipments/edit/${ship.id}`}
+                        className="p-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700 active:scale-95 transition-transform"
+                        title="Редагувати"
+                      >
+                        <Pencil size={16} />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
