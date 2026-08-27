@@ -74,34 +74,60 @@ async function apiCall(action, options = {}) {
 export const constructionService = {
   // Отримати всі об'єкти будівництва
   getObjects: async () => {
-    // 1. Перевіряємо Vercel API (Service Role — 100% працює на всіх пристроях)
+    const localList = getLocalObjects();
+    let remoteData = null;
+
+    // 1. Vercel API
     const apiRes = await apiCall('get_objects');
-    if (apiRes && apiRes.data) {
-      saveLocalObjects(apiRes.data);
-      return { success: true, data: apiRes.data };
+    if (apiRes && Array.isArray(apiRes.data)) {
+      remoteData = apiRes.data;
     }
 
     // 2. Прямий виклик Supabase client
-    if (supabase) {
+    if (!remoteData && supabase) {
       try {
         const { data, error } = await supabase
           .from('construction_objects')
           .select('*')
           .order('created_at', { ascending: false });
 
-        if (!error && data) {
-          saveLocalObjects(data);
-          return { success: true, data };
+        if (!error && Array.isArray(data)) {
+          remoteData = data;
         }
       } catch (err) {
         console.warn('Supabase fetch failed, fallback to LocalStorage:', err);
       }
     }
 
-    // 3. Fallback LocalStorage
-    const list = getLocalObjects();
-    list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-    return { success: true, data: list };
+    // 3. Авто-міграція локальних об'єктів у хмару (якщо вони були створені раніше офлайн)
+    if (localList.length > 0) {
+      const remoteIds = new Set((remoteData || []).map(r => String(r.id)));
+      const toMigrate = localList.filter(l => l && l.id && !remoteIds.has(String(l.id)));
+
+      if (toMigrate.length > 0) {
+        for (const item of toMigrate) {
+          const saved = await constructionService.saveObject(item);
+          if (saved.success && saved.data) {
+            if (!remoteData) remoteData = [];
+            remoteData.unshift(saved.data);
+          }
+          const allLocalMats = getLocalMaterials();
+          const objMats = allLocalMats.filter(m => String(m.object_id) === String(item.id));
+          if (objMats.length > 0) {
+            await constructionService.saveMaterials(item.id, objMats);
+          }
+        }
+      }
+    }
+
+    if (remoteData) {
+      saveLocalObjects(remoteData);
+      return { success: true, data: remoteData };
+    }
+
+    // 4. Fallback LocalStorage
+    localList.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    return { success: true, data: localList };
   },
 
   // Отримати один об'єкт з матеріалами

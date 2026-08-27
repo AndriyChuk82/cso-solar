@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, User, Menu } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import Sidebar from './Sidebar';
 import CONFIG from '../config';
 import { ThemeToggle } from './ThemeToggle';
-
-import MobileQuickActionFAB from './MobileQuickActionFAB';
+import MobileBottomNav from './MobileBottomNav';
 
 /**
  * Основний макет додатку: хедер + сайдбар + контент.
@@ -23,13 +22,6 @@ export default function Layout() {
           <div className="flex items-center justify-between h-16">
             {/* Logo Section */}
             <div className="flex items-center gap-3">
-              <button
-                className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-neutral-700 text-gray-600 dark:text-neutral-300 transition-colors"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                title="Меню"
-              >
-                <Menu size={20} />
-              </button>
               <img
                 src="https://i.ibb.co/32JD4dc/logo.png"
                 alt="CSO Solar"
@@ -119,13 +111,13 @@ export default function Layout() {
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
-        <main className="app-main pb-20 md:pb-6">
+        <main className="app-main pb-28 md:pb-6">
           <Outlet />
         </main>
       </div>
 
-      {/* Floating Action Button для швидких дій на смартфонах */}
-      <MobileQuickActionFAB />
+      {/* Нижня панель навігації та швидкі дії для смартфонів */}
+      <MobileBottomNav />
     </>
   );
 }
