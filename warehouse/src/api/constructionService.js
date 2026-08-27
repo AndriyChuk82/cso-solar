@@ -48,9 +48,40 @@ function saveLocalMaterials(materials) {
   localStorage.setItem(LOCAL_STORAGE_MATERIALS_KEY, JSON.stringify(materials));
 }
 
+async function apiCall(action, options = {}) {
+  try {
+    let url = `/api/construction?action=${action}`;
+    if (options.params) {
+      for (const [k, v] of Object.entries(options.params)) {
+        url += `&${k}=${encodeURIComponent(v)}`;
+      }
+    }
+    const res = await fetch(url, {
+      method: options.method || 'GET',
+      headers: options.body ? { 'Content-Type': 'application/json' } : undefined,
+      body: options.body ? JSON.stringify(options.body) : undefined
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.success) return json;
+    }
+  } catch (err) {
+    console.warn(`API call ${action} failed:`, err);
+  }
+  return null;
+}
+
 export const constructionService = {
   // Отримати всі об'єкти будівництва
   getObjects: async () => {
+    // 1. Перевіряємо Vercel API (Service Role — 100% працює на всіх пристроях)
+    const apiRes = await apiCall('get_objects');
+    if (apiRes && apiRes.data) {
+      saveLocalObjects(apiRes.data);
+      return { success: true, data: apiRes.data };
+    }
+
+    // 2. Прямий виклик Supabase client
     if (supabase) {
       try {
         const { data, error } = await supabase
@@ -59,33 +90,15 @@ export const constructionService = {
           .order('created_at', { ascending: false });
 
         if (!error && data) {
-          // Міграція об'єктів з LocalStorage у Supabase (якщо вони були створені раніше локально)
-          const localList = getLocalObjects();
-          if (localList.length > 0) {
-            const remoteIds = new Set(data.map(d => d.id));
-            const toMigrate = localList.filter(l => !remoteIds.has(l.id));
-            if (toMigrate.length > 0) {
-              for (const item of toMigrate) {
-                await constructionService.saveObject(item);
-                const allLocalMats = getLocalMaterials();
-                const objMats = allLocalMats.filter(m => String(m.object_id) === String(item.id));
-                if (objMats.length > 0) {
-                  await constructionService.saveMaterials(item.id, objMats);
-                }
-              }
-              const updatedRes = await supabase.from('construction_objects').select('*').order('created_at', { ascending: false });
-              if (!updatedRes.error && updatedRes.data) {
-                return { success: true, data: updatedRes.data };
-              }
-            }
-          }
+          saveLocalObjects(data);
           return { success: true, data };
         }
       } catch (err) {
         console.warn('Supabase fetch failed, fallback to LocalStorage:', err);
       }
     }
-    // Fallback LocalStorage
+
+    // 3. Fallback LocalStorage
     const list = getLocalObjects();
     list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     return { success: true, data: list };
@@ -96,7 +109,15 @@ export const constructionService = {
     let targetObject = null;
     let targetMaterials = [];
 
-    if (supabase) {
+    // 1. Vercel API
+    const apiRes = await apiCall('get_details', { params: { id } });
+    if (apiRes && apiRes.object) {
+      targetObject = apiRes.object;
+      targetMaterials = apiRes.materials || [];
+    }
+
+    // 2. Прямий Supabase
+    if (!targetObject && supabase) {
       try {
         const [objRes, matRes] = await Promise.all([
           supabase.from('construction_objects').select('*').eq('id', id).single(),
@@ -144,7 +165,6 @@ export const constructionService = {
             if (calcTotal > 0) {
               targetObject.total_price = calcTotal;
               if (prop.currency) targetObject.currency = prop.currency.toUpperCase();
-              // Зберігаємо оновлений об'єкт
               const saved = await constructionService.saveObject(targetObject);
               if (saved.success && saved.data) {
                 targetObject = saved.data;
@@ -177,6 +197,15 @@ export const constructionService = {
       paid_amount: parseFloat(objectData.paid_amount || 0)
     };
 
+    // 1. Vercel API
+    const apiRes = await apiCall('save_object', { method: 'POST', body: payload });
+    if (apiRes && apiRes.data) {
+      const localObjs = getLocalObjects().filter(o => o.id !== id);
+      saveLocalObjects([apiRes.data, ...localObjs]);
+      return { success: true, data: apiRes.data };
+    }
+
+    // 2. Прямий Supabase
     if (supabase) {
       try {
         const { data, error } = await supabase
@@ -186,7 +215,6 @@ export const constructionService = {
           .single();
 
         if (!error && data) {
-          // Also sync to local storage
           const localObjs = getLocalObjects().filter(o => o.id !== id);
           saveLocalObjects([data, ...localObjs]);
           return { success: true, data };
@@ -203,9 +231,17 @@ export const constructionService = {
 
   // Зберегти список матеріалів
   saveMaterials: async (objectId, materials) => {
+    // 1. Vercel API
+    const apiRes = await apiCall('save_materials', { method: 'POST', body: { objectId, materials } });
+    if (apiRes && apiRes.data) {
+      const otherMats = getLocalMaterials().filter(m => m.object_id !== objectId);
+      saveLocalMaterials([...otherMats, ...apiRes.data]);
+      return { success: true, data: apiRes.data };
+    }
+
+    // 2. Прямий Supabase
     if (supabase) {
       try {
-        // Delete existing and insert new
         await supabase.from('construction_object_materials').delete().eq('object_id', objectId);
         
         const formatted = materials.map((m, idx) => ({
@@ -227,7 +263,6 @@ export const constructionService = {
           .select();
 
         if (!error && data) {
-          // Update local storage too
           const otherMats = getLocalMaterials().filter(m => m.object_id !== objectId);
           saveLocalMaterials([...otherMats, ...data]);
           return { success: true, data };
