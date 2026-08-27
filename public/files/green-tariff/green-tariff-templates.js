@@ -648,7 +648,7 @@ const GT_TEMPLATES = {
             <div style="display:flex; justify-content:flex-end; margin-bottom:15mm;">
                 <div style="text-align:right; font-size:12pt; margin-right:5mm;">
                     <p style="font-weight:bold; margin:0;">"ЗАТВЕРДЖУЮ"</p>
-                    <p style="margin:20px 0 0; position:relative;">{{signature_title}} _________________ Петро ПАСТУШОК</p>
+                    <p style="margin:20px 0 0; text-align:right;"><span style="position:relative; display:inline-block;">{{signature_title}}_________________</span> Петро ПАСТУШОК</p>
                 </div>
             </div>
 
@@ -801,7 +801,7 @@ const GT_TEMPLATES = {
         <div class="p2-page p2-appendix-page">
             <div style="text-align:right; font-size:11pt; margin-bottom:10px;">
                 <p style="font-weight:bold; margin:0;">«ЗАТВЕРДЖУЮ»</p>
-                <p style="margin:16px 0 0; position:relative;">{{signature_app1}} _________________ Петро ПАСТУШОК</p>
+                <p style="margin:16px 0 0; text-align:right;"><span style="position:relative; display:inline-block;">{{signature_app1}}_________________</span> Петро ПАСТУШОК</p>
             </div>
 
             <p style="font-size:14pt; font-weight:bold; text-align:center; text-transform:uppercase; letter-spacing:0.5px; margin:0 0 4px;">

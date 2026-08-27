@@ -328,19 +328,17 @@
                     }
                 }
 
-                // Логіка підпису та печатки (Окремо для кожної сторінки)
-                const signBase = 'position:absolute; width:180px; z-index:10; pointer-events:none; mix-blend-mode: multiply; opacity: 0.94;';
-
                 // === НАЛАШТУВАННЯ ПІДПИСІВ ===
                 let signImg = '';
+                let signWidth = '175px';
 
                 // 1. Відступи для режиму "Печатка + підпис"
-                let stampTitleTop = '-65px';
+                let stampTitleTop = '-55px';
                 let stampApp1Top = '-50px';
 
-                // 2. Відступи для режиму "Лише підпис" (РЕДАГУЙТЕ ТУТ)
-                let onlyTitleTop = '-10px';   // Титульна сторінка
-                let onlyApp1Top = '30px';    // Протокол (Додаток 1)
+                // 2. Відступи для режиму "Лише підпис"
+                let onlyTitleTop = '-28px';   // Титульна сторінка
+                let onlyApp1Top = '-28px';    // Протокол (Додаток 1)
 
                 // =============================
 
@@ -349,19 +347,23 @@
 
                 if (formData.signMode === 'stamp' || (formData.useSign && !formData.signMode)) {
                     signImg = 'doc/sign_cso.png';
+                    signWidth = '175px';
                     titleTop = stampTitleTop;
                     app1Top = stampApp1Top;
                 } else if (formData.signMode === 'only') {
                     signImg = 'doc/only_sign_cso.png';
+                    signWidth = '145px';
                     titleTop = onlyTitleTop;
                     app1Top = onlyApp1Top;
                 }
 
+                const signBase = `position:absolute; width:${signWidth}; z-index:10; pointer-events:none; mix-blend-mode:multiply; opacity:0.94; left:50%; transform:translateX(-50%);`;
+
                 const signatureTitleHtml = signImg
-                    ? `<img src="${signImg}" style="${signBase} left:-10px; top:${titleTop};">`
+                    ? `<img src="${signImg}" style="${signBase} top:${titleTop};">`
                     : '';
                 const signatureApp1Html = signImg
-                    ? `<img src="${signImg}" style="${signBase} right:70px; top:${app1Top};">`
+                    ? `<img src="${signImg}" style="${signBase} top:${app1Top};">`
                     : '';
 
                 template = template.split('{{signature_title}}').join(signatureTitleHtml);
