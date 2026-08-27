@@ -293,9 +293,17 @@ CREATE TABLE IF NOT EXISTS public.construction_objects (
     payment_type TEXT DEFAULT 'cash_end', -- 'bank_loan', 'cash_end', 'cash_deposit', 'other'
     payment_notes TEXT,
     notes TEXT,
+    total_price NUMERIC DEFAULT 0,
+    advance_amount NUMERIC DEFAULT 0,
+    paid_amount NUMERIC DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Додавання колонок на випадок, якщо таблиця вже існувала
+ALTER TABLE public.construction_objects ADD COLUMN IF NOT EXISTS total_price NUMERIC DEFAULT 0;
+ALTER TABLE public.construction_objects ADD COLUMN IF NOT EXISTS advance_amount NUMERIC DEFAULT 0;
+ALTER TABLE public.construction_objects ADD COLUMN IF NOT EXISTS paid_amount NUMERIC DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS public.construction_object_materials (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
