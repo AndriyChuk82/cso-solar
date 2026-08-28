@@ -45,7 +45,10 @@ export default function Catalog() {
     name: '',
     article: '',
     unit: 'шт',
-    category: ''
+    category: '',
+    price_wholesale: '',
+    price_retail: '',
+    price_currency: 'USD'
   });
 
   useEffect(() => {
@@ -71,7 +74,15 @@ export default function Catalog() {
   function openAddModal() {
     setEditProduct(null);
     const firstCat = (categories || []).find(c => c.active)?.name || '';
-    setFormData({ name: '', article: '', unit: 'шт', category: firstCat });
+    setFormData({
+      name: '',
+      article: '',
+      unit: 'шт',
+      category: firstCat,
+      price_wholesale: '',
+      price_retail: '',
+      price_currency: 'USD'
+    });
     setShowModal(true);
   }
 
@@ -79,9 +90,12 @@ export default function Catalog() {
     setEditProduct(product);
     setFormData({
       name: product.name,
-      article: product.article,
+      article: product.article || '',
       unit: product.unit,
-      category: product.category || ''
+      category: product.category || '',
+      price_wholesale: product.price_wholesale || '',
+      price_retail: product.price_retail || '',
+      price_currency: product.price_currency || 'USD'
     });
     setShowModal(true);
   }
@@ -97,6 +111,9 @@ export default function Catalog() {
         article: formData.article.trim(),
         unit: formData.unit,
         category: formData.category,
+        price_wholesale: formData.price_wholesale ? formData.price_wholesale.trim() : null,
+        price_retail: formData.price_retail ? formData.price_retail.trim() : null,
+        price_currency: formData.price_currency || 'USD',
         active: true
       };
 
@@ -434,6 +451,47 @@ export default function Catalog() {
                       <option key={c.name} value={c.name}>{c.name}</option>
                     ))}
                   </select>
+                </div>
+
+                {/* Блок цін для прайс-листа */}
+                <div className="bg-[var(--bg)] border border-[var(--border)] rounded-xl p-3 space-y-2 mt-3">
+                  <div className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5">
+                    <span>💰</span> Орієнтовні ціни (для Прайс-листа)
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="form-group mb-0">
+                      <label className="text-[11px] font-semibold text-[var(--text-muted)]">Опт (базовий)</label>
+                      <input
+                        type="text"
+                        className="form-input text-xs"
+                        placeholder="напр. 150"
+                        value={formData.price_wholesale}
+                        onChange={(e) => setFormData({ ...formData, price_wholesale: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group mb-0">
+                      <label className="text-[11px] font-semibold text-[var(--text-muted)]">Роздріб</label>
+                      <input
+                        type="text"
+                        className="form-input text-xs"
+                        placeholder="напр. 180"
+                        value={formData.price_retail}
+                        onChange={(e) => setFormData({ ...formData, price_retail: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group mb-0">
+                      <label className="text-[11px] font-semibold text-[var(--text-muted)]">Валюта</label>
+                      <select
+                        className="form-select text-xs"
+                        value={formData.price_currency}
+                        onChange={(e) => setFormData({ ...formData, price_currency: e.target.value })}
+                      >
+                        <option value="USD">USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="UAH">UAH (грн)</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="modal-footer">

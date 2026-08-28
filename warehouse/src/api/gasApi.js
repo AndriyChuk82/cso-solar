@@ -175,26 +175,76 @@ export async function getCatalog() {
   if (!supabase) return { success: true, products: [] };
   const { data, error } = await supabase.from('products').select('*, categories(name)').order('name');
   if (error) throw error;
-  return { success: true, products: data.map(p => ({ ...p, category: p.categories?.name || '' })) };
+  return { 
+    success: true, 
+    products: data.map(p => ({ 
+      ...p, 
+      category: p.categories?.name || '',
+      price_wholesale: p.price_wholesale || null,
+      price_retail: p.price_retail || null,
+      price_currency: p.price_currency || 'USD'
+    })) 
+  };
 }
 
 export async function addProduct(product) {
   if (!supabase) throw new Error('База даних не підключена');
-  const { data, error } = await supabase.from('products').insert([{
-    id: product.id || String(Date.now()), name: product.name, article: product.article,
-    unit: product.unit, category_id: product.category, active: true
-  }]).select();
-  if (error) throw error;
-  return { success: true, product: data[0] };
+  const payload = {
+    id: product.id || String(Date.now()),
+    name: product.name,
+    article: product.article,
+    unit: product.unit,
+    category_id: product.category,
+    active: true
+  };
+  if (product.price_wholesale) payload.price_wholesale = product.price_wholesale;
+  if (product.price_retail) payload.price_retail = product.price_retail;
+  if (product.price_currency) payload.price_currency = product.price_currency;
+
+  try {
+    const { data, error } = await supabase.from('products').insert([payload]).select();
+    if (error) throw error;
+    return { success: true, product: data[0] };
+  } catch (err) {
+    const { data, error } = await supabase.from('products').insert([{
+      id: product.id || String(Date.now()),
+      name: product.name,
+      article: product.article,
+      unit: product.unit,
+      category_id: product.category,
+      active: true
+    }]).select();
+    if (error) throw error;
+    return { success: true, product: data[0] };
+  }
 }
 
 export async function updateProduct(product) {
   if (!supabase) throw new Error('База даних не підключена');
-  const { error } = await supabase.from('products').update({
-    name: product.name, article: product.article, unit: product.unit,
-    category_id: product.category, active: product.active
-  }).eq('id', product.id);
-  if (error) throw error;
+  const payload = {
+    name: product.name,
+    article: product.article,
+    unit: product.unit,
+    category_id: product.category,
+    active: product.active
+  };
+  if (product.price_wholesale !== undefined) payload.price_wholesale = product.price_wholesale;
+  if (product.price_retail !== undefined) payload.price_retail = product.price_retail;
+  if (product.price_currency !== undefined) payload.price_currency = product.price_currency;
+
+  try {
+    const { error } = await supabase.from('products').update(payload).eq('id', product.id);
+    if (error) throw error;
+  } catch (err) {
+    const { error } = await supabase.from('products').update({
+      name: product.name,
+      article: product.article,
+      unit: product.unit,
+      category_id: product.category,
+      active: product.active
+    }).eq('id', product.id);
+    if (error) throw error;
+  }
   return { success: true };
 }
 
