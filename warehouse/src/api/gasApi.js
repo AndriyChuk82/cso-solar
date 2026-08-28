@@ -2980,7 +2980,7 @@ export async function getPriceListData() {
     });
 
     const stockInfo = stockMap[prod.id] || { total: 0, byWarehouse: {} };
-    const category = inferCategoryFromName(prod.name, prod.category);
+    const category = (prod.category && prod.category.trim()) ? prod.category.trim() : inferCategoryFromName(prod.name);
 
     let wholesale = { amount: null, formatted: '—', currency: 'USD' };
     let retail = { amount: null, formatted: '—', currency: 'USD' };
@@ -3013,27 +3013,7 @@ export async function getPriceListData() {
     });
   });
 
-  // 6. Додаємо позиції з Google Таблиці, яких раптом ще немає в базі товарів Каталогу
-  sheetItems.forEach((sh, idx) => {
-    if (!matchedSheetIndices.has(idx)) {
-      const category = inferCategoryFromName(sh.name);
-      priceListItems.push({
-        id: 'sheet-' + idx,
-        name: sh.name,
-        article: '',
-        unit: 'шт',
-        category: category,
-        wholesale: sh.wholesale,
-        retail: sh.retail,
-        priceSource: 'google_sheet',
-        totalStock: 0,
-        warehouseStocks: [],
-        isFromCatalog: false
-      });
-    }
-  });
-
-  // 7. Сортуємо: спочатку за категоріями, потім за алфавітом назви
+  // 6. Сортуємо: спочатку за категоріями, потім за алфавітом назви
   priceListItems.sort((a, b) => {
     const catComp = (a.category || '').localeCompare(b.category || '', 'uk');
     if (catComp !== 0) return catComp;
