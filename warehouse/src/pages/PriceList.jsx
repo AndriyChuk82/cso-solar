@@ -280,7 +280,7 @@ export default function PriceList() {
                       <th className="py-2.5 px-4">Обладнання / Товар</th>
                       <th className="py-2.5 px-4 text-center w-44">Оптовий прайс</th>
                       <th className="py-2.5 px-4 text-center w-44">Роздрібний прайс</th>
-                      <th className="py-2.5 px-4 text-center w-52">Залишок на складі</th>
+                      <th className="py-2.5 px-4 text-center min-w-[220px] w-64">Залишок на складі</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border)] text-sm">
@@ -355,9 +355,9 @@ export default function PriceList() {
                                   <span className="text-[10px] font-normal">{item.unit || 'шт'}</span>
                                 </span>
                                 {item.warehouseStocks && item.warehouseStocks.length > 0 && (
-                                  <div className="flex flex-wrap justify-center gap-1 text-[10px] text-[var(--text-muted)]">
+                                  <div className={`flex items-center justify-center gap-1 text-[10px] text-[var(--text-muted)] ${item.warehouseStocks.length <= 2 ? 'flex-nowrap whitespace-nowrap' : 'flex-wrap'}`}>
                                     {item.warehouseStocks.map(wh => (
-                                      <span key={wh.warehouseName} className="bg-[var(--bg)] px-1.5 py-0.2 rounded border border-[var(--border)]">
+                                      <span key={wh.warehouseName} className="bg-[var(--bg)] px-1.5 py-0.5 rounded border border-[var(--border)] whitespace-nowrap">
                                         {wh.warehouseName}: {wh.quantity}
                                       </span>
                                     ))}
