@@ -171,26 +171,55 @@ export async function updateCategory(category) {
 
 // --- КАТАЛОГ ---
 
+function getStoredCatalogPrices() {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('cso_product_custom_prices') : null;
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function setStoredCatalogPrice(productId, data) {
+  try {
+    if (typeof window === 'undefined' || !productId) return;
+    const all = getStoredCatalogPrices();
+    all[productId] = {
+      price_wholesale: data.price_wholesale || '',
+      price_retail: data.price_retail || '',
+      price_currency: data.price_currency || 'USD'
+    };
+    localStorage.setItem('cso_product_custom_prices', JSON.stringify(all));
+  } catch (e) {}
+}
+
 export async function getCatalog() {
   if (!supabase) return { success: true, products: [] };
   const { data, error } = await supabase.from('products').select('*, categories(name)').order('name');
   if (error) throw error;
+
+  const customPrices = getStoredCatalogPrices();
+
   return { 
     success: true, 
-    products: data.map(p => ({ 
-      ...p, 
-      category: p.categories?.name || '',
-      price_wholesale: p.price_wholesale || null,
-      price_retail: p.price_retail || null,
-      price_currency: p.price_currency || 'USD'
-    })) 
+    products: data.map(p => {
+      const custom = customPrices[p.id] || {};
+      return { 
+        ...p, 
+        category: p.categories?.name || '',
+        price_wholesale: p.price_wholesale || custom.price_wholesale || null,
+        price_retail: p.price_retail || custom.price_retail || null,
+        price_currency: p.price_currency || custom.price_currency || 'USD'
+      };
+    }) 
   };
 }
 
 export async function addProduct(product) {
   if (!supabase) throw new Error('База даних не підключена');
+  const prodId = product.id || String(Date.now());
   const payload = {
-    id: product.id || String(Date.now()),
+    id: prodId,
     name: product.name,
     article: product.article,
     unit: product.unit,
@@ -201,13 +230,15 @@ export async function addProduct(product) {
   if (product.price_retail) payload.price_retail = product.price_retail;
   if (product.price_currency) payload.price_currency = product.price_currency;
 
+  setStoredCatalogPrice(prodId, product);
+
   try {
     const { data, error } = await supabase.from('products').insert([payload]).select();
     if (error) throw error;
     return { success: true, product: data[0] };
   } catch (err) {
     const { data, error } = await supabase.from('products').insert([{
-      id: product.id || String(Date.now()),
+      id: prodId,
       name: product.name,
       article: product.article,
       unit: product.unit,
@@ -231,6 +262,8 @@ export async function updateProduct(product) {
   if (product.price_wholesale !== undefined) payload.price_wholesale = product.price_wholesale;
   if (product.price_retail !== undefined) payload.price_retail = product.price_retail;
   if (product.price_currency !== undefined) payload.price_currency = product.price_currency;
+
+  setStoredCatalogPrice(product.id, product);
 
   try {
     const { error } = await supabase.from('products').update(payload).eq('id', product.id);
@@ -2988,18 +3021,24 @@ export async function getPriceListData() {
     const stockInfo = stockMap[prod.id] || { total: 0, byWarehouse: {} };
     const category = (prod.category && prod.category.trim()) ? prod.category.trim() : inferCategoryFromName(prod.name);
 
-    let wholesale = { amount: null, formatted: '—', currency: 'USD' };
-    let retail = { amount: null, formatted: '—', currency: 'USD' };
-    let priceSource = 'none';
+    const hasSheetPrice = matchedSheetItem && (
+      (matchedSheetItem.wholesale?.amount !== null && matchedSheetItem.wholesale?.amount > 0) ||
+      (matchedSheetItem.retail?.amount !== null && matchedSheetItem.retail?.amount > 0)
+    );
 
-    if (matchedSheetItem) {
+    if (hasSheetPrice) {
       wholesale = matchedSheetItem.wholesale;
       retail = matchedSheetItem.retail;
       priceSource = 'google_sheet';
     } else if (prod.price_wholesale || prod.price_retail) {
-      wholesale = parsePriceString(prod.price_wholesale);
-      retail = parsePriceString(prod.price_retail);
+      const cur = prod.price_currency || 'USD';
+      wholesale = parsePriceString(prod.price_wholesale ? `${prod.price_wholesale} ${cur}` : '');
+      retail = parsePriceString(prod.price_retail ? `${prod.price_retail} ${cur}` : '');
       priceSource = 'catalog';
+    } else if (matchedSheetItem) {
+      wholesale = matchedSheetItem.wholesale;
+      retail = matchedSheetItem.retail;
+      priceSource = 'google_sheet';
     }
 
     priceListItems.push({
