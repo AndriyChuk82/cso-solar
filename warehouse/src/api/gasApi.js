@@ -2770,10 +2770,10 @@ export async function getPriceListData() {
     }
   }
 
-  // 3. Каталог товарів зі складу
-  const catalogProducts = catalogRes.status === 'fulfilled' && catalogRes.value?.success 
+  // 3. Каталог товарів зі складу (лише активні товари, без архівних)
+  const catalogProducts = (catalogRes.status === 'fulfilled' && catalogRes.value?.success 
     ? (catalogRes.value.products || []) 
-    : [];
+    : []).filter(p => p.active !== false);
 
   // 4. Склади та Залишки
   const warehouses = whRes.status === 'fulfilled' && whRes.value?.success 
