@@ -184,11 +184,15 @@ function setStoredCatalogPrice(productId, data) {
   try {
     if (typeof window === 'undefined' || !productId) return;
     const all = getStoredCatalogPrices();
-    all[productId] = {
+    const entry = {
       price_wholesale: data.price_wholesale || '',
       price_retail: data.price_retail || '',
       price_currency: data.price_currency || 'USD'
     };
+    all[productId] = entry;
+    if (data.name) {
+      all[data.name.trim()] = entry;
+    }
     localStorage.setItem('cso_product_custom_prices', JSON.stringify(all));
   } catch (e) {}
 }
@@ -203,7 +207,7 @@ export async function getCatalog() {
   return { 
     success: true, 
     products: data.map(p => {
-      const custom = customPrices[p.id] || {};
+      const custom = customPrices[p.id] || (p.name ? customPrices[p.name.trim()] : null) || {};
       return { 
         ...p, 
         category: p.categories?.name || '',
