@@ -2782,7 +2782,7 @@ function normalizeModelCode(str) {
   return str.toLowerCase()
     .replace(/(\d+)\s*k(?=[-\s\d\w]|$)/g, '$1') // 20k -> 20, 15k -> 15
     .replace(/(\d+)\s*к(?=[-\s\d\w]|$)/g, '$1') // кирилична к
-    .replace(/[\s\W_]/g, '')
+    .replace(/[^a-z0-9а-яіїєґ]/gu, '') // Зберігаємо всі українські та латинські літери і цифри
     .replace(/р/g, 'p').replace(/с/g, 'c').replace(/о/g, 'o').replace(/а/g, 'a')
     .replace(/х/g, 'x').replace(/у/g, 'y').replace(/е/g, 'e').replace(/і/g, 'i')
     .replace(/в/g, 'b');
@@ -2796,22 +2796,22 @@ function extractProductModelKeys(name = '') {
   const keys = [];
 
   // Стійки під АКБ
-  if (n.includes('3u-lrack') || (n.includes('8') && (n.includes('стійк') || n.includes('rack') || n.includes('батарей') || n.includes('акб')))) {
+  if (n.includes('3u-lrack') || (n.includes('8') && (n.includes('стійк') || n.includes('rack')) && (n.includes('батарей') || n.includes('акб') || n.includes('deye')))) {
     keys.push('RACK_8');
   }
-  if (n.includes('3u-hrack') || ((n.includes('12') || n.includes('13')) && (n.includes('стійк') || n.includes('rack') || n.includes('батарей') || n.includes('акб')))) {
+  if (n.includes('3u-hrack') || ((n.includes('12') || n.includes('13')) && (n.includes('стійк') || n.includes('rack')) && (n.includes('батарей') || n.includes('акб') || n.includes('deye')))) {
     keys.push('RACK_13');
   }
 
   // BMS / Контролери (напр: "BMS Контролер Deye Bos-G 120-750 Vdc 100A" == "Deye BMS PDU2")
-  if ((n.includes('bms') && (n.includes('pdu') || n.includes('контролер') || n.includes('120-750') || n.includes('100a'))) || n.includes('pdu2')) {
+  if ((n.includes('bms') && (n.includes('pdu') || n.includes('контролер') || n.includes('120-750') || n.includes('100a'))) || (n.includes('deye') && n.includes('pdu2'))) {
     keys.push('DEYE_BMS_PDU2');
   }
 
   // Акумулятори
   if (n.includes('240kwh') || n.includes('bos-b')) {
     keys.push('DEYE_BOS_B_240');
-  } else if (n.includes('bos-g') || n.includes('bos g') || (n.includes('5.1') && n.includes('pro') && !n.includes('se5.1') && !n.includes('pro-b') && !n.includes('prob'))) {
+  } else if ((n.includes('bos-g') || n.includes('bos g')) && !n.includes('стійк') && !n.includes('rack') && !n.includes('контролер') && !n.includes('pdu')) {
     keys.push('DEYE_BOS_G_5_1');
   } else if (n.includes('se5.1') || n.includes('pro-b') || n.includes('prob') || n.includes('se 5.1')) {
     keys.push('DEYE_SE_5_1_PRO_B');
@@ -2835,15 +2835,15 @@ function extractProductModelKeys(name = '') {
   }
 
   // Мережеві інвертори
-  if (n.includes('sun2000-30ktl') || n.includes('30ktl-m3') || (n.includes('huawei') && n.includes('30'))) {
+  if (n.includes('sun2000-30ktl') || n.includes('30ktl-m3') || (n.includes('huawei') && n.includes('30ktl'))) {
     keys.push('HUAWEI_30KTL');
   }
-  if (n.includes('s5-gc30k') || (n.includes('solis') && n.includes('30'))) {
+  if (n.includes('s5-gc30k') || (n.includes('solis') && n.includes('gc30k'))) {
     keys.push('SOLIS_30K');
   }
 
   // Солярний кабель
-  if ((n.includes('кабель') || n.includes('провід') || n.includes('cable')) && (n.includes('солярн') || n.includes('solar')) && n.includes('6')) {
+  if ((n.includes('кабель') || n.includes('провід') || n.includes('cable')) && (n.includes('солярн') || n.includes('solar')) && (n.includes('6мм') || n.includes('6 мм') || n.includes('6mm') || n.includes('6 mm'))) {
     keys.push('SOLAR_CABLE_6');
   }
 
@@ -2859,17 +2859,22 @@ function extractProductModelKeys(name = '') {
 }
 
 function isProductMatchingPriceSheet(prodName, sheetName) {
-  // 1. Прямий або нормалізований збіг (видаляє різницю 20 vs 20k, дефіси, пробіли)
+  if (!prodName || !sheetName) return false;
+
+  // 1. Прямий або нормалізований збіг
   const normDb = normalizeModelCode(prodName);
   const normSheet = normalizeModelCode(sheetName);
-  if (normDb === normSheet) return true;
-  if (normDb.includes(normSheet) || normSheet.includes(normDb)) return true;
+  if (normDb.length >= 4 && normSheet.length >= 4) {
+    if (normDb === normSheet) return true;
+  }
 
   // 2. Збіг за ключовими маркерами моделей
   const dbKeys = extractProductModelKeys(prodName);
   const sheetKeys = extractProductModelKeys(sheetName);
-  for (const k of dbKeys) {
-    if (sheetKeys.includes(k)) return true;
+  if (dbKeys.length > 0 && sheetKeys.length > 0) {
+    for (const k of dbKeys) {
+      if (sheetKeys.includes(k)) return true;
+    }
   }
 
   return false;
