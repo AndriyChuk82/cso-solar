@@ -2715,16 +2715,23 @@ export function parsePriceString(rawVal) {
   else if (str.includes('грн') || str.includes('₴') || /uah/i.test(str)) currency = 'UAH';
   else if (str.includes('$') || /usd/i.test(str)) currency = 'USD';
 
-  // Вичищаємо всі символи крім цифр, коми, крапки та мінуса
-  const cleaned = str
-    .replace(/[^\d,.-]/g, '')
-    .replace(',', '.');
+  // Обробка чисел із комами або крапками (наприклад 1.10, 1,10, 1 990,50, 1,990.50)
+  let cleanStr = str.replace(/[^\d,.-]/g, '');
+  if (cleanStr.includes(',') && cleanStr.includes('.')) {
+    if (cleanStr.indexOf(',') < cleanStr.indexOf('.')) {
+      cleanStr = cleanStr.replace(/,/g, '');
+    } else {
+      cleanStr = cleanStr.replace(/\./g, '').replace(',', '.');
+    }
+  } else if (cleanStr.includes(',')) {
+    cleanStr = cleanStr.replace(',', '.');
+  }
 
-  const num = parseFloat(cleaned);
+  const num = parseFloat(cleanStr);
   if (isNaN(num) || num <= 0) return { amount: null, formatted: '—', currency };
 
   const currencySymbol = currency === 'EUR' ? '€' : currency === 'UAH' ? 'грн' : '$';
-  const formattedNum = num.toLocaleString('uk-UA', { minimumFractionDigits: Number.isInteger(num) ? 0 : 2, maximumFractionDigits: 2 });
+  const formattedNum = num.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const formatted = currency === 'EUR' ? `€${formattedNum}` : currency === 'UAH' ? `${formattedNum} грн` : `$${formattedNum}`;
 
   return { amount: num, formatted, currency, currencySymbol };
