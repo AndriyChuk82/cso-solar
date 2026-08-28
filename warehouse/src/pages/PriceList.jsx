@@ -272,9 +272,9 @@ export default function PriceList() {
                     <tr className="border-b border-[var(--border)] text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider bg-[var(--bg-card)]">
                       <th className="py-2.5 px-4 w-12 text-center">#</th>
                       <th className="py-2.5 px-4">Обладнання / Товар</th>
-                      <th className="py-2.5 px-4 text-right w-44">Оптовий прайс</th>
-                      <th className="py-2.5 px-4 text-right w-44">Роздрібний прайс</th>
-                      <th className="py-2.5 px-4 text-right w-52">Залишок на складі</th>
+                      <th className="py-2.5 px-4 text-center w-44">Оптовий прайс</th>
+                      <th className="py-2.5 px-4 text-center w-44">Роздрібний прайс</th>
+                      <th className="py-2.5 px-4 text-center w-52">Залишок на складі</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border)] text-sm">
@@ -315,9 +315,9 @@ export default function PriceList() {
                           </td>
 
                           {/* Оптовий прайс */}
-                          <td className="py-3 px-4 text-right">
+                          <td className="py-3 px-4 text-center">
                             {hasWholesale ? (
-                              <div className="inline-flex flex-col items-end">
+                              <div className="inline-flex flex-col items-center">
                                 <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm tracking-tight">
                                   {item.wholesale.formatted}
                                 </span>
@@ -328,9 +328,9 @@ export default function PriceList() {
                           </td>
 
                           {/* Роздрібний прайс */}
-                          <td className="py-3 px-4 text-right">
+                          <td className="py-3 px-4 text-center">
                             {hasRetail ? (
-                              <div className="inline-flex flex-col items-end">
+                              <div className="inline-flex flex-col items-center">
                                 <span className="font-bold text-blue-600 dark:text-blue-400 text-sm tracking-tight">
                                   {item.retail.formatted}
                                 </span>
@@ -341,15 +341,15 @@ export default function PriceList() {
                           </td>
 
                           {/* Залишок на складах */}
-                          <td className="py-3 px-4 text-right">
+                          <td className="py-3 px-4 text-center">
                             {hasStock ? (
-                              <div className="flex flex-col items-end gap-1">
+                              <div className="flex flex-col items-center gap-1">
                                 <span className="font-bold text-xs bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2.5 py-0.5 rounded-full border border-emerald-500/20 inline-flex items-center gap-1">
                                   <span>{item.totalStock}</span>
                                   <span className="text-[10px] font-normal">{item.unit || 'шт'}</span>
                                 </span>
                                 {item.warehouseStocks && item.warehouseStocks.length > 0 && (
-                                  <div className="flex flex-wrap justify-end gap-1 text-[10px] text-[var(--text-muted)]">
+                                  <div className="flex flex-wrap justify-center gap-1 text-[10px] text-[var(--text-muted)]">
                                     {item.warehouseStocks.map(wh => (
                                       <span key={wh.warehouseName} className="bg-[var(--bg)] px-1.5 py-0.2 rounded border border-[var(--border)]">
                                         {wh.warehouseName}: {wh.quantity}
