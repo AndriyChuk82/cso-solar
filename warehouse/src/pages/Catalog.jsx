@@ -288,6 +288,7 @@ export default function Catalog() {
                     <th>Назва</th>
                     <th>Од. виміру</th>
                     <th>Категорія</th>
+                    <th>Прайс (Опт / Роздріб)</th>
                     <th>Статус</th>
                     {user?.isAdmin && <th></th>}
                   </tr>
@@ -298,6 +299,24 @@ export default function Catalog() {
                       <td style={{ fontWeight: 600 }}>{p.name}</td>
                       <td>{p.unit}</td>
                       <td>{p.category || '—'}</td>
+                      <td>
+                        {(p.price_wholesale || p.price_retail) ? (
+                          <div className="text-xs space-y-0.5">
+                            {p.price_wholesale && (
+                              <div className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                Опт: {p.price_wholesale} {p.price_currency || 'USD'}
+                              </div>
+                            )}
+                            {p.price_retail && (
+                              <div className="text-blue-600 dark:text-blue-400 font-semibold">
+                                Роздріб: {p.price_retail} {p.price_currency || 'USD'}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-[var(--text-muted)]">—</span>
+                        )}
+                      </td>
                       <td>
                         <span className={`badge ${p.active ? 'badge-income' : 'badge-expense'}`}>
                           {p.active ? 'Активний' : 'Архів'}
