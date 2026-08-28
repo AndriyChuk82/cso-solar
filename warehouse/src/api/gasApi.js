@@ -3035,24 +3035,33 @@ export async function getPriceListData() {
     let retail = { amount: null, formatted: '—', currency: 'USD' };
     let priceSource = 'none';
 
-    const hasSheetPrice = matchedSheetItem && (
-      (matchedSheetItem.wholesale?.amount !== null && matchedSheetItem.wholesale?.amount > 0) ||
-      (matchedSheetItem.retail?.amount !== null && matchedSheetItem.retail?.amount > 0)
-    );
+    // 1. Спочатку беремо ціни з Google Таблиці (якщо є)
+    if (matchedSheetItem) {
+      if (matchedSheetItem.wholesale?.amount !== null && matchedSheetItem.wholesale?.amount > 0) {
+        wholesale = matchedSheetItem.wholesale;
+        priceSource = 'google_sheet';
+      }
+      if (matchedSheetItem.retail?.amount !== null && matchedSheetItem.retail?.amount > 0) {
+        retail = matchedSheetItem.retail;
+        priceSource = 'google_sheet';
+      }
+    }
 
-    if (hasSheetPrice) {
-      wholesale = matchedSheetItem.wholesale;
-      retail = matchedSheetItem.retail;
-      priceSource = 'google_sheet';
-    } else if (prod.price_wholesale || prod.price_retail) {
-      const cur = prod.price_currency || 'USD';
-      wholesale = parsePriceString(prod.price_wholesale ? `${prod.price_wholesale} ${cur}` : '');
-      retail = parsePriceString(prod.price_retail ? `${prod.price_retail} ${cur}` : '');
-      priceSource = 'catalog';
-    } else if (matchedSheetItem) {
-      wholesale = matchedSheetItem.wholesale;
-      retail = matchedSheetItem.retail;
-      priceSource = 'google_sheet';
+    // 2. Якщо в Каталозі товарів вручну вказано ціни — вони мають найвищий пріоритет (перевизначають таблицю)
+    const cur = prod.price_currency || 'USD';
+    if (prod.price_wholesale) {
+      const parsedWholesale = parsePriceString(`${prod.price_wholesale} ${cur}`);
+      if (parsedWholesale.amount !== null) {
+        wholesale = parsedWholesale;
+        priceSource = 'catalog';
+      }
+    }
+    if (prod.price_retail) {
+      const parsedRetail = parsePriceString(`${prod.price_retail} ${cur}`);
+      if (parsedRetail.amount !== null) {
+        retail = parsedRetail;
+        priceSource = 'catalog';
+      }
     }
 
     priceListItems.push({
