@@ -2803,17 +2803,23 @@ function extractProductModelKeys(name = '') {
     keys.push('RACK_13');
   }
 
-  // BMS / Контролери (напр: "BMS Контролер Deye Bos-G 120-750 Vdc 100A" == "Deye BMS PDU2")
-  if ((n.includes('bms') && (n.includes('pdu') || n.includes('контролер') || n.includes('120-750') || n.includes('100a'))) || (n.includes('deye') && n.includes('pdu2'))) {
+  // BMS / Контролери Deye BOS-G (120-750V / PDU2)
+  // Вимагає ОБОВ'ЯЗКОВО наявність слова BMS, PDU або Контролер
+  if ((n.includes('bms') || n.includes('контролер') || n.includes('pdu')) && (n.includes('bos-g') || n.includes('bos g') || n.includes('pdu2') || n.includes('120-750'))) {
     keys.push('DEYE_BMS_PDU2');
   }
 
   // Акумулятори
-  if (n.includes('240kwh') || n.includes('bos-b')) {
+  // Повна система BOS-B A3 PRO (тільки якщо повний комплект або точна назва)
+  if (n === 'акб deye bos-b a3 pro' || n.includes('240kwh') || (n.includes('bos-b') && n.includes('a3 pro') && !n.includes('pack') && !n.includes('accessory') && !n.includes('pdu') && !n.includes('bms'))) {
     keys.push('DEYE_BOS_B_240');
-  } else if ((n.includes('bos-g') || n.includes('bos g')) && !n.includes('стійк') && !n.includes('rack') && !n.includes('контролер') && !n.includes('pdu')) {
+  } 
+  // Окремі батареї BOS-G 5.1 PRO (НЕ стійка, НЕ BMS, НЕ контролер, НЕ аксесуари, НЕ BOS-B)
+  else if ((n.includes('bos-g') || n.includes('bos g')) && !n.includes('стійк') && !n.includes('rack') && !n.includes('контролер') && !n.includes('bms') && !n.includes('pdu') && !n.includes('accessory') && !n.includes('кабел')) {
     keys.push('DEYE_BOS_G_5_1');
-  } else if (n.includes('se5.1') || n.includes('pro-b') || n.includes('prob') || n.includes('se 5.1')) {
+  } 
+  // Низьковольтні батареї
+  else if ((n.includes('se5.1') || n.includes('se 5.1') || n.includes('pro-b') || n.includes('prob')) && !n.includes('bos-b') && !n.includes('bos-g')) {
     keys.push('DEYE_SE_5_1_PRO_B');
   } else if (n.includes('se-f5') || n.includes('se f5')) {
     keys.push('DEYE_SE_F5');
