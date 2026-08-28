@@ -16,7 +16,7 @@ export default function PriceList() {
   const [updatedAt, setUpdatedAt] = useState('');
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
-  const [onlyInStock, setOnlyInStock] = useState(false);
+  const [onlyInStock, setOnlyInStock] = useState(true);
 
   const deferredSearch = useDeferredValue(search);
 

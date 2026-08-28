@@ -2810,16 +2810,16 @@ function extractProductModelKeys(name = '') {
   }
 
   // Акумулятори
-  // Повна система BOS-B A3 PRO (тільки якщо повний комплект або точна назва)
-  if (n === 'акб deye bos-b a3 pro' || n.includes('240kwh') || (n.includes('bos-b') && n.includes('a3 pro') && !n.includes('pack') && !n.includes('accessory') && !n.includes('pdu') && !n.includes('bms'))) {
+  // Повна система BOS-B A3 PRO 240kWh:
+  if (n.includes('240kwh') || n.includes('240 kwh') || n.includes('240 квт') || (n.includes('bos-b') && (n.includes('240') || n.includes('15 шт') || n.includes('15шт') || n.includes('комплект') || (n.includes('a3') && n.includes('pro')))) && !n.includes('pack16') && !n.includes('accessory') && !n.includes('pdu-2-a')) {
     keys.push('DEYE_BOS_B_240');
   } 
   // Окремі батареї BOS-G 5.1 PRO (НЕ стійка, НЕ BMS, НЕ контролер, НЕ аксесуари, НЕ BOS-B)
   else if ((n.includes('bos-g') || n.includes('bos g')) && !n.includes('стійк') && !n.includes('rack') && !n.includes('контролер') && !n.includes('bms') && !n.includes('pdu') && !n.includes('accessory') && !n.includes('кабел')) {
     keys.push('DEYE_BOS_G_5_1');
   } 
-  // Низьковольтні батареї
-  else if ((n.includes('se5.1') || n.includes('se 5.1') || n.includes('pro-b') || n.includes('prob')) && !n.includes('bos-b') && !n.includes('bos-g')) {
+  // Низьковольтні батареї: SE-5.1 Pro-B / SE-G5.1 ProB / ProВ
+  else if ((n.includes('5.1') || n.includes('5,1')) && (n.includes('pro-b') || n.includes('prob') || n.includes('proв') || n.includes('pro b') || n.includes('pro в') || n.includes('se-g5.1') || n.includes('se5.1')) && !n.includes('bos-b') && !n.includes('bos-g')) {
     keys.push('DEYE_SE_5_1_PRO_B');
   } else if (n.includes('se-f5') || n.includes('se f5')) {
     keys.push('DEYE_SE_F5');
