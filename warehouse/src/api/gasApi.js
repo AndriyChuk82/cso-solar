@@ -3019,16 +3019,16 @@ export async function getPriceListData() {
     });
   });
 
-  // 6. Сортуємо: спочатку за категоріями, потім за алфавітом назви
+  // 6. Сортуємо: спочатку за категоріями, потім за природним числовим порядком назви (потужність 6 -> 8 -> 10 -> 12 -> 15 -> ... -> 125)
   priceListItems.sort((a, b) => {
-    const catComp = (a.category || '').localeCompare(b.category || '', 'uk');
+    const catComp = (a.category || '').localeCompare(b.category || '', 'uk', { sensitivity: 'base' });
     if (catComp !== 0) return catComp;
-    return a.name.localeCompare(b.name, 'uk');
+    return (a.name || '').localeCompare(b.name || '', 'uk', { numeric: true, sensitivity: 'base' });
   });
 
-  // 8. Список унікальних категорій для швидких фільтрів
+  // 7. Список унікальних категорій для швидких фільтрів
   const categoriesSet = new Set(priceListItems.map(i => i.category).filter(Boolean));
-  const categoriesList = Array.from(categoriesSet).sort((a, b) => a.localeCompare(b, 'uk'));
+  const categoriesList = Array.from(categoriesSet).sort((a, b) => a.localeCompare(b, 'uk', { sensitivity: 'base' }));
 
   return {
     success: true,

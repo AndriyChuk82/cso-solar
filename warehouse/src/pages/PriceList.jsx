@@ -77,7 +77,7 @@ export default function PriceList() {
     });
   }, [items, selectedCategory, onlyInStock, deferredSearch]);
 
-  // Групування відфільтрованих товарів по категоріях
+  // Групування відфільтрованих товарів по категоріях із сортуванням за потужністю/числами
   const groupedItems = useMemo(() => {
     const groups = {};
     filteredItems.forEach(item => {
@@ -87,6 +87,12 @@ export default function PriceList() {
       }
       groups[cat].push(item);
     });
+
+    // Сортуємо товари всередині кожної категорії за природним числовим порядком
+    Object.keys(groups).forEach(cat => {
+      groups[cat].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'uk', { numeric: true, sensitivity: 'base' }));
+    });
+
     return groups;
   }, [filteredItems]);
 
