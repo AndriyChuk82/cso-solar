@@ -23,6 +23,7 @@ export default function DailyBalance() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [sortAsc, setSortAsc] = useState(false);
+  const [includeZero, setIncludeZero] = useState(false);
 
   useEffect(() => {
     getWarehouses().then((result) => {
@@ -38,7 +39,7 @@ export default function DailyBalance() {
     if (!warehouseId) return;
     setLoading(true);
     try {
-      const result = await getDailyBalanceData(warehouseId);
+      const result = await getDailyBalanceData(warehouseId, includeZero);
       if (result?.success) {
         setItems(
           (result.items || []).map((item) => ({
@@ -57,7 +58,7 @@ export default function DailyBalance() {
 
   useEffect(() => {
     if (warehouseId) loadBalanceData();
-  }, [warehouseId]);
+  }, [warehouseId, includeZero]);
 
   function updateFact(index, value) {
     setItems((prev) =>
@@ -109,10 +110,10 @@ export default function DailyBalance() {
   const sortedItems = useMemo(() => {
     return [...items].sort((a, b) => {
       // Спочатку за категорією
-      const catCompare = (a.category || '').localeCompare(b.category || '');
+      const catCompare = (a.category || '').localeCompare(b.category || '', 'uk', { sensitivity: 'base' });
       if (catCompare !== 0) return catCompare;
-      // Потім за назвою всередині категорії
-      return (a.product_name || '').localeCompare(b.product_name || '');
+      // Потім за назвою всередині категорії із природним числовим сортуванням
+      return (a.product_name || '').localeCompare(b.product_name || '', 'uk', { numeric: true, sensitivity: 'base' });
     });
   }, [items]);
 
@@ -126,9 +127,9 @@ export default function DailyBalance() {
       </div>
 
       <div className="card" style={{ marginBottom: '16px' }}>
-        <div className="card-body">
-          <div className="form-group" style={{ maxWidth: '400px' }}>
-            <label>Склад</label>
+        <div className="card-body" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+          <div className="form-group" style={{ maxWidth: '400px', flex: 1, minWidth: '240px', marginBottom: 0 }}>
+            <label style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '6px', display: 'block' }}>Склад</label>
             <select
               className="form-select"
               value={warehouseId}
@@ -140,6 +141,16 @@ export default function DailyBalance() {
               ))}
             </select>
           </div>
+
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none', background: 'var(--bg)', border: '1px solid var(--border)', padding: '8px 14px', borderRadius: '10px', marginTop: 'auto', fontSize: '0.85rem', fontWeight: 600 }}>
+            <input
+              type="checkbox"
+              checked={includeZero}
+              onChange={(e) => setIncludeZero(e.target.checked)}
+              style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#2563eb' }}
+            />
+            <span>Показувати товари з 0 залишком</span>
+          </label>
         </div>
       </div>
 

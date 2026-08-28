@@ -540,7 +540,7 @@ export async function deleteOperation(operationId) {
   return { success: true };
 }
 
-export async function getBalances(warehouseId) {
+export async function getBalances(warehouseId, includeZero = false) {
   if (!supabase) return { success: true, balances: [] };
   const { rawOperations } = await getOperations({ warehouseId });
   
@@ -608,9 +608,26 @@ export async function getBalances(warehouseId) {
   }
 
   // Отримуємо каталог товарів для наповнення відсутніх у фізичному залишку
-  const { data: prods } = await supabase.from('products').select('*');
+  const { data: prods } = await supabase.from('products').select('*, categories(name)').eq('active', true);
   const prodMap = {};
   prods?.forEach(p => prodMap[p.id] = p);
+
+  // Якщо includeZero === true — додаємо всі активні товари каталогу, навіть якщо по них не було операцій
+  if (includeZero && prods) {
+    prods.forEach(p => {
+      if (!finalBalances[p.id]) {
+        finalBalances[p.id] = {
+          product_id: p.id,
+          product_name: p.name || 'Невідомий товар',
+          product_article: p.article || '',
+          unit: p.unit || 'шт',
+          category: p.categories?.name || '',
+          quantity: 0,
+          reserved: 0
+        };
+      }
+    });
+  }
 
   // Накладаємо бронь на баланси
   Object.keys(reservedMap).forEach(prodId => {
@@ -621,7 +638,7 @@ export async function getBalances(warehouseId) {
         product_name: p.name || 'Невідомий товар',
         product_article: p.article || '',
         unit: p.unit || 'шт',
-        category: '',
+        category: p.categories?.name || '',
         quantity: 0,
         reserved: 0
       };
@@ -633,7 +650,7 @@ export async function getBalances(warehouseId) {
 
   return { 
     success: true, 
-    items: Object.values(finalBalances).filter(b => b.quantity !== 0 || b.reserved !== 0),
+    items: Object.values(finalBalances).filter(b => includeZero ? true : (b.quantity !== 0 || b.reserved !== 0)),
     balances: Object.values(finalBalances)
   };
 }
@@ -686,7 +703,7 @@ export async function getMovementReport(filters) {
   return { success: true, columns: ['Дата', 'Тип', 'Товар', 'Склад', 'К-сть', 'Коментар', 'Автор'], items };
 }
 
-export async function getDailyBalanceData(warehouseId) { return getBalances(warehouseId); }
+export async function getDailyBalanceData(warehouseId, includeZero = false) { return getBalances(warehouseId, includeZero); }
 export async function submitDailyBalance(data) {
   return addOperation({
     date: data.date, 
