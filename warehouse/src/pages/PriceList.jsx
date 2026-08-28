@@ -16,6 +16,7 @@ export default function PriceList() {
   const [updatedAt, setUpdatedAt] = useState('');
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [onlyInStock, setOnlyInStock] = useState(false);
 
   const deferredSearch = useDeferredValue(search);
 
@@ -48,15 +49,25 @@ export default function PriceList() {
     }
   }
 
+  // Кількість товарів у наявності
+  const inStockCount = useMemo(() => {
+    return items.filter(item => item.totalStock > 0).length;
+  }, [items]);
+
   // Адаптивна фільтрація товарів
   const filteredItems = useMemo(() => {
     return items.filter(item => {
-      // 1. Фільтр по категорії
+      // 1. Фільтр тільки наявних
+      if (onlyInStock && item.totalStock <= 0) {
+        return false;
+      }
+
+      // 2. Фільтр по категорії
       if (selectedCategory !== 'ALL' && item.category !== selectedCategory) {
         return false;
       }
 
-      // 2. Адаптивний пошук за назвою, категорією та артикулом
+      // 3. Адаптивний пошук за назвою, категорією та артикулом
       if (deferredSearch.trim()) {
         const searchText = `${item.name} ${item.category} ${item.article || ''}`;
         return matchesSearch(searchText, deferredSearch);
@@ -64,7 +75,7 @@ export default function PriceList() {
 
       return true;
     });
-  }, [items, selectedCategory, deferredSearch]);
+  }, [items, selectedCategory, onlyInStock, deferredSearch]);
 
   // Групування відфільтрованих товарів по категоріях
   const groupedItems = useMemo(() => {
@@ -139,24 +150,40 @@ export default function PriceList() {
 
       {/* Панель фільтрів та пошуку */}
       <div className="space-y-3">
-        {/* Адаптивне поле пошуку */}
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-          <input
-            type="text"
-            placeholder="Адаптивний пошук (напр. 'деє 15', 'соліс', 'лонгі 645', 'BOS-G', 'кабель')..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-10 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all shadow-xs"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text)] w-5 h-5 flex items-center justify-center rounded-full bg-[var(--bg)] border border-[var(--border)]"
-            >
-              ✕
-            </button>
-          )}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          {/* Адаптивне поле пошуку */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+            <input
+              type="text"
+              placeholder="Адаптивний пошук (напр. 'деє 15', 'соліс', 'лонгі 645', 'BOS-G', 'кабель')..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-10 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all shadow-xs"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text)] w-5 h-5 flex items-center justify-center rounded-full bg-[var(--bg)] border border-[var(--border)]"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Галочка: Показувати лише наявні */}
+          <label className="inline-flex items-center gap-2 cursor-pointer select-none bg-[var(--bg-card)] border border-[var(--border)] px-3.5 py-2.5 rounded-xl hover:bg-[var(--border-light)] transition-all shadow-xs shrink-0">
+            <input
+              type="checkbox"
+              checked={onlyInStock}
+              onChange={(e) => setOnlyInStock(e.target.checked)}
+              className="w-4 h-4 text-blue-600 rounded border-[var(--border)] focus:ring-blue-500 cursor-pointer accent-blue-600"
+            />
+            <span className="text-xs font-bold text-[var(--text)] whitespace-nowrap">Лише в наявності</span>
+            <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${onlyInStock ? 'bg-emerald-500 text-white' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'}`}>
+              {inStockCount}
+            </span>
+          </label>
         </div>
 
         {/* Кнопки вибору категорій */}

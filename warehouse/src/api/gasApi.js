@@ -2725,6 +2725,107 @@ export function inferCategoryFromName(name = '', existingCategory = '') {
 }
 
 /**
+ * Нормалізація коду моделі для нечіткого зіставлення
+ */
+function normalizeModelCode(str) {
+  if (!str) return '';
+  return str.toLowerCase()
+    .replace(/(\d+)\s*k(?=[-\s\d\w]|$)/g, '$1') // 20k -> 20, 15k -> 15
+    .replace(/(\d+)\s*к(?=[-\s\d\w]|$)/g, '$1') // кирилична к
+    .replace(/[\s\W_]/g, '')
+    .replace(/р/g, 'p').replace(/с/g, 'c').replace(/о/g, 'o').replace(/а/g, 'a')
+    .replace(/х/g, 'x').replace(/у/g, 'y').replace(/е/g, 'e').replace(/і/g, 'i')
+    .replace(/в/g, 'b');
+}
+
+/**
+ * Виділення унікальних маркерів моделей (BMS, стійки, акумулятори, інвертори)
+ */
+function extractProductModelKeys(name = '') {
+  const n = String(name).toLowerCase();
+  const keys = [];
+
+  // Стійки під АКБ
+  if (n.includes('3u-lrack') || (n.includes('8') && (n.includes('стійк') || n.includes('rack') || n.includes('батарей') || n.includes('акб')))) {
+    keys.push('RACK_8');
+  }
+  if (n.includes('3u-hrack') || ((n.includes('12') || n.includes('13')) && (n.includes('стійк') || n.includes('rack') || n.includes('батарей') || n.includes('акб')))) {
+    keys.push('RACK_13');
+  }
+
+  // BMS / Контролери (напр: "BMS Контролер Deye Bos-G 120-750 Vdc 100A" == "Deye BMS PDU2")
+  if ((n.includes('bms') && (n.includes('pdu') || n.includes('контролер') || n.includes('120-750') || n.includes('100a'))) || n.includes('pdu2')) {
+    keys.push('DEYE_BMS_PDU2');
+  }
+
+  // Акумулятори
+  if (n.includes('240kwh') || n.includes('bos-b')) {
+    keys.push('DEYE_BOS_B_240');
+  } else if (n.includes('bos-g') || n.includes('bos g') || (n.includes('5.1') && n.includes('pro') && !n.includes('se5.1') && !n.includes('pro-b') && !n.includes('prob'))) {
+    keys.push('DEYE_BOS_G_5_1');
+  } else if (n.includes('se5.1') || n.includes('pro-b') || n.includes('prob') || n.includes('se 5.1')) {
+    keys.push('DEYE_SE_5_1_PRO_B');
+  } else if (n.includes('se-f5') || n.includes('se f5')) {
+    keys.push('DEYE_SE_F5');
+  } else if (n.includes('se-f12') || n.includes('se f12')) {
+    keys.push('DEYE_SE_F12');
+  } else if (n.includes('se-f16') || n.includes('se f16')) {
+    keys.push('DEYE_SE_F16');
+  }
+
+  // Сонячні панелі
+  if (n.includes('615m') || n.includes('lr8-66hgd') || n.includes('lr8 66hgd')) {
+    keys.push('LONGI_615');
+  }
+  if (n.includes('645m') || n.includes('lr7-72hvd') || n.includes('lr7 72hvd')) {
+    keys.push('LONGI_645');
+  }
+  if (n.includes('jam54d41') || (n.includes('jasolar') && n.includes('455'))) {
+    keys.push('JASOLAR_455');
+  }
+
+  // Мережеві інвертори
+  if (n.includes('sun2000-30ktl') || n.includes('30ktl-m3') || (n.includes('huawei') && n.includes('30'))) {
+    keys.push('HUAWEI_30KTL');
+  }
+  if (n.includes('s5-gc30k') || (n.includes('solis') && n.includes('30'))) {
+    keys.push('SOLIS_30K');
+  }
+
+  // Солярний кабель
+  if ((n.includes('кабель') || n.includes('провід') || n.includes('cable')) && (n.includes('солярн') || n.includes('solar')) && n.includes('6')) {
+    keys.push('SOLAR_CABLE_6');
+  }
+
+  // Інвертори Deye (зіставлення потужності та серії: SUN-20 vs SUN-20k, SG05LP3 тощо)
+  const deyeMatch = n.match(/sun[-\s]*(\d+)\s*k?[-\s]*([a-z0-9]+)/i);
+  if (deyeMatch) {
+    const power = deyeMatch[1]; // 20, 15, 12, 10, 8, 6, 30, 50, 80, 125
+    let series = deyeMatch[2].toLowerCase().replace(/[-_]?(eu|sm2|am3)/g, '');
+    keys.push(`DEYE_SUN_${power}_${series}`);
+  }
+
+  return keys;
+}
+
+function isProductMatchingPriceSheet(prodName, sheetName) {
+  // 1. Прямий або нормалізований збіг (видаляє різницю 20 vs 20k, дефіси, пробіли)
+  const normDb = normalizeModelCode(prodName);
+  const normSheet = normalizeModelCode(sheetName);
+  if (normDb === normSheet) return true;
+  if (normDb.includes(normSheet) || normSheet.includes(normDb)) return true;
+
+  // 2. Збіг за ключовими маркерами моделей
+  const dbKeys = extractProductModelKeys(prodName);
+  const sheetKeys = extractProductModelKeys(sheetName);
+  for (const k of dbKeys) {
+    if (sheetKeys.includes(k)) return true;
+  }
+
+  return false;
+}
+
+/**
  * Завантаження повного прайс-листа з об'єднанням Google Таблиці, Каталогу товарів та залишків на складах
  */
 export async function getPriceListData() {
@@ -2759,7 +2860,6 @@ export async function getPriceListData() {
 
           sheetItems.push({
             name,
-            nameNormalized: name.toLowerCase().replace(/[\s\W_]/g, ''),
             wholesale,
             retail
           });
@@ -2808,34 +2908,21 @@ export async function getPriceListData() {
     });
   }
 
-  // 5. Об'єднуємо всі товари з Каталогу з даними з Google Таблиці
+  // 5. Об'єднуємо всі товари з Каталогу з даними з Google Таблиці через розумний матчинг
   const matchedSheetIndices = new Set();
   const priceListItems = [];
 
   catalogProducts.forEach(prod => {
     const prodName = prod.name.trim();
-    const prodNameNorm = prodName.toLowerCase().replace(/[\s\W_]/g, '');
 
-    // Шукаємо збіг у Google Таблиці
+    // Шукаємо збіг у Google Таблиці за допомогою розумного алгоритму
     let matchedSheetItem = null;
     sheetItems.forEach((sh, idx) => {
-      if (sh.nameNormalized === prodNameNorm) {
+      if (isProductMatchingPriceSheet(prodName, sh.name)) {
         matchedSheetItem = sh;
         matchedSheetIndices.add(idx);
       }
     });
-
-    // Якщо точного збігу немає, шукаємо частковий збіг (наприклад, по назві моделі)
-    if (!matchedSheetItem) {
-      sheetItems.forEach((sh, idx) => {
-        if (!matchedSheetIndices.has(idx)) {
-          if (prodNameNorm.includes(sh.nameNormalized) || sh.nameNormalized.includes(prodNameNorm)) {
-            matchedSheetItem = sh;
-            matchedSheetIndices.add(idx);
-          }
-        }
-      });
-    }
 
     const stockInfo = stockMap[prod.id] || { total: 0, byWarehouse: {} };
     const category = inferCategoryFromName(prod.name, prod.category);
