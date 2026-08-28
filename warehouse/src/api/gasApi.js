@@ -706,7 +706,33 @@ export async function submitDailyBalance(data) {
 }
 
 export async function createBackup() { return gasRequest('createBackup', {}, 'POST'); }
-export async function getUsers() { return gasRequest('getUsers'); }
+export async function getUsers() {
+  // 1. Спробуємо через Vercel Admin API (Supabase Service Role)
+  try {
+    const res = await vercelAdminRequest('getUsers');
+    if (res && res.success && Array.isArray(res.users) && res.users.length > 0) {
+      return res;
+    }
+  } catch (err) {
+    console.warn('Vercel admin getUsers error:', err);
+  }
+
+  // 2. Спробуємо напряму через Supabase клієнт
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, email, name, role, warehouse_id, project_access, module_access, active, created_at, updated_at')
+        .order('name');
+      if (!error && data && data.length > 0) {
+        return { success: true, users: data };
+      }
+    } catch (e) {}
+  }
+
+  // 3. Fallback на Google Apps Script
+  return gasRequest('getUsers');
+}
 export async function getProjects(email) { return gasRequest('getProjects', { email }); }
 export async function addUser(user) { return vercelAdminRequest('addUser', user); }
 export async function updateUser(user) { return vercelAdminRequest('updateUser', user); }

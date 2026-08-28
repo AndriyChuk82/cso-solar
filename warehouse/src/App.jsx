@@ -1,10 +1,11 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import { useTheme } from '@cso/design-system';
+import { canAccess, getDefaultWarehouseRoute } from './utils/permissions';
 
 // Lazy load pages
 const Journal = lazy(() => import('./pages/Journal'));
@@ -36,7 +37,23 @@ const ShipmentDetails = lazy(() => import('./pages/ShipmentDetails'));
 const ConstructionObjectsDashboard = lazy(() => import('./pages/ConstructionObjectsDashboard'));
 const ConstructionObjectDetails = lazy(() => import('./pages/ConstructionObjectDetails'));
 
+// Обгортка для захисту роутів за правами доступу
+function ProtectedRoute({ permission, user, children }) {
+  if (canAccess(user, permission)) {
+    return children;
+  }
+  const defaultRoute = getDefaultWarehouseRoute(user);
+  return <Navigate to={defaultRoute} replace />;
+}
 
+// Стартовий роут: якщо немає прав на Журнал, перенаправляємо на дозволений розділ
+function HomeRoute({ user }) {
+  if (canAccess(user, 'journal')) {
+    return <Journal />;
+  }
+  const defaultRoute = getDefaultWarehouseRoute(user);
+  return <Navigate to={defaultRoute} replace />;
+}
 
 function AppContent() {
   const { user, loading, error, isVerifying } = useAuth();
@@ -102,33 +119,40 @@ function AppContent() {
       }>
         <Routes>
           <Route element={<Layout />}>
-            <Route path="/" element={<Journal />} />
-            <Route path="/income" element={<OperationForm type="income" />} />
-            <Route path="/expense" element={<OperationForm type="expense" />} />
-            <Route path="/transfer" element={<Transfer />} />
-            <Route path="/daily-balance" element={<DailyBalance />} />
-            <Route path="/price-list" element={<PriceList />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/catalog" element={<Catalog />} />
+            {/* Головна сторінка або редирект */}
+            <Route path="/" element={<HomeRoute user={user} />} />
+
+            {/* Операції приходу/розходу */}
+            <Route path="/income" element={<ProtectedRoute permission="operations" user={user}><OperationForm type="income" /></ProtectedRoute>} />
+            <Route path="/expense" element={<ProtectedRoute permission="operations" user={user}><OperationForm type="expense" /></ProtectedRoute>} />
+            <Route path="/transfer" element={<ProtectedRoute permission="operations" user={user}><Transfer /></ProtectedRoute>} />
+            <Route path="/daily-balance" element={<ProtectedRoute permission="operations" user={user}><DailyBalance /></ProtectedRoute>} />
+            <Route path="/catalog" element={<ProtectedRoute permission="operations" user={user}><Catalog /></ProtectedRoute>} />
+
+            {/* Прайс-лист */}
+            <Route path="/price-list" element={<ProtectedRoute permission="price_list" user={user}><PriceList /></ProtectedRoute>} />
+
+            {/* Звіти */}
+            <Route path="/reports" element={<ProtectedRoute permission="reports" user={user}><Reports /></ProtectedRoute>} />
+            <Route path="/buyers/report" element={<ProtectedRoute permission="reports" user={user}><BuyersReport /></ProtectedRoute>} />
+            <Route path="/audit-log" element={<ProtectedRoute permission="reports" user={user}><AuditLog /></ProtectedRoute>} />
 
             {/* Баланси клієнтів */}
-            <Route path="/buyers" element={<BuyersDashboard />} />
-            <Route path="/buyers/report" element={<BuyersReport />} />
-            <Route path="/audit-log" element={<AuditLog />} />
-            <Route path="/buyers/:id" element={<BuyerDetails />} />
-            <Route path="/buyers/issue" element={<BuyerIssueForm />} />
-            <Route path="/buyers/issue/edit/:txId" element={<BuyerIssueForm />} />
-            <Route path="/buyers/payment" element={<BuyerPaymentForm />} />
+            <Route path="/buyers" element={<ProtectedRoute permission="buyers" user={user}><BuyersDashboard /></ProtectedRoute>} />
+            <Route path="/buyers/:id" element={<ProtectedRoute permission="buyers" user={user}><BuyerDetails /></ProtectedRoute>} />
+            <Route path="/buyers/issue" element={<ProtectedRoute permission="buyers" user={user}><BuyerIssueForm /></ProtectedRoute>} />
+            <Route path="/buyers/issue/edit/:txId" element={<ProtectedRoute permission="buyers" user={user}><BuyerIssueForm /></ProtectedRoute>} />
+            <Route path="/buyers/payment" element={<ProtectedRoute permission="buyers" user={user}><BuyerPaymentForm /></ProtectedRoute>} />
 
             {/* Відправлення */}
-            <Route path="/shipments" element={<ShipmentsDashboard />} />
-            <Route path="/shipments/new" element={<ShipmentForm />} />
-            <Route path="/shipments/edit/:id" element={<ShipmentForm />} />
-            <Route path="/shipments/:id" element={<ShipmentDetails />} />
+            <Route path="/shipments" element={<ProtectedRoute permission="shipments" user={user}><ShipmentsDashboard /></ProtectedRoute>} />
+            <Route path="/shipments/new" element={<ProtectedRoute permission="shipments" user={user}><ShipmentForm /></ProtectedRoute>} />
+            <Route path="/shipments/edit/:id" element={<ProtectedRoute permission="shipments" user={user}><ShipmentForm /></ProtectedRoute>} />
+            <Route path="/shipments/:id" element={<ProtectedRoute permission="shipments" user={user}><ShipmentDetails /></ProtectedRoute>} />
 
             {/* Об'єкти будівництва */}
-            <Route path="/construction-objects" element={<ConstructionObjectsDashboard />} />
-            <Route path="/construction-objects/:id" element={<ConstructionObjectDetails />} />
+            <Route path="/construction-objects" element={<ProtectedRoute permission="objects" user={user}><ConstructionObjectsDashboard /></ProtectedRoute>} />
+            <Route path="/construction-objects/:id" element={<ProtectedRoute permission="objects" user={user}><ConstructionObjectDetails /></ProtectedRoute>} />
 
             {/* Лише адміністратор */}
             {user.isAdmin && (
@@ -139,6 +163,9 @@ function AppContent() {
                 <Route path="/backups" element={<Backups />} />
               </>
             )}
+
+            {/* Невідомий роут -> редирект на дозволену стартову сторінку */}
+            <Route path="*" element={<Navigate to={getDefaultWarehouseRoute(user)} replace />} />
           </Route>
         </Routes>
       </Suspense>

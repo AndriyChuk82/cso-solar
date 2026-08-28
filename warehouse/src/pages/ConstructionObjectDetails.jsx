@@ -11,11 +11,15 @@ import KPImportModal from '../components/KPImportModal';
 import AddMaterialModal from '../components/AddMaterialModal';
 import ConstructionObjectFormModal from '../components/ConstructionObjectFormModal';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
+import { isFinanceHidden } from '../utils/permissions';
 
 export default function ConstructionObjectDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const hideFinances = isFinanceHidden(user);
 
   const [object, setObject] = useState(null);
   const [materials, setMaterials] = useState([]);
@@ -180,13 +184,15 @@ export default function ConstructionObjectDetails() {
                 <h1 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white leading-tight">
                   {object.client_name}
                 </h1>
-                <span className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded ${
-                  currencyBadge === 'UAH' 
-                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' 
-                    : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
-                }`}>
-                  {currencyBadge} ({currencyBadge === 'UAH' ? 'Гривня ₴' : 'Долар $'})
-                </span>
+                {!hideFinances && (
+                  <span className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded ${
+                    currencyBadge === 'UAH' 
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' 
+                      : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                  }`}>
+                    {currencyBadge} ({currencyBadge === 'UAH' ? 'Гривня ₴' : 'Долар $'})
+                  </span>
+                )}
               </div>
 
               <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-neutral-400 mt-1 flex-wrap">
@@ -202,9 +208,11 @@ export default function ConstructionObjectDetails() {
                     {object.address}
                   </span>
                 )}
-                <span className="text-xs text-gray-700 dark:text-neutral-300 bg-gray-100 dark:bg-neutral-700/60 px-2 py-0.5 rounded font-medium">
-                  💰 {paymentLabel} {object.payment_notes ? `(${object.payment_notes})` : ''}
-                </span>
+                {!hideFinances && (
+                  <span className="text-xs text-gray-700 dark:text-neutral-300 bg-gray-100 dark:bg-neutral-700/60 px-2 py-0.5 rounded font-medium">
+                    💰 {paymentLabel} {object.payment_notes ? `(${object.payment_notes})` : ''}
+                  </span>
+                )}
                 {object.notes && (
                   <span className="text-xs text-gray-500 dark:text-neutral-400 italic">
                     • {object.notes}
@@ -220,49 +228,51 @@ export default function ConstructionObjectDetails() {
           </div>
         </div>
 
-        {/* Financial Summary Bar (Погоджена сума, Аванс, Залишок) */}
-        <div 
-          onClick={() => setIsEditObjectOpen(true)}
-          className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-gray-50 dark:bg-neutral-900/40 p-2 rounded-xl border border-gray-100 dark:border-neutral-800 cursor-pointer hover:bg-gray-100/80 dark:hover:bg-neutral-800/80 transition group"
-          title="Натисніть, щоб відредагувати суму КП, аванс чи оплати"
-        >
-          <div className="flex flex-col px-2 border-r border-gray-200 dark:border-neutral-700/60 last:border-0">
-            <div className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-              <span>Сума по КП</span>
-              <Edit3 size={10} className="opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+        {/* Financial Summary Bar (Погоджена сума, Аванс, Залишок) - приховано для монтажників */}
+        {!hideFinances && (
+          <div 
+            onClick={() => setIsEditObjectOpen(true)}
+            className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-gray-50 dark:bg-neutral-900/40 p-2 rounded-xl border border-gray-100 dark:border-neutral-800 cursor-pointer hover:bg-gray-100/80 dark:hover:bg-neutral-800/80 transition group"
+            title="Натисніть, щоб відредагувати суму КП, аванс чи оплати"
+          >
+            <div className="flex flex-col px-2 border-r border-gray-200 dark:border-neutral-700/60 last:border-0">
+              <div className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                <span>Сума по КП</span>
+                <Edit3 size={10} className="opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
+              </div>
+              <span className="text-xs sm:text-sm font-extrabold text-gray-900 dark:text-white">
+                {totalPrice > 0 ? `${totalPrice.toLocaleString()} ${currSymbol}` : '0 ' + currSymbol}
+              </span>
             </div>
-            <span className="text-xs sm:text-sm font-extrabold text-gray-900 dark:text-white">
-              {totalPrice > 0 ? `${totalPrice.toLocaleString()} ${currSymbol}` : '0 ' + currSymbol}
-            </span>
-          </div>
 
-          <div className="flex flex-col px-2 border-r border-gray-200 dark:border-neutral-700/60 last:border-0">
-            <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-              <span>Аванс / Завдаток</span>
-              <Edit3 size={10} className="opacity-0 group-hover:opacity-100 text-emerald-500 transition-opacity" />
+            <div className="flex flex-col px-2 border-r border-gray-200 dark:border-neutral-700/60 last:border-0">
+              <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                <span>Аванс / Завдаток</span>
+                <Edit3 size={10} className="opacity-0 group-hover:opacity-100 text-emerald-500 transition-opacity" />
+              </div>
+              <span className="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                {advanceAmount > 0 ? `${advanceAmount.toLocaleString()} ${currSymbol}` : '0 ' + currSymbol}
+              </span>
             </div>
-            <span className="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
-              {advanceAmount > 0 ? `${advanceAmount.toLocaleString()} ${currSymbol}` : '0 ' + currSymbol}
-            </span>
-          </div>
 
-          <div className="flex flex-col px-2 border-r border-gray-200 dark:border-neutral-700/60 last:border-0">
-            <div className="flex items-center gap-1 text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-              <span>Сплачено</span>
-              <Edit3 size={10} className="opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity" />
+            <div className="flex flex-col px-2 border-r border-gray-200 dark:border-neutral-700/60 last:border-0">
+              <div className="flex items-center gap-1 text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                <span>Сплачено</span>
+                <Edit3 size={10} className="opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity" />
+              </div>
+              <span className="text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400">
+                {paidAmount > 0 ? `${paidAmount.toLocaleString()} ${currSymbol}` : '0 ' + currSymbol}
+              </span>
             </div>
-            <span className="text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400">
-              {paidAmount > 0 ? `${paidAmount.toLocaleString()} ${currSymbol}` : '0 ' + currSymbol}
-            </span>
-          </div>
 
-          <div className="flex flex-col px-2">
-            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Залишок до сплати</span>
-            <span className={`text-xs sm:text-sm font-extrabold ${remainingAmount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600'}`}>
-              {remainingAmount > 0 ? `${remainingAmount.toLocaleString()} ${currSymbol}` : '0 ' + currSymbol}
-            </span>
+            <div className="flex flex-col px-2">
+              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Залишок до сплати</span>
+              <span className={`text-xs sm:text-sm font-extrabold ${remainingAmount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600'}`}>
+                {remainingAmount > 0 ? `${remainingAmount.toLocaleString()} ${currSymbol}` : '0 ' + currSymbol}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Compact Sequential Status Stepper Ribbon */}
         <div className="space-y-1">

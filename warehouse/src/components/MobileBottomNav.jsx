@@ -8,6 +8,7 @@ import {
   UserCheck, ArrowLeftRight, FileText, Plus, Sun
 } from 'lucide-react';
 import CONFIG from '../config';
+import { canAccess, canCreateWarehouseOperations } from '../utils/permissions';
 
 export default function MobileBottomNav() {
   const { user } = useAuth();
@@ -23,12 +24,15 @@ export default function MobileBottomNav() {
     setIsFabOpen(false);
   }, [location.pathname]);
 
+  const showFab = canCreateWarehouseOperations(user);
+
   const quickActions = [
     {
       label: 'Новий прихід',
       desc: 'Надходження товарів на склад',
       icon: <ArrowDownRight size={18} className="text-emerald-500" />,
       bg: 'bg-emerald-500/10 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-500/20',
+      permission: 'operations',
       onClick: () => navigate('/income')
     },
     {
@@ -36,6 +40,7 @@ export default function MobileBottomNav() {
       desc: 'Оформлення відвантаження покупцю',
       icon: <UserCheck size={18} className="text-blue-500" />,
       bg: 'bg-blue-500/10 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-500/20',
+      permission: 'buyers',
       onClick: () => navigate('/buyers/issue')
     },
     {
@@ -43,6 +48,7 @@ export default function MobileBottomNav() {
       desc: 'Створити відправку Новою поштою',
       icon: <Truck size={18} className="text-amber-500" />,
       bg: 'bg-amber-500/10 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-500/20',
+      permission: 'shipments',
       onClick: () => navigate('/shipments/new')
     },
     {
@@ -50,6 +56,7 @@ export default function MobileBottomNav() {
       desc: 'Прямий розхід / дефект / брак',
       icon: <ArrowUpRight size={18} className="text-rose-500" />,
       bg: 'bg-rose-500/10 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 border-rose-500/20',
+      permission: 'operations',
       onClick: () => navigate('/expense')
     },
     {
@@ -57,21 +64,23 @@ export default function MobileBottomNav() {
       desc: 'Між внутрішніми складами',
       icon: <ArrowLeftRight size={18} className="text-purple-500" />,
       bg: 'bg-purple-500/10 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border-purple-500/20',
+      permission: 'operations',
       onClick: () => navigate('/transfer')
     }
-  ];
+  ].filter(act => canAccess(user, act.permission));
 
   const moreSections = [
     {
       title: 'Склад та облік',
       items: [
-        { path: '/price-list', label: 'Прайс-лист', icon: <Tag size={18} className="text-emerald-500" /> },
-        { path: '/catalog', label: 'Каталог товарів', icon: <Package size={18} className="text-amber-500" /> },
-        { path: '/daily-balance', label: 'Підсумок дня', icon: <BarChart3 size={18} className="text-blue-500" /> },
-        { path: '/reports', label: 'Звіти по залишках', icon: <TrendingUp size={18} className="text-emerald-500" /> },
-        { path: '/buyers/report', label: 'Звіти по клієнтах', icon: <Users size={18} className="text-indigo-500" /> },
-        { path: '/audit-log', label: 'Журнал дій (Аудит)', icon: <History size={18} className="text-gray-500" /> },
-      ]
+        { path: '/construction-objects', label: 'Об\'єкти будівництва', icon: <SunMedium size={18} className="text-amber-500" />, permission: 'objects' },
+        { path: '/price-list', label: 'Прайс-лист', icon: <Tag size={18} className="text-emerald-500" />, permission: 'price_list' },
+        { path: '/catalog', label: 'Каталог товарів', icon: <Package size={18} className="text-amber-500" />, permission: 'operations' },
+        { path: '/daily-balance', label: 'Підсумок дня', icon: <BarChart3 size={18} className="text-blue-500" />, permission: 'operations' },
+        { path: '/reports', label: 'Звіти по залишках', icon: <TrendingUp size={18} className="text-emerald-500" />, permission: 'reports' },
+        { path: '/buyers/report', label: 'Звіти по клієнтах', icon: <Users size={18} className="text-indigo-500" />, permission: 'reports' },
+        { path: '/audit-log', label: 'Журнал дій (Аудит)', icon: <History size={18} className="text-gray-500" />, permission: 'reports' },
+      ].filter(item => !item.permission || canAccess(user, item.permission))
     },
     ...(user?.isAdmin ? [{
       title: 'Адміністрування',
@@ -85,15 +94,59 @@ export default function MobileBottomNav() {
     {
       title: 'Інші модулі системи',
       items: [
-        { path: '/proposals/', label: '📄 Комерційні пропозиції (КП)', external: true },
-        { path: '/projects/', label: '📊 Проєкти', external: true },
-        { path: '/green-tariff/', label: '🌱 Зелений тариф', external: true },
-        { path: '/land-lease/', label: '🌾 Оренда землі', external: true },
-      ]
+        { path: '/proposals/', label: '📄 Комерційні пропозиції (КП)', external: true, show: user?.isAdmin || user?.module_access?.includes('proposals') },
+        { path: '/projects/', label: '📊 Проєкти', external: true, show: user?.isAdmin || user?.module_access?.includes('projects') },
+        { path: '/green-tariff/', label: '🌱 Зелений тариф', external: true, show: user?.isAdmin || user?.module_access?.includes('gt') },
+        { path: '/land-lease/', label: '🌾 Оренда землі', external: true, show: user?.isAdmin || user?.module_access?.includes('land-lease') },
+      ].filter(item => item.show !== false)
     }
-  ];
+  ].filter(sec => sec.items.length > 0);
 
-  const isMoreActive = ['/price-list', '/catalog', '/daily-balance', '/reports', '/buyers/report', '/audit-log', '/categories', '/warehouses', '/users', '/backups'].some(p => location.pathname === p);
+  // Визначення головних табів нижньої панелі
+  const bottomTabs = [];
+
+  if (canAccess(user, 'objects')) {
+    bottomTabs.push({
+      path: '/construction-objects',
+      label: 'Об\'єкти',
+      icon: <SunMedium size={20} />
+    });
+  }
+
+  if (canAccess(user, 'price_list')) {
+    bottomTabs.push({
+      path: '/price-list',
+      label: 'Прайс',
+      icon: <Tag size={20} />
+    });
+  }
+
+  if (canAccess(user, 'journal')) {
+    bottomTabs.push({
+      path: '/',
+      end: true,
+      label: 'Журнал',
+      icon: <ClipboardList size={20} />
+    });
+  }
+
+  if (canAccess(user, 'buyers')) {
+    bottomTabs.push({
+      path: '/buyers',
+      label: 'Клієнти',
+      icon: <Users size={20} />
+    });
+  }
+
+  if (canAccess(user, 'shipments')) {
+    bottomTabs.push({
+      path: '/shipments',
+      label: 'Відправки',
+      icon: <Truck size={20} />
+    });
+  }
+
+  const isMoreActive = ['/catalog', '/daily-balance', '/reports', '/buyers/report', '/audit-log', '/categories', '/warehouses', '/users', '/backups'].some(p => location.pathname === p);
 
   return (
     <div className="md:hidden">
@@ -109,7 +162,7 @@ export default function MobileBottomNav() {
       )}
 
       {/* FAB Speed Dial Drawer */}
-      {isFabOpen && (
+      {showFab && isFabOpen && (
         <div className="fixed bottom-20 right-4 left-4 z-50 bg-white dark:bg-neutral-800 rounded-3xl p-4 border border-gray-200 dark:border-neutral-700 shadow-2xl space-y-2 max-w-sm ml-auto animate-fade-in">
           <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-neutral-700/60 px-2">
             <span className="text-xs font-bold text-gray-500 dark:text-neutral-400 uppercase tracking-wider">
@@ -214,86 +267,45 @@ export default function MobileBottomNav() {
       )}
 
       {/* Floating Action Button (placed just above the bottom bar) */}
-      <button
-        type="button"
-        onClick={() => {
-          setIsMoreOpen(false);
-          setIsFabOpen(!isFabOpen);
-        }}
-        className={`fixed bottom-20 right-4 z-40 p-3.5 rounded-full shadow-xl transition-all duration-300 flex items-center justify-center active:scale-95 ${
-          isFabOpen
-            ? 'bg-gray-800 text-white rotate-45 dark:bg-neutral-700'
-            : 'bg-primary text-white hover:bg-primary/95 shadow-primary/40 ring-4 ring-primary/20'
-        }`}
-        aria-label="Швидкі дії"
-      >
-        <Plus size={22} className="transition-transform" />
-      </button>
+      {showFab && (
+        <button
+          type="button"
+          onClick={() => {
+            setIsMoreOpen(false);
+            setIsFabOpen(!isFabOpen);
+          }}
+          className={`fixed bottom-20 right-4 z-40 p-3.5 rounded-full shadow-xl transition-all duration-300 flex items-center justify-center active:scale-95 ${
+            isFabOpen
+              ? 'bg-gray-800 text-white rotate-45 dark:bg-neutral-700'
+              : 'bg-primary text-white hover:bg-primary/95 shadow-primary/40 ring-4 ring-primary/20'
+          }`}
+          aria-label="Швидкі дії"
+        >
+          <Plus size={22} className="transition-transform" />
+        </button>
+      )}
 
       {/* Bottom Navigation Bar */}
       <nav className="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-gray-200 dark:border-neutral-800 h-16 px-2 flex items-center justify-around shadow-lg">
-        {/* 1. Журнал */}
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) =>
-            `flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-              isActive
-                ? 'text-primary font-bold'
-                : 'text-gray-500 dark:text-neutral-400 hover:text-gray-800 dark:hover:text-neutral-200 font-medium'
-            }`
-          }
-        >
-          <ClipboardList size={20} />
-          <span className="text-[10px] mt-0.5 tracking-tight">Журнал</span>
-        </NavLink>
+        {bottomTabs.map((tab) => (
+          <NavLink
+            key={tab.path}
+            to={tab.path}
+            end={tab.end}
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
+                isActive
+                  ? 'text-primary font-bold'
+                  : 'text-gray-500 dark:text-neutral-400 hover:text-gray-800 dark:hover:text-neutral-200 font-medium'
+              }`
+            }
+          >
+            {tab.icon}
+            <span className="text-[10px] mt-0.5 tracking-tight">{tab.label}</span>
+          </NavLink>
+        ))}
 
-        {/* 2. Клієнти */}
-        <NavLink
-          to="/buyers"
-          className={({ isActive }) =>
-            `flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-              isActive && location.pathname !== '/buyers/report'
-                ? 'text-primary font-bold'
-                : 'text-gray-500 dark:text-neutral-400 hover:text-gray-800 dark:hover:text-neutral-200 font-medium'
-            }`
-          }
-        >
-          <Users size={20} />
-          <span className="text-[10px] mt-0.5 tracking-tight">Клієнти</span>
-        </NavLink>
-
-        {/* 3. Відправлення */}
-        <NavLink
-          to="/shipments"
-          className={({ isActive }) =>
-            `flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-              isActive
-                ? 'text-primary font-bold'
-                : 'text-gray-500 dark:text-neutral-400 hover:text-gray-800 dark:hover:text-neutral-200 font-medium'
-            }`
-          }
-        >
-          <Truck size={20} />
-          <span className="text-[10px] mt-0.5 tracking-tight">Відправки</span>
-        </NavLink>
-
-        {/* 4. Об'єкти */}
-        <NavLink
-          to="/construction-objects"
-          className={({ isActive }) =>
-            `flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-              isActive
-                ? 'text-primary font-bold'
-                : 'text-gray-500 dark:text-neutral-400 hover:text-gray-800 dark:hover:text-neutral-200 font-medium'
-            }`
-          }
-        >
-          <SunMedium size={20} />
-          <span className="text-[10px] mt-0.5 tracking-tight">Об'єкти</span>
-        </NavLink>
-
-        {/* 5. Ще (More) */}
+        {/* Ще (More) */}
         <button
           type="button"
           onClick={() => {
@@ -313,3 +325,4 @@ export default function MobileBottomNav() {
     </div>
   );
 }
+

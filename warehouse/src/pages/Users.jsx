@@ -24,7 +24,8 @@ export default function Users() {
     active: true,
     password: '',
     project_access: '',
-    module_access: '' // Comma-separated module IDs
+    module_access: '', // Comma-separated module IDs
+    warehouse_access: '' // Comma-separated warehouse permissions
   });
 
   useEffect(() => { loadData(); }, []);
@@ -48,6 +49,25 @@ export default function Users() {
     }
   }
 
+  function parseInitialWarehousePerms(u) {
+    if (!u) return CONFIG.PERMISSION_PRESETS.full.permissions.join(',');
+    if (u.warehouse_access) {
+      return Array.isArray(u.warehouse_access) ? u.warehouse_access.join(',') : String(u.warehouse_access);
+    }
+    if (u.module_access) {
+      const perms = u.module_access.split(',')
+        .map(s => s.trim())
+        .filter(s => s.startsWith('wh_perm:') || s.startsWith('warehouse:'))
+        .map(s => s.replace(/^(wh_perm:|warehouse:)/, ''));
+      if (perms.length > 0) return perms.join(',');
+    }
+    const role = (u.role || '').toLowerCase();
+    if (role === 'installer' || role === 'монтажник') {
+      return CONFIG.PERMISSION_PRESETS.installer.permissions.join(',');
+    }
+    return CONFIG.PERMISSION_PRESETS.full.permissions.join(',');
+  }
+
   function openAdd() {
     setEditItem(null);
     setFormData({ 
@@ -58,7 +78,8 @@ export default function Users() {
       active: true, 
       password: '',
       project_access: '',
-      module_access: ''
+      module_access: 'warehouse',
+      warehouse_access: CONFIG.PERMISSION_PRESETS.full.permissions.join(',')
     });
     setShowModal(true);
   }
@@ -73,7 +94,8 @@ export default function Users() {
       active: u.active,
       password: '',
       project_access: u.project_access || '',
-      module_access: u.module_access || ''
+      module_access: u.module_access || '',
+      warehouse_access: parseInitialWarehousePerms(u)
     });
     setShowModal(true);
   }
@@ -225,28 +247,111 @@ export default function Users() {
                       ℹ️ Адміністратор має доступ до всіх розділів автоматично.
                     </div>
                   ) : (
-                    <div style={{ border: '1px solid #ddd', padding: '8px', borderRadius: '4px', background: '#f9f9f9', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                      {CONFIG.APP_MODULES.map(m => {
-                        const ids = (formData.module_access || '').split(',').filter(Boolean);
-                        const isChecked = ids.includes(String(m.id));
-                        return (
-                          <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
-                            <input 
-                              type="checkbox" 
-                              checked={isChecked}
-                              onChange={(e) => {
-                                const currentIds = (formData.module_access || '').split(',').filter(Boolean);
-                                const newIds = e.target.checked 
-                                  ? [...currentIds, String(m.id)] 
-                                  : currentIds.filter(id => id !== String(m.id));
-                                setFormData({ ...formData, module_access: newIds.join(',') });
-                              }}
-                            />
-                            {m.label}
-                          </label>
-                        );
-                      })}
-                    </div>
+                    <>
+                      <div style={{ border: '1px solid var(--border, #ddd)', padding: '8px', borderRadius: '6px', background: 'var(--bg, #f9f9f9)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        {CONFIG.APP_MODULES.map(m => {
+                          const ids = (formData.module_access || '').split(',').map(s => s.trim()).filter(Boolean);
+                          const isChecked = ids.includes(String(m.id));
+                          return (
+                            <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                              <input 
+                                type="checkbox" 
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  const currentIds = (formData.module_access || '').split(',').map(s => s.trim()).filter(Boolean);
+                                  const newIds = e.target.checked 
+                                    ? [...currentIds, String(m.id)] 
+                                    : currentIds.filter(id => id !== String(m.id));
+                                  setFormData({ ...formData, module_access: newIds.join(',') });
+                                }}
+                              />
+                              {m.label}
+                            </label>
+                          );
+                        })}
+                      </div>
+
+                      {/* Гранулярні налаштування операцій Складу */}
+                      {(formData.module_access || '').split(',').map(s => s.trim()).includes('warehouse') && (
+                        <div style={{ marginTop: '14px', border: '1px solid #3b82f640', borderRadius: '8px', padding: '12px', background: '#3b82f608' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>
+                              📦 Права на операції Складу:
+                            </span>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormData({
+                                    ...formData,
+                                    role: 'installer',
+                                    warehouse_access: CONFIG.PERMISSION_PRESETS.installer.permissions.join(',')
+                                  });
+                                }}
+                                style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', border: '1px solid #10b981', background: '#10b98115', color: '#059669', cursor: 'pointer', fontWeight: 600 }}
+                              >
+                                👷 Монтажник
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormData({
+                                    ...formData,
+                                    warehouse_access: CONFIG.PERMISSION_PRESETS.full.permissions.join(',')
+                                  });
+                                }}
+                                style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', border: '1px solid #3b82f6', background: '#3b82f615', color: '#2563eb', cursor: 'pointer', fontWeight: 600 }}
+                              >
+                                👑 Всі операції
+                              </button>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {CONFIG.WAREHOUSE_PERMISSIONS.map(p => {
+                              const currentPerms = (formData.warehouse_access || '').split(',').map(s => s.trim()).filter(Boolean);
+                              const isChecked = currentPerms.includes(p.id);
+                              return (
+                                <label 
+                                  key={p.id} 
+                                  style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'flex-start', 
+                                    gap: '8px', 
+                                    cursor: 'pointer', 
+                                    fontSize: '0.82rem',
+                                    padding: '4px 6px',
+                                    borderRadius: '4px',
+                                    background: isChecked ? 'rgba(59, 130, 246, 0.08)' : 'transparent'
+                                  }}
+                                >
+                                  <input 
+                                    type="checkbox" 
+                                    checked={isChecked}
+                                    style={{ marginTop: '2px' }}
+                                    onChange={(e) => {
+                                      const perms = (formData.warehouse_access || '').split(',').map(s => s.trim()).filter(Boolean);
+                                      const newPerms = e.target.checked
+                                        ? [...perms, p.id]
+                                        : perms.filter(id => id !== p.id);
+                                      setFormData({ ...formData, warehouse_access: newPerms.join(',') });
+                                    }}
+                                  />
+                                  <div>
+                                    <div style={{ fontWeight: 600, color: p.isNegative ? '#dc2626' : 'var(--text)' }}>
+                                      {p.label}
+                                    </div>
+                                    <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #666)' }}>
+                                      {p.desc}
+                                    </div>
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 

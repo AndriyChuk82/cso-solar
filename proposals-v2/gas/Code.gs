@@ -3041,8 +3041,11 @@ function extractProductInfoForPrimary(name) {
     return null;
   }
 
-  // Skip комплекти (full system kits) from being recognized as simple racks
+  // 4. Вилучаємо великі комплекти обладнання від плутанини зі стійками
   if (low.includes('комплект')) return null;
+
+  // 5. Вилучаємо мережеві інвертори G04 / G05 (без S) від плутанини з гібридами
+  if (low.includes('g04') || low.match(/sun[-_\s]*\d+k?[-_\s]*g\d+/i)) return null;
 
   if (low.includes('стійка') || low.includes('rack')) {
     if (low.includes('8') || low.includes('lrack')) return { type: 'rack', key: 'rack8' };
@@ -3103,13 +3106,13 @@ function extractProductInfoForPrimary(name) {
 
 function findBestMatchForPrimary(targetInfo, catalog) {
   if (!targetInfo) return null;
-  // 1. Exact key match
+  // 1. Точний збіг ключа (SG05 -> SG05, SG02 -> SG02, SG01 -> SG01)
   let match = catalog.find(item => item.info.type === targetInfo.type && item.info.key === targetInfo.key);
   if (match) return match;
 
-  // 2. Fallback match for inverters: same kw and same p (type/phase)
+  // 2. Резервний пошук для гібридних інверторів: якщо точної серії немає, шукаємо сумісний гібридний інвертор тієї ж потужності (кВт) та фази (p)
   if (targetInfo.type === 'inverter') {
-    match = catalog.find(item => item.info.type === 'inverter' && item.info.key.startsWith('sun_' + targetInfo.kw + 'k') && item.info.p === targetInfo.p);
+    match = catalog.find(item => item.info.type === 'inverter' && item.info.kw === targetInfo.kw && item.info.p === targetInfo.p);
     if (match) return match;
   }
 
@@ -3127,7 +3130,14 @@ function cleanStrForPrimary(s) {
 function parsePriceValueForPrimary(str) {
   if (!str) return null;
   let s = String(str).trim();
-  if (s.toLowerCase().includes('гот') || s.includes('/')) {
+  const low = s.toLowerCase();
+  
+  // Ігноруємо значення гарантії ("5 Років", "10 років", "гарантія")
+  if (low.includes('рок') || low.includes('рік') || low.includes('гарант')) {
+    return null;
+  }
+
+  if (low.includes('гот') || s.includes('/')) {
     const match = s.match(/[\d\s,.]+/);
     if (match) s = match[0];
   }

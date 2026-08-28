@@ -41,13 +41,30 @@ export default async function handler(req, res) {
                 return res.status(400).json({ error: 'Email користувача обов’язковий' });
             }
 
+            // Обробка прав доступу до Складу (warehouse_access)
+            let formattedModuleAccess = userData.module_access || '';
+            if (userData.warehouse_access !== undefined && userData.warehouse_access !== null) {
+                const rawPerms = Array.isArray(userData.warehouse_access) 
+                    ? userData.warehouse_access 
+                    : String(userData.warehouse_access).split(',').map(s => s.trim()).filter(Boolean);
+                
+                // Очищаємо старі wh_perm: з module_access
+                const cleanModules = formattedModuleAccess.split(',')
+                    .map(s => s.trim())
+                    .filter(s => s && !s.startsWith('wh_perm:') && !s.startsWith('warehouse:'));
+                
+                // Додаємо нові wh_perm:
+                const permTags = rawPerms.map(p => `wh_perm:${p}`);
+                formattedModuleAccess = [...cleanModules, ...permTags].join(',');
+            }
+
             const finalData = {
                 email: userData.email.trim().toLowerCase(),
                 name: userData.name || userData.email,
                 role: (userData.role || 'user').trim().toLowerCase(),
                 warehouse_id: userData.warehouse_id || '',
                 project_access: userData.project_access || '',
-                module_access: userData.module_access || '',
+                module_access: formattedModuleAccess,
                 active: userData.active !== undefined ? Boolean(userData.active) : true,
                 updated_at: new Date()
             };
@@ -65,6 +82,16 @@ export default async function handler(req, res) {
 
             if (error) throw error;
             return res.status(200).json({ success: true, user: data });
+        }
+
+        if (action === 'getUsers') {
+            const { data, error } = await supabaseAdmin
+                .from('users')
+                .select('id, email, name, role, warehouse_id, project_access, module_access, active, created_at, updated_at')
+                .order('name');
+
+            if (error) throw error;
+            return res.status(200).json({ success: true, users: data || [] });
         }
 
         return res.status(400).json({ error: 'Invalid action' });

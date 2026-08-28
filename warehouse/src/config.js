@@ -27,12 +27,45 @@ const CONFIG = {
   // Ролі
   ROLES: {
     ADMIN: 'admin',
-    USER: 'user'
+    USER: 'user',
+    INSTALLER: 'installer'
   },
 
   ROLE_LABELS: {
     'admin': 'Адміністратор',
-    'user': 'Користувач'
+    'user': 'Користувач',
+    'installer': 'Монтажник'
+  },
+
+  // Гранулярні дозволи для модуля Склад
+  WAREHOUSE_PERMISSIONS: [
+    { id: 'objects', label: '🏗️ Об\'єкти будівництва', desc: 'Перегляд та списання матеріалів на об\'єктах' },
+    { id: 'price_list', label: '🏷️ Прайс-лист', desc: 'Перегляд прайс-листа товарів та залишків' },
+    { id: 'journal', label: '📋 Журнал операцій', desc: 'Історія складських операцій' },
+    { id: 'operations', label: '📥/📤 Прихід, Розхід, Переміщення', desc: 'Створення складських документів та підсумок дня' },
+    { id: 'buyers', label: '⚖️ Баланси клієнтів', desc: 'Взаєморозрахунки, видача та оплати' },
+    { id: 'shipments', label: '🚚 Відправлення', desc: 'Оформлення та трекінг Нової Пошти' },
+    { id: 'reports', label: '📈 Звіти та аудит', desc: 'Звіти по залишках, клієнтах та журнал дій' },
+    { id: 'hide_finances', label: '🔒 Приховати фінанси в об\'єктах', desc: 'Приховати суми по КП, аванси та заборгованість', isNegative: true }
+  ],
+
+  // Готові шаблони прав для швидкого вибору
+  PERMISSION_PRESETS: {
+    installer: {
+      label: '👷 Монтажник',
+      role: 'installer',
+      permissions: ['objects', 'price_list', 'hide_finances']
+    },
+    storekeeper: {
+      label: '📦 Комірник',
+      role: 'user',
+      permissions: ['journal', 'operations', 'price_list', 'shipments', 'reports', 'objects', 'buyers']
+    },
+    full: {
+      label: '👑 Повний доступ до складу',
+      role: 'user',
+      permissions: ['objects', 'price_list', 'journal', 'operations', 'buyers', 'shipments', 'reports']
+    }
   },
 
   // Supabase

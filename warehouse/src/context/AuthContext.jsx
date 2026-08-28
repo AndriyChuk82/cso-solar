@@ -92,13 +92,17 @@ export function AuthProvider({ children }) {
           finalModuleAccess = 'warehouse,gt,projects,proposals,land-lease';
         }
 
+        const isInstaller = finalRole === 'installer' || finalRole === 'монтажник';
+
         const updatedUser = {
           email,
           name: name || email,
           role: finalRole,
           warehouseId: null,
           module_access: finalModuleAccess,
+          warehouse_access: verifyData.warehouse_access || null,
           isAdmin,
+          isInstaller,
           isStorekeeper: finalRole === 'storekeeper' || finalRole === 'комірник',
           isManager: finalRole === 'manager' || finalRole === 'менеджер',
         };

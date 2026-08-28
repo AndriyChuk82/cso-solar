@@ -1,10 +1,11 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import CONFIG from '../config';
+import { canAccess } from '../utils/permissions';
 
 /**
  * Бічна навігація.
- * Показує пункти меню відповідно до ролі користувача.
+ * Показує пункти меню відповідно до дозволів користувача.
  */
 export default function Sidebar({ isOpen, onClose }) {
   const { user } = useAuth();
@@ -14,23 +15,23 @@ export default function Sidebar({ isOpen, onClose }) {
     {
       section: 'Операції',
       items: [
-        { path: '/', label: 'Журнал операцій', icon: '📋' },
-        { path: '/price-list', label: 'Прайс-лист', icon: '🏷️' },
-        { path: '/income', label: 'Новий прихід', icon: '📥' },
-        { path: '/expense', label: 'Новий розхід', icon: '📤' },
-        { path: '/transfer', label: 'Переміщення', icon: '🔄' },
-        { path: '/daily-balance', label: 'Підсумок дня', icon: '📊' },
-        { path: '/buyers', label: 'Баланси клієнтів', icon: '⚖️' },
-        { path: '/shipments', label: 'Відправлення', icon: '🚚' },
-        { path: '/construction-objects', label: 'Об\'єкти будівництва', icon: '🏗️' },
+        { path: '/construction-objects', label: 'Об\'єкти будівництва', icon: '🏗️', permission: 'objects' },
+        { path: '/price-list', label: 'Прайс-лист', icon: '🏷️', permission: 'price_list' },
+        { path: '/', label: 'Журнал операцій', icon: '📋', permission: 'journal' },
+        { path: '/income', label: 'Новий прихід', icon: '📥', permission: 'operations' },
+        { path: '/expense', label: 'Новий розхід', icon: '📤', permission: 'operations' },
+        { path: '/transfer', label: 'Переміщення', icon: '🔄', permission: 'operations' },
+        { path: '/daily-balance', label: 'Підсумок дня', icon: '📊', permission: 'operations' },
+        { path: '/buyers', label: 'Баланси клієнтів', icon: '⚖️', permission: 'buyers' },
+        { path: '/shipments', label: 'Відправлення', icon: '🚚', permission: 'shipments' },
       ]
     },
     {
       section: 'Звіти',
       items: [
-        { path: '/reports', label: 'Звіти', icon: '📈' },
-        { path: '/buyers/report', label: 'Звіти по клієнтах', icon: '👥' },
-        { path: '/audit-log', label: 'Журнал дій (Аудит)', icon: '📜' },
+        { path: '/reports', label: 'Звіти', icon: '📈', permission: 'reports' },
+        { path: '/buyers/report', label: 'Звіти по клієнтах', icon: '👥', permission: 'reports' },
+        { path: '/audit-log', label: 'Журнал дій (Аудит)', icon: '📜', permission: 'reports' },
       ]
     },
 
@@ -53,10 +54,21 @@ export default function Sidebar({ isOpen, onClose }) {
         <nav className="sidebar-nav">
           {navItems.map((section) => {
             if (section.adminOnly && !user?.isAdmin) return null;
+            
+            // Фільтрація доступних пунктів меню
+            const visibleItems = section.items.filter(item => {
+              if (item.permission) {
+                return canAccess(user, item.permission);
+              }
+              return true;
+            });
+
+            if (visibleItems.length === 0) return null;
+
             return (
               <div key={section.section} className="nav-section">
                 <div className="nav-section-label">{section.section}</div>
-                {section.items.map((item) => (
+                {visibleItems.map((item) => (
                   <NavLink
                     key={item.path}
                     to={item.path}

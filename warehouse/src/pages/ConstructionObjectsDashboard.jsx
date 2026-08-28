@@ -9,10 +9,14 @@ import {
 } from '../api/constructionService';
 import ConstructionObjectFormModal from '../components/ConstructionObjectFormModal';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
+import { isFinanceHidden } from '../utils/permissions';
 
 export default function ConstructionObjectsDashboard() {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const hideFinances = isFinanceHidden(user);
 
   const [objects, setObjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -244,9 +248,11 @@ export default function ConstructionObjectsDashboard() {
                             <span>{obj.phone}</span>
                           </a>
                         )}
-                        <span className="text-[11px] text-gray-600 dark:text-neutral-400 bg-gray-100 dark:bg-neutral-700/60 px-2 py-1 rounded-lg font-medium">
-                          💰 {paymentLabel}
-                        </span>
+                        {!hideFinances && (
+                          <span className="text-[11px] text-gray-600 dark:text-neutral-400 bg-gray-100 dark:bg-neutral-700/60 px-2 py-1 rounded-lg font-medium">
+                            💰 {paymentLabel}
+                          </span>
+                        )}
                       </div>
                     </div>
 
