@@ -65,6 +65,7 @@ export default function MobileBottomNav() {
     {
       title: 'Склад та облік',
       items: [
+        { path: '/price-list', label: 'Прайс-лист', icon: <Tag size={18} className="text-emerald-500" /> },
         { path: '/catalog', label: 'Каталог товарів', icon: <Package size={18} className="text-amber-500" /> },
         { path: '/daily-balance', label: 'Підсумок дня', icon: <BarChart3 size={18} className="text-blue-500" /> },
         { path: '/reports', label: 'Звіти по залишках', icon: <TrendingUp size={18} className="text-emerald-500" /> },
@@ -92,7 +93,7 @@ export default function MobileBottomNav() {
     }
   ];
 
-  const isMoreActive = ['/catalog', '/daily-balance', '/reports', '/buyers/report', '/audit-log', '/categories', '/warehouses', '/users', '/backups'].some(p => location.pathname === p);
+  const isMoreActive = ['/price-list', '/catalog', '/daily-balance', '/reports', '/buyers/report', '/audit-log', '/categories', '/warehouses', '/users', '/backups'].some(p => location.pathname === p);
 
   return (
     <div className="md:hidden">
