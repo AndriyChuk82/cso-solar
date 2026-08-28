@@ -58,7 +58,9 @@ const CONFIG = {
     { name: 'Мережеві інвертори', mainCat: 'Інвертори', gid: 1047165471, sId: 'MAIN' },
     { name: 'АКБ', mainCat: 'АКБ та BMS', gid: 1248903265, sId: 'MAIN' },
     { name: 'ДОВІДНИК_ТОВАРІВ', mainCat: 'Власний матеріал', gid: 0, sId: 'MATERIALS' }
-  ]
+  ],
+  // Прайс-лист
+  PRICE_LIST_SPREADSHEET: import.meta.env.VITE_PRICE_LIST_SPREADSHEET || '1Zt2uqioUsdvh55NV6gvobDzOSWMqJpCr35h0LaQwzlY'
 };
 
 export default CONFIG;

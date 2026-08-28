@@ -17,6 +17,7 @@ const Users = lazy(() => import('./pages/Users'));
 const Categories = lazy(() => import('./pages/Categories'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Backups = lazy(() => import('./pages/Backups'));
+const PriceList = lazy(() => import('./pages/PriceList'));
 
 // Нові сторінки для модуля «Баланси клієнтів»
 const BuyersDashboard = lazy(() => import('./pages/BuyersDashboard'));
@@ -106,6 +107,7 @@ function AppContent() {
             <Route path="/expense" element={<OperationForm type="expense" />} />
             <Route path="/transfer" element={<Transfer />} />
             <Route path="/daily-balance" element={<DailyBalance />} />
+            <Route path="/price-list" element={<PriceList />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/catalog" element={<Catalog />} />
 

@@ -15,6 +15,7 @@ export default function Sidebar({ isOpen, onClose }) {
       section: 'Операції',
       items: [
         { path: '/', label: 'Журнал операцій', icon: '📋' },
+        { path: '/price-list', label: 'Прайс-лист', icon: '🏷️' },
         { path: '/income', label: 'Новий прихід', icon: '📥' },
         { path: '/expense', label: 'Новий розхід', icon: '📤' },
         { path: '/transfer', label: 'Переміщення', icon: '🔄' },

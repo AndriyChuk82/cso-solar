@@ -2617,3 +2617,297 @@ export async function batchDeleteShipments(shipmentIds = [], user = {}) {
   return { success: true, count, errors };
 }
 
+// --- ПРАЙС-ЛИСТ (Google Таблиця + Каталог) ---
+
+/**
+ * Парсинг рядка з ціною (визначає число та валюту USD / EUR / UAH)
+ */
+export function parsePriceString(rawVal) {
+  if (rawVal === undefined || rawVal === null || rawVal === '') return { amount: null, formatted: '—', currency: 'USD' };
+  const str = String(rawVal).trim();
+  if (!str || str === '0' || str === '-') return { amount: null, formatted: '—', currency: 'USD' };
+
+  let currency = 'USD';
+  if (str.includes('€') || /eur/i.test(str)) currency = 'EUR';
+  else if (str.includes('грн') || str.includes('₴') || /uah/i.test(str)) currency = 'UAH';
+  else if (str.includes('$') || /usd/i.test(str)) currency = 'USD';
+
+  // Вичищаємо всі символи крім цифр, коми, крапки та мінуса
+  const cleaned = str
+    .replace(/[^\d,.-]/g, '')
+    .replace(',', '.');
+
+  const num = parseFloat(cleaned);
+  if (isNaN(num) || num <= 0) return { amount: null, formatted: '—', currency };
+
+  const currencySymbol = currency === 'EUR' ? '€' : currency === 'UAH' ? 'грн' : '$';
+  const formattedNum = num.toLocaleString('uk-UA', { minimumFractionDigits: Number.isInteger(num) ? 0 : 2, maximumFractionDigits: 2 });
+  const formatted = currency === 'EUR' ? `€${formattedNum}` : currency === 'UAH' ? `${formattedNum} грн` : `$${formattedNum}`;
+
+  return { amount: num, formatted, currency, currencySymbol };
+}
+
+/**
+ * Простий та надійний парсер CSV
+ */
+function parseCsvRows(csvText) {
+  const rows = [];
+  let currentRow = [];
+  let currentVal = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < csvText.length; i++) {
+    const char = csvText[i];
+    const nextChar = csvText[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        currentVal += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      currentRow.push(currentVal.trim());
+      currentVal = '';
+    } else if ((char === '\r' || char === '\n') && !inQuotes) {
+      if (char === '\r' && nextChar === '\n') i++;
+      currentRow.push(currentVal.trim());
+      if (currentRow.some(cell => cell.length > 0)) {
+        rows.push(currentRow);
+      }
+      currentRow = [];
+      currentVal = '';
+    } else {
+      currentVal += char;
+    }
+  }
+
+  if (currentVal || currentRow.length > 0) {
+    currentRow.push(currentVal.trim());
+    if (currentRow.some(cell => cell.length > 0)) {
+      rows.push(currentRow);
+    }
+  }
+
+  return rows;
+}
+
+/**
+ * Автоматичне визначення логічної категорії за назвою
+ */
+export function inferCategoryFromName(name = '', existingCategory = '') {
+  if (existingCategory && existingCategory !== '—' && existingCategory !== 'Невизначено') {
+    return existingCategory;
+  }
+  const n = String(name).toLowerCase();
+
+  if (n.includes('інвертор') || n.includes('inverter') || /sun-\d+/i.test(n) || /solis/i.test(n) || /huawei/i.test(n) || /deye\s*sun/i.test(n)) {
+    return 'Інвертори';
+  }
+  if (n.includes('акб') || n.includes('bms') || n.includes('акумулятор') || n.includes('battery') || /bos-g/i.test(n) || /se-f/i.test(n) || /se5\.1/i.test(n) || /pdu/i.test(n)) {
+    return 'Акумулятори та BMS';
+  }
+  if (n.includes('стійк') || n.includes('шаф') || /rack/i.test(n) || /lrack/i.test(n) || /hrack/i.test(n)) {
+    return 'Стійки та аксесуари';
+  }
+  if (n.includes('панел') || n.includes('модул') || /longi/i.test(n) || /jasolar/i.test(n) || /jinko/i.test(n) || /bifacial/i.test(n) || /solar\s+lr/i.test(n) || /jam54/i.test(n)) {
+    return 'Сонячні панелі';
+  }
+  if (n.includes('кабел') || n.includes('провід') || n.includes('cable') || n.includes('конектор') || n.includes('mc4')) {
+    return 'Кабель та комутація';
+  }
+  if (n.includes('кріплен') || n.includes('профіль') || n.includes('болт') || n.includes('гайка') || n.includes('затискач') || n.includes('рейк')) {
+    return 'Кріплення та конструкції';
+  }
+
+  return 'Інше обладнання';
+}
+
+/**
+ * Завантаження повного прайс-листа з об'єднанням Google Таблиці, Каталогу товарів та залишків на складах
+ */
+export async function getPriceListData() {
+  const spreadsheetId = CONFIG.PRICE_LIST_SPREADSHEET || '1Zt2uqioUsdvh55NV6gvobDzOSWMqJpCr35h0LaQwzlY';
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=0&_t=${Date.now()}`;
+
+  // 1. Паралельно завантажуємо Google Sheet CSV, Каталог товарів та Операції для розрахунку залишків
+  const [csvRes, catalogRes, opsRes, whRes] = await Promise.allSettled([
+    fetch(csvUrl).then(r => r.text()),
+    getCatalog(),
+    getOperations(),
+    getWarehouses()
+  ]);
+
+  // 2. Парсимо позиції з Google Таблиці
+  const sheetItems = [];
+  if (csvRes.status === 'fulfilled' && csvRes.value) {
+    try {
+      const rows = parseCsvRows(csvRes.value);
+      if (rows.length > 1) {
+        // Пропускаємо рядок заголовків
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          const name = (row[0] || '').trim();
+          if (!name) continue;
+
+          const wholesaleRaw = row[1];
+          const retailRaw = row[2];
+
+          const wholesale = parsePriceString(wholesaleRaw);
+          const retail = parsePriceString(retailRaw);
+
+          sheetItems.push({
+            name,
+            nameNormalized: name.toLowerCase().replace(/[\s\W_]/g, ''),
+            wholesale,
+            retail
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("Could not parse price sheet CSV:", e);
+    }
+  }
+
+  // 3. Каталог товарів зі складу
+  const catalogProducts = catalogRes.status === 'fulfilled' && catalogRes.value?.success 
+    ? (catalogRes.value.products || []) 
+    : [];
+
+  // 4. Склади та Залишки
+  const warehouses = whRes.status === 'fulfilled' && whRes.value?.success 
+    ? (whRes.value.warehouses || []) 
+    : [];
+  const whMap = {};
+  warehouses.forEach(w => whMap[w.id] = w.name);
+
+  // Розраховуємо залишки по кожному товару і по складах
+  const stockMap = {}; // productId -> { total: number, warehouses: { [whName]: number } }
+  if (opsRes.status === 'fulfilled' && opsRes.value?.rawOperations) {
+    opsRes.value.rawOperations.forEach(op => {
+      const pid = op.product_id;
+      if (!pid) return;
+      if (!stockMap[pid]) {
+        stockMap[pid] = { total: 0, byWarehouse: {} };
+      }
+      const qty = parseFloat(op.quantity) || 0;
+      const whName = whMap[op.warehouse_id] || op.warehouse_name || op.warehouse_id || 'Склад';
+
+      if (!stockMap[pid].byWarehouse[whName]) {
+        stockMap[pid].byWarehouse[whName] = 0;
+      }
+
+      if (op.type === 'income' || op.type === 'balance') {
+        stockMap[pid].total += qty;
+        stockMap[pid].byWarehouse[whName] += qty;
+      } else if (op.type === 'expense') {
+        stockMap[pid].total -= qty;
+        stockMap[pid].byWarehouse[whName] -= qty;
+      }
+    });
+  }
+
+  // 5. Об'єднуємо всі товари з Каталогу з даними з Google Таблиці
+  const matchedSheetIndices = new Set();
+  const priceListItems = [];
+
+  catalogProducts.forEach(prod => {
+    const prodName = prod.name.trim();
+    const prodNameNorm = prodName.toLowerCase().replace(/[\s\W_]/g, '');
+
+    // Шукаємо збіг у Google Таблиці
+    let matchedSheetItem = null;
+    sheetItems.forEach((sh, idx) => {
+      if (sh.nameNormalized === prodNameNorm) {
+        matchedSheetItem = sh;
+        matchedSheetIndices.add(idx);
+      }
+    });
+
+    // Якщо точного збігу немає, шукаємо частковий збіг (наприклад, по назві моделі)
+    if (!matchedSheetItem) {
+      sheetItems.forEach((sh, idx) => {
+        if (!matchedSheetIndices.has(idx)) {
+          if (prodNameNorm.includes(sh.nameNormalized) || sh.nameNormalized.includes(prodNameNorm)) {
+            matchedSheetItem = sh;
+            matchedSheetIndices.add(idx);
+          }
+        }
+      });
+    }
+
+    const stockInfo = stockMap[prod.id] || { total: 0, byWarehouse: {} };
+    const category = inferCategoryFromName(prod.name, prod.category);
+
+    let wholesale = { amount: null, formatted: '—', currency: 'USD' };
+    let retail = { amount: null, formatted: '—', currency: 'USD' };
+    let priceSource = 'none';
+
+    if (matchedSheetItem) {
+      wholesale = matchedSheetItem.wholesale;
+      retail = matchedSheetItem.retail;
+      priceSource = 'google_sheet';
+    } else if (prod.price_wholesale || prod.price_retail) {
+      wholesale = parsePriceString(prod.price_wholesale);
+      retail = parsePriceString(prod.price_retail);
+      priceSource = 'catalog';
+    }
+
+    priceListItems.push({
+      id: prod.id,
+      name: prod.name,
+      article: prod.article || '',
+      unit: prod.unit || 'шт',
+      category: category,
+      wholesale,
+      retail,
+      priceSource,
+      totalStock: stockInfo.total,
+      warehouseStocks: Object.entries(stockInfo.byWarehouse)
+        .filter(([, qty]) => qty > 0)
+        .map(([whName, qty]) => ({ warehouseName: whName, quantity: qty })),
+      isFromCatalog: true
+    });
+  });
+
+  // 6. Додаємо позиції з Google Таблиці, яких раптом ще немає в базі товарів Каталогу
+  sheetItems.forEach((sh, idx) => {
+    if (!matchedSheetIndices.has(idx)) {
+      const category = inferCategoryFromName(sh.name);
+      priceListItems.push({
+        id: 'sheet-' + idx,
+        name: sh.name,
+        article: '',
+        unit: 'шт',
+        category: category,
+        wholesale: sh.wholesale,
+        retail: sh.retail,
+        priceSource: 'google_sheet',
+        totalStock: 0,
+        warehouseStocks: [],
+        isFromCatalog: false
+      });
+    }
+  });
+
+  // 7. Сортуємо: спочатку за категоріями, потім за алфавітом назви
+  priceListItems.sort((a, b) => {
+    const catComp = (a.category || '').localeCompare(b.category || '', 'uk');
+    if (catComp !== 0) return catComp;
+    return a.name.localeCompare(b.name, 'uk');
+  });
+
+  // 8. Список унікальних категорій для швидких фільтрів
+  const categoriesSet = new Set(priceListItems.map(i => i.category).filter(Boolean));
+  const categoriesList = Array.from(categoriesSet).sort((a, b) => a.localeCompare(b, 'uk'));
+
+  return {
+    success: true,
+    items: priceListItems,
+    categories: categoriesList,
+    totalCount: priceListItems.length,
+    updatedAt: new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  };
+}
+
