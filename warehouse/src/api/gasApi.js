@@ -3027,6 +3027,9 @@ export async function getPriceListData() {
 
     const stockInfo = stockMap[prod.id] || { total: 0, byWarehouse: {} };
     const category = (prod.category && prod.category.trim()) ? prod.category.trim() : inferCategoryFromName(prod.name);
+    let wholesale = { amount: null, formatted: '—', currency: 'USD' };
+    let retail = { amount: null, formatted: '—', currency: 'USD' };
+    let priceSource = 'none';
 
     const hasSheetPrice = matchedSheetItem && (
       (matchedSheetItem.wholesale?.amount !== null && matchedSheetItem.wholesale?.amount > 0) ||
