@@ -3150,6 +3150,7 @@ export async function getPriceListData() {
     success: true,
     items: priceListItems,
     categories: categoriesList,
+    warehouseMap: whMap,
     totalCount: priceListItems.length,
     updatedAt: new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
   };

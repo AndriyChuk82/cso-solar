@@ -13,6 +13,7 @@ export default function PriceList() {
 
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [warehouseMap, setWarehouseMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [updatedAt, setUpdatedAt] = useState('');
@@ -35,6 +36,7 @@ export default function PriceList() {
       if (res.success) {
         setItems(res.items || []);
         setCategories(res.categories || []);
+        setWarehouseMap(res.warehouseMap || {});
         setUpdatedAt(res.updatedAt || '');
         if (isManual) {
           showToast('Прайс-лист успішно оновлено', 'success');
@@ -55,17 +57,17 @@ export default function PriceList() {
   const inStockCount = useMemo(() => {
     if (stocksHidden) return 0;
     return items.filter(item => {
-      const { stock } = getItemStockForUser(item, user);
+      const { stock } = getItemStockForUser(item, user, warehouseMap);
       return stock > 0;
     }).length;
-  }, [items, user, stocksHidden]);
+  }, [items, user, stocksHidden, warehouseMap]);
 
   // Адаптивна фільтрація товарів
   const filteredItems = useMemo(() => {
     return items.filter(item => {
       // 1. Фільтр тільки наявних (якщо залишки не приховані)
       if (!stocksHidden && onlyInStock) {
-        const { stock } = getItemStockForUser(item, user);
+        const { stock } = getItemStockForUser(item, user, warehouseMap);
         if (stock <= 0) {
           return false;
         }
@@ -84,7 +86,7 @@ export default function PriceList() {
 
       return true;
     });
-  }, [items, selectedCategory, onlyInStock, deferredSearch, user, stocksHidden]);
+  }, [items, selectedCategory, onlyInStock, deferredSearch, user, stocksHidden, warehouseMap]);
 
   // Групування відфільтрованих товарів по категоріях із сортуванням за потужністю/числами
   const groupedItems = useMemo(() => {
@@ -134,7 +136,7 @@ export default function PriceList() {
     
     let stockText = '';
     if (!stocksHidden) {
-      const userStock = getItemStockForUser(item, user);
+      const userStock = getItemStockForUser(item, user, warehouseMap);
       stockText = userStock.stock > 0 
         ? ` (${userStock.isAssignedWarehouse ? userStock.warehouseName + ': ' : 'Залишок: '}${userStock.stock} ${item.unit || 'шт'})` 
         : ' (Немає в наявності)';
@@ -323,7 +325,7 @@ export default function PriceList() {
                   </thead>
                   <tbody className="divide-y divide-[var(--border)] text-sm">
                     {catItems.map((item, idx) => {
-                      const userStock = getItemStockForUser(item, user);
+                      const userStock = getItemStockForUser(item, user, warehouseMap);
                       const hasStock = userStock.stock > 0;
                       const hasWholesale = item.wholesale?.amount !== null;
                       const hasRetail = item.retail?.amount !== null;
@@ -436,7 +438,7 @@ export default function PriceList() {
               {/* Мобільні картки (Сучасний мобільний вигляд для смартфонів) */}
               <div className="md:hidden divide-y divide-[var(--border)]">
                 {catItems.map((item, idx) => {
-                  const userStock = getItemStockForUser(item, user);
+                  const userStock = getItemStockForUser(item, user, warehouseMap);
                   const hasStock = userStock.stock > 0;
                   const hasWholesale = item.wholesale?.amount !== null;
                   const hasRetail = item.retail?.amount !== null;

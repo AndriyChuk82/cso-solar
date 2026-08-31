@@ -138,9 +138,10 @@ export function getUserWarehouseId(user) {
  * Розраховує залишок товару з урахуванням прав та закріпленого складу користувача
  * @param {Object} item - Об'єкт товару з прайс-листа
  * @param {Object} user - Об'єкт користувача
+ * @param {Object} [warehouseMap] - Словник складів { id: name }
  * @returns {{ isHidden: boolean, stock: number, warehouseName?: string, isAssignedWarehouse: boolean }}
  */
-export function getItemStockForUser(item, user) {
+export function getItemStockForUser(item, user, warehouseMap = {}) {
   if (!item) return { isHidden: false, stock: 0, isAssignedWarehouse: false };
 
   // 1. Якщо залишки приховані
@@ -151,7 +152,20 @@ export function getItemStockForUser(item, user) {
   // 2. Якщо користувач закріплений за конкретним складом (і це не адмін)
   const userWhId = (!user?.isAdmin) ? getUserWarehouseId(user) : null;
   if (userWhId && String(userWhId).trim() !== '' && String(userWhId).trim().toLowerCase() !== 'all') {
-    const cleanUserWh = String(userWhId).toLowerCase().replace(/^(м\.|м\s+|склад\s+)/g, '').trim();
+    const rawWhId = String(userWhId).trim();
+    const cleanUserWh = rawWhId.toLowerCase().replace(/^(м\.|м\s+|склад\s+)/g, '').trim();
+
+    // Визначаємо зрозумілу людині назву складу замість UUID
+    let humanName = warehouseMap[rawWhId] || 
+      (typeof warehouseMap === 'object' && Object.values(warehouseMap).find(w => w?.id === rawWhId)?.name) || 
+      '';
+
+    if (!humanName && !rawWhId.includes('-')) {
+      humanName = rawWhId;
+    }
+    if (!humanName) {
+      humanName = 'Склад';
+    }
 
     let whStock = null;
     if (item.warehouseStocks && Array.isArray(item.warehouseStocks)) {
@@ -161,8 +175,8 @@ export function getItemStockForUser(item, user) {
         const cleanWName = wName.replace(/^(м\.|м\s+|склад\s+)/g, '').trim();
 
         return (
-          wId === String(userWhId).toLowerCase().trim() ||
-          wName === String(userWhId).toLowerCase().trim() ||
+          wId === rawWhId.toLowerCase() ||
+          wName === rawWhId.toLowerCase() ||
           (cleanUserWh && cleanWName === cleanUserWh) ||
           (cleanUserWh && wName.includes(cleanUserWh)) ||
           (cleanUserWh && cleanUserWh.includes(cleanWName))
@@ -171,10 +185,12 @@ export function getItemStockForUser(item, user) {
     }
 
     const qty = whStock ? (parseFloat(whStock.quantity) || 0) : 0;
+    const resolvedWhName = whStock?.warehouseName || humanName;
+
     return {
       isHidden: false,
       stock: qty,
-      warehouseName: whStock?.warehouseName || userWhId,
+      warehouseName: resolvedWhName,
       isAssignedWarehouse: true
     };
   }
