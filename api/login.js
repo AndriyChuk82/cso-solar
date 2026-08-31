@@ -81,6 +81,7 @@ export default async function handler(req, res) {
         let displayName = username;
         let userRole = 'user'; // Default role
         let moduleAccess = '';
+        let warehouseId = '';
 
         // 1. Спочатку перевіряємо чи це захардкоджений адмін (з ENV)
         const userIndex = usernames.findIndex(u => u.toLowerCase() === username.toLowerCase());
@@ -111,6 +112,7 @@ export default async function handler(req, res) {
                         displayName = dbUser.name || username;
                         userRole = (dbUser.role || 'user').toLowerCase();
                         moduleAccess = dbUser.module_access || '';
+                        warehouseId = dbUser.warehouse_id || '';
                     }
                 }
             } catch (err) {
@@ -165,9 +167,10 @@ export default async function handler(req, res) {
             name: displayName,
             role: 'authenticated', // Необхідно для Supabase PostgREST RLS
             user_role: userRole,   // Наша внутрішня роль (admin, user)
+            warehouse_id: warehouseId, // Закріплений склад
             aud: 'authenticated',  // Необхідно для Supabase PostgREST
             app_metadata: { provider: 'email', providers: ['email'] },
-            user_metadata: { name: displayName, role: userRole },
+            user_metadata: { name: displayName, role: userRole, warehouse_id: warehouseId },
             module_access: moduleAccess // Додаємо доступ до модулів у токен
         })
             .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })

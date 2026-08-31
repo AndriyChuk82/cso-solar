@@ -20,6 +20,7 @@ export default async function handler(req, res) {
             user: payload.email || payload.sub,
             name: payload.name || payload.email || payload.sub,
             role: payload.user_role || payload.role || 'user',
+            warehouse_id: payload.warehouse_id || payload.user_metadata?.warehouse_id || '',
             module_access: payload.module_access || ''
         });
     } catch (err) {

@@ -3031,7 +3031,7 @@ export async function getPriceListData() {
   warehouses.forEach(w => whMap[w.id] = w.name);
 
   // Розраховуємо залишки по кожному товару і по складах
-  const stockMap = {}; // productId -> { total: number, warehouses: { [whName]: number } }
+  const stockMap = {}; // productId -> { total: number, byWarehouse: { [whId]: { warehouseId, warehouseName, quantity } } }
   if (opsRes.status === 'fulfilled' && opsRes.value?.rawOperations) {
     opsRes.value.rawOperations.forEach(op => {
       const pid = op.product_id;
@@ -3040,18 +3040,19 @@ export async function getPriceListData() {
         stockMap[pid] = { total: 0, byWarehouse: {} };
       }
       const qty = parseFloat(op.quantity) || 0;
-      const whName = whMap[op.warehouse_id] || op.warehouse_name || op.warehouse_id || 'Склад';
+      const whId = op.warehouse_id || op.warehouseId || 'main';
+      const whName = whMap[whId] || op.warehouse_name || op.warehouse_id || 'Склад';
 
-      if (!stockMap[pid].byWarehouse[whName]) {
-        stockMap[pid].byWarehouse[whName] = 0;
+      if (!stockMap[pid].byWarehouse[whId]) {
+        stockMap[pid].byWarehouse[whId] = { warehouseId: whId, warehouseName: whName, quantity: 0 };
       }
 
       if (op.type === 'income' || op.type === 'balance') {
         stockMap[pid].total += qty;
-        stockMap[pid].byWarehouse[whName] += qty;
+        stockMap[pid].byWarehouse[whId].quantity += qty;
       } else if (op.type === 'expense') {
         stockMap[pid].total -= qty;
-        stockMap[pid].byWarehouse[whName] -= qty;
+        stockMap[pid].byWarehouse[whId].quantity -= qty;
       }
     });
   }
@@ -3117,9 +3118,9 @@ export async function getPriceListData() {
       retail,
       priceSource,
       totalStock: stockInfo.total,
-      warehouseStocks: Object.entries(stockInfo.byWarehouse)
-        .filter(([, qty]) => qty > 0)
-        .map(([whName, qty]) => ({ warehouseName: whName, quantity: qty })),
+      warehouseStocks: Object.values(stockInfo.byWarehouse)
+        .filter((wh) => wh.quantity > 0)
+        .map((wh) => ({ warehouseId: wh.warehouseId, warehouseName: wh.warehouseName, quantity: wh.quantity })),
       isFromCatalog: true
     });
   });

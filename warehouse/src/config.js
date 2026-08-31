@@ -46,7 +46,8 @@ const CONFIG = {
     { id: 'buyers', label: '⚖️ Баланси клієнтів', desc: 'Взаєморозрахунки, видача та оплати' },
     { id: 'shipments', label: '🚚 Відправлення', desc: 'Оформлення та трекінг Нової Пошти' },
     { id: 'reports', label: '📈 Звіти та аудит', desc: 'Звіти по залишках, клієнтах та журнал дій' },
-    { id: 'hide_finances', label: '🔒 Приховати фінанси в об\'єктах', desc: 'Приховати суми по КП, аванси та заборгованість', isNegative: true }
+    { id: 'hide_finances', label: '🔒 Приховати фінанси в об\'єктах', desc: 'Приховати суми по КП, аванси та заборгованість', isNegative: true },
+    { id: 'hide_stocks', label: '🔒 Приховати залишки на складах', desc: 'Показувати лише ціни без кількості товарів', isNegative: true }
   ],
 
   // Готові шаблони прав для швидкого вибору
@@ -54,7 +55,7 @@ const CONFIG = {
     installer: {
       label: '👷 Монтажник',
       role: 'installer',
-      permissions: ['objects', 'price_list', 'hide_finances']
+      permissions: ['objects', 'price_list', 'hide_finances', 'hide_stocks']
     },
     storekeeper: {
       label: '📦 Комірник',

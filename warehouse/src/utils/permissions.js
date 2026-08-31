@@ -112,6 +112,67 @@ export function getDefaultWarehouseRoute(user) {
 }
 
 /**
+ * Перевіряє, чи увімкнена опція приховування залишків для цього користувача
+ * @param {Object} user
+ * @returns {boolean}
+ */
+export function isStocksHidden(user) {
+  if (!user) return false;
+  if (user.isAdmin) return false;
+
+  const perms = getWarehousePermissions(user);
+  return perms.includes('hide_stocks');
+}
+
+/**
+ * Отримує ID закріпленого складу користувача (якщо є)
+ * @param {Object} user
+ * @returns {string|null}
+ */
+export function getUserWarehouseId(user) {
+  if (!user) return null;
+  return user.warehouse_id || user.warehouseId || null;
+}
+
+/**
+ * Розраховує залишок товару з урахуванням прав та закріпленого складу користувача
+ * @param {Object} item - Об'єкт товару з прайс-листа
+ * @param {Object} user - Об'єкт користувача
+ * @returns {{ isHidden: boolean, stock: number, warehouseName?: string, isAssignedWarehouse: boolean }}
+ */
+export function getItemStockForUser(item, user) {
+  if (!item) return { isHidden: false, stock: 0, isAssignedWarehouse: false };
+
+  // 1. Якщо залишки приховані
+  if (isStocksHidden(user)) {
+    return { isHidden: true, stock: 0, isAssignedWarehouse: false };
+  }
+
+  // 2. Якщо користувач закріплений за конкретним складом (і це не адмін)
+  const userWhId = (!user?.isAdmin) ? getUserWarehouseId(user) : null;
+  if (userWhId && item.warehouseStocks && Array.isArray(item.warehouseStocks)) {
+    const whStock = item.warehouseStocks.find(w => 
+      String(w.warehouseId) === String(userWhId) || 
+      String(w.warehouseName).toLowerCase() === String(userWhId).toLowerCase()
+    );
+    const qty = whStock ? (parseFloat(whStock.quantity) || 0) : 0;
+    return {
+      isHidden: false,
+      stock: qty,
+      warehouseName: whStock?.warehouseName || 'Закріплений склад',
+      isAssignedWarehouse: true
+    };
+  }
+
+  // 3. За замовчуванням (повний доступ до залишків усіх складів)
+  return {
+    isHidden: false,
+    stock: parseFloat(item.totalStock) || 0,
+    isAssignedWarehouse: false
+  };
+}
+
+/**
  * Перевіряє, чи може користувач створювати оперативні складські транзакції (FAB кнопка)
  * @param {Object} user
  * @returns {boolean}

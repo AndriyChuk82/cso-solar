@@ -4,10 +4,12 @@ import { matchesSearch } from '../utils/searchUtils';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Search, RefreshCw, Layers, CheckCircle2, Box, Info } from 'lucide-react';
+import { isStocksHidden, getItemStockForUser } from '../utils/permissions';
 
 export default function PriceList() {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const stocksHidden = isStocksHidden(user);
 
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -49,17 +51,24 @@ export default function PriceList() {
     }
   }
 
-  // Кількість товарів у наявності
+  // Кількість товарів у наявності (з урахуванням прав та закріпленого складу)
   const inStockCount = useMemo(() => {
-    return items.filter(item => item.totalStock > 0).length;
-  }, [items]);
+    if (stocksHidden) return 0;
+    return items.filter(item => {
+      const { stock } = getItemStockForUser(item, user);
+      return stock > 0;
+    }).length;
+  }, [items, user, stocksHidden]);
 
   // Адаптивна фільтрація товарів
   const filteredItems = useMemo(() => {
     return items.filter(item => {
-      // 1. Фільтр тільки наявних
-      if (onlyInStock && item.totalStock <= 0) {
-        return false;
+      // 1. Фільтр тільки наявних (якщо залишки не приховані)
+      if (!stocksHidden && onlyInStock) {
+        const { stock } = getItemStockForUser(item, user);
+        if (stock <= 0) {
+          return false;
+        }
       }
 
       // 2. Фільтр по категорії
@@ -75,7 +84,7 @@ export default function PriceList() {
 
       return true;
     });
-  }, [items, selectedCategory, onlyInStock, deferredSearch]);
+  }, [items, selectedCategory, onlyInStock, deferredSearch, user, stocksHidden]);
 
   // Групування відфільтрованих товарів по категоріях із сортуванням за потужністю/числами
   const groupedItems = useMemo(() => {
@@ -122,8 +131,16 @@ export default function PriceList() {
     const wholesaleText = item.wholesale?.formatted ? `Опт: ${item.wholesale.formatted}` : '';
     const retailText = item.retail?.formatted ? `Роздріб: ${item.retail.formatted}` : '';
     const priceText = [wholesaleText, retailText].filter(Boolean).join(' | ');
-    const stockText = item.totalStock > 0 ? `Залишок: ${item.totalStock} ${item.unit || 'шт'}` : 'Немає в наявності';
-    const textToCopy = `${item.name}${priceText ? ` — ${priceText}` : ''} (${stockText})`;
+    
+    let stockText = '';
+    if (!stocksHidden) {
+      const userStock = getItemStockForUser(item, user);
+      stockText = userStock.stock > 0 
+        ? ` (${userStock.isAssignedWarehouse ? userStock.warehouseName + ': ' : 'Залишок: '}${userStock.stock} ${item.unit || 'шт'})` 
+        : ' (Немає в наявності)';
+    }
+
+    const textToCopy = `${item.name}${priceText ? ` — ${priceText}` : ''}${stockText}`;
     
     if (navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(textToCopy);
@@ -193,20 +210,22 @@ export default function PriceList() {
           </div>
 
           {/* Галочка: Показувати лише наявні */}
-          <label className="inline-flex items-center justify-between sm:justify-start gap-2 cursor-pointer select-none bg-[var(--bg-card)] border border-[var(--border)] px-3.5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl hover:bg-[var(--border-light)] active:scale-98 transition-all shadow-xs shrink-0">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={onlyInStock}
-                onChange={(e) => setOnlyInStock(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded border-[var(--border)] focus:ring-blue-500 cursor-pointer accent-blue-600"
-              />
-              <span className="text-xs font-bold text-[var(--text)] whitespace-nowrap">Лише в наявності</span>
-            </div>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${onlyInStock ? 'bg-emerald-500 text-white' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'}`}>
-              {inStockCount}
-            </span>
-          </label>
+          {!stocksHidden && (
+            <label className="inline-flex items-center justify-between sm:justify-start gap-2 cursor-pointer select-none bg-[var(--bg-card)] border border-[var(--border)] px-3.5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl hover:bg-[var(--border-light)] active:scale-98 transition-all shadow-xs shrink-0">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={onlyInStock}
+                  onChange={(e) => setOnlyInStock(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded border-[var(--border)] focus:ring-blue-500 cursor-pointer accent-blue-600"
+                />
+                <span className="text-xs font-bold text-[var(--text)] whitespace-nowrap">Лише в наявності</span>
+              </div>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${onlyInStock ? 'bg-emerald-500 text-white' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'}`}>
+                {inStockCount}
+              </span>
+            </label>
+          )}
         </div>
 
         {/* Кнопки вибору категорій */}
@@ -297,12 +316,15 @@ export default function PriceList() {
                       <th className="py-3 px-4">Обладнання / Товар</th>
                       <th className="py-3 px-4 text-center w-44">Оптовий прайс</th>
                       <th className="py-3 px-4 text-center w-44">Роздрібний прайс</th>
-                      <th className="py-3 px-4 text-center min-w-[220px] w-64">Залишок на складі</th>
+                      {!stocksHidden && (
+                        <th className="py-3 px-4 text-center min-w-[220px] w-64">Залишок на складі</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border)] text-sm">
                     {catItems.map((item, idx) => {
-                      const hasStock = item.totalStock > 0;
+                      const userStock = getItemStockForUser(item, user);
+                      const hasStock = userStock.stock > 0;
                       const hasWholesale = item.wholesale?.amount !== null;
                       const hasRetail = item.retail?.amount !== null;
 
@@ -366,29 +388,44 @@ export default function PriceList() {
                           </td>
 
                           {/* Залишок на складах */}
-                          <td className="py-3.5 px-4 text-center">
-                            {hasStock ? (
-                              <div className="flex flex-col items-center gap-1">
-                                <span className="font-bold text-xs bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2.5 py-0.5 rounded-full border border-emerald-500/20 inline-flex items-center gap-1">
-                                  <span>{item.totalStock}</span>
-                                  <span className="text-[10px] font-normal">{item.unit || 'шт'}</span>
-                                </span>
-                                {item.warehouseStocks && item.warehouseStocks.length > 0 && (
-                                  <div className={`flex items-center justify-center gap-1 text-[10px] text-[var(--text-muted)] ${item.warehouseStocks.length <= 2 ? 'flex-nowrap whitespace-nowrap' : 'flex-wrap'}`}>
-                                    {item.warehouseStocks.map(wh => (
-                                      <span key={wh.warehouseName} className="bg-[var(--bg)] px-1.5 py-0.5 rounded border border-[var(--border)] whitespace-nowrap">
-                                        {wh.warehouseName}: {wh.quantity}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-[var(--text-muted)] bg-[var(--bg)] px-2 py-0.5 rounded border border-[var(--border)]">
-                                0 {item.unit || 'шт'}
-                              </span>
-                            )}
-                          </td>
+                          {!stocksHidden && (
+                            <td className="py-3.5 px-4 text-center">
+                              {hasStock ? (
+                                <div className="flex flex-col items-center gap-1">
+                                  <span className="font-bold text-xs bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2.5 py-0.5 rounded-full border border-emerald-500/20 inline-flex items-center gap-1">
+                                    <span>{userStock.stock}</span>
+                                    <span className="text-[10px] font-normal">{item.unit || 'шт'}</span>
+                                  </span>
+                                  {userStock.isAssignedWarehouse ? (
+                                    <span className="text-[10px] text-[var(--text-muted)] bg-[var(--bg)] px-1.5 py-0.5 rounded border border-[var(--border)] whitespace-nowrap">
+                                      {userStock.warehouseName}
+                                    </span>
+                                  ) : (
+                                    item.warehouseStocks && item.warehouseStocks.length > 0 && (
+                                      <div className={`flex items-center justify-center gap-1 text-[10px] text-[var(--text-muted)] ${item.warehouseStocks.length <= 2 ? 'flex-nowrap whitespace-nowrap' : 'flex-wrap'}`}>
+                                        {item.warehouseStocks.map(wh => (
+                                          <span key={wh.warehouseId || wh.warehouseName} className="bg-[var(--bg)] px-1.5 py-0.5 rounded border border-[var(--border)] whitespace-nowrap">
+                                            {wh.warehouseName}: {wh.quantity}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="flex flex-col items-center gap-0.5">
+                                  <span className="text-xs text-[var(--text-muted)] bg-[var(--bg)] px-2 py-0.5 rounded border border-[var(--border)]">
+                                    0 {item.unit || 'шт'}
+                                  </span>
+                                  {userStock.isAssignedWarehouse && (
+                                    <span className="text-[9px] text-[var(--text-muted)]">
+                                      {userStock.warehouseName}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                          )}
                         </tr>
                       );
                     })}
@@ -399,7 +436,8 @@ export default function PriceList() {
               {/* Мобільні картки (Сучасний мобільний вигляд для смартфонів) */}
               <div className="md:hidden divide-y divide-[var(--border)]">
                 {catItems.map((item, idx) => {
-                  const hasStock = item.totalStock > 0;
+                  const userStock = getItemStockForUser(item, user);
+                  const hasStock = userStock.stock > 0;
                   const hasWholesale = item.wholesale?.amount !== null;
                   const hasRetail = item.retail?.amount !== null;
 
@@ -430,19 +468,26 @@ export default function PriceList() {
                         </div>
 
                         {/* Головний бейдж залишку */}
-                        <div className="shrink-0">
-                          {hasStock ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 shadow-2xs">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                              <span>{item.totalStock}</span>
-                              <span className="text-[10px] font-medium opacity-80">{item.unit || 'шт'}</span>
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--bg)] text-[var(--text-muted)] border border-[var(--border)]">
-                              0 {item.unit || 'шт'}
-                            </span>
-                          )}
-                        </div>
+                        {!stocksHidden && (
+                          <div className="shrink-0 flex flex-col items-end gap-1">
+                            {hasStock ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 shadow-2xs">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span>{userStock.stock}</span>
+                                <span className="text-[10px] font-medium opacity-80">{item.unit || 'шт'}</span>
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--bg)] text-[var(--text-muted)] border border-[var(--border)]">
+                                0 {item.unit || 'шт'}
+                              </span>
+                            )}
+                            {userStock.isAssignedWarehouse && (
+                              <span className="text-[9px] font-semibold text-[var(--text-muted)] bg-[var(--bg)] px-1.5 py-0.2 rounded border border-[var(--border)]">
+                                {userStock.warehouseName}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Блок цін: Опт і Роздріб */}
