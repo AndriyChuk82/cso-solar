@@ -38,10 +38,12 @@ export default async function handler(req, res) {
     const { action, userData } = req.body;
 
     try {
-        if (action === 'addUser' || action === 'updateUser') {
+        if (action === 'updateUser') {
             if (!userData || !userData.email) {
                 return res.status(400).json({ error: 'Email користувача обов’язковий' });
             }
+
+            const cleanEmail = userData.email.trim().toLowerCase();
 
             // Обробка прав доступу до Складу (warehouse_access)
             let formattedModuleAccess = userData.module_access || '';
@@ -60,26 +62,70 @@ export default async function handler(req, res) {
                 formattedModuleAccess = [...cleanModules, ...permTags].join(',');
             }
 
-            const finalData = {
-                email: userData.email.trim().toLowerCase(),
+            const updatePayload = {
                 name: userData.name || userData.email,
                 role: (userData.role || 'user').trim().toLowerCase(),
                 warehouse_id: userData.warehouse_id || '',
                 project_access: userData.project_access || '',
                 module_access: formattedModuleAccess,
-                active: userData.active !== undefined ? Boolean(userData.active) : true,
-                updated_at: new Date()
+                active: userData.active !== undefined ? Boolean(userData.active) : true
             };
 
             // Хешуємо пароль тільки якщо він переданий
-            if (userData.password) {
-                finalData.password = await bcrypt.hash(userData.password, 10);
+            if (userData.password && userData.password.trim()) {
+                updatePayload.password = await bcrypt.hash(userData.password.trim(), 10);
             }
 
             const { data, error } = await supabaseAdmin
                 .from('users')
-                .upsert(finalData, { onConflict: 'email' })
-                .select('id, email, name, role, warehouse_id, project_access, module_access, active, created_at, updated_at')
+                .update(updatePayload)
+                .eq('email', cleanEmail)
+                .select('id, email, name, role, warehouse_id, project_access, module_access, active')
+                .maybeSingle();
+
+            if (error) throw error;
+            return res.status(200).json({ success: true, user: data });
+        }
+
+        if (action === 'addUser') {
+            if (!userData || !userData.email) {
+                return res.status(400).json({ error: 'Email користувача обов’язковий' });
+            }
+
+            const cleanEmail = userData.email.trim().toLowerCase();
+
+            let formattedModuleAccess = userData.module_access || '';
+            if (userData.warehouse_access !== undefined && userData.warehouse_access !== null) {
+                const rawPerms = Array.isArray(userData.warehouse_access) 
+                    ? userData.warehouse_access 
+                    : String(userData.warehouse_access).split(',').map(s => s.trim()).filter(Boolean);
+                
+                const cleanModules = formattedModuleAccess.split(',')
+                    .map(s => s.trim())
+                    .filter(s => s && !s.startsWith('wh_perm:') && !s.startsWith('warehouse:'));
+                
+                const permTags = rawPerms.map(p => `wh_perm:${p}`);
+                formattedModuleAccess = [...cleanModules, ...permTags].join(',');
+            }
+
+            const insertPayload = {
+                email: cleanEmail,
+                name: userData.name || userData.email,
+                role: (userData.role || 'user').trim().toLowerCase(),
+                warehouse_id: userData.warehouse_id || '',
+                project_access: userData.project_access || '',
+                module_access: formattedModuleAccess,
+                active: userData.active !== undefined ? Boolean(userData.active) : true
+            };
+
+            if (userData.password && userData.password.trim()) {
+                insertPayload.password = await bcrypt.hash(userData.password.trim(), 10);
+            }
+
+            const { data, error } = await supabaseAdmin
+                .from('users')
+                .insert([insertPayload])
+                .select('id, email, name, role, warehouse_id, project_access, module_access, active')
                 .single();
 
             if (error) throw error;
@@ -89,7 +135,7 @@ export default async function handler(req, res) {
         if (action === 'getUsers') {
             const { data, error } = await supabaseAdmin
                 .from('users')
-                .select('id, email, name, role, warehouse_id, project_access, module_access, active, created_at, updated_at')
+                .select('id, email, name, role, warehouse_id, project_access, module_access, active')
                 .order('name');
 
             if (error) throw error;
