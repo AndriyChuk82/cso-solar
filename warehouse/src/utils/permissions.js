@@ -150,16 +150,31 @@ export function getItemStockForUser(item, user) {
 
   // 2. Якщо користувач закріплений за конкретним складом (і це не адмін)
   const userWhId = (!user?.isAdmin) ? getUserWarehouseId(user) : null;
-  if (userWhId && item.warehouseStocks && Array.isArray(item.warehouseStocks)) {
-    const whStock = item.warehouseStocks.find(w => 
-      String(w.warehouseId) === String(userWhId) || 
-      String(w.warehouseName).toLowerCase() === String(userWhId).toLowerCase()
-    );
+  if (userWhId && String(userWhId).trim() !== '' && String(userWhId).trim().toLowerCase() !== 'all') {
+    const cleanUserWh = String(userWhId).toLowerCase().replace(/^(м\.|м\s+|склад\s+)/g, '').trim();
+
+    let whStock = null;
+    if (item.warehouseStocks && Array.isArray(item.warehouseStocks)) {
+      whStock = item.warehouseStocks.find(w => {
+        const wId = String(w.warehouseId || '').toLowerCase().trim();
+        const wName = String(w.warehouseName || '').toLowerCase().trim();
+        const cleanWName = wName.replace(/^(м\.|м\s+|склад\s+)/g, '').trim();
+
+        return (
+          wId === String(userWhId).toLowerCase().trim() ||
+          wName === String(userWhId).toLowerCase().trim() ||
+          (cleanUserWh && cleanWName === cleanUserWh) ||
+          (cleanUserWh && wName.includes(cleanUserWh)) ||
+          (cleanUserWh && cleanUserWh.includes(cleanWName))
+        );
+      });
+    }
+
     const qty = whStock ? (parseFloat(whStock.quantity) || 0) : 0;
     return {
       isHidden: false,
       stock: qty,
-      warehouseName: whStock?.warehouseName || 'Закріплений склад',
+      warehouseName: whStock?.warehouseName || userWhId,
       isAssignedWarehouse: true
     };
   }
