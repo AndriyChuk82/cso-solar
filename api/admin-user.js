@@ -12,8 +12,10 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    // Verify authentication
-    const token = req.cookies?.cso_auth_token;
+    // Verify authentication (cookie or Bearer token)
+    const authHeader = req.headers?.authorization || req.headers?.Authorization;
+    const bearerToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const token = req.cookies?.cso_auth_token || bearerToken;
     if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
     let payload;

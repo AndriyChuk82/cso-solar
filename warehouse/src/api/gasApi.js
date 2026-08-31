@@ -106,12 +106,22 @@ async function gasRequest(action, params = {}, method = 'GET') {
 }
 
 async function vercelAdminRequest(action, userData) {
+  const token = localStorage.getItem('cso_auth_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
   const response = await fetch('/api/admin-user', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    headers,
     body: JSON.stringify({ action, userData })
   });
-  return response.json();
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    return { success: false, error: data.error || `Помилка сервера (HTTP ${response.status})` };
+  }
+  return data;
 }
 
 // --- АВТОРИЗАЦІЯ ---

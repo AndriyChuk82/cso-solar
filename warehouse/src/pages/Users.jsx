@@ -106,12 +106,12 @@ export default function Users() {
     setSaving(true);
     try {
       const res = editItem ? await updateUser(formData) : await addUser(formData);
-      if (res && res.success === false) {
-        throw new Error(res.error || 'Помилка збереження користувача');
+      if (!res || res.success !== true) {
+        throw new Error(res?.error || 'Помилка збереження користувача');
       }
       setShowModal(false);
       showToast(editItem ? 'Користувача оновлено' : 'Користувача додано', 'success');
-      loadData();
+      await loadData();
     } catch (err) {
       console.error('Помилка:', err);
       showToast(err.message || 'Помилка збереження', 'error');
