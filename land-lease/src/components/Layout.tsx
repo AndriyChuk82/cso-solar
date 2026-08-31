@@ -36,16 +36,22 @@ export default function Layout({ user }: LayoutProps) {
               >
                 <Menu size={20} />
               </button>
-              <img
-                src="https://i.ibb.co/32JD4dc/logo.png"
-                alt="CSO Solar"
-                style={{ height: '40px', width: 'auto', display: 'block' }}
-                className="flex-shrink-0"
-              />
-              <div className="flex flex-col">
-                <div className="font-bold text-gray-900 dark:text-white leading-tight text-lg">CSO Solar</div>
-                <div className="text-[10px] text-gray-500 dark:text-neutral-400 uppercase tracking-wider font-medium">Оренда землі</div>
-              </div>
+              <a
+                href="https://cso-solar.vercel.app/dashboard/"
+                className="flex items-center gap-3 hover:opacity-85 transition-opacity cursor-pointer"
+                title="Перейти на Головну (Панель керування)"
+              >
+                <img
+                  src="https://i.ibb.co/32JD4dc/logo.png"
+                  alt="CSO Solar"
+                  style={{ height: '40px', width: 'auto', display: 'block' }}
+                  className="flex-shrink-0"
+                />
+                <div className="flex flex-col">
+                  <div className="font-bold text-gray-900 dark:text-white leading-tight text-lg">CSO Solar</div>
+                  <div className="text-[10px] text-gray-500 dark:text-neutral-400 uppercase tracking-wider font-medium">Оренда землі</div>
+                </div>
+              </a>
             </div>
 
             <div className="flex items-center gap-4">

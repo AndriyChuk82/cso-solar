@@ -215,7 +215,11 @@ export function PublicFilesPage({ onBackToApp }: PublicFilesPageProps) {
       {/* Header Bar */}
       <header className="sticky top-0 z-40 bg-[#fbfaf5]/90 dark:bg-[#0f172a]/90 backdrop-blur-md border-b border-gray-200/60 dark:border-slate-800/80 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <a
+            href="https://cso-solar.vercel.app/dashboard/"
+            className="flex items-center gap-3 hover:opacity-85 transition-opacity cursor-pointer"
+            title="Перейти на Головну (Панель керування)"
+          >
             <img
               src="https://i.ibb.co/32JD4dc/logo.png"
               alt="CSO Solar Logo"
@@ -229,7 +233,7 @@ export function PublicFilesPage({ onBackToApp }: PublicFilesPageProps) {
                 Публічна бібліотека технічної документації
               </p>
             </div>
-          </div>
+          </a>
 
           <div className="flex items-center gap-2">
             {authenticated && (

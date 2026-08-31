@@ -21,7 +21,11 @@ export default function Layout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="flex items-center justify-between h-16">
             {/* Logo Section */}
-            <div className="flex items-center gap-3">
+            <a
+              href="https://cso-solar.vercel.app/dashboard/"
+              className="flex items-center gap-3 hover:opacity-85 transition-opacity cursor-pointer"
+              title="Перейти на Головну (Панель керування)"
+            >
               <img
                 src="https://i.ibb.co/32JD4dc/logo.png"
                 alt="CSO Solar"
@@ -32,7 +36,7 @@ export default function Layout() {
                 <div className="font-bold text-gray-900 dark:text-white leading-tight text-lg">CSO Solar</div>
                 <div className="text-[10px] text-gray-500 dark:text-neutral-400 uppercase tracking-wider font-medium">Складський облік</div>
               </div>
-            </div>
+            </a>
 
             {/* Navigation and Actions */}
             <div className="flex items-center gap-4">

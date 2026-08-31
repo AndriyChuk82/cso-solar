@@ -212,10 +212,14 @@ export default function App() {
       {/* Header */}
       <header className="bg-white border-b border-slate-200 py-4 px-6 fixed top-0 left-0 right-0 z-10">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <a
+            href="https://cso-solar.vercel.app/dashboard/"
+            className="flex items-center gap-3 hover:opacity-85 transition-opacity cursor-pointer"
+            title="Головна панель керування"
+          >
             <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" className="h-9" />
             <span className="font-bold text-slate-800 tracking-tight text-lg">CSO SOLAR</span>
-          </div>
+          </a>
 
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3 text-sm font-medium text-slate-600">

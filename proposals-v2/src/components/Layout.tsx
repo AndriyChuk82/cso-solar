@@ -61,19 +61,21 @@ export function Layout({ children }: LayoutProps) {
       <header className="bg-white dark:bg-neutral-800 shadow-sm border-b border-gray-200 dark:border-neutral-700 transition-colors">
         <div className="max-w-[100%] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <a href="/dashboard/" className="hover:opacity-80 transition-opacity">
-                <img
-                  src="https://i.ibb.co/32JD4dc/logo.png"
-                  alt="CSO Solar"
-                  className="h-9"
-                />
-              </a>
+            <a
+              href="https://cso-solar.vercel.app/dashboard/"
+              className="flex items-center gap-3 hover:opacity-85 transition-opacity cursor-pointer"
+              title="Перейти на Головну (Панель керування)"
+            >
+              <img
+                src="https://i.ibb.co/32JD4dc/logo.png"
+                alt="CSO Solar"
+                className="h-9"
+              />
               <div className="hidden sm:block">
                 <div className="text-lg font-bold text-gray-900 dark:text-white leading-tight">CSO Solar</div>
                 <div className="text-xs text-gray-500 dark:text-neutral-400">Комерційні пропозиції</div>
               </div>
-            </div>
+            </a>
 
             <div className="flex items-center gap-4">
               <nav className="hidden md:flex items-center gap-1.5">

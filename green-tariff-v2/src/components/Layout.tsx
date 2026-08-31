@@ -45,7 +45,11 @@ export function Layout({ children }: LayoutProps) {
           <div className="flex items-center justify-between h-16">
             
             {/* Logo and branding */}
-            <div className="flex items-center gap-3">
+            <a
+              href="https://cso-solar.vercel.app/dashboard/"
+              className="flex items-center gap-3 hover:opacity-85 transition-opacity cursor-pointer"
+              title="Перейти на Головну (Панель керування)"
+            >
               <img
                 src="https://i.ibb.co/32JD4dc/logo.png"
                 alt="CSO Solar"
@@ -55,7 +59,7 @@ export function Layout({ children }: LayoutProps) {
                 <div className="text-sm font-bold text-gray-900 dark:text-white leading-tight">CSO Solar</div>
                 <div className="text-[10px] font-semibold text-[#f59e0b] tracking-wider uppercase">Зелений тариф <span className="bg-[#f59e0b]/10 text-[#f59e0b] px-1.5 py-0.5 rounded ml-1 text-[8px] font-bold">V2</span></div>
               </div>
-            </div>
+            </a>
 
             {/* Navigation links */}
             <div className="flex items-center gap-6">
