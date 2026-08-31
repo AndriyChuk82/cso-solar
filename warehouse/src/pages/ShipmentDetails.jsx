@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getShipmentById, cancelShipment, deleteShipment } from '../api/gasApi';
+import { getShipmentById, cancelShipment, deleteShipment, formatUserName } from '../api/gasApi';
 import { trackTtn } from '../api/novaPoshtaApi';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
@@ -186,7 +186,7 @@ export default function ShipmentDetails() {
         date: log.created_at,
         icon: log.action_type === 'CANCEL' ? '🔄' : '✏️',
         title: log.entity_title || 'Зміна відправлення',
-        description: `Оператор: ${log.user_name || log.user_email || 'Оператор'}. ${log.details?.comment || ''}`,
+        description: `Оператор: ${formatUserName(log.user_name || log.user_email)}. ${log.details?.comment || ''}`,
         badge: log.action_type,
         badgeBg: 'bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-neutral-300'
       });

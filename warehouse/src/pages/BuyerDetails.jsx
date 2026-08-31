@@ -1895,7 +1895,7 @@ export default function BuyerDetails() {
                                 <span className="text-[10px] text-[var(--text-secondary)] block mt-0.5">{(t.comment || '').replace(/\s*\[invoice_id:[\w-]+\]/g, '')}</span>
                               )}
                               {t.user_email && (
-                                <span className="text-[9px] text-[var(--text-secondary)] opacity-60 block mt-0.5">Вніс: {t.user_email}</span>
+                                <span className="text-[9px] text-[var(--text-secondary)] opacity-60 block mt-0.5">Вніс: {formatUserName(t.user_email)}</span>
                               )}
                             </td>
                             <td className="p-2 text-center text-red-500 font-medium align-top font-mono">
@@ -1994,7 +1994,7 @@ export default function BuyerDetails() {
                             <span className="text-[10px] text-[var(--text-secondary)] block mt-0.5">{t.comment}</span>
                           )}
                           {t.user_email && (
-                            <span className="text-[9px] text-[var(--text-secondary)] opacity-60 block mt-0.5">Вніс: {t.user_email}</span>
+                            <span className="text-[9px] text-[var(--text-secondary)] opacity-60 block mt-0.5">Вніс: {formatUserName(t.user_email)}</span>
                           )}
                         </div>
                         <div className="flex justify-between items-center pt-2 border-t border-[var(--border)]">
