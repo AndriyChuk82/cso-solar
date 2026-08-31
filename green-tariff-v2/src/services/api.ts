@@ -229,14 +229,37 @@ export async function uploadSpecFile(file: File): Promise<{ success: boolean; er
 }
 
 export async function deleteSpecFile(fileName: string): Promise<{ success: boolean; error?: string }> {
-  if (!supabase) return { success: false, error: 'Supabase client not initialized' };
   try {
-    const { error } = await supabase
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('cso_auth_token') || sessionStorage.getItem('cso_auth_token') || '') : '';
+    const res = await fetch('/api/delete-spec-file', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ fileName })
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success) return { success: true };
+      if (data.error) return { success: false, error: data.error };
+    }
+  } catch (apiErr) {
+    console.warn('API delete-spec-file error, trying direct client:', apiErr);
+  }
+
+  if (!supabase) return { success: false, error: 'Помилка з\'єднання з базою' };
+  try {
+    const { data, error } = await supabase
       .storage
       .from('equipment-specs')
       .remove([fileName]);
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      return { success: false, error: 'Не вдалося видалити файл (перевірте права доступу)' };
+    }
     return { success: true };
   } catch (e: any) {
     console.error('Error deleting spec file from Supabase:', e);
