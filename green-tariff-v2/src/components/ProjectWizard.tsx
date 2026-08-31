@@ -38,6 +38,39 @@ export const REQUIRED_FIELDS_BY_STEP: Record<number, (keyof SemanticProject)[]> 
   6: [],
 };
 
+// Витягнення потужності сонячної панелі (у Ватах) з параметрів або назви моделі
+function extractPanelWatts(modelName?: string, powerStr?: string): number | null {
+  if (powerStr) {
+    const numMatch = powerStr.toString().match(/(\d+(?:[.,]\d+)?)/);
+    if (numMatch) {
+      const val = parseFloat(numMatch[1].replace(',', '.'));
+      if (!isNaN(val)) {
+        if (val >= 100 && val <= 1000) return val; // e.g. 650 W
+        if (val > 0 && val < 5) return val * 1000; // e.g. 0.65 kW -> 650 W
+      }
+    }
+  }
+
+  if (modelName) {
+    // 1. Пошук чисел перед суфіксами W, Вт, M, N (напр. 650M, 650W, 585N, 435M)
+    const suffixMatch = modelName.match(/(?:[-_\s/](\d{3})[A-Za-z\s/_-]|(?:^|\s|[A-Za-z])(\d{3})(?:W|Вт|M|m|N|n|P|p|\b))/);
+    if (suffixMatch) {
+      const p = parseInt(suffixMatch[1] || suffixMatch[2]);
+      if (p >= 200 && p <= 800) return p;
+    }
+
+    // 2. Будь-яке 3-значне число в діапазоні типових потужностей панелей (250-750 Вт)
+    const all3Digits = modelName.match(/\b([2-7]\d{2})\b/g);
+    if (all3Digits) {
+      for (const num of all3Digits) {
+        const p = parseInt(num);
+        if (p >= 250 && p <= 750) return p;
+      }
+    }
+  }
+  return null;
+}
+
 // Розрахунок оцінки відповідності імені файлу та назви моделі (від 0 до 100)
 function calculateMatchScore(fileName: string, modelName: string): number {
   const normalizeText = (text: string) => {
@@ -246,12 +279,12 @@ export function ProjectWizard() {
         const targetCount = field === 'panelCount' ? value : newData.panelCount;
         
         const p = equipment.panels.find(p => p.model === targetModel);
-        if (p && p.power) {
-          const perPanelPower = parseFloat(p.power.replace(/[^\d.]/g, '')) / 1000; // W to kW
-          const count = parseInt(targetCount);
-          if (!isNaN(perPanelPower) && !isNaN(count)) {
-            newData.totalPanelPower = (perPanelPower * count).toFixed(3);
-          }
+        const watts = extractPanelWatts(targetModel, p?.power);
+        const count = parseInt(targetCount);
+
+        if (watts && !isNaN(count) && count > 0) {
+          const totalKw = (watts * count) / 1000;
+          newData.totalPanelPower = parseFloat(totalKw.toFixed(3)).toString();
         }
       }
 
@@ -825,7 +858,21 @@ export function ProjectWizard() {
                       step="any" 
                       value={formData.totalPanelPower} 
                       onChange={(v) => handleChange('totalPanelPower', v)} 
+                      placeholder="напр. 31.2"
                     />
+                    {(() => {
+                      const p = equipment.panels.find(p => p.model === formData.panelModel);
+                      const watts = extractPanelWatts(formData.panelModel, p?.power);
+                      const count = parseInt(formData.panelCount);
+                      if (watts && !isNaN(count) && count > 0) {
+                        return (
+                          <div className="text-[11px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1 font-medium">
+                            <span>⚡ Авторозрахунок: {count} шт × {watts} Вт = {((watts * count) / 1000).toFixed(2)} кВт (можна редагувати)</span>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </FormField>
 
                   <FormField label="Місце встановлення панелей" required>
