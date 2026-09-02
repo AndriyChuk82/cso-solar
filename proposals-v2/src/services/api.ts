@@ -1,5 +1,5 @@
 import { CONFIG } from '../config';
-import type { Product, Category, SupplierOffer } from '../types';
+import type { Product, Category, SupplierOffer, SupplierStatus } from '../types';
 import { SOLARVERSE_STATIC_PRODUCTS } from '../data/solarverseData';
 
 /**
@@ -1277,10 +1277,67 @@ export async function fetchAllData() {
       heliusProducts.map(normalizeCableSpool),
       solarverseProducts.map(normalizeCableSpool)
     );
+
+    const nowIso = new Date().toISOString();
+    const isSolarverseLive = !!(res.solarverseProducts && Array.isArray(res.solarverseProducts) && res.solarverseProducts.length > 0);
+
+    const supplierStatuses: SupplierStatus[] = [
+      {
+        id: 'pe',
+        name: 'Правильне Електроживлення',
+        code: 'ПЕ',
+        status: gasProducts.length > 0 ? 'online' : 'error',
+        count: gasProducts.length,
+        lastUpdated: nowIso,
+        source: 'Google Apps Script (онлайн)',
+        isStale: false
+      },
+      {
+        id: 'biz',
+        name: 'Biz Solar',
+        code: 'БІЗ',
+        status: bizProducts.length > 0 ? 'online' : 'error',
+        count: bizProducts.length,
+        lastUpdated: nowIso,
+        source: 'Прямий API Biz Solar',
+        isStale: false
+      },
+      {
+        id: 'helius',
+        name: 'Helius',
+        code: 'ХЕЛ',
+        status: heliusProducts.length > 0 ? 'online' : 'error',
+        count: heliusProducts.length,
+        lastUpdated: nowIso,
+        source: 'Прямий API Helius',
+        isStale: false
+      },
+      {
+        id: 'solarverse',
+        name: 'Solarverse',
+        code: 'СВ',
+        status: isSolarverseLive ? 'online' : 'warning',
+        count: solarverseProducts.length,
+        lastUpdated: isSolarverseLive ? nowIso : '2026-08-28T00:00:00.000Z',
+        source: isSolarverseLive ? 'Онлайн таблиця Solarverse' : 'Зафіксована база (28.08.2026)',
+        isStale: !isSolarverseLive,
+        message: !isSolarverseLive ? 'Доступ до Proton Drive закрито постачальником. Використовується зафіксована копія.' : undefined
+      },
+      {
+        id: 'custom',
+        name: 'Власні матеріали (CSO)',
+        code: 'CSO',
+        status: 'online',
+        count: customMaterialsFromGAS.length,
+        lastUpdated: nowIso,
+        source: 'База CSO Solar',
+        isStale: false
+      }
+    ];
     
     const endTime = performance.now();
     console.log(`⚡ Каталоги завантажено та злито за ${Math.round(endTime - startTime)}мс! Усього згрупованих товарів: ${products.length}`);
-    return { rates, products, customMaterials: customMaterialsFromGAS };
+    return { rates, products, customMaterials: customMaterialsFromGAS, supplierStatuses };
   } catch (error) {
     console.error('Fetch all failed:', error);
     return null;

@@ -209,3 +209,15 @@ export interface RegularClient {
   isKpClient: boolean;     // чи позначений як клієнт КП
   prices?: ClientPriceEntry[];
 }
+
+export interface SupplierStatus {
+  id: string;
+  name: string;
+  code: string;
+  status: 'online' | 'warning' | 'error';
+  count: number;
+  lastUpdated: string;
+  source: string;
+  message?: string;
+  isStale?: boolean;
+}

@@ -1,7 +1,61 @@
 import { StateCreator } from 'zustand';
-import { Product, Category } from '../../types';
+import { Product, Category, SupplierStatus } from '../../types';
 import { fetchAllProducts, fetchRates, isSavedProposal } from '../../services/api';
 import { CONFIG } from '../../config';
+
+const DEFAULT_SUPPLIER_STATUSES: SupplierStatus[] = [
+  {
+    id: 'pe',
+    name: 'Правильне Електроживлення',
+    code: 'ПЕ',
+    status: 'online',
+    count: 0,
+    lastUpdated: new Date().toISOString(),
+    source: 'Google Apps Script (онлайн)',
+    isStale: false
+  },
+  {
+    id: 'biz',
+    name: 'Biz Solar',
+    code: 'БІЗ',
+    status: 'online',
+    count: 0,
+    lastUpdated: new Date().toISOString(),
+    source: 'Прямий API Biz Solar',
+    isStale: false
+  },
+  {
+    id: 'helius',
+    name: 'Helius',
+    code: 'ХЕЛ',
+    status: 'online',
+    count: 0,
+    lastUpdated: new Date().toISOString(),
+    source: 'Прямий API Helius',
+    isStale: false
+  },
+  {
+    id: 'solarverse',
+    name: 'Solarverse',
+    code: 'СВ',
+    status: 'warning',
+    count: 0,
+    lastUpdated: '2026-08-28T00:00:00.000Z',
+    source: 'Зафіксована база (28.08.2026)',
+    isStale: true,
+    message: 'Доступ до Proton Drive закрито постачальником. Використовується зафіксована копія.'
+  },
+  {
+    id: 'custom',
+    name: 'Власні матеріали (CSO)',
+    code: 'CSO',
+    status: 'online',
+    count: 0,
+    lastUpdated: new Date().toISOString(),
+    source: 'База CSO Solar',
+    isStale: false
+  }
+];
 
 /**
  * Products Slice - управління продуктами та категоріями
@@ -10,12 +64,15 @@ export interface ProductsSlice {
   // State
   products: Product[];
   categories: Category[];
+  supplierStatuses: SupplierStatus[];
+  isRefreshingSuppliers: boolean;
   loading: boolean;
   error: string | null;
 
   // Actions
   loadProducts: () => Promise<void>;
   refreshRates: (isManual?: boolean) => Promise<void>;
+  refreshSupplierPrices: () => Promise<void>;
 }
 
 export const createProductsSlice: StateCreator<
@@ -27,6 +84,8 @@ export const createProductsSlice: StateCreator<
   // Initial State
   products: [],
   categories: [],
+  supplierStatuses: DEFAULT_SUPPLIER_STATUSES,
+  isRefreshingSuppliers: false,
   loading: false,
   error: null,
 
@@ -97,8 +156,9 @@ export const createProductsSlice: StateCreator<
                 });
 
               const customMaterials = data.customMaterials || [];
+              const supplierStatuses = data.supplierStatuses || DEFAULT_SUPPLIER_STATUSES;
               try {
-                localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), products, categories, rates, customMaterials }));
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), products, categories, rates, customMaterials, supplierStatuses }));
               } catch (storageError) {
                 console.warn('⚠️ Не вдалося зберегти кеш у localStorage (переповнено):', storageError);
               }
@@ -110,6 +170,7 @@ export const createProductsSlice: StateCreator<
                   products,
                   categories,
                   customMaterials,
+                  supplierStatuses,
                 };
                 if (rates && rates.usd && rates.eur) {
                   newState.settings = { ...state.settings, usdRate: rates.usd, eurRate: rates.eur };
@@ -157,6 +218,7 @@ export const createProductsSlice: StateCreator<
                 products: cache.products,
                 categories: cache.categories,
                 customMaterials: cache.customMaterials || [],
+                supplierStatuses: cache.supplierStatuses || DEFAULT_SUPPLIER_STATUSES,
                 loading: false,
                 error: null
               };
@@ -242,8 +304,9 @@ export const createProductsSlice: StateCreator<
         });
 
       const customMaterials = data.customMaterials || [];
+      const supplierStatuses = data.supplierStatuses || DEFAULT_SUPPLIER_STATUSES;
       try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, products, categories, rates, customMaterials }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, products, categories, rates, customMaterials, supplierStatuses }));
       } catch (storageError) {
         console.warn('⚠️ Не вдалося зберегти кеш у localStorage (переповнено):', storageError);
       }
@@ -255,6 +318,7 @@ export const createProductsSlice: StateCreator<
           products,
           categories,
           customMaterials,
+          supplierStatuses,
           loading: false,
         };
         
@@ -268,72 +332,75 @@ export const createProductsSlice: StateCreator<
         return newState;
       });
     } catch (error) {
-      console.error('Failed to load products, using mock data:', error);
-      
-      // Mock дані для тестування
-      const mockProducts: Product[] = [
-        {
-          id: 'mock_1',
-          name: 'Сонячна панель JA Solar 550W',
-          category: 'Сонячні батареї',
-          mainCategory: 'Сонячні батареї',
-          price: 120,
-          currency: 'USD',
-          unit: 'шт',
-          description: 'Монокристалічна панель 550Вт',
-          manufacturer: 'JA Solar',
-          power: '550W',
-          warranty: '25 років',
-          inStock: true,
-        },
-        {
-          id: 'mock_2',
-          name: 'Інвертор Growatt 10kW',
-          category: 'Гібридні інвертори',
-          mainCategory: 'Інвертори',
-          price: 850,
-          currency: 'USD',
-          unit: 'шт',
-          description: 'Гібридний інвертор 10кВт',
-          manufacturer: 'Growatt',
-          power: '10kW',
-          warranty: '10 років',
-          inStock: true,
-        },
-        {
-          id: 'mock_3',
-          name: 'Акумулятор Pylontech US5000',
-          category: 'АКБ',
-          mainCategory: 'АКБ та BMS',
-          price: 1200,
-          currency: 'USD',
-          unit: 'шт',
-          description: 'Літій-іонний акумулятор 4.8кВт·год',
-          manufacturer: 'Pylontech',
-          power: '4.8kWh',
-          warranty: '10 років',
-          inStock: true,
-        },
-      ];
-
-      const mockCategories: Category[] = [
-        { name: 'Сонячні батареї', mainCategory: 'Сонячні батареї', count: 1 },
-        { name: 'Інвертори', mainCategory: 'Інвертори', count: 1 },
-        { name: 'АКБ та BMS', mainCategory: 'АКБ та BMS', count: 1 },
-      ];
-
+      console.error('Failed to load products:', error);
       set({
-        products: mockProducts,
-        categories: mockCategories,
         loading: false,
-        error: null
+        error: error instanceof Error ? error.message : 'Помилка завантаження продуктів'
       });
     }
   },
 
   refreshRates: async () => {
-    const rates = await fetchRates();
-    // Rates будуть оновлені в settingsSlice
-    // Тут просто тригеримо оновлення
+    await fetchRates();
+  },
+
+  refreshSupplierPrices: async () => {
+    set({ isRefreshingSuppliers: true });
+    try {
+      const CACHE_KEY = `cso-products-cache-${CONFIG.CACHE_VERSION}`;
+      const { fetchAllData } = await import('../../services/api');
+      const data = await fetchAllData();
+      if (data && data.products && data.products.length > 0) {
+        const allProducts = [...(data.products || []), ...(data.customMaterials || [])];
+        const rates = data.rates;
+        const products = allProducts;
+        const customMaterials = data.customMaterials || [];
+        const supplierStatuses = data.supplierStatuses || DEFAULT_SUPPLIER_STATUSES;
+
+        const categoryOrder = ['Сонячні батареї', 'Інвертори', 'АКБ та BMS'];
+        const categories = Array.from(new Set(products.map(p => p.mainCategory || 'Інше')))
+          .filter(name => name.length > 0)
+          .map(name => ({
+            name,
+            mainCategory: name,
+            count: products.filter(p => p.mainCategory === name).length
+          }))
+          .sort((a, b) => {
+            const idxA = categoryOrder.indexOf(a.name);
+            const idxB = categoryOrder.indexOf(b.name);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+            return a.name.localeCompare(b.name);
+          });
+
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({
+            timestamp: Date.now(),
+            products,
+            categories,
+            rates,
+            customMaterials,
+            supplierStatuses
+          }));
+        } catch (storageError) {
+          console.warn('Storage full', storageError);
+        }
+
+        set((state: any) => ({
+          ...state,
+          products,
+          categories,
+          customMaterials,
+          supplierStatuses,
+          isRefreshingSuppliers: false
+        }));
+      } else {
+        set({ isRefreshingSuppliers: false });
+      }
+    } catch (e) {
+      console.error('Failed to refresh supplier prices:', e);
+      set({ isRefreshingSuppliers: false });
+    }
   },
 });

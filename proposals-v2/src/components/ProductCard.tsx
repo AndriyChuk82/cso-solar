@@ -36,6 +36,7 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
   const customMaterials = useProposalStore((state) => state.customMaterials);
   const favorites = useProposalStore(selectFavorites);
   const useVatPrices = useProposalStore((state) => state.proposal.useVatPrices || false);
+  const supplierStatuses = useProposalStore((state: any) => state.supplierStatuses || []);
 
   // Dynamically select best offer if supplier choice was not manually overridden
   const activeOffer = useMemo(() => {
@@ -264,10 +265,18 @@ export const ProductCard = memo(function ProductCard({ product }: ProductCardPro
               })}
             </div>
           ) : (
-            <div className="flex mt-2 select-none">
+            <div className="flex items-center gap-1.5 mt-2 select-none">
               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tight bg-primary/10 dark:bg-amber-500/10 text-primary dark:text-amber-400 border border-primary/20 dark:border-amber-500/20">
                 Постачальник: {getSupplierDisplayName(activeSupplier)}
               </span>
+              {supplierStatuses.some((s: any) => (s.name === activeSupplier || s.code === activeSupplier || (activeSupplier === 'Solarverse' && s.id === 'solarverse') || (activeSupplier === 'СВ' && s.id === 'solarverse')) && (s.status === 'warning' || s.isStale)) && (
+                <span 
+                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40"
+                  title="Прайс цього постачальника зафіксовано з резервної копії (28.08.2026)"
+                >
+                  ⚠️ зафіксовано
+                </span>
+              )}
             </div>
           )}
           {product.inStock === false && (
