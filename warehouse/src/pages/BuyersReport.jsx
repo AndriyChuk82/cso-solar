@@ -157,7 +157,7 @@ export default function BuyersReport() {
       const amt = isReservedIssue ? 0 : (parseFloat(t.amount) || 0);
       const cur = t.currency;
 
-      if (t.date < dateFrom) {
+      if (dateFrom && t.date < dateFrom) {
         if (t.type === 'issue') {
           if (cur === 'UAH') uahOpening -= amt;
           if (cur === 'USD') usdOpening -= amt;
@@ -170,12 +170,9 @@ export default function BuyersReport() {
         if (t.type === 'issue' && t.linkedPayments) {
           t.linkedPayments.forEach(lp => {
             const lpAmt = parseFloat(lp.amount) || 0;
-            if (lp.date < dateFrom) {
+            if (dateFrom && lp.date < dateFrom) {
               if (lp.currency === 'UAH') uahOpening += lpAmt;
               if (lp.currency === 'USD') usdOpening += lpAmt;
-            } else if (lp.date >= dateFrom && lp.date <= dateTo) {
-              if (lp.currency === 'UAH') uahPaid += lpAmt;
-              if (lp.currency === 'USD') usdPaid += lpAmt;
             }
           });
         }
@@ -192,40 +189,62 @@ export default function BuyersReport() {
       const amt = isReservedIssue ? 0 : (parseFloat(t.amount) || 0);
       const cur = t.currency;
 
+      const isTxInPeriod = (!dateFrom || t.date >= dateFrom) && (!dateTo || t.date <= dateTo);
+
       let uahDeb = 0, uahCred = 0, usdDeb = 0, usdCred = 0;
 
       if (t.type === 'issue') {
-        if (!isReservedIssue) {
-          if (cur === 'UAH') { uahDeb = amt; currentUahRunning -= amt; uahIssued += amt; }
-          if (cur === 'USD') { usdDeb = amt; currentUsdRunning -= amt; usdIssued += amt; }
+        if (!isReservedIssue && isTxInPeriod) {
+          if (cur === 'UAH') { uahDeb = amt; uahIssued += amt; }
+          if (cur === 'USD') { usdDeb = amt; usdIssued += amt; }
         }
         
         // Враховуємо лінковані платежі в межах періоду
         if (t.linkedPayments) {
           t.linkedPayments.forEach(lp => {
             const lpAmt = parseFloat(lp.amount) || 0;
-            if (lp.currency === 'UAH') {
-              uahCred += lpAmt;
-              currentUahRunning += lpAmt;
-              if (lp.date >= dateFrom && lp.date <= dateTo) {
+            const lpIsInPeriod = (!dateFrom || lp.date >= dateFrom) && (!dateTo || lp.date <= dateTo);
+            if (lpIsInPeriod) {
+              if (lp.currency === 'UAH') {
+                uahCred += lpAmt;
                 uahPaid += lpAmt;
               }
-            }
-            if (lp.currency === 'USD') {
-              usdCred += lpAmt;
-              currentUsdRunning += lpAmt;
-              if (lp.date >= dateFrom && lp.date <= dateTo) {
+              if (lp.currency === 'USD') {
+                usdCred += lpAmt;
                 usdPaid += lpAmt;
               }
             }
           });
         }
       } else {
-        if (cur === 'UAH') { uahCred = amt; currentUahRunning += amt; if (t.date >= dateFrom && t.date <= dateTo) uahPaid += amt; }
-        if (cur === 'USD') { usdCred = amt; currentUsdRunning += amt; if (t.date >= dateFrom && t.date <= dateTo) usdPaid += amt; }
+        if (isTxInPeriod) {
+          if (cur === 'UAH') {
+            if (amt >= 0) {
+              uahCred = amt;
+              uahPaid += amt;
+            } else {
+              uahDeb = Math.abs(amt);
+              uahIssued += Math.abs(amt);
+            }
+          }
+          if (cur === 'USD') {
+            if (amt >= 0) {
+              usdCred = amt;
+              usdPaid += amt;
+            } else {
+              usdDeb = Math.abs(amt);
+              usdIssued += Math.abs(amt);
+            }
+          }
+        }
       }
 
-      if (t.date >= dateFrom && t.date <= dateTo) {
+      const hasActivityInPeriod = isTxInPeriod || (t.type === 'issue' && t.linkedPayments?.some(lp => (!dateFrom || lp.date >= dateFrom) && (!dateTo || lp.date <= dateTo)));
+
+      if (hasActivityInPeriod) {
+        currentUahRunning = currentUahRunning - uahDeb + uahCred;
+        currentUsdRunning = currentUsdRunning - usdDeb + usdCred;
+
         periodItems.push({
           ...t,
           uahDeb,
@@ -281,7 +300,7 @@ export default function BuyersReport() {
   // Фільтрування загального журналу операцій (вкладка 2)
   const filteredJournalTransactions = processedTransactions
     .filter(t => t.is_archived !== true)
-    .filter(t => t.date >= dateFrom && t.date <= dateTo)
+    .filter(t => (!dateFrom || t.date >= dateFrom) && (!dateTo || t.date <= dateTo))
     .filter(t => currencyFilter === 'ALL' || t.currency === currencyFilter)
     .sort((a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at)); // Новіші спочатку
 
