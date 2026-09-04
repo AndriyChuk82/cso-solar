@@ -625,7 +625,7 @@ export default function ShipmentForm() {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto min-h-[220px]">
+          <div className="overflow-x-auto" style={{ minHeight: '340px', paddingBottom: '140px' }}>
             <table className="w-full text-xs text-left border-collapse min-w-[700px]">
               <thead>
                 <tr className="bg-gray-50 dark:bg-neutral-700/50 text-gray-500 dark:text-neutral-400 font-semibold border-b border-gray-200 dark:border-neutral-700">
@@ -639,7 +639,6 @@ export default function ShipmentForm() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-neutral-700">
                 {items.map((item, index) => {
-                  const isLastRows = index >= items.length - 2 && items.length >= 3;
                   const whStock = warehouseStockMap[item.warehouseId]?.[item.productId];
                   const availableQty = whStock ? (whStock.quantity - whStock.reserved) : null;
                   const itemSum = (parseFloat(item.quantity || 0) * parseFloat(item.price || 0));
@@ -666,7 +665,7 @@ export default function ShipmentForm() {
                                   onChange={(e) => setSearchText(e.target.value)}
                                 />
                                 {/* Dropdown menu */}
-                                <div className={`absolute left-2 right-2 ${isLastRows ? 'bottom-full mb-1' : 'top-12'} bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl shadow-xl max-h-72 overflow-y-auto z-50 text-xs divide-y divide-gray-100 dark:divide-neutral-700`}>
+                                <div className="absolute left-2 right-2 top-full mt-1 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl shadow-2xl max-h-72 overflow-y-auto z-50 text-xs divide-y divide-gray-100 dark:divide-neutral-700">
                                   {filteredProducts.length === 0 ? (
                                     <div className="p-3 text-gray-400 text-center">Нічого не знайдено</div>
                                   ) : (

@@ -279,7 +279,7 @@ export default function OperationForm({ type = 'income' }) {
         {/* Таблична частина (1С Склад стиль) */}
         <div className="card bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-3">
           {/* Десктопна версія: Таблиця (показується від sm: і вище) */}
-          <div className="hidden sm:block overflow-x-auto" style={{ minHeight: '260px' }}>
+          <div className="hidden sm:block overflow-x-auto" style={{ minHeight: '340px', paddingBottom: '140px' }}>
             <table className="w-full text-xs text-left border-collapse min-w-[600px]">
               <thead>
                 <tr className="bg-[var(--bg)] text-[var(--text-secondary)] font-semibold border-b border-[var(--border)]">
@@ -291,7 +291,6 @@ export default function OperationForm({ type = 'income' }) {
               </thead>
               <tbody className="divide-y divide-[var(--border)]">
                 {formData.items.map((item, index) => {
-                  const isLastRows = index >= formData.items.length - 2 && formData.items.length >= 3;
                   const stock = balances[item.productId] || 0;
                   const isOver = !isIncome && item.productId && parseFloat(item.quantity) > stock;
 
@@ -309,13 +308,13 @@ export default function OperationForm({ type = 'income' }) {
                                 <input
                                   type="text"
                                   autoFocus
-                                  className="w-full p-1.5 rounded border border-blue-500 bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none"
+                                  className="w-full p-1.5 rounded border border-blue-500 bg-[var(--bg)] text-[var(--text)] text-[16px] sm:text-xs focus:outline-none shadow-sm"
                                   placeholder="Введіть назву або артикул..."
                                   value={searchText}
                                   onChange={(e) => setSearchText(e.target.value)}
                                 />
                                 {/* Випадаючий список пошуку */}
-                                <div className={`absolute left-2 right-2 ${isLastRows ? 'bottom-full mb-1' : 'top-11'} bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-xl max-h-80 overflow-y-auto z-50 text-xs divide-y divide-[var(--border)]`}>
+                                <div className="absolute left-2 right-2 top-full mt-1 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-2xl max-h-72 overflow-y-auto z-50 text-xs divide-y divide-[var(--border)]">
                                   {filteredProducts.length === 0 ? (
                                     <div className="p-2 text-[var(--text-secondary)] text-center">Нічого не знайдено</div>
                                   ) : (
