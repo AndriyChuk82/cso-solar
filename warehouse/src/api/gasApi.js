@@ -655,7 +655,7 @@ export async function getBalances(warehouseId, includeZero = false) {
     }
     const reservedQty = reservedMap[prodId];
     finalBalances[prodId].reserved = reservedQty;
-    finalBalances[prodId].quantity -= reservedQty; // зменшуємо вільний залишок
+    // Варіант 3: Бронь не зменшує обліковий залишок до моменту фактичної видачі
   });
 
   return { 
@@ -3065,35 +3065,6 @@ export async function getPriceListData() {
         stockMap[pid].byWarehouse[whId].quantity -= qty;
       }
     });
-  }
-
-  // Віднімаємо зарезервовані товари з вільного залишку для синхронізації з підсумком дня
-  try {
-    const { data: resItems } = await supabase
-      .from('buyer_transaction_items')
-      .select('product_id, warehouse_id, quantity, buyer_transactions(status, is_archived)');
-
-    if (resItems) {
-      resItems.forEach(item => {
-        const tx = item.buyer_transactions;
-        if (tx && tx.status === 'reserved' && !tx.is_archived && item.product_id) {
-          const qty = parseFloat(item.quantity) || 0;
-          let whId = item.warehouse_id || 'main';
-          if (whId && !whMap[whId]) {
-            const pot = Object.keys(whMap).find(k => whMap[k]?.toLowerCase() === String(whId).toLowerCase().trim());
-            if (pot) whId = pot;
-          }
-          if (stockMap[item.product_id]) {
-            stockMap[item.product_id].total -= qty;
-            if (stockMap[item.product_id].byWarehouse[whId]) {
-              stockMap[item.product_id].byWarehouse[whId].quantity -= qty;
-            }
-          }
-        }
-      });
-    }
-  } catch (e) {
-    console.warn("Could not fetch reserves for price list:", e);
   }
 
   // 5. Об'єднуємо всі товари з Каталогу з даними з Google Таблиці через розумний матчинг
