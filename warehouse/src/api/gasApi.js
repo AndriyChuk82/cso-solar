@@ -552,10 +552,10 @@ export async function deleteOperation(operationId) {
 
 export async function getBalances(warehouseId, includeZero = false) {
   if (!supabase) return { success: true, balances: [] };
-  const { rawOperations } = await getOperations({ warehouseId });
+  const { operations } = await getOperations({ warehouseId });
   
   const finalBalances = {};
-  rawOperations.forEach(op => {
+  operations.forEach(op => {
     if (!finalBalances[op.product_id]) {
       finalBalances[op.product_id] = { 
         product_id: op.product_id, 
@@ -3042,8 +3042,8 @@ export async function getPriceListData() {
 
   // Розраховуємо залишки по кожному товару і по складах
   const stockMap = {}; // productId -> { total: number, byWarehouse: { [whId]: { warehouseId, warehouseName, quantity } } }
-  if (opsRes.status === 'fulfilled' && opsRes.value?.rawOperations) {
-    opsRes.value.rawOperations.forEach(op => {
+  if (opsRes.status === 'fulfilled' && opsRes.value?.operations) {
+    opsRes.value.operations.forEach(op => {
       const pid = op.product_id;
       if (!pid) return;
       if (!stockMap[pid]) {
@@ -3051,7 +3051,7 @@ export async function getPriceListData() {
       }
       const qty = parseFloat(op.quantity) || 0;
       const whId = op.warehouse_id || op.warehouseId || 'main';
-      const whName = whMap[whId] || op.warehouse_name || op.warehouse_id || 'Склад';
+      const whName = op.warehouse_name || whMap[whId] || 'Склад';
 
       if (!stockMap[pid].byWarehouse[whId]) {
         stockMap[pid].byWarehouse[whId] = { warehouseId: whId, warehouseName: whName, quantity: 0 };
@@ -3065,6 +3065,35 @@ export async function getPriceListData() {
         stockMap[pid].byWarehouse[whId].quantity -= qty;
       }
     });
+  }
+
+  // Віднімаємо зарезервовані товари з вільного залишку для синхронізації з підсумком дня
+  try {
+    const { data: resItems } = await supabase
+      .from('buyer_transaction_items')
+      .select('product_id, warehouse_id, quantity, buyer_transactions(status, is_archived)');
+
+    if (resItems) {
+      resItems.forEach(item => {
+        const tx = item.buyer_transactions;
+        if (tx && tx.status === 'reserved' && !tx.is_archived && item.product_id) {
+          const qty = parseFloat(item.quantity) || 0;
+          let whId = item.warehouse_id || 'main';
+          if (whId && !whMap[whId]) {
+            const pot = Object.keys(whMap).find(k => whMap[k]?.toLowerCase() === String(whId).toLowerCase().trim());
+            if (pot) whId = pot;
+          }
+          if (stockMap[item.product_id]) {
+            stockMap[item.product_id].total -= qty;
+            if (stockMap[item.product_id].byWarehouse[whId]) {
+              stockMap[item.product_id].byWarehouse[whId].quantity -= qty;
+            }
+          }
+        }
+      });
+    }
+  } catch (e) {
+    console.warn("Could not fetch reserves for price list:", e);
   }
 
   // 5. Об'єднуємо всі товари з Каталогу з даними з Google Таблиці через розумний матчинг
