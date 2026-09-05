@@ -235,12 +235,34 @@ function inferProductType(name = '', category = '') {
 }
 
 function inferCategoryGroup(type = '', name = '') {
-  const t = (type + ' ' + name).toLowerCase();
-  if (t.includes('інвертор')) return 'Інвертори';
-  if (t.includes('акумулятор') || t.includes('акб') || t.includes('bms') || t.includes('стійк')) return 'Акумулятори та BMS';
-  if (t.includes('фотомодуль') || t.includes('панел') || t.includes('модул')) return 'Сонячні панелі';
-  if (t.includes('кабель') || t.includes('комутац')) return 'Кабель';
-  if (t.includes('кріплен')) return 'Кріплення';
+  const tp = String(type || '').toLowerCase();
+  const n = String(name || '').toLowerCase();
+
+  // 1. Кріплення та конструкції (перевіряємо першими, щоб "міжпанельні" прижими не потрапляли в панелі через корінь "панел")
+  if (tp.includes('кріплен') || tp.includes('конструкці') || n.includes('кріплен') || n.includes('прижим') || n.includes('профіль') || n.includes('затискач') || n.includes('болт') || n.includes('гайка') || n.includes('монтаж')) {
+    return 'Кріплення';
+  }
+
+  // 2. Інвертори
+  if (tp.includes('інвертор') || n.includes('інвертор') || n.includes('inverter') || n.includes('sun-') || n.includes('solis') || n.includes('huawei')) {
+    return 'Інвертори';
+  }
+
+  // 3. Акумулятори та BMS
+  if (tp.includes('акумулятор') || tp.includes('bms') || tp.includes('стійк') || n.includes('акумулятор') || n.includes('акб') || n.includes('battery') || n.includes('bms') || n.includes('стійк') || n.includes('rack') || n.includes('bos-g') || n.includes('bos-b') || n.includes('se-f')) {
+    return 'Акумулятори та BMS';
+  }
+
+  // 4. Кабель та комутація
+  if (tp.includes('кабель') || tp.includes('комутац') || n.includes('кабель') || n.includes('cable') || n.includes('провід') || n.includes('mc4')) {
+    return 'Кабель';
+  }
+
+  // 5. Сонячні панелі (фотомодулі)
+  if (tp.includes('фотомодуль') || tp.includes('панел') || n.includes('фотомодуль') || n.includes('сонячн') || n.includes('longi') || n.includes('jasolar') || n.includes('jinko') || n.includes('trina') || n.includes('tongwei') || /lr\d-/i.test(n) || /jam\d/i.test(n) || n.includes('bificial') || n.includes('bifacial') || (n.includes('панел') && !n.includes('міжпанел'))) {
+    return 'Сонячні панелі';
+  }
+
   return 'Інше';
 }
 
