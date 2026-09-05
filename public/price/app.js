@@ -28,21 +28,115 @@
   let searchQuery = '';
   let onlyInStock = false;
   let toastTimeout = null;
+  let scrollRestored = false;
 
   // Ініціалізація
   init();
 
   async function init() {
+    loadSavedState();
     setupEventListeners();
     showSkeleton();
     await loadData();
   }
+
+  function saveState() {
+    try {
+      const params = new URLSearchParams();
+      if (selectedCategory && selectedCategory !== 'Всі') {
+        params.set('cat', selectedCategory);
+      }
+      if (searchQuery) {
+        params.set('q', searchQuery);
+      }
+      if (onlyInStock) {
+        params.set('stock', '1');
+      }
+
+      const queryString = params.toString();
+      const newUrl = window.location.pathname + (queryString ? '?' + queryString : '');
+      window.history.replaceState(null, '', newUrl);
+
+      sessionStorage.setItem('cso_price_state', JSON.stringify({
+        cat: selectedCategory,
+        q: searchQuery,
+        stock: onlyInStock
+      }));
+    } catch (e) {}
+  }
+
+  function loadSavedState() {
+    try {
+      // 1. Пріоритет: параметри з URL (напр. /price?cat=Сонячні+панелі)
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlCat = urlParams.get('cat');
+      const urlQ = urlParams.get('q');
+      const urlStock = urlParams.get('stock');
+
+      if (urlCat || urlQ || urlStock) {
+        if (urlCat) selectedCategory = urlCat;
+        if (urlQ) {
+          searchQuery = urlQ;
+          searchInput.value = urlQ;
+          clearSearchBtn.style.display = 'flex';
+        }
+        if (urlStock === '1' || urlStock === 'true') {
+          onlyInStock = true;
+          onlyInStockCheckbox.checked = true;
+        }
+        return;
+      }
+
+      // 2. Якщо в URL немає — відновлюємо з sessionStorage
+      const saved = sessionStorage.getItem('cso_price_state');
+      if (saved) {
+        const state = JSON.parse(saved);
+        if (state.cat) selectedCategory = state.cat;
+        if (state.q) {
+          searchQuery = state.q;
+          searchInput.value = state.q;
+          clearSearchBtn.style.display = 'flex';
+        }
+        if (state.stock) {
+          onlyInStock = true;
+          onlyInStockCheckbox.checked = true;
+        }
+      }
+    } catch (e) {}
+  }
+
+  function restoreScroll() {
+    if (scrollRestored) return;
+    try {
+      const savedScroll = sessionStorage.getItem('cso_price_scroll');
+      if (savedScroll) {
+        const top = parseInt(savedScroll, 10);
+        if (!isNaN(top) && top > 0) {
+          setTimeout(() => {
+            window.scrollTo({ top, behavior: 'instant' });
+          }, 30);
+        }
+      }
+      scrollRestored = true;
+    } catch (e) {}
+  }
+
+  // Зберігаємо позицію скролу
+  let scrollSaveTimer = null;
+  window.addEventListener('scroll', () => {
+    if (scrollSaveTimer) return;
+    scrollSaveTimer = setTimeout(() => {
+      sessionStorage.setItem('cso_price_scroll', String(window.scrollY));
+      scrollSaveTimer = null;
+    }, 150);
+  }, { passive: true });
 
   function setupEventListeners() {
     // Пошук із затримкою (debounce)
     searchInput.addEventListener('input', (e) => {
       searchQuery = e.target.value.trim();
       clearSearchBtn.style.display = searchQuery ? 'flex' : 'none';
+      saveState();
       render();
     });
 
@@ -51,12 +145,14 @@
       searchQuery = '';
       clearSearchBtn.style.display = 'none';
       searchInput.focus();
+      saveState();
       render();
     });
 
     // Перемикач наявності
     onlyInStockCheckbox.addEventListener('change', (e) => {
       onlyInStock = e.target.checked;
+      saveState();
       render();
     });
 
@@ -69,6 +165,9 @@
       onlyInStock = false;
       selectedCategory = 'Всі';
       updateCategoryTabs();
+      sessionStorage.removeItem('cso_price_state');
+      sessionStorage.removeItem('cso_price_scroll');
+      window.history.replaceState(null, '', window.location.pathname);
       render();
     });
 
@@ -109,6 +208,7 @@
         // Рендеримо таби категорій та товари
         renderCategories();
         render();
+        restoreScroll();
       } else {
         throw new Error(data.error || 'Помилка отримання даних');
       }
@@ -150,6 +250,7 @@
       btn.addEventListener('click', () => {
         selectedCategory = cat;
         updateCategoryTabs();
+        saveState();
         render();
       });
 
