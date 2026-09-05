@@ -247,7 +247,7 @@
       return;
     }
 
-    priceTable.style.display = 'table';
+    priceTable.style.display = '';
     emptyState.style.display = 'none';
 
     // 4. Заповнення рядків
