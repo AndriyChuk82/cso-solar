@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { getWarehouses, getStockReport, getCompareReport, getMovementReport, getCatalog } from '../api/gasApi';
 import { exportToExcel, exportToPdf } from '../utils/exportUtils';
+import { printStockReport } from '../utils/printUtils';
 import { formatDate } from '../utils/dateUtils';
 import { formatQuantity } from '../utils/formatUtils';
 import CONFIG from '../config';
 import ResizableHeader from '../components/ResizableHeader';
 import { Button } from '@cso/design-system';
-import { Boxes, Scale, Play } from 'lucide-react';
+import { Boxes, Scale, Play, Printer, FileSpreadsheet, FileText } from 'lucide-react';
 
 /**
- * Звіти та аналітика — 3 типи звітів з експортом Excel/PDF.
+ * Звіти та аналітика — 3 типи звітів з експортом Excel/PDF та бланком для друку.
  */
 export default function Reports() {
   const [activeTab, setActiveTab] = useState('stock');
@@ -105,6 +106,37 @@ export default function Reports() {
     const date = new Date().toISOString().split('T')[0].replace(/-/g, '-');
     const typeMap = { stock: 'залишки', compare: 'порівняння', move: 'рух' };
     return `звіт_${typeMap[activeTab]}_${date}`;
+  }
+
+  function handlePrint() {
+    if (!reportData?.columns || sortedItems.length === 0) return;
+
+    // Форматуємо дати та кількості в айтемах перед друком
+    const items = sortedItems.map(row => {
+      const newRow = { ...row };
+      if (newRow['Дата']) newRow['Дата'] = formatDate(newRow['Дата']);
+      
+      reportData.columns.forEach(col => {
+        if (col === 'Кількість' || col === 'Всього' || warehouses.some(w => w.name === col)) {
+          newRow[col] = formatQuantity(newRow[col], row.category, row['Товар'] || row['Назва']);
+        }
+      });
+      
+      return newRow;
+    });
+
+    const whName = stockFilter.warehouseId 
+      ? (warehouses.find((w) => w.id === stockFilter.warehouseId)?.name || '') 
+      : (activeTab === 'stock' ? 'Всі склади' : '');
+
+    printStockReport({
+      title: getReportTitle(),
+      warehouseName: whName,
+      date: activeTab === 'stock' ? stockFilter.date : new Date().toISOString().split('T')[0],
+      columns: reportData.columns,
+      items: items,
+      isCompare: activeTab === 'compare'
+    });
   }
 
   function handleExportExcel() {
@@ -225,8 +257,52 @@ export default function Reports() {
 
       {/* Результат */}
       {reportData && (
-        <div className="card" style={{ padding: '4px', borderTop: 'none' }}>
-          <div className="data-table-wrap" style={{ maxHeight: 'calc(100vh - 170px)', overflowY: 'auto' }}>
+        <div className="card" style={{ padding: '8px 12px', borderTop: 'none' }}>
+          {/* Верхня панель результатів з діями */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid var(--border-light)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                {getReportTitle()}
+              </span>
+              <span style={{ fontSize: '0.7rem', fontWeight: 600, background: 'var(--bg-light)', color: 'var(--text-secondary)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--border-light)' }}>
+                {sortedItems.length} поз.
+              </span>
+            </div>
+            
+            {sortedItems.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Button 
+                  variant="secondary" 
+                  onClick={handlePrint} 
+                  style={{ height: '26px', padding: '0 8px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                  title="Друкувати бланк залишків"
+                >
+                  <Printer size={13} />
+                  Друк
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={handleExportExcel} 
+                  style={{ height: '26px', padding: '0 8px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                  title="Експорт в Excel (.csv)"
+                >
+                  <FileSpreadsheet size={13} />
+                  Excel
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={handleExportPdf} 
+                  style={{ height: '26px', padding: '0 8px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                  title="Експорт в PDF"
+                >
+                  <FileText size={13} />
+                  PDF
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="data-table-wrap" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
             {sortedItems && sortedItems.length > 0 ? (
               <table className="data-table compact-table">
                 <thead>

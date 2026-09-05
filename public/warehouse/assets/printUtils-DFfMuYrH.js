@@ -1,56 +1,21 @@
-/**
- * Друк видаткової накладної від імені ФОП Пастушок М. В.
- */
-export function printDeliveryNote(formData, buyer, showPrices, txId) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Будь ласка, дозвольте спливаючі вікна для друку');
-    return;
-  }
-
-  const dateStr = formData.date ? new Date(formData.date).toLocaleDateString('uk-UA') : new Date().toLocaleDateString('uk-UA');
-  const dnNumber = txId ? `ВН-${txId.slice(-6).toUpperCase()}` : 'Нова';
-  const currencySymbol = formData.currency === 'UAH' ? 'грн' : '$';
-
-  const buyerName = buyer ? buyer.name : '____________________';
-  const buyerPhone = buyer ? buyer.phone || '-' : '-';
-  const buyerAddress = buyer ? buyer.address || '-' : '-';
-
-  const items = formData.items || [];
-  let totalSum = 0;
-
-  const itemsHTML = items.map((item, i) => {
-    const itemName = item.productName || 'Без назви';
-    const itemUnit = item.unit || 'шт.';
-    const itemQty = parseFloat(item.quantity) || 0;
-    const itemPrice = parseFloat(item.price) || 0;
-    const itemSum = itemPrice * itemQty;
-    
-    if (showPrices) {
-      totalSum += itemSum;
-    }
-
-    return `
+function A(o,e,n,a){const d=window.open("","_blank");if(!d){alert("Будь ласка, дозвольте спливаючі вікна для друку");return}const h=o.date?new Date(o.date).toLocaleDateString("uk-UA"):new Date().toLocaleDateString("uk-UA"),l=a?`ВН-${a.slice(-6).toUpperCase()}`:"Нова",c=o.currency==="UAH"?"грн":"$",b=e?e.name:"____________________",v=e&&e.phone||"-",E=e&&e.address||"-",y=o.items||[];let f=0;const m=y.map((i,p)=>{const t=i.productName||"Без назви",r=i.unit||"шт.",g=parseFloat(i.quantity)||0,u=parseFloat(i.price)||0,x=u*g;return n&&(f+=x),`
       <tr>
-        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${i + 1}</td>
+        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${p+1}</td>
         <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px;">
-          <strong>${itemName}</strong>
+          <strong>${t}</strong>
         </td>
-        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${itemUnit}</td>
-        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 600;">${itemQty}</td>
-        ${showPrices ? `
-        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${itemPrice.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap; font-weight: 600;">${itemSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-        ` : ''}
+        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center;">${r}</td>
+        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; font-weight: 600;">${g}</td>
+        ${n?`
+        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap;">${u.toLocaleString("uk-UA",{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td style="padding: 6px 8px; border: 1px solid #E5E7EB; font-size: 11px; text-align: center; white-space: nowrap; font-weight: 600;">${x.toLocaleString("uk-UA",{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        `:""}
       </tr>
-    `;
-  }).join('');
-
-  const html = `
+    `}).join(""),$=`
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Видаткова накладна ${dnNumber}</title>
+        <title>Видаткова накладна ${l}</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
           @page {
@@ -73,7 +38,7 @@ export function printDeliveryNote(formData, buyer, showPrices, txId) {
         <hr style="height: 3px; background-color: #F59E0B; border: none; margin: 10px 0 20px;">
         
         <div style="font-size: 14px; font-weight: 700; margin-bottom: 30px; text-align: center;">
-          Видаткова накладна № ${dnNumber} від ${dateStr}
+          Видаткова накладна № ${l} від ${h}
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px; font-size: 11px;">
@@ -86,9 +51,9 @@ export function printDeliveryNote(formData, buyer, showPrices, txId) {
           </div>
           <div>
             <span style="color: #9CA3AF; text-transform: uppercase; font-size: 9px; font-weight: 600; display: block; margin-bottom: 4px;">Покупець:</span>
-            <strong>${buyerName}</strong><br>
-            Тел: ${buyerPhone}<br>
-            Адреса: ${buyerAddress}
+            <strong>${b}</strong><br>
+            Тел: ${v}<br>
+            Адреса: ${E}
           </div>
         </div>
 
@@ -99,21 +64,21 @@ export function printDeliveryNote(formData, buyer, showPrices, txId) {
               <th style="text-align: left;">Найменування</th>
               <th style="width: 40px">Од.</th>
               <th style="width: 40px">К-сть</th>
-              ${showPrices ? `
-              <th style="width: 80px">Ціна (${currencySymbol})</th>
-              <th style="width: 80px">Сума (${currencySymbol})</th>
-              ` : ''}
+              ${n?`
+              <th style="width: 80px">Ціна (${c})</th>
+              <th style="width: 80px">Сума (${c})</th>
+              `:""}
             </tr>
           </thead>
           <tbody>
-            ${itemsHTML}
-            ${showPrices ? `
+            ${m}
+            ${n?`
             <tr class="total-row">
               <td colspan="4" style="border: none; background: none;"></td>
               <td style="padding: 6px 8px; text-align: right; text-transform: uppercase; font-size: 11px;">Разом:</td>
-              <td style="padding: 6px 8px; text-align: center; font-size: 11px; white-space: nowrap;">${totalSum.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencySymbol}</td>
+              <td style="padding: 6px 8px; text-align: center; font-size: 11px; white-space: nowrap;">${f.toLocaleString("uk-UA",{minimumFractionDigits:2,maximumFractionDigits:2})} ${c}</td>
             </tr>
-            ` : ''}
+            `:""}
           </tbody>
         </table>
 
@@ -131,108 +96,30 @@ export function printDeliveryNote(formData, buyer, showPrices, txId) {
         <script>
           window.onload = () => setTimeout(() => window.print(), 800);
           window.onafterprint = () => window.close();
-        </script>
+        <\/script>
       </body>
     </html>
-  `;
-
-  printWindow.document.write(html);
-  printWindow.document.close();
-}
-
-/**
- * Безпечне екранування HTML
- */
-function escHtml(str) {
-  if (str === null || str === undefined) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-/**
- * Друк звіту залишків товарів (по конкретному складу або по всіх складах)
- */
-export function printStockReport({ title, warehouseName, date, columns = [], items = [], isCompare = false }) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Будь ласка, дозвольте спливаючі вікна для друку');
-    return;
-  }
-
-  const dateStr = date ? (typeof date === 'string' && date.includes('-') ? date.split('-').reverse().join('.') : new Date(date).toLocaleDateString('uk-UA')) : new Date().toLocaleDateString('uk-UA');
-  const docTitle = isCompare 
-    ? 'ЗВЕДЕНА ВІДОМІСТЬ ЗАЛИШКІВ ПО СКЛАДАХ' 
-    : (warehouseName && warehouseName !== 'Всі склади' ? `ВІДОМІСТЬ ЗАЛИШКІВ — СКЛАД ${warehouseName.toUpperCase()}` : 'ВІДОМІСТЬ ЗАЛИШКІВ ТОВАРІВ');
-  
-  const subTitle = warehouseName && warehouseName !== 'Всі склади'
-    ? `Склад: <strong>${escHtml(warehouseName)}</strong> | Станом на: <strong>${escHtml(dateStr)}</strong>`
-    : `Станом на: <strong>${escHtml(dateStr)}</strong>`;
-
-  const isLandscape = columns.length > 5 || isCompare;
-
-  // Формування рядків з групуванням по категоріях
-  let currentCategory = null;
-  let counter = 0;
-  let rowsHtml = '';
-
-  items.forEach((item) => {
-    const cat = item.category || 'Без категорії';
-    if (cat !== currentCategory) {
-      currentCategory = cat;
-      const catCount = items.filter(it => (it.category || 'Без категорії') === cat).length;
-      rowsHtml += `
+  `;d.document.write($),d.document.close()}function s(o){return o==null?"":String(o).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function k({title:o,warehouseName:e,date:n,columns:a=[],items:d=[],isCompare:h=!1}){const l=window.open("","_blank");if(!l){alert("Будь ласка, дозвольте спливаючі вікна для друку");return}const c=n?typeof n=="string"&&n.includes("-")?n.split("-").reverse().join("."):new Date(n).toLocaleDateString("uk-UA"):new Date().toLocaleDateString("uk-UA"),b=h?"ЗВЕДЕНА ВІДОМІСТЬ ЗАЛИШКІВ ПО СКЛАДАХ":e&&e!=="Всі склади"?`ВІДОМІСТЬ ЗАЛИШКІВ — СКЛАД ${e.toUpperCase()}`:"ВІДОМІСТЬ ЗАЛИШКІВ ТОВАРІВ",v=e&&e!=="Всі склади"?`Склад: <strong>${s(e)}</strong> | Станом на: <strong>${s(c)}</strong>`:`Станом на: <strong>${s(c)}</strong>`,E=a.length>5||h;let y=null,f=0,m="";d.forEach(i=>{const p=i.category||"Без категорії";if(p!==y){y=p;const t=d.filter(r=>(r.category||"Без категорії")===p).length;m+=`
         <tr class="category-header-row">
-          <td colspan="${columns.length + 1}" style="background: #F1F5F9; font-weight: 700; color: #1E3A8A; padding: 6px 8px; font-size: 10.5px; border: 1px solid #CBD5E1; text-align: left;">
-            📁 ${escHtml(cat)} <span style="font-size: 9.5px; font-weight: 500; color: #64748B; margin-left: 6px;">(${catCount} поз.)</span>
+          <td colspan="${a.length+1}" style="background: #F1F5F9; font-weight: 700; color: #1E3A8A; padding: 6px 8px; font-size: 10.5px; border: 1px solid #CBD5E1; text-align: left;">
+            📁 ${s(p)} <span style="font-size: 9.5px; font-weight: 500; color: #64748B; margin-left: 6px;">(${t} поз.)</span>
           </td>
         </tr>
-      `;
-    }
-
-    counter++;
-    rowsHtml += `
+      `}f++,m+=`
       <tr>
-        <td style="padding: 5px 6px; border: 1px solid #E2E8F0; font-size: 10px; text-align: center; color: #64748B; width: 28px;">${counter}</td>
-        ${columns.map((col) => {
-          const val = item[col] ?? '—';
-          const isNameCol = col === 'Товар' || col === 'Назва' || col === 'Найменування';
-          const isQtyCol = col === 'Кількість' || col === 'Всього' || (!isNameCol && col !== 'Одиниця' && col !== 'Од.' && col !== 'Склад' && col !== 'Категорія');
-          
-          let align = 'center';
-          if (isNameCol) align = 'left';
-          else if (col === 'Склад') align = 'left';
-
-          let cellStyle = `padding: 5px 6px; border: 1px solid #E2E8F0; font-size: 10px; text-align: ${align};`;
-          if (isNameCol) {
-            cellStyle += ' font-weight: 600; color: #0F172A;';
-          }
-          if (isQtyCol) {
-            const numVal = parseFloat(String(val).replace(/[^0-9.-]/g, ''));
-            if (!isNaN(numVal) && numVal > 0) {
-              cellStyle += ' font-weight: 700; color: #1E3A8A;';
-            } else if (val === '0' || val === 0 || val === '—') {
-              cellStyle += ' color: #94A3B8;';
-            }
-          }
-          return `<td style="${cellStyle}">${escHtml(String(val))}</td>`;
-        }).join('')}
+        <td style="padding: 5px 6px; border: 1px solid #E2E8F0; font-size: 10px; text-align: center; color: #64748B; width: 28px;">${f}</td>
+        ${a.map(t=>{const r=i[t]??"—",g=t==="Товар"||t==="Назва"||t==="Найменування",u=t==="Кількість"||t==="Всього"||!g&&t!=="Одиниця"&&t!=="Од."&&t!=="Склад"&&t!=="Категорія";let x="center";(g||t==="Склад")&&(x="left");let w=`padding: 5px 6px; border: 1px solid #E2E8F0; font-size: 10px; text-align: ${x};`;if(g&&(w+=" font-weight: 600; color: #0F172A;"),u){const F=parseFloat(String(r).replace(/[^0-9.-]/g,""));!isNaN(F)&&F>0?w+=" font-weight: 700; color: #1E3A8A;":(r==="0"||r===0||r==="—")&&(w+=" color: #94A3B8;")}return`<td style="${w}">${s(String(r))}</td>`}).join("")}
       </tr>
-    `;
-  });
-
-  const html = `
+    `});const $=`
     <!DOCTYPE html>
     <html lang="uk">
       <head>
         <meta charset="UTF-8">
-        <title>${escHtml(title || docTitle)}</title>
+        <title>${s(o||b)}</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
           @page {
-            size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'};
+            size: ${E?"A4 landscape":"A4 portrait"};
             margin: 8mm 10mm;
           }
           * { box-sizing: border-box; }
@@ -352,8 +239,8 @@ export function printStockReport({ title, warehouseName, date, columns = [], ite
             </div>
           </div>
           <div>
-            <div class="doc-title">${escHtml(docTitle)}</div>
-            <div class="doc-subtitle">${subTitle}</div>
+            <div class="doc-title">${s(b)}</div>
+            <div class="doc-subtitle">${v}</div>
           </div>
         </div>
         <hr class="accent-line">
@@ -362,20 +249,17 @@ export function printStockReport({ title, warehouseName, date, columns = [], ite
           <thead>
             <tr>
               <th style="width: 28px;">№</th>
-              ${columns.map(col => {
-                const isLeft = col === 'Товар' || col === 'Назва' || col === 'Найменування' || col === 'Склад';
-                return `<th class="${isLeft ? 'th-left' : ''}">${escHtml(col)}</th>`;
-              }).join('')}
+              ${a.map(i=>`<th class="${i==="Товар"||i==="Назва"||i==="Найменування"||i==="Склад"?"th-left":""}">${s(i)}</th>`).join("")}
             </tr>
           </thead>
           <tbody>
-            ${rowsHtml}
+            ${m}
           </tbody>
         </table>
 
         <div class="stats-bar">
-          <div>Всього найменувань у відомості: <strong>${items.length}</strong></div>
-          <div>Згенеровано: <strong>${new Date().toLocaleDateString('uk-UA')} ${new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}</strong></div>
+          <div>Всього найменувань у відомості: <strong>${d.length}</strong></div>
+          <div>Згенеровано: <strong>${new Date().toLocaleDateString("uk-UA")} ${new Date().toLocaleTimeString("uk-UA",{hour:"2-digit",minute:"2-digit"})}</strong></div>
         </div>
 
         <div class="signatures">
@@ -392,12 +276,7 @@ export function printStockReport({ title, warehouseName, date, columns = [], ite
         <script>
           window.onload = () => setTimeout(() => window.print(), 600);
           window.onafterprint = () => window.close();
-        </script>
+        <\/script>
       </body>
     </html>
-  `;
-
-  printWindow.document.write(html);
-  printWindow.document.close();
-}
-
+  `;l.document.write($),l.document.close()}export{A as a,k as p};
