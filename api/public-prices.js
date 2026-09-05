@@ -76,8 +76,14 @@ function parseRetailPrice(rawVal) {
   const num = parseFloat(cleanStr);
   if (isNaN(num) || num <= 0) return { amount: null, formatted: 'xx$' };
 
-  // Форматування тільки у $ (наприклад: 720$, 1 060$)
-  const formattedNum = Math.round(num).toLocaleString('uk-UA').replace(/\u00A0/g, ' ');
+  // Форматування тільки у $ (наприклад: 720$, 1 060$, для кабелю 1,3$)
+  let formattedNum;
+  if (num % 1 === 0) {
+    formattedNum = num.toLocaleString('uk-UA').replace(/\u00A0/g, ' ');
+  } else {
+    const minDigits = (num * 10) % 1 === 0 ? 1 : 2;
+    formattedNum = num.toLocaleString('uk-UA', { minimumFractionDigits: minDigits, maximumFractionDigits: 2 }).replace(/\u00A0/g, ' ');
+  }
   return { amount: num, formatted: `${formattedNum}$` };
 }
 
