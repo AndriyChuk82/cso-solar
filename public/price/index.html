@@ -661,10 +661,19 @@ body {
   opacity: 1;
 }
 
-/* Мобільна адаптація */
+/* Мобільна адаптація (Смартфони та планшети < 768px) */
 @media (max-width: 768px) {
+  .container {
+    padding: 0 8px;
+  }
+
   .header-inner {
     padding: 6px 8px;
+    gap: 8px;
+  }
+
+  .brand-title {
+    font-size: 14px;
   }
 
   .brand-subtitle {
@@ -676,36 +685,161 @@ body {
   }
 
   .phone-link {
-    padding: 4px 9px;
+    padding: 4px 10px;
     font-size: 11px;
+    white-space: nowrap;
   }
 
-  .col-num {
-    display: none;
+  .controls-panel {
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
   }
 
-  .product-name-cell {
+  .controls-top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .search-box {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .search-box input {
+    height: 36px;
+    font-size: 13px;
+  }
+
+  .stock-toggle {
+    width: 100%;
+    justify-content: space-between;
+    height: 34px;
     font-size: 12px;
   }
 
-  .type-badge {
-    font-size: 10px;
-    padding: 2px 6px;
-    max-width: 140px;
-  }
-
-  .price-cell {
-    font-size: 12px;
-  }
-
-  .stock-badge {
-    min-width: 105px;
-    font-size: 10px !important;
-    padding: 2px 6px !important;
+  .summary-line {
+    padding: 2px 4px 6px 4px;
   }
 
   .copy-hint-text {
     display: none;
+  }
+
+  /* ТРАНСФОРМАЦІЯ ТАБЛИЦІ В МОБІЛЬНІ КАРТКИ (БЕЗ ГОРИЗОНТАЛЬНОГО СКРОЛУ) */
+  .table-card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .table-responsive {
+    overflow: visible !important;
+  }
+
+  .price-table {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .price-table thead {
+    display: none !important;
+  }
+
+  .price-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  /* Кожен рядок стає акуратною білою карткою */
+  .price-table tbody tr {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-areas:
+      "name name"
+      "type type"
+      "price stock" !important;
+    gap: 6px !important;
+    background-color: #ffffff !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    padding: 10px 12px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+    margin: 0 !important;
+    transition: transform 0.1s ease, border-color 0.1s ease !important;
+  }
+
+  .price-table tbody tr:active {
+    transform: scale(0.99) !important;
+    border-color: var(--primary) !important;
+  }
+
+  .row-num {
+    display: none !important;
+  }
+
+  /* Назва товару */
+  .product-name-cell {
+    grid-area: name !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    line-height: 1.35 !important;
+    text-decoration: none !important;
+    text-align: left !important;
+    word-break: break-word !important;
+    padding: 0 !important;
+  }
+
+  /* Тип товару */
+  .type-cell {
+    grid-area: type !important;
+    text-align: left !important;
+    padding: 0 !important;
+  }
+
+  .type-badge {
+    font-size: 11px !important;
+    padding: 2px 7px !important;
+    background-color: #f1f5f9 !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 4px !important;
+    max-width: 100% !important;
+    display: inline-block !important;
+  }
+
+  /* Ціна (ліворуч унизу) */
+  .price-cell {
+    grid-area: price !important;
+    text-align: left !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    padding: 6px 0 0 0 !important;
+    border-top: 1px dashed #e2e8f0 !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  /* Наявність (праворуч унизу) */
+  .stock-badge-cell {
+    grid-area: stock !important;
+    text-align: right !important;
+    padding: 6px 0 0 0 !important;
+    border-top: 1px dashed #e2e8f0 !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+  }
+
+  .stock-badge {
+    min-width: auto !important;
+    padding: 3px 10px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
   }
 }
   </style>
