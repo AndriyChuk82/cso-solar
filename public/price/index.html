@@ -9,7 +9,777 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <style>
+/* ==========================================================================
+   CSO Solar — Minimalist Public Price List Styles (Inline for 0ms load)
+   ========================================================================== */
+
+:root {
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-muted: #f1f5f9;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-subtle: #eff6ff;
+  
+  /* Статуси наявності відповідно до скріншота */
+  --stock-green-bg: #86efac;
+  --stock-green-text: #14532d;
+  --stock-yellow-bg: #fde047;
+  --stock-yellow-text: #713f12;
+  --stock-red-bg: #fca5a5;
+  --stock-red-text: #7f1d1d;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   Шапка (Header)
+   -------------------------------------------------------------------------- */
+.site-header {
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  gap: 16px;
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-img {
+  height: 38px !important;
+  max-height: 38px !important;
+  width: auto !important;
+  max-width: 140px !important;
+  object-fit: contain;
+  display: block;
+}
+
+.brand-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+
+.brand-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.updated-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--bg-muted);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+}
+
+.phone-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--primary);
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+.phone-link:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.phone-link:active {
+  transform: translateY(0);
+}
+
+.phone-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   Основний блок та Панель фільтрів
+   -------------------------------------------------------------------------- */
+.main-content {
+  flex: 1;
+  padding-top: 20px;
+  padding-bottom: 40px;
+}
+
+.controls-panel {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
+}
+
+.controls-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--text-light);
+  pointer-events: none;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 38px 10px 42px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text-main);
+  background-color: var(--bg-muted);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.search-box input:focus {
+  background-color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 14px;
+  font-weight: 700;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.clear-btn:hover {
+  background-color: var(--border);
+  color: var(--text-main);
+}
+
+/* Перемикач "Лише в наявності" */
+.stock-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  background-color: var(--bg-muted);
+  padding: 9px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  transition: all 0.15s ease;
+}
+
+.stock-toggle:hover {
+  background-color: #e2e8f0;
+}
+
+.stock-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-custom {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-strong);
+  border-radius: 4px;
+  background-color: #ffffff;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.stock-toggle input:checked ~ .toggle-custom {
+  background-color: #10b981;
+  border-color: #10b981;
+}
+
+.stock-toggle input:checked ~ .toggle-custom::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.count-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+}
+
+.in-stock-pill {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #047857;
+}
+
+/* Категорії (таби) */
+.categories-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-top: 14px;
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  scrollbar-width: none;
+}
+
+.categories-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.category-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  background-color: var(--bg-card);
+}
+
+.category-tab:hover {
+  border-color: var(--border-strong);
+  color: var(--text-main);
+  background-color: var(--bg-muted);
+}
+
+.category-tab.active {
+  background-color: var(--text-main);
+  color: #ffffff;
+  border-color: var(--text-main);
+}
+
+.category-tab.active .tab-count {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.tab-count {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background-color: var(--bg-muted);
+  color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Інформаційний рядок
+   -------------------------------------------------------------------------- */
+.summary-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 10px 4px;
+  font-size: 13px;
+}
+
+.summary-text {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.copy-hint-text {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+/* --------------------------------------------------------------------------
+   Таблиця прайсу (як на скріншоті)
+   -------------------------------------------------------------------------- */
+.table-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.price-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+/* Заголовок таблиці як на скріншоті (темно-сірий/синій) */
+.price-table thead tr {
+  background-color: #3b4b59;
+  color: #f8fafc;
+}
+
+.price-table th {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  border: none;
+  white-space: nowrap;
+}
+
+.col-num {
+  width: 48px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.col-name {
+  min-width: 260px;
+}
+
+.col-type {
+  min-width: 200px;
+}
+
+.col-price {
+  min-width: 110px;
+  text-align: right;
+}
+
+.col-stock {
+  min-width: 160px;
+  text-align: center;
+}
+
+/* Рядки таблиці */
+.price-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.12s ease;
+  cursor: pointer;
+}
+
+.price-table tbody tr:hover {
+  background-color: #f1f5f9;
+}
+
+.price-table td {
+  padding: 11px 16px;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.row-num {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+/* Назва товару (жирна, підкреслена як на скріні) */
+.product-name-cell {
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  text-decoration: underline;
+  text-decoration-color: #cbd5e1;
+  text-underline-offset: 3px;
+}
+
+/* Тип обладнання (бейдж із стрілкою як на скріншоті) */
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background-color: #e2e8f0;
+  color: #1e293b;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  max-width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.type-caret {
+  font-size: 9px;
+  color: #64748b;
+  transform: translateY(1px);
+}
+
+/* Ціна (напівжирна, тільки у $, як на скріншоті) */
+.price-cell {
+  text-align: right;
+  font-family: 'JetBrains Mono', 'Inter', monospace;
+  font-weight: 700;
+  font-size: 15px;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.price-cell.price-empty {
+  font-style: italic;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* Статус наявності (кольорові заокруглені бейджі як на скріні) */
+.stock-badge-cell {
+  text-align: center;
+}
+
+.stock-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  min-width: 140px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.badge-caret {
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+/* Зелений: В наявності */
+.stock-badge.in-stock {
+  background-color: var(--stock-green-bg);
+  color: var(--stock-green-text);
+}
+
+/* Жовтий: Наявність уточняйте */
+.stock-badge.low-stock {
+  background-color: var(--stock-yellow-bg);
+  color: var(--stock-yellow-text);
+}
+
+/* Червоний: Закінчилось */
+.stock-badge.out-of-stock {
+  background-color: var(--stock-red-bg);
+  color: var(--stock-red-text);
+}
+
+/* Скелетон завантаження */
+.skeleton-row td {
+  padding: 16px;
+}
+
+.skeleton-box {
+  height: 18px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* --------------------------------------------------------------------------
+   Порожній стан (Empty State)
+   -------------------------------------------------------------------------- */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.empty-state h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.empty-state p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.btn-reset {
+  background-color: var(--primary);
+  color: #ffffff;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-reset:hover {
+  background-color: var(--primary-hover);
+}
+
+/* --------------------------------------------------------------------------
+   Підвал (Footer)
+   -------------------------------------------------------------------------- */
+.site-footer {
+  background-color: #ffffff;
+  border-top: 1px solid var(--border);
+  padding: 20px 0;
+  margin-top: auto;
+}
+
+.footer-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.footer-contact a {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.footer-contact a:hover {
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   Toast повідомлення
+   -------------------------------------------------------------------------- */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background-color: #0f172a;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 100;
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Адаптивність для мобільних екранів
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .header-inner {
+    padding: 10px 12px;
+  }
+
+  .brand-title {
+    font-size: 16px;
+  }
+
+  .brand-subtitle {
+    display: none;
+  }
+
+  .phone-link {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
+  .updated-badge {
+    display: none;
+  }
+
+  .controls-panel {
+    padding: 12px;
+  }
+
+  .controls-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box {
+    min-width: 100%;
+  }
+
+  .stock-toggle {
+    justify-content: space-between;
+  }
+
+  .price-table th,
+  .price-table td {
+    padding: 10px 10px;
+  }
+
+  .col-num {
+    display: none;
+  }
+
+  .product-name-cell {
+    font-size: 13px;
+  }
+
+  .type-badge {
+    font-size: 11px;
+    padding: 4px 8px;
+    max-width: 160px;
+  }
+
+  .price-cell {
+    font-size: 14px;
+  }
+
+  .stock-badge {
+    min-width: 115px;
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+
+  .copy-hint-text {
+    display: none;
+  }
+}
+  </style>
 </head>
 <body>
   <div class="app-wrapper">
@@ -17,7 +787,14 @@
     <header class="site-header">
       <div class="container header-inner">
         <div class="brand-block">
-          <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" class="logo-img">
+          <img 
+            src="https://i.ibb.co/32JD4dc/logo.png" 
+            alt="CSO Solar" 
+            class="logo-img" 
+            width="120" 
+            height="38" 
+            style="height: 38px !important; width: auto !important; max-height: 38px !important; max-width: 140px !important; object-fit: contain; display: block;"
+          >
           <div class="brand-text">
             <h1 class="brand-title">CSO Solar</h1>
             <p class="brand-subtitle">Прайс-лист та наявність обладнання</p>
@@ -124,6 +901,323 @@
   <!-- Спливаюче сповіщення про копіювання (Toast) -->
   <div class="toast" id="toast">Скопійовано в буфер обміну</div>
 
-  <script src="app.js"></script>
+  <script>
+/**
+ * CSO Solar — Public Price List Client Application
+ */
+(function () {
+  'use strict';
+
+  const searchInput = document.getElementById('searchInput');
+  const clearSearchBtn = document.getElementById('clearSearchBtn');
+  const onlyInStockCheckbox = document.getElementById('onlyInStockCheckbox');
+  const inStockCountBadge = document.getElementById('inStockCountBadge');
+  const categoriesBar = document.getElementById('categoriesBar');
+  const priceTable = document.getElementById('priceTable');
+  const priceTableBody = document.getElementById('priceTableBody');
+  const summaryText = document.getElementById('summaryText');
+  const emptyState = document.getElementById('emptyState');
+  const emptyMessage = document.getElementById('emptyMessage');
+  const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+  const updatedText = document.getElementById('updatedText');
+  const toast = document.getElementById('toast');
+
+  let allItems = [];
+  let categories = ['Всі'];
+  let selectedCategory = 'Всі';
+  let searchQuery = '';
+  let onlyInStock = false;
+  let toastTimeout = null;
+
+  init();
+
+  async function init() {
+    setupEventListeners();
+    showSkeleton();
+    await loadData();
+  }
+
+  function setupEventListeners() {
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value.trim();
+      clearSearchBtn.style.display = searchQuery ? 'flex' : 'none';
+      render();
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      searchQuery = '';
+      clearSearchBtn.style.display = 'none';
+      searchInput.focus();
+      render();
+    });
+
+    onlyInStockCheckbox.addEventListener('change', (e) => {
+      onlyInStock = e.target.checked;
+      render();
+    });
+
+    resetFiltersBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      searchQuery = '';
+      clearSearchBtn.style.display = 'none';
+      onlyInStockCheckbox.checked = false;
+      onlyInStock = false;
+      selectedCategory = 'Всі';
+      updateCategoryTabs();
+      render();
+    });
+
+    let lastFetch = Date.now();
+    window.addEventListener('focus', () => {
+      if (Date.now() - lastFetch > 120000) {
+        lastFetch = Date.now();
+        loadData(true);
+      }
+    });
+  }
+
+  async function loadData(silent = false) {
+    if (!silent) {
+      showSkeleton();
+    }
+
+    try {
+      const res = await fetch('/api/public-prices?_t=' + Date.now());
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+
+      if (data.success) {
+        allItems = data.items || [];
+        categories = data.categories || ['Всі'];
+
+        if (data.updatedAt) {
+          updatedText.textContent = `Оновлено: ${data.updatedAt}`;
+        }
+
+        const totalInStock = allItems.filter(i => i.inStock).length;
+        inStockCountBadge.textContent = totalInStock;
+
+        renderCategories();
+        render();
+      } else {
+        throw new Error(data.error || 'Помилка отримання даних');
+      }
+    } catch (err) {
+      console.error('Data load error:', err);
+      if (!silent) {
+        priceTableBody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 40px 16px; color: #ef4444;">
+              ⚠️ Не вдалося завантажити дані прайс-листа.<br>
+              <button onclick="location.reload()" style="margin-top: 12px; padding: 6px 14px; border-radius: 9999px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-weight: 600;">
+                Спробувати знову
+              </button>
+            </td>
+          </tr>
+        `;
+        summaryText.textContent = 'Помилка підключення';
+      }
+    }
+  }
+
+  function renderCategories() {
+    categoriesBar.innerHTML = '';
+
+    categories.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = `category-tab ${cat === selectedCategory ? 'active' : ''}`;
+      
+      const count = cat === 'Всі' 
+        ? allItems.length 
+        : allItems.filter(i => i.category === cat).length;
+
+      btn.innerHTML = `
+        <span>${cat}</span>
+        <span class="tab-count">${count}</span>
+      `;
+
+      btn.addEventListener('click', () => {
+        selectedCategory = cat;
+        updateCategoryTabs();
+        render();
+      });
+
+      categoriesBar.appendChild(btn);
+    });
+  }
+
+  function updateCategoryTabs() {
+    const tabs = categoriesBar.querySelectorAll('.category-tab');
+    tabs.forEach(tab => {
+      const name = tab.querySelector('span').textContent;
+      if (name === selectedCategory) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+  }
+
+  function matchesSearch(text, query) {
+    if (!query) return true;
+    const t = text.toLowerCase();
+    const q = query.toLowerCase().trim();
+
+    if (t.includes(q)) return true;
+
+    const translitMap = {
+      'деє': 'deye',
+      'дейе': 'deye',
+      'дее': 'deye',
+      'соліс': 'solis',
+      'солис': 'solis',
+      'хуавей': 'huawei',
+      'лонжі': 'longi',
+      'лонгі': 'longi',
+      'джасолар': 'jasolar',
+      'жасолар': 'jasolar',
+      'акб': 'акумулятор',
+      'бмс': 'bms',
+      'стійка': 'rack'
+    };
+
+    for (const [cyr, lat] of Object.entries(translitMap)) {
+      if (q.includes(cyr) && (t.includes(lat) || t.includes(cyr))) {
+        return true;
+      }
+    }
+
+    const words = q.split(/\s+/).filter(Boolean);
+    return words.every(w => t.includes(w));
+  }
+
+  function render() {
+    const filtered = allItems.filter(item => {
+      if (onlyInStock && !item.inStock) {
+        return false;
+      }
+
+      if (selectedCategory !== 'Всі' && item.category !== selectedCategory) {
+        return false;
+      }
+
+      if (searchQuery) {
+        const fullText = `${item.name} ${item.type} ${item.category}`;
+        if (!matchesSearch(fullText, searchQuery)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    summaryText.textContent = `Показано ${filtered.length} з ${allItems.length} позицій`;
+
+    if (filtered.length === 0) {
+      priceTable.style.display = 'none';
+      emptyState.style.display = 'block';
+      if (searchQuery) {
+        emptyMessage.textContent = `За запитом "${searchQuery}" нічого не знайдено`;
+      } else if (onlyInStock) {
+        emptyMessage.textContent = 'У цій категорії наразі немає товарів у наявності';
+      } else {
+        emptyMessage.textContent = 'Немає товарів для відображення';
+      }
+      return;
+    }
+
+    priceTable.style.display = 'table';
+    emptyState.style.display = 'none';
+
+    let html = '';
+    filtered.forEach((item, idx) => {
+      const isPriceEmpty = !item.price || item.price === 'xx$' || item.price === '0$' || item.price === '—';
+      const priceClass = isPriceEmpty ? 'price-cell price-empty' : 'price-cell';
+      const priceDisplay = isPriceEmpty ? 'xx$' : item.price;
+
+      html += `
+        <tr data-id="${item.id}" data-idx="${idx}" title="Клікніть, щоб скопіювати рядок">
+          <td class="row-num">${idx + 1}</td>
+          <td class="product-name-cell">${escapeHtml(item.name)}</td>
+          <td>
+            <span class="type-badge" title="${escapeHtml(item.type)}">
+              <span>${escapeHtml(item.type)}</span>
+              <span class="type-caret">▼</span>
+            </span>
+          </td>
+          <td class="${priceClass}">${priceDisplay}</td>
+          <td class="stock-badge-cell">
+            <span class="stock-badge ${item.stockStatus}">
+              <span>${escapeHtml(item.stockLabel)}</span>
+              <span class="badge-caret">▼</span>
+            </span>
+          </td>
+        </tr>
+      `;
+    });
+
+    priceTableBody.innerHTML = html;
+
+    const rows = priceTableBody.querySelectorAll('tr');
+    rows.forEach(row => {
+      row.addEventListener('click', () => {
+        const idx = parseInt(row.getAttribute('data-idx'), 10);
+        const item = filtered[idx];
+        if (item) {
+          copyItemInfo(item);
+        }
+      });
+    });
+  }
+
+  function copyItemInfo(item) {
+    const text = `${item.name} | ${item.type} | Ціна: ${item.price} | ${item.stockLabel}`;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`Скопійовано: ${item.name}`);
+      }).catch(() => {
+        showToast(text);
+      });
+    } else {
+      showToast(text);
+    }
+  }
+
+  function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+      toast.classList.remove('show');
+    }, 2500);
+  }
+
+  function showSkeleton() {
+    let rows = '';
+    for (let i = 0; i < 8; i++) {
+      rows += `
+        <tr class="skeleton-row">
+          <td class="row-num"><div class="skeleton-box" style="width: 20px; margin: 0 auto;"></div></td>
+          <td><div class="skeleton-box" style="width: ${60 + (i % 4) * 10}%;"></div></td>
+          <td><div class="skeleton-box" style="width: 140px; border-radius: 9999px;"></div></td>
+          <td><div class="skeleton-box" style="width: 70px; margin-left: auto;"></div></td>
+          <td><div class="skeleton-box" style="width: 110px; margin: 0 auto; border-radius: 9999px;"></div></td>
+        </tr>
+      `;
+    }
+    priceTableBody.innerHTML = rows;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+})();
+  </script>
 </body>
 </html>

@@ -30,7 +30,8 @@
     { "source": "/green-tariff-v2/((?!assets/).*)", "destination": "/green-tariff/index.html" },
     { "source": "/price", "destination": "/price/index.html" },
     { "source": "/price/", "destination": "/price/index.html" },
-    { "source": "/price/assets/(.*)", "destination": "/price/assets/$1" }
+    { "source": "/price/assets/(.*)", "destination": "/price/assets/$1" },
+    { "source": "/price/(.*)", "destination": "/price/$1" }
   ],
   "functions": {
     "api/**/*.js": {
