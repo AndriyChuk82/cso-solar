@@ -57,10 +57,10 @@ function parseCsvRows(csvText) {
 
 // Парсинг значення ціни
 function parseRetailPrice(rawVal) {
-  if (rawVal === undefined || rawVal === null || rawVal === '') return { amount: null, formatted: 'xx$' };
+  if (rawVal === undefined || rawVal === null || rawVal === '') return { amount: null, formatted: 'Уточнити в менеджера' };
   const str = String(rawVal).trim();
-  if (!str || str === '-' || str === '0') return { amount: null, formatted: 'xx$' };
-  if (str.toLowerCase().includes('xx')) return { amount: null, formatted: 'xx$' };
+  if (!str || str === '-' || str === '0') return { amount: null, formatted: 'Уточнити в менеджера' };
+  if (str.toLowerCase().includes('xx') || str.toLowerCase().includes('уточн')) return { amount: null, formatted: 'Уточнити в менеджера' };
 
   let cleanStr = str.replace(/[^\d,.-]/g, '');
   if (cleanStr.includes(',') && cleanStr.includes('.')) {
@@ -74,7 +74,7 @@ function parseRetailPrice(rawVal) {
   }
 
   const num = parseFloat(cleanStr);
-  if (isNaN(num) || num <= 0) return { amount: null, formatted: 'xx$' };
+  if (isNaN(num) || num <= 0) return { amount: null, formatted: 'Уточнити в менеджера' };
 
   // Форматування тільки у $ (наприклад: 720$, 1 060$, для кабелю 1,3$)
   let formattedNum;
@@ -415,7 +415,7 @@ export default async function handler(req, res) {
         return;
       }
 
-      let retail = { amount: null, formatted: 'xx$' };
+      let retail = { amount: null, formatted: 'Уточнити в менеджера' };
       if (matchedSheetItem && matchedSheetItem.retail?.formatted) {
         retail = matchedSheetItem.retail;
       }
@@ -461,7 +461,7 @@ export default async function handler(req, res) {
         name: prodName,
         type: type,
         category: categoryGroup,
-        price: retail.formatted || 'xx$',
+        price: retail.formatted || 'Уточнити в менеджера',
         priceAmount: retail.amount,
         stockStatus,
         stockLabel,

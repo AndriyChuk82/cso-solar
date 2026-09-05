@@ -253,9 +253,11 @@
     // 4. Заповнення рядків
     let html = '';
     filtered.forEach((item, idx) => {
-      const isPriceEmpty = !item.price || item.price === 'xx$' || item.price === '0$' || item.price === '—';
+      const isPriceEmpty = !item.price || item.price === 'xx$' || item.price === '0$' || item.price === '—' || item.price === 'Уточнити в менеджера' || item.price.includes('Уточнити');
       const priceClass = isPriceEmpty ? 'price-cell price-empty' : 'price-cell';
-      const priceDisplay = isPriceEmpty ? 'xx$' : item.price;
+      const priceDisplay = isPriceEmpty 
+        ? '<span class="price-ask-badge">Уточнити в менеджера</span>' 
+        : escapeHtml(item.price);
 
       const statusClass = (item.stockStatus || '').replace('_', '-');
 

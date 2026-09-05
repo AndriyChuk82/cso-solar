@@ -525,9 +525,23 @@ body {
 }
 
 .price-cell.price-empty {
-  color: #94a3b8;
-  font-style: italic;
+  color: #64748b;
+  font-family: inherit;
   font-weight: 500;
+}
+
+.price-ask-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  white-space: nowrap;
 }
 
 /* Статус наявності (КОЛЬОРОВІ ПЛАШКИ З СКРІНШОТА, по центру) */
@@ -1293,9 +1307,11 @@ body {
 
     let html = '';
     filtered.forEach((item, idx) => {
-      const isPriceEmpty = !item.price || item.price === 'xx$' || item.price === '0$' || item.price === '—';
+      const isPriceEmpty = !item.price || item.price === 'xx$' || item.price === '0$' || item.price === '—' || item.price === 'Уточнити в менеджера' || item.price.includes('Уточнити');
       const priceClass = isPriceEmpty ? 'price-cell price-empty' : 'price-cell';
-      const priceDisplay = isPriceEmpty ? 'xx$' : item.price;
+      const priceDisplay = isPriceEmpty 
+        ? '<span class="price-ask-badge">Уточнити в менеджера</span>' 
+        : escapeHtml(item.price);
       
       // Підтримка обох форматів класів для надійності
       const statusClass = (item.stockStatus || '').replace('_', '-');
