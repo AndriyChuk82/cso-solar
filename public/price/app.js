@@ -257,21 +257,21 @@
       const priceClass = isPriceEmpty ? 'price-cell price-empty' : 'price-cell';
       const priceDisplay = isPriceEmpty ? 'xx$' : item.price;
 
+      const statusClass = (item.stockStatus || '').replace('_', '-');
+
       html += `
         <tr data-id="${item.id}" data-idx="${idx}" title="Клікніть, щоб скопіювати рядок">
           <td class="row-num">${idx + 1}</td>
           <td class="product-name-cell">${escapeHtml(item.name)}</td>
-          <td>
+          <td class="type-cell">
             <span class="type-badge" title="${escapeHtml(item.type)}">
               <span>${escapeHtml(item.type)}</span>
-              <span class="type-caret">▼</span>
             </span>
           </td>
           <td class="${priceClass}">${priceDisplay}</td>
           <td class="stock-badge-cell">
-            <span class="stock-badge ${item.stockStatus}">
+            <span class="stock-badge ${statusClass} ${item.stockStatus}">
               <span>${escapeHtml(item.stockLabel)}</span>
-              <span class="badge-caret">▼</span>
             </span>
           </td>
         </tr>
