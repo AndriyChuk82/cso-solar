@@ -284,10 +284,19 @@ export default async function handler(req, res) {
   try {
     const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=0&_t=${now}`;
 
+    // Функція завантаження товарів з підтримкою ціни з Каталогу товарів (price_retail)
+    const fetchProducts = async () => {
+      let res = await supabase.from('products').select('id, name, article, unit, category_id, active, price_retail').order('name');
+      if (res.error && (res.error.code === 'PGRST204' || res.error.message?.includes('price_retail'))) {
+        res = await supabase.from('products').select('id, name, article, unit, category_id, active').order('name');
+      }
+      return res;
+    };
+
     // Завантажуємо паралельно дані з Google Sheet та Каталог товарів
     const [csvRes, prodRes] = await Promise.allSettled([
       fetch(csvUrl).then(r => r.text()),
-      supabase.from('products').select('id, name, article, unit, category_id, active').order('name')
+      fetchProducts()
     ]);
 
     // Завантажуємо всі операції з пагінацією (для точного розрахунку залишків)
