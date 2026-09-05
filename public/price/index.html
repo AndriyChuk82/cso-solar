@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSO Solar — Прайс-лист та наявність обладнання</title>
+  <meta name="description" content="Актуальний прайс-лист та залишки обладнання на складі CSO Solar: інвертори, акумулятори, сонячні панелі.">
+  <link rel="icon" type="image/png" href="https://i.ibb.co/32JD4dc/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- Верхня панель (Header) -->
+    <header class="site-header">
+      <div class="container header-inner">
+        <div class="brand-block">
+          <img src="https://i.ibb.co/32JD4dc/logo.png" alt="CSO Solar" class="logo-img">
+          <div class="brand-text">
+            <h1 class="brand-title">CSO Solar</h1>
+            <p class="brand-subtitle">Прайс-лист та наявність обладнання</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <!-- Оновлено -->
+          <div class="updated-badge" id="updatedBadge">
+            <span class="pulse-dot"></span>
+            <span id="updatedText">Завантаження...</span>
+          </div>
+
+          <!-- Телефон з ТЗ -->
+          <a href="tel:0673740802" class="phone-link" title="Зателефонувати менеджеру">
+            <svg class="phone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <span class="phone-number">0673740802</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Основний контейнер -->
+    <main class="main-content container">
+      <!-- Панель фільтрів та пошуку (Sticky) -->
+      <section class="controls-panel">
+        <div class="controls-top">
+          <!-- Пошук -->
+          <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="Пошук за назвою або моделлю (напр. 'Deye 12', 'Solis', 'АКБ')..." 
+              autocomplete="off"
+            >
+            <button id="clearSearchBtn" class="clear-btn" aria-label="Очистити пошук" style="display: none;">✕</button>
+          </div>
+
+          <!-- Галочка наявності -->
+          <label class="stock-toggle">
+            <input type="checkbox" id="onlyInStockCheckbox">
+            <span class="toggle-custom"></span>
+            <span class="toggle-text">Лише в наявності</span>
+            <span class="count-pill in-stock-pill" id="inStockCountBadge">0</span>
+          </label>
+        </div>
+
+        <!-- Категорії (таби) -->
+        <div class="categories-bar" id="categoriesBar">
+          <!-- Будуть згенеровані через JS -->
+        </div>
+      </section>
+
+      <!-- Лічильник знайденого -->
+      <div class="summary-line">
+        <span class="summary-text" id="summaryText">Завантаження позицій...</span>
+        <span class="copy-hint-text">💡 Клікніть на рядок, щоб скопіювати</span>
+      </div>
+
+      <!-- Таблиця прайсу (Десктоп та Планшет) -->
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="price-table" id="priceTable">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-name">Назва товару</th>
+                <th class="col-type">Тип</th>
+                <th class="col-price">Ціна</th>
+                <th class="col-stock">Наявність</th>
+              </tr>
+            </thead>
+            <tbody id="priceTableBody">
+              <!-- Рядки таблиці або стан завантаження -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Стан відсутності результатів -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+          <div class="empty-icon">🔍</div>
+          <h3>Нічого не знайдено</h3>
+          <p id="emptyMessage">Спробуйте змінити пошуковий запит або скинути фільтри</p>
+          <button id="resetFiltersBtn" class="btn-reset">Скинути всі фільтри</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Підвал (Footer) -->
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p>© CSO Solar — Надійні сонячні електростанції та системи резервного живлення.</p>
+        <p class="footer-contact">Відділ продажу: <a href="tel:0673740802">0673740802</a></p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Спливаюче сповіщення про копіювання (Toast) -->
+  <div class="toast" id="toast">Скопійовано в буфер обміну</div>
+
+  <script src="app.js"></script>
+</body>
+</html>

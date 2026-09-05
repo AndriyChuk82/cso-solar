@@ -9,7 +9,9 @@ const PUBLIC_PATHS = [
     '/assets/',
     '/api/verify',
     '/api/fetch-rates',
-    '/files'
+    '/files',
+    '/price',
+    '/api/public-prices'
 ];
 
 export const config = {

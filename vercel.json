@@ -27,7 +27,10 @@
     { "source": "/land-lease/((?!assets/).*)", "destination": "/land-lease/index.html" },
     { "source": "/green-tariff-v2", "destination": "/green-tariff/index.html" },
     { "source": "/green-tariff-v2/assets/(.*)", "destination": "/green-tariff/assets/$1" },
-    { "source": "/green-tariff-v2/((?!assets/).*)", "destination": "/green-tariff/index.html" }
+    { "source": "/green-tariff-v2/((?!assets/).*)", "destination": "/green-tariff/index.html" },
+    { "source": "/price", "destination": "/price/index.html" },
+    { "source": "/price/", "destination": "/price/index.html" },
+    { "source": "/price/assets/(.*)", "destination": "/price/assets/$1" }
   ],
   "functions": {
     "api/**/*.js": {
