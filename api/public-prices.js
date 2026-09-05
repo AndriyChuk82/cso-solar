@@ -300,8 +300,48 @@ export default async function handler(req, res) {
             const row = rows[i];
             const name = (row[0] || '').trim();
             if (!name) continue;
-            const retail = parseRetailPrice(row[2]);
-            sheetItems.push({ name, retail });
+
+            const retailRaw = row[2];
+            const col4 = row[3] !== undefined ? String(row[3]).trim().toLowerCase() : '';
+            const retailStr = String(retailRaw || '').trim().toLowerCase();
+
+            // Перевірка на приховування:
+            // 1. У стовпці D (4-й стовпець): "приховати", "hide", "ні", "no", "0", "false" або знята галочка
+            // 2. У стовпці C (роздрібна ціна): слово "приховати", "hide", "сховати" або "-"
+            // 3. Знак "#" або "!" на початку назви товару в таблиці (напр. "#SUN-6K")
+            let isHidden = false;
+            if (
+              col4 === 'приховати' ||
+              col4 === 'сховати' ||
+              col4 === 'hide' ||
+              col4 === 'ні' ||
+              col4 === 'no' ||
+              col4 === '0' ||
+              col4 === 'false' ||
+              col4 === '-' ||
+              col4 === 'х' ||
+              col4 === 'x'
+            ) {
+              isHidden = true;
+            }
+
+            if (
+              retailStr === 'приховати' ||
+              retailStr === 'сховати' ||
+              retailStr === 'hide' ||
+              retailStr === '-' ||
+              retailStr === 'no'
+            ) {
+              isHidden = true;
+            }
+
+            if (name.startsWith('#') || name.startsWith('!')) {
+              isHidden = true;
+            }
+
+            const cleanName = name.replace(/^[#!]\s*/, '');
+            const retail = parseRetailPrice(retailRaw);
+            sheetItems.push({ name, cleanName, retail, isHidden });
           }
         }
       } catch (e) {
@@ -336,10 +376,15 @@ export default async function handler(req, res) {
       // Шукаємо роздрібну ціну в Google Sheet
       let matchedSheetItem = null;
       for (const sh of sheetItems) {
-        if (isProductMatching(prodName, sh.name)) {
+        if (isProductMatching(prodName, sh.name) || (sh.cleanName && isProductMatching(prodName, sh.cleanName))) {
           matchedSheetItem = sh;
           break;
         }
+      }
+
+      // Якщо товар у Google Таблиці позначено як прихований — не показуємо його на публічній сторінці!
+      if (matchedSheetItem && matchedSheetItem.isHidden) {
+        return;
       }
 
       let retail = { amount: null, formatted: 'xx$' };
