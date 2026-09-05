@@ -419,6 +419,19 @@ export default async function handler(req, res) {
         }
       }
 
+      // Якщо товар у Каталозі позначено як прихований (знаком #, ! або словом "приховати" в ціні/назві)
+      if (prodName.startsWith('#') || prodName.startsWith('!') || prodName.toLowerCase().includes('приховати')) {
+        return;
+      }
+      if (prod.price_retail && (
+        String(prod.price_retail).toLowerCase().includes('приховати') || 
+        String(prod.price_retail).toLowerCase().includes('hide') || 
+        String(prod.price_retail).trim() === '-' ||
+        String(prod.price_retail).trim() === 'no'
+      )) {
+        return;
+      }
+
       // Якщо товар у Google Таблиці позначено як прихований — не показуємо його на публічній сторінці!
       if (matchedSheetItem && matchedSheetItem.isHidden) {
         return;
